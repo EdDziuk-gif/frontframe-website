@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrontFrame Admin</title>
+  <link rel="icon" type="image/png" href="images/Logo_FF.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:     #1E2D40;
+      --amber:    #F5A623;
+      --offwhite: #F8F6F1;
+      --gray:     #8A9BAE;
+      --white:    #FFFFFF;
+      --ltgray:   #E8ECF0;
+      --red:      #C0392B;
+      --orange:   #E67E22;
+      --blue:     #2980B9;
+      --green:    #27AE60;
+      --border:   #D8DFE8;
+    }
+
+    body { font-family: 'Inter', system-ui, sans-serif; font-size: 14px; background: var(--offwhite); color: var(--navy); min-height: 100vh; }
+    h1, h2, h3, .brand { font-family: 'DM Sans', system-ui, sans-serif; font-weight: 700; }
+
+    #login-screen { min-height: 100vh; background: var(--navy); display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-box { background: var(--offwhite); border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 400px; }
+    .login-logo { margin-bottom: 32px; }
+    .login-box h1 { font-size: 1.4rem; margin-bottom: 6px; }
+    .login-box p  { color: var(--gray); font-size: 0.875rem; margin-bottom: 32px; line-height: 1.6; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--navy); margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--navy); background: white; outline: none; transition: border-color 0.15s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--navy); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s, transform 0.1s; text-decoration: none; }
+    .btn:hover { opacity: 0.88; } .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--amber); color: var(--navy); }
+    .btn-navy    { background: var(--navy);  color: white; }
+    .btn-ghost   { background: transparent;  color: var(--navy); border: 1.5px solid var(--border); }
+    .btn-danger  { background: #FDE8E6;      color: var(--red); }
+    .btn-sm      { padding: 6px 12px; font-size: 0.8rem; }
+    .btn-full    { width: 100%; justify-content: center; }
+    .error-msg   { color: var(--red); font-size: 0.8rem; margin-top: 10px; display: none; }
+
+    #admin-shell { display: none; flex-direction: column; min-height: 100vh; }
+
+    .admin-header { background: var(--navy); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .header-left  { display: flex; align-items: center; gap: 16px; }
+    .header-wordmark { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.1rem; color: white; letter-spacing: -0.01em; }
+    .mode-badge { padding: 3px 10px; border-radius: 20px; font-family: 'DM Sans', sans-serif; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+    .mode-badge.testing { background: var(--amber); color: var(--navy); }
+    .mode-badge.live    { background: var(--green);  color: white; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .header-user  { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+    .btn-signout  { font-size: 0.75rem; color: rgba(255,255,255,0.5); background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif; transition: color 0.15s; }
+    .btn-signout:hover { color: white; }
+
+    .tab-bar { background: white; border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; padding: 0 24px; }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-btn { padding: 14px 18px; border: none; border-bottom: 2px solid transparent; background: none; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 700; color: var(--gray); cursor: pointer; white-space: nowrap; transition: color 0.15s, border-color 0.15s; }
+    .tab-btn:hover { color: var(--navy); }
+    .tab-btn.active { color: var(--navy); border-bottom-color: var(--amber); }
+    .tab-badge { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 9px; background: var(--red); color: white; font-size: 0.65rem; font-weight: 700; margin-left: 5px; }
+
+    .tab-content { padding: 24px; max-width: 1200px; flex: 1; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 24px; margin-bottom: 16px; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--ltgray); }
+    .card-title    { font-size: 1rem; font-family: 'DM Sans', sans-serif; font-weight: 700; }
+    .card-subtitle { font-size: 0.8rem; color: var(--gray); margin-top: 3px; }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+    .stat-number { font-size: 2.2rem; font-family: 'DM Sans', sans-serif; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+    .stat-label  { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); font-weight: 500; }
+    .stat-red    { color: var(--red); }   .stat-orange { color: var(--orange); }
+    .stat-blue   { color: var(--blue); }  .stat-gray   { color: var(--gray); }
+    .stat-amber  { color: var(--amber); } .stat-green  { color: var(--green); }
+
+    .mode-card { background: var(--navy); color: white; border-radius: 12px; padding: 28px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .mode-card h2 { font-size: 1.2rem; color: white; margin-bottom: 4px; }
+    .mode-card p  { font-size: 0.8rem; color: rgba(255,255,255,0.55); }
+
+    .build-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    .build-row label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); }
+    .build-row input, .build-row select { padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.85rem; font-family: 'Inter', sans-serif; color: var(--navy); outline: none; }
+    .build-row input { width: 120px; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 10px 14px; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); background: var(--offwhite); border-bottom: 1px solid var(--border); }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--ltgray); vertical-align: top; font-size: 0.875rem; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #FAFBFC; }
+
+    /* conversation expansion */
+    .convo-row td { padding: 0; border-bottom: 1px solid var(--border); background: var(--offwhite); }
+    .convo-row.hidden { display: none; }
+    .convo-panel   { padding: 20px 24px; }
+    .convo-loading { padding: 20px 24px; color: var(--gray); font-size: 0.875rem; }
+    .convo-empty   { padding: 20px 24px; color: var(--gray); font-size: 0.875rem; font-style: italic; }
+    .convo-meta    { font-size: 0.75rem; color: var(--gray); margin-bottom: 16px; }
+    .convo-messages { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
+    .convo-msg { max-width: 75%; padding: 10px 14px; border-radius: 10px; font-size: 0.875rem; line-height: 1.55; }
+    .convo-msg.user { background: var(--navy); color: white; align-self: flex-end; border-bottom-right-radius: 3px; }
+    .convo-msg.ed   { background: white; color: var(--navy); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 3px; }
+    .convo-role { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .convo-msg.user .convo-role { color: rgba(255,255,255,0.6); text-align: right; }
+    .convo-msg.ed   .convo-role { color: var(--amber); }
+
+    /* system prompt panel */
+    .prompt-panel { background: var(--offwhite); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }
+    .prompt-panel pre { font-family: 'Inter', monospace; font-size: 0.8rem; line-height: 1.65; white-space: pre-wrap; word-break: break-word; color: var(--navy); max-height: 340px; overflow-y: auto; }
+    .prompt-panel .prompt-empty { color: var(--gray); font-size: 0.875rem; font-style: italic; }
+    .prompt-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .prompt-controls label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); }
+    .prompt-controls select { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.825rem; font-family: 'Inter', sans-serif; color: var(--navy); outline: none; background: white; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+    .badge-blocking  { background: #FDECEA; color: var(--red); }
+    .badge-major     { background: #FEF3E2; color: var(--orange); }
+    .badge-minor     { background: #EBF5FF; color: var(--blue); }
+    .badge-cosmetic  { background: var(--ltgray); color: var(--gray); }
+    .badge-open      { background: #FEF3E2; color: var(--orange); }
+    .badge-in_review { background: #EBF5FF; color: var(--blue); }
+    .badge-resolved  { background: #E8F8EE; color: var(--green); }
+    .badge-deferred  { background: var(--ltgray); color: var(--gray); }
+    .badge-retain    { background: #E8F8EE; color: var(--green); }
+    .badge-delete    { background: #FDECEA; color: var(--red); }
+    .badge-testing   { background: #FFF3D6; color: #B7680A; }
+    .badge-live      { background: #E8F8EE; color: var(--green); }
+    .badge-seed      { background: var(--ltgray); color: var(--gray); }
+    .badge-admin     { background: #EDE8FF; color: #5B35B8; }
+    .badge-staff     { background: #EBF5FF; color: var(--blue); }
+    .badge-contractor{ background: #FEF3E2; color: var(--orange); }
+    .badge-client    { background: var(--ltgray); color: var(--gray); }
+    .badge-promoted  { background: #E8F8EE; color: var(--green); }
+    .badge-go_live   { background: #E8F8EE; color: var(--green); }
+    .badge-defect_resolved   { background: #E8F8EE; color: var(--green); }
+    .badge-defect_deferred   { background: var(--ltgray); color: var(--gray); }
+    .badge-feedback_promoted { background: #EBF5FF; color: var(--blue); }
+    .badge-version_bump      { background: #EDE8FF; color: #5B35B8; }
+    .badge-new              { background: #EBF5FF; color: var(--blue); }
+    .badge-reviewing        { background: #FEF3E2; color: var(--orange); }
+    .badge-active_sales_call{ background: #E8F8EE; color: var(--green); }
+    .badge-closed           { background: var(--ltgray); color: var(--gray); }
+    .badge-test             { background: #FFF3D6; color: #B7680A; }
+    /* Q&A pair statuses */
+    .badge-under_review { background: #FEF3E2; color: var(--orange); }
+    .badge-redundant    { background: #FDECEA; color: var(--red); }
+    .badge-implemented  { background: #E8F8EE; color: var(--green); }
+    /* page scope */
+    .badge-all      { background: var(--ltgray); color: var(--gray); }
+    .badge-home     { background: #EDE8FF; color: #5B35B8; }
+    .badge-intake   { background: #EBF5FF; color: var(--blue); }
+    .badge-discovery{ background: #FEF3E2; color: var(--orange); }
+    .badge-yours    { background: #E8F8EE; color: var(--green); }
+    .badge-proposal { background: #FFF3D6; color: #B7680A; }
+
+    .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+    .filter-bar select { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.825rem; font-family: 'Inter', sans-serif; color: var(--navy); outline: none; background: white; }
+
+    .feedback-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+    .feedback-card.promoted { opacity: 0.5; }
+    .feedback-q  { font-weight: 500; margin-bottom: 8px; }
+    .feedback-ed { font-size: 0.8rem; color: var(--gray); padding: 10px; background: var(--offwhite); border-radius: 6px; margin-bottom: 12px; line-height: 1.5; }
+    .feedback-ed strong { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); margin-bottom: 4px; }
+    .feedback-actions { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; margin-top: 12px; }
+    .feedback-suggest { flex: 1; min-width: 200px; }
+    .feedback-suggest input { width: 100%; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.85rem; font-family: 'Inter', sans-serif; outline: none; }
+    .feedback-suggest input:focus { border-color: var(--navy); }
+
+    .changelog-list { list-style: none; }
+    .changelog-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--ltgray); }
+    .changelog-item:last-child { border-bottom: none; }
+    .changelog-dot  { width: 10px; height: 10px; border-radius: 50%; background: var(--amber); margin-top: 5px; flex-shrink: 0; }
+    .changelog-body { flex: 1; }
+    .changelog-summary { font-size: 0.875rem; margin-bottom: 4px; }
+    .changelog-meta   { font-size: 0.75rem; color: var(--gray); }
+
+    .invite-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--ltgray); }
+    .invite-row .form-group { margin-bottom: 0; flex: 1; min-width: 160px; }
+
+    .qa-answer     { max-width: 340px; white-space: normal; line-height: 1.4; }
+    .text-truncate { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(30,45,64,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+    .modal h2 { font-size: 1.1rem; margin-bottom: 6px; }
+    .modal p  { font-size: 0.85rem; color: var(--gray); margin-bottom: 24px; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+    .golive-confirm-input { width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-family: 'Inter', sans-serif; outline: none; margin-top: 8px; }
+    .golive-confirm-input:focus { border-color: var(--red); }
+
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--gray); }
+    .empty-state p { font-size: 0.875rem; margin-top: 8px; }
+
+    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy); color: white; padding: 12px 20px; border-radius: 8px; font-size: 0.875rem; font-family: 'DM Sans', sans-serif; font-weight: 700; z-index: 300; transform: translateY(80px); opacity: 0; transition: transform 0.25s, opacity 0.25s; max-width: 320px; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-left: 4px solid var(--green); }
+    #toast.error   { border-left: 4px solid var(--red); }
+
+    .flex { display: flex; } .items-center { align-items: center; } .gap-8 { gap: 8px; }
+    .text-sm { font-size: 0.8rem; } .text-gray { color: var(--gray); }
+    .font-bold { font-weight: 700; } .hidden { display: none !important; }
+
+    .pw-wrap { position: relative; }
+    .pw-wrap input[type="password"], .pw-wrap input[type="text"] { padding-right: 40px; }
+    .pw-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 0; color: var(--gray); display: flex; align-items: center; width: auto; }
+    .pw-toggle:hover { color: var(--navy); opacity: 1; }
+
+    @media (max-width: 600px) {
+      .tab-content { padding: 16px; }
+      .mode-card { flex-direction: column; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo"><span class="brand" style="font-size:1.4rem;color:var(--navy)">FrontFrame</span></div>
+    <h1>Admin Portal</h1>
+    <p>Sign in with your FrontFrame admin credentials to access the testing dashboard.</p>
+    <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@frontframe.co" autocomplete="email"></div>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+        <button type="button" class="pw-toggle" onclick="togglePw('login-password',this)" tabindex="-1">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" id="login-btn">Sign In</button>
+    <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ── ADMIN SHELL ── -->
+<div id="admin-shell">
+
+  <header class="admin-header">
+    <div class="header-left">
+      <span class="header-wordmark">FrontFrame</span>
+      <span class="mode-badge testing" id="header-mode-badge">Testing</span>
+      <span class="text-sm" style="color:rgba(255,255,255,0.4)" id="header-version"></span>
+    </div>
+    <div class="header-right">
+      <span class="header-user" id="header-user"></span>
+      <button class="btn-signout" id="signout-btn">Sign out</button>
+    </div>
+  </header>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="lead-alerts">Lead Alerts <span class="tab-badge hidden" id="badge-alerts">0</span></button>
+    <button class="tab-btn" data-tab="defects">Defects <span class="tab-badge hidden" id="badge-defects">0</span></button>
+    <button class="tab-btn" data-tab="feedback">Feedback <span class="tab-badge hidden" id="badge-feedback">0</span></button>
+    <button class="tab-btn" data-tab="changelog">Changelog</button>
+    <button class="tab-btn" data-tab="reviewers">Reviewers</button>
+    <button class="tab-btn" data-tab="qa">Q&amp;A</button>
+  </nav>
+
+  <div class="tab-content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="tab-panel active" id="tab-dashboard">
+      <div class="mode-card" id="mode-card">
+        <div>
+          <h2 id="mode-heading">System Mode: Testing</h2>
+          <p id="mode-desc">Pre-launch. Bot is in feedback mode. Site is not indexed.</p>
+        </div>
+        <button class="btn btn-primary" id="golive-btn">Flip to Live</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Build Configuration</div><div class="card-subtitle">Stamped on all defect records</div></div>
+          <button class="btn btn-ghost btn-sm" id="save-config-btn">Save</button>
+        </div>
+        <div class="build-row">
+          <label>Build Version</label><input type="text" id="cfg-version" placeholder="v0.1.0">
+          <label>Stage Gate</label>
+          <select id="cfg-stage">
+            <option value="discovery">Discovery</option><option value="build">Build</option>
+            <option value="review">Review</option><option value="pre-launch">Pre-Launch</option>
+            <option value="live">Live</option>
+          </select>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-number stat-blue"   id="stat-new-alerts">—</div><div class="stat-label">New Alerts</div></div>
+        <div class="stat-card"><div class="stat-number stat-green"  id="stat-active-calls">—</div><div class="stat-label">Active Sales</div></div>
+        <div class="stat-card"><div class="stat-number stat-red"    id="stat-blocking">—</div><div class="stat-label">Blocking</div></div>
+        <div class="stat-card"><div class="stat-number stat-orange" id="stat-major">—</div><div class="stat-label">Major</div></div>
+        <div class="stat-card"><div class="stat-number stat-amber"  id="stat-feedback">—</div><div class="stat-label">Feedback Gaps</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Recent Changelog</div>
+          <button class="btn btn-ghost btn-sm" onclick="switchTab('changelog')">View all</button>
+        </div>
+        <ul class="changelog-list" id="dashboard-changelog"><li class="empty-state"><p>No entries yet.</p></li></ul>
+      </div>
+    </div>
+
+    <!-- ── LEAD ALERTS ── -->
+    <div class="tab-panel" id="tab-lead-alerts">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Lead Alerts</div>
+            <div class="card-subtitle">Every escalation Ed has flagged. Click a row to read the conversation.</div>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <select id="filter-alert-status">
+            <option value="">All Statuses</option>
+            <option value="new">New</option>
+            <option value="reviewing">Reviewing</option>
+            <option value="active_sales_call">Active Sales Call</option>
+            <option value="closed">Closed</option>
+            <option value="test">Test</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Prospect</th><th>Signal</th><th>Page</th><th>Current Site</th><th>SMS</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="alerts-tbody"><tr><td colspan="9" class="empty-state">No alerts yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEFECTS ── -->
+    <div class="tab-panel" id="tab-defects">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Log a Defect</div></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+          <div class="form-group"><label>Area</label>
+            <select id="new-area"><option value="bot">Bot</option><option value="ui">UI</option><option value="content">Content</option><option value="form">Form</option><option value="payment">Payment</option><option value="contract">Contract</option><option value="other">Other</option></select>
+          </div>
+          <div class="form-group"><label>Severity</label>
+            <select id="new-severity"><option value="blocking">Blocking</option><option value="major">Major</option><option value="minor" selected>Minor</option><option value="cosmetic">Cosmetic</option></select>
+          </div>
+          <div class="form-group"><label>Disposition</label>
+            <select id="new-disposition"><option value="retain" selected>Retain</option><option value="delete">Delete</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label>Description</label><textarea id="new-description" placeholder="Describe what you observed..."></textarea></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn btn-primary" id="log-defect-btn">Log Defect</button></div>
+      </div>
+      <div class="card">
+        <div class="filter-bar">
+          <select id="filter-area"><option value="">All Areas</option><option value="bot">Bot</option><option value="ui">UI</option><option value="content">Content</option><option value="form">Form</option><option value="payment">Payment</option><option value="contract">Contract</option><option value="other">Other</option></select>
+          <select id="filter-severity"><option value="">All Severities</option><option value="blocking">Blocking</option><option value="major">Major</option><option value="minor">Minor</option><option value="cosmetic">Cosmetic</option></select>
+          <select id="filter-status"><option value="">All Statuses</option><option value="open">Open</option><option value="in_review">In Review</option><option value="resolved">Resolved</option><option value="deferred">Deferred</option></select>
+          <button class="btn btn-ghost btn-sm" id="export-defects-btn">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Area</th><th>Severity</th><th style="min-width:240px">Description</th><th>Status</th><th>Disposition</th><th>Reported</th><th>Actions</th></tr></thead>
+          <tbody id="defects-tbody"><tr><td colspan="7" class="empty-state">No defects logged.</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FEEDBACK ── -->
+    <div class="tab-panel" id="tab-feedback">
+      <div class="filter-bar">
+        <select id="filter-feedback"><option value="unpromoted">Unpromoted only</option><option value="all">All entries</option></select>
+        <span class="text-sm text-gray" id="feedback-count-label"></span>
+      </div>
+      <div id="feedback-list"><div class="empty-state"><p>No feedback entries yet.</p></div></div>
+    </div>
+
+    <!-- ── CHANGELOG ── -->
+    <div class="tab-panel" id="tab-changelog">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Add Entry</div></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px">
+          <div class="form-group"><label>Event Type</label>
+            <select id="new-changelog-type"><option value="version_bump">Version Bump</option><option value="defect_resolved">Defect Resolved</option><option value="defect_deferred">Defect Deferred</option><option value="feedback_promoted">Feedback Promoted</option><option value="go_live">Go Live</option></select>
+          </div>
+          <div class="form-group"><label>Build Version</label><input type="text" id="new-changelog-version" placeholder="v0.2.0"></div>
+          <div class="form-group"><label>Disposition</label><select id="new-changelog-disposition"><option value="retain">Retain</option><option value="delete">Delete</option></select></div>
+        </div>
+        <div class="form-group"><label>Summary</label><textarea id="new-changelog-summary" placeholder="Describe what changed..."></textarea></div>
+        <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" id="add-changelog-btn">Add Entry</button></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Audit Trail</div>
+          <button class="btn btn-ghost btn-sm" id="export-changelog-btn">Export retain CSV</button>
+        </div>
+        <div class="filter-bar" style="margin-bottom:16px">
+          <select id="filter-changelog"><option value="">All Events</option><option value="defect_resolved">Defect Resolved</option><option value="defect_deferred">Defect Deferred</option><option value="feedback_promoted">Feedback Promoted</option><option value="version_bump">Version Bump</option><option value="go_live">Go Live</option></select>
+        </div>
+        <ul class="changelog-list" id="changelog-list"><li class="empty-state"><p>No entries yet.</p></li></ul>
+      </div>
+    </div>
+
+    <!-- ── REVIEWERS ── -->
+    <div class="tab-panel" id="tab-reviewers">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Invite Reviewer</div></div>
+        <div class="invite-row">
+          <div class="form-group"><label>Email</label><input type="email" id="inv-email" placeholder="reviewer@example.com"></div>
+          <div class="form-group"><label>Display Name</label><input type="text" id="inv-name" placeholder="Frank"></div>
+          <div class="form-group"><label>Role</label>
+            <select id="inv-role"><option value="frontframe_staff">FrontFrame Staff</option><option value="contractor">Contractor</option><option value="client_tester">Client Tester</option><option value="frontframe_admin">Admin</option></select>
+          </div>
+          <button class="btn btn-primary" id="invite-btn">Send Invite</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Role</th><th>Invited</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="reviewers-tbody"><tr><td colspan="5" class="empty-state">No reviewers yet.</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Q&A ── -->
+    <div class="tab-panel" id="tab-qa">
+
+      <!-- System prompt panel -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">System Prompt</div>
+            <div class="card-subtitle">Ed's base instruction set for the selected page — evaluate Q&A pairs against this.</div>
+          </div>
+        </div>
+        <div class="prompt-controls">
+          <label>Page</label>
+          <select id="prompt-page-select">
+            <option value="home">Home</option>
+            <option value="intake">Intake</option>
+            <option value="discovery">Discovery</option>
+            <option value="yours">Yours</option>
+            <option value="proposal">Proposal</option>
+          </select>
+        </div>
+        <div class="prompt-panel" id="prompt-panel">
+          <div class="prompt-empty">Select a page to load the system prompt.</div>
+        </div>
+      </div>
+
+      <!-- Add pair form -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Add Q&amp;A Pair</div>
+          <button class="btn btn-ghost btn-sm" id="export-qa-btn">Export CSV</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end;margin-bottom:14px">
+          <div class="form-group" style="margin-bottom:0"><label>Question</label><input type="text" id="new-q" placeholder="What does FrontFrame do?"></div>
+          <div class="form-group" style="margin-bottom:0"><label>Page scope</label>
+            <select id="new-q-page">
+              <option value="all">All pages</option>
+              <option value="home">Home</option>
+              <option value="intake">Intake</option>
+              <option value="discovery">Discovery</option>
+              <option value="yours">Yours</option>
+              <option value="proposal">Proposal</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label>Answer</label><textarea id="new-a" placeholder="Ed's answer..."></textarea></div>
+        <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" id="add-qa-btn">Add Pair</button></div>
+      </div>
+
+      <!-- Pairs table -->
+      <div class="card">
+        <div class="filter-bar">
+          <select id="filter-qa-status">
+            <option value="under_review">Under Review</option>
+            <option value="implemented">Implemented</option>
+            <option value="redundant">Redundant</option>
+            <option value="">All Statuses</option>
+          </select>
+          <select id="filter-qa-page">
+            <option value="">All Pages</option>
+            <option value="all">All (global)</option>
+            <option value="home">Home</option>
+            <option value="intake">Intake</option>
+            <option value="discovery">Discovery</option>
+            <option value="yours">Yours</option>
+            <option value="proposal">Proposal</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th style="min-width:180px">Question</th>
+              <th style="min-width:240px">Answer</th>
+              <th>Page</th>
+              <th>Status</th>
+              <th>Source</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="qa-tbody"><tr><td colspan="6" class="empty-state">No pairs loaded.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── GO-LIVE MODAL ── -->
+<div class="modal-overlay" id="golive-modal">
+  <div class="modal">
+    <h2>Flip to Live</h2>
+    <p>This action sets the system to <strong>live mode</strong>. Type <strong>frontframe.co</strong> to confirm.</p>
+    <input type="text" class="golive-confirm-input" id="golive-confirm" placeholder="frontframe.co">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="golive-cancel">Cancel</button>
+      <button class="btn btn-danger" id="golive-confirm-btn" disabled>Go Live</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT DEFECT MODAL ── -->
+<div class="modal-overlay" id="edit-defect-modal">
+  <div class="modal">
+    <h2>Edit Defect</h2>
+    <p>Update the area or description for this defect record.</p>
+    <input type="hidden" id="edit-defect-id">
+    <div class="form-group"><label>Area</label>
+      <select id="edit-defect-area"><option value="bot">Bot</option><option value="ui">UI</option><option value="content">Content</option><option value="form">Form</option><option value="payment">Payment</option><option value="contract">Contract</option><option value="other">Other</option></select>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="edit-defect-description" style="min-height:120px"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="edit-defect-cancel">Cancel</button>
+      <button class="btn btn-navy"  id="edit-defect-save">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL  = 'https://ifjsepyzdnpmwyuytppr.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmanNlcHl6ZG5wbXd5dXl0cHByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUzMjksImV4cCI6MjA5MjExMTMyOX0.D4rt9LMNta78wGhNpT6P-pMM5pEdltAAxz1nQqJ1b80';
+const WORKER_URL    = 'https://frontframe-worker.ed-e5c.workers.dev';
+
+let session   = null;
+let config    = null;
+let defects   = [];
+let feedback  = [];
+let changelog = [];
+let reviewers = [];
+let qaPairs   = [];
+let alerts    = [];
+
+const expandedAlerts = new Set();
+
+// ── AUTH ──
+async function signIn(email, password) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) { const err = await res.json(); throw new Error(err.error_description || 'Sign in failed.'); }
+  return res.json();
+}
+async function signOut() {
+  try { await fetch(`${SUPABASE_URL}/auth/v1/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPABASE_ANON } }); } catch {}
+  sessionStorage.removeItem('ff_session'); session = null; showLogin();
+}
+function saveSession(s) { session = s; sessionStorage.setItem('ff_session', JSON.stringify(s)); }
+function loadSession()   { try { return JSON.parse(sessionStorage.getItem('ff_session')); } catch { return null; } }
+
+// ── API ──
+async function api(method, path, body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`${WORKER_URL}${path}`, opts);
+  if (!res.ok) throw new Error(`API ${method} ${path} failed: ${await res.text()}`);
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ── TOAST ──
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = `show ${type}`;
+  clearTimeout(el._t); el._t = setTimeout(() => { el.className = ''; }, 3000);
+}
+
+// ── TABS ──
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
+  expandedAlerts.clear();
+  loadAll().then(() => {
+    if (name === 'dashboard')   renderDashboard();
+    if (name === 'lead-alerts') renderAlerts();
+    if (name === 'defects')     renderDefects();
+    if (name === 'feedback')    renderFeedback();
+    if (name === 'changelog')   renderChangelog();
+    if (name === 'reviewers')   renderReviewers();
+    if (name === 'qa')          { renderQA(); loadSystemPrompt(); }
+  });
+}
+
+// ── DATA ──
+async function loadAll() {
+  try {
+    [config, defects, feedback, changelog, reviewers, qaPairs, alerts] = await Promise.all([
+      api('GET', '/admin/config'),
+      api('GET', '/admin/defects'),
+      api('GET', '/admin/feedback'),
+      api('GET', '/admin/changelog'),
+      api('GET', '/admin/reviewers'),
+      api('GET', '/qa'),
+      api('GET', '/admin/lead-alerts'),
+    ]);
+    updateHeaderBadges();
+  } catch (e) { toast('Failed to load data. ' + e.message, 'error'); }
+}
+
+function updateHeaderBadges() {
+  const mode  = config?.mode ?? 'testing';
+  const badge = document.getElementById('header-mode-badge');
+  badge.textContent = mode === 'live' ? 'Live' : 'Testing';
+  badge.className   = `mode-badge ${mode}`;
+  document.getElementById('header-version').textContent = config?.build_version ?? '';
+  setBadge('badge-defects',  defects.filter(d => d.status === 'open' || d.status === 'in_review').length);
+  setBadge('badge-feedback', feedback.filter(f => !f.promoted).length);
+  setBadge('badge-alerts',   alerts.filter(a => a.status === 'new').length);
+}
+function setBadge(id, count) {
+  const el = document.getElementById(id);
+  if (count > 0) { el.textContent = count; el.classList.remove('hidden'); }
+  else             el.classList.add('hidden');
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  if (!config) return;
+  const mode = config.mode ?? 'testing';
+  document.getElementById('mode-card').style.background = mode === 'live' ? 'var(--green)' : 'var(--navy)';
+  document.getElementById('mode-heading').textContent = `System Mode: ${mode === 'live' ? 'Live' : 'Testing'}`;
+  document.getElementById('mode-desc').textContent    = mode === 'live'
+    ? 'Public. Bot is in prospect mode. Site is indexed.'
+    : 'Pre-launch. Bot is in feedback mode. Site is not indexed.';
+  const glBtn = document.getElementById('golive-btn');
+  glBtn.textContent = mode === 'live' ? 'Currently Live' : 'Flip to Live';
+  glBtn.disabled    = mode === 'live';
+  document.getElementById('cfg-version').value = config.build_version ?? '';
+  document.getElementById('cfg-stage').value   = config.stage_gate    ?? 'build';
+
+  const open = defects.filter(d => d.status !== 'resolved' && d.status !== 'deferred');
+  document.getElementById('stat-new-alerts').textContent   = alerts.filter(a => a.status === 'new').length;
+  document.getElementById('stat-active-calls').textContent = alerts.filter(a => a.status === 'active_sales_call').length;
+  document.getElementById('stat-blocking').textContent     = open.filter(d => d.severity === 'blocking').length;
+  document.getElementById('stat-major').textContent        = open.filter(d => d.severity === 'major').length;
+  document.getElementById('stat-feedback').textContent     = feedback.filter(f => !f.promoted).length;
+
+  const ul = document.getElementById('dashboard-changelog');
+  const recent = [...changelog].slice(0, 5);
+  if (!recent.length) { ul.innerHTML = '<li class="empty-state"><p>No entries yet.</p></li>'; return; }
+  ul.innerHTML = recent.map(e => `
+    <li class="changelog-item">
+      <div class="changelog-dot"></div>
+      <div class="changelog-body">
+        <div class="changelog-summary"><span class="badge badge-${e.event_type}">${fmtEvent(e.event_type)}</span>&nbsp;${esc(e.summary)}</div>
+        <div class="changelog-meta">${fmtDate(e.created_at)} · v${esc(e.build_version ?? '—')}</div>
+      </div>
+    </li>`).join('');
+}
+
+// ── LEAD ALERTS ──
+function renderAlerts() {
+  const statusFilter = document.getElementById('filter-alert-status').value;
+  let rows = [...alerts];
+  if (statusFilter) rows = rows.filter(a => a.status === statusFilter);
+
+  const tbody = document.getElementById('alerts-tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>No alerts match the current filter.</p></div></td></tr>'; return; }
+
+  tbody.innerHTML = rows.map(a => {
+    const hasSession = !!a.session_id;
+    const isExpanded = expandedAlerts.has(a.alert_id);
+    return `
+    <tr id="alert-row-${a.alert_id}" style="cursor:${hasSession?'pointer':'default'}" onclick="${hasSession?`toggleConversation('${a.alert_id}')`:''}" >
+      <td style="width:28px;color:var(--gray);font-size:0.8rem">${hasSession?(isExpanded?'▾':'▸'):'—'}</td>
+      <td><strong>${esc(a.prospect_name ?? 'Visitor')}</strong></td>
+      <td class="text-sm">${esc(a.trigger_reason ?? '—')}</td>
+      <td><span class="text-sm text-gray">${esc(a.page ?? '—')}</span></td>
+      <td>${a.current_site?`<a href="${esc(a.current_site)}" target="_blank" rel="noopener" style="color:var(--blue);font-size:0.8rem;word-break:break-all" onclick="event.stopPropagation()">${esc(a.current_site)}</a>`:'<span class="text-gray text-sm">—</span>'}</td>
+      <td><span class="badge ${a.sms_sent?'badge-resolved':'badge-cosmetic'}">${a.sms_sent?'Sent':'No'}</span></td>
+      <td onclick="event.stopPropagation()">
+        <select onchange="updateAlertStatus('${a.alert_id}', this.value)"
+          style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:0.8rem;font-family:'Inter',sans-serif;color:var(--navy);outline:none;background:white">
+          ${['new','reviewing','active_sales_call','closed','test'].map(s=>`<option value="${s}" ${a.status===s?'selected':''}>${s.replace(/_/g,' ')}</option>`).join('')}
+        </select>
+      </td>
+      <td class="text-gray text-sm">${fmtDate(a.triggered_at)}</td>
+      <td onclick="event.stopPropagation()"><button class="btn btn-danger btn-sm" onclick="deleteAlert('${a.alert_id}')">Delete</button></td>
+    </tr>
+    <tr id="convo-row-${a.alert_id}" class="convo-row${isExpanded?'':' hidden'}">
+      <td colspan="9"><div id="convo-content-${a.alert_id}" class="convo-loading">Loading conversation…</div></td>
+    </tr>`;
+  }).join('');
+
+  expandedAlerts.forEach(id => loadConversation(id));
+}
+
+async function toggleConversation(alertId) {
+  const convoRow   = document.getElementById(`convo-row-${alertId}`);
+  const alertRow   = document.getElementById(`alert-row-${alertId}`);
+  const chevron    = alertRow?.querySelector('td:first-child');
+  const isExpanded = expandedAlerts.has(alertId);
+  if (isExpanded) {
+    expandedAlerts.delete(alertId);
+    convoRow.classList.add('hidden');
+    if (chevron) chevron.textContent = '▸';
+  } else {
+    expandedAlerts.add(alertId);
+    convoRow.classList.remove('hidden');
+    if (chevron) chevron.textContent = '▾';
+    await loadConversation(alertId);
+  }
+}
+
+async function loadConversation(alertId) {
+  const el = document.getElementById(`convo-content-${alertId}`);
+  if (!el) return;
+  try {
+    const data = await api('GET', `/admin/lead-alerts/${alertId}/session`);
+    if (!data.conversation) {
+      el.className = 'convo-empty';
+      el.textContent = data.reason === 'no_session'
+        ? 'Session capture was not enabled when this alert was created.'
+        : 'Session record not found.';
+      return;
+    }
+    const turns = data.conversation;
+    if (!turns || turns.length === 0) { el.className = 'convo-empty'; el.textContent = 'No conversation turns recorded.'; return; }
+    el.className = 'convo-panel';
+    el.innerHTML = `
+      <div class="convo-meta">Page: <strong>${esc(data.page ?? '—')}</strong> &nbsp;·&nbsp; Started: <strong>${fmtDate(data.started_at)}</strong> &nbsp;·&nbsp; ${turns.length} turn${turns.length===1?'':'s'}</div>
+      <div class="convo-messages">
+        ${turns.map(t => {
+          const isUser = t.role === 'user';
+          return `<div class="convo-msg ${isUser?'user':'ed'}"><div class="convo-role">${isUser?'Prospect':'Ed'}</div>${esc(t.content)}</div>`;
+        }).join('')}
+      </div>`;
+  } catch (e) { el.className = 'convo-empty'; el.textContent = 'Could not load conversation: ' + e.message; }
+}
+
+async function updateAlertStatus(id, status) {
+  try {
+    await api('PATCH', `/admin/lead-alerts/${id}`, { status });
+    const idx = alerts.findIndex(a => a.alert_id === id);
+    if (idx >= 0) alerts[idx].status = status;
+    updateHeaderBadges(); renderAlerts(); toast(`Alert marked ${status.replace(/_/g,' ')}.`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteAlert(id) {
+  if (!confirm('Delete this alert record? This cannot be undone.')) return;
+  try {
+    await api('DELETE', `/admin/lead-alerts/${id}`);
+    alerts = alerts.filter(a => a.alert_id !== id);
+    expandedAlerts.delete(id);
+    updateHeaderBadges(); renderAlerts(); toast('Alert deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── DEFECTS ──
+function renderDefects() {
+  const area     = document.getElementById('filter-area').value;
+  const severity = document.getElementById('filter-severity').value;
+  const status   = document.getElementById('filter-status').value;
+  let rows = [...defects];
+  if (area)     rows = rows.filter(d => d.area === area);
+  if (severity) rows = rows.filter(d => d.severity === severity);
+  if (status)   rows = rows.filter(d => d.status === status);
+  const tbody = document.getElementById('defects-tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>No defects match the current filters.</p></div></td></tr>'; return; }
+  tbody.innerHTML = rows.map(d => `
+    <tr>
+      <td><span class="badge badge-${d.area}">${d.area}</span></td>
+      <td><span class="badge badge-${d.severity}">${d.severity}</span></td>
+      <td>${esc(d.description)}</td>
+      <td>
+        <select onchange="updateDefectStatus('${d.id}', this.value)"
+          style="border:none;background:none;cursor:pointer;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;padding:2px 8px">
+          ${['open','in_review','resolved','deferred'].map(s=>`<option value="${s}" ${d.status===s?'selected':''}>${s.replace('_',' ')}</option>`).join('')}
+        </select>
+      </td>
+      <td><span class="badge badge-${d.disposition}">${d.disposition}</span></td>
+      <td class="text-gray text-sm">${fmtDate(d.created_at)}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="toggleDisposition('${d.id}','${d.disposition}')">${d.disposition==='retain'?'Mark Delete':'Mark Retain'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="openEditDefect('${d.id}')">Edit</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function logDefect() {
+  const description = document.getElementById('new-description').value.trim();
+  if (!description) { toast('Description is required.', 'error'); return; }
+  try {
+    const d = await api('POST', '/admin/defects', { area: document.getElementById('new-area').value, severity: document.getElementById('new-severity').value, disposition: document.getElementById('new-disposition').value, description });
+    defects.unshift(d[0] ?? d);
+    document.getElementById('new-description').value = '';
+    updateHeaderBadges(); renderDefects(); toast('Defect logged.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function updateDefectStatus(id, status) {
+  try {
+    await api('PATCH', `/admin/defects/${id}`, { status });
+    const idx = defects.findIndex(d => d.id === id);
+    if (idx >= 0) defects[idx].status = status;
+    updateHeaderBadges(); renderDefects(); toast(`Status updated to ${status.replace('_',' ')}.`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function toggleDisposition(id, current) {
+  const next = current === 'retain' ? 'delete' : 'retain';
+  try {
+    await api('PATCH', `/admin/defects/${id}`, { disposition: next });
+    const idx = defects.findIndex(d => d.id === id);
+    if (idx >= 0) defects[idx].disposition = next;
+    renderDefects(); toast(`Disposition set to ${next}.`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function exportDefectsCSV() {
+  const rows = [['ID','Area','Severity','Description','Status','Disposition','Build','Reported']];
+  defects.forEach(d => rows.push([d.id,d.area,d.severity,`"${d.description.replace(/"/g,'""')}"`,d.status,d.disposition,d.build_version,d.created_at]));
+  downloadCSV(rows, 'frontframe-defects.csv');
+}
+
+// ── FEEDBACK ──
+function renderFeedback() {
+  const filterVal = document.getElementById('filter-feedback').value;
+  let items = filterVal === 'unpromoted' ? feedback.filter(f => !f.promoted) : [...feedback];
+  document.getElementById('feedback-count-label').textContent = `${items.length} entr${items.length===1?'y':'ies'}`;
+  const list = document.getElementById('feedback-list');
+  if (!items.length) { list.innerHTML = '<div class="empty-state"><p>No feedback entries.</p></div>'; return; }
+  list.innerHTML = items.map(f => `
+    <div class="feedback-card ${f.promoted?'promoted':''}" id="fb-${f.id}">
+      <div class="flex items-center gap-8" style="margin-bottom:10px">
+        <span class="badge ${f.promoted?'badge-promoted':'badge-testing'}">${f.promoted?'Promoted':'Open'}</span>
+        <span class="text-sm text-gray">${fmtDate(f.created_at)}</span>
+      </div>
+      <div class="feedback-q">${esc(f.question)}</div>
+      ${f.ed_response?`<div class="feedback-ed"><strong>Ed's Response</strong>${esc(f.ed_response)}</div>`:''}
+      ${!f.promoted?`
+      <div class="feedback-actions">
+        <div class="feedback-suggest"><input type="text" id="suggest-${f.id}" placeholder="Better answer (optional)..." value="${esc(f.suggested_answer||'')}"></div>
+        <button class="btn btn-primary btn-sm" onclick="promoteFeedback('${f.id}')">Promote to Q&amp;A</button>
+        <button class="btn btn-ghost btn-sm"   onclick="dismissFeedback('${f.id}')">Dismiss</button>
+      </div>`:''}
+    </div>`).join('');
+}
+
+async function promoteFeedback(id) {
+  const suggestEl = document.getElementById(`suggest-${id}`);
+  const suggested = suggestEl ? suggestEl.value.trim() : '';
+  try {
+    if (suggested) await api('PATCH', `/admin/feedback/${id}`, { suggested_answer: suggested });
+    await api('PATCH', `/admin/feedback/${id}`, { action: 'promote' });
+    const idx = feedback.findIndex(f => f.id === id);
+    if (idx >= 0) feedback[idx].promoted = true;
+    updateHeaderBadges(); renderFeedback(); toast('Promoted to Q&A.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function dismissFeedback(id) {
+  try {
+    await api('PATCH', `/admin/feedback/${id}`, { action: 'dismiss' });
+    const idx = feedback.findIndex(f => f.id === id);
+    if (idx >= 0) feedback[idx].suggested_answer = '[dismissed]';
+    renderFeedback(); toast('Dismissed.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── CHANGELOG ──
+async function addChangelog() {
+  const summary       = document.getElementById('new-changelog-summary').value.trim();
+  const event_type    = document.getElementById('new-changelog-type').value;
+  const disposition   = document.getElementById('new-changelog-disposition').value;
+  const build_version = document.getElementById('new-changelog-version').value.trim() || (config?.build_version ?? '');
+  if (!summary) { toast('Summary is required.', 'error'); return; }
+  try {
+    const entry = await api('POST', '/admin/changelog', { event_type, summary, disposition, build_version });
+    changelog.unshift(entry[0] ?? entry);
+    document.getElementById('new-changelog-summary').value = '';
+    renderChangelog(); toast('Changelog entry added.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderChangelog() {
+  const filter = document.getElementById('filter-changelog').value;
+  let items = filter ? changelog.filter(e => e.event_type === filter) : [...changelog];
+  const list = document.getElementById('changelog-list');
+  if (!items.length) { list.innerHTML = '<li class="empty-state"><p>No entries yet.</p></li>'; return; }
+  list.innerHTML = items.map(e => `
+    <li class="changelog-item">
+      <div class="changelog-dot"></div>
+      <div class="changelog-body">
+        <div class="changelog-summary"><span class="badge badge-${e.event_type}">${fmtEvent(e.event_type)}</span>&nbsp;${esc(e.summary)}${e.disposition?`<span class="badge badge-${e.disposition}" style="margin-left:6px">${e.disposition}</span>`:''}</div>
+        <div class="changelog-meta">${fmtDate(e.created_at)} · v${esc(e.build_version ?? '—')}</div>
+      </div>
+    </li>`).join('');
+}
+
+function exportChangelogCSV() {
+  const retain = changelog.filter(e => e.disposition !== 'delete');
+  const rows = [['Event','Summary','Build Version','Date']];
+  retain.forEach(e => rows.push([e.event_type, `"${e.summary.replace(/"/g,'""')}"`, e.build_version, e.created_at]));
+  downloadCSV(rows, 'frontframe-changelog-delivery.csv');
+}
+
+// ── REVIEWERS ──
+function renderReviewers() {
+  const tbody = document.getElementById('reviewers-tbody');
+  if (!reviewers.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><p>No reviewers yet.</p></div></td></tr>'; return; }
+  tbody.innerHTML = reviewers.map(r => `
+    <tr>
+      <td><strong>${esc(r.display_name)}</strong></td>
+      <td>${roleBadge(r.role)}</td>
+      <td class="text-gray text-sm">${fmtDate(r.invited_at)}</td>
+      <td><span class="badge ${r.active?'badge-resolved':'badge-cosmetic'}">${r.active?'Active':'Inactive'}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="resetPassword('${esc(r.email??'')}')">Reset Password</button></td>
+    </tr>`).join('');
+}
+
+async function inviteReviewer() {
+  const email = document.getElementById('inv-email').value.trim();
+  const name  = document.getElementById('inv-name').value.trim();
+  const role  = document.getElementById('inv-role').value;
+  if (!email || !name) { toast('Email and name are required.', 'error'); return; }
+  try {
+    const res = await api('POST', '/admin/reviewers/invite', { email, display_name: name, role });
+    reviewers.push(res.reviewer);
+    document.getElementById('inv-email').value = '';
+    document.getElementById('inv-name').value  = '';
+    renderReviewers(); toast(`Invite sent to ${email}.`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Q&A ──
+
+// System prompt loader
+async function loadSystemPrompt() {
+  const page  = document.getElementById('prompt-page-select').value;
+  const panel = document.getElementById('prompt-panel');
+  panel.innerHTML = '<div class="prompt-empty">Loading…</div>';
+  try {
+    const data = await api('GET', `/admin/system-prompt/${page}`);
+    if (!data.content) {
+      panel.innerHTML = '<div class="prompt-empty">No system prompt found for this page.</div>';
+    } else {
+      panel.innerHTML = `<pre>${esc(data.content)}</pre>`;
+    }
+  } catch (e) {
+    panel.innerHTML = `<div class="prompt-empty">Failed to load: ${esc(e.message)}</div>`;
+  }
+
+  // Sync the pairs filter to the selected prompt page and re-render
+  document.getElementById('filter-qa-page').value = page;
+  renderQA();
+}
+
+function renderQA() {
+  const statusFilter = document.getElementById('filter-qa-status').value;
+  const pageFilter   = document.getElementById('filter-qa-page').value;
+  let rows = [...qaPairs];
+  if (statusFilter) rows = rows.filter(p => p.status === statusFilter);
+  if (pageFilter)   rows = rows.filter(p => p.page === pageFilter);
+
+  const tbody = document.getElementById('qa-tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><p>No pairs match the current filters.</p></div></td></tr>'; return; }
+
+  tbody.innerHTML = rows.map((p, i) => `
+    <tr id="qa-row-${i}">
+      <td class="text-truncate" title="${esc(p.question)}">${esc(p.question)}</td>
+      <td class="qa-answer">${esc(p.answer)}</td>
+      <td><span class="badge badge-${p.page||'all'}">${p.page||'all'}</span></td>
+      <td>
+        <select onchange="updateQAStatus('${p.id}', this.value)"
+          style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:0.75rem;font-family:'Inter',sans-serif;color:var(--navy);outline:none;background:white">
+          ${['under_review','implemented','redundant'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s.replace('_',' ')}</option>`).join('')}
+        </select>
+      </td>
+      <td><span class="badge badge-${p.source||'seed'}">${p.source||'seed'}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="deleteQA('${p.id}',${i})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function updateQAStatus(id, status) {
+  try {
+    await api('PUT', `/qa/${id}`, { status });
+    const idx = qaPairs.findIndex(p => p.id === id);
+    if (idx >= 0) qaPairs[idx].status = status;
+    renderQA(); toast(`Pair marked ${status.replace('_',' ')}.`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function addQA() {
+  const question = document.getElementById('new-q').value.trim();
+  const answer   = document.getElementById('new-a').value.trim();
+  const page     = document.getElementById('new-q-page').value;
+  if (!question || !answer) { toast('Both fields are required.', 'error'); return; }
+  try {
+    const res = await api('POST', '/qa', { question, answer, page });
+    qaPairs.unshift(res[0] ?? res);
+    document.getElementById('new-q').value = '';
+    document.getElementById('new-a').value = '';
+    renderQA(); toast('Q&A pair added.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteQA(id, idx) {
+  if (!confirm('Delete this Q&A pair?')) return;
+  try {
+    await api('DELETE', `/qa/${id}`);
+    qaPairs.splice(idx, 1);
+    renderQA(); toast('Pair deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function exportQACSV() {
+  const rows = [['Question','Answer','Page','Status','Source','Created']];
+  qaPairs.forEach(p => rows.push([
+    `"${(p.question||'').replace(/"/g,'""')}"`,
+    `"${(p.answer  ||'').replace(/"/g,'""')}"`,
+    p.page    || 'all',
+    p.status  || 'under_review',
+    p.source  || 'seed',
+    p.created_at || '',
+  ]));
+  downloadCSV(rows, 'frontframe-qa-pairs.csv');
+}
+
+async function resetPassword(email) {
+  if (!email) { toast('No email on record for this reviewer.', 'error'); return; }
+  if (!confirm(`Send password reset email to ${email}?`)) return;
+  try { await api('POST', '/admin/reviewers/reset-password', { email }); toast(`Password reset sent to ${email}.`); }
+  catch (e) { toast(e.message, 'error'); }
+}
+
+function togglePw(id, btn) {
+  const inp  = document.getElementById(id);
+  const show = inp.type === 'password';
+  inp.type   = show ? 'text' : 'password';
+  btn.innerHTML = show
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+}
+
+function openEditDefect(id) {
+  const d = defects.find(x => x.id === id);
+  if (!d) { toast('Defect not found.', 'error'); return; }
+  document.getElementById('edit-defect-id').value          = id;
+  document.getElementById('edit-defect-area').value        = d.area;
+  document.getElementById('edit-defect-description').value = d.description;
+  document.getElementById('edit-defect-modal').classList.add('open');
+}
+
+async function saveEditDefect() {
+  const id          = document.getElementById('edit-defect-id').value;
+  const area        = document.getElementById('edit-defect-area').value;
+  const description = document.getElementById('edit-defect-description').value.trim();
+  if (!description) { toast('Description is required.', 'error'); return; }
+  try {
+    await api('PATCH', `/admin/defects/${id}`, { area, description });
+    const idx = defects.findIndex(d => d.id === id);
+    if (idx >= 0) { defects[idx].area = area; defects[idx].description = description; }
+    document.getElementById('edit-defect-modal').classList.remove('open');
+    renderDefects(); toast('Defect updated.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── HELPERS ──
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+function fmtEvent(type) {
+  return { defect_resolved:'Resolved', defect_deferred:'Deferred', feedback_promoted:'Promoted', version_bump:'Version', go_live:'Go Live' }[type] ?? type;
+}
+function roleBadge(role) {
+  const map   = { frontframe_admin:'badge-admin', frontframe_staff:'badge-staff', contractor:'badge-contractor', client_tester:'badge-client' };
+  const label = { frontframe_admin:'Admin', frontframe_staff:'Staff', contractor:'Contractor', client_tester:'Client Tester' };
+  return `<span class="badge ${map[role]||''}">${label[role]||role}</span>`;
+}
+function downloadCSV(rows, filename) {
+  const blob = new Blob([rows.map(r=>r.join(',')).join('\n')], { type: 'text/csv' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: filename });
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ── WIRING ──
+document.getElementById('edit-defect-cancel').onclick = () => document.getElementById('edit-defect-modal').classList.remove('open');
+document.getElementById('edit-defect-save').onclick   = saveEditDefect;
+
+document.getElementById('golive-confirm').addEventListener('input', function() {
+  document.getElementById('golive-confirm-btn').disabled = this.value.trim() !== 'frontframe.co';
+});
+document.getElementById('golive-cancel').onclick = () => {
+  document.getElementById('golive-modal').classList.remove('open');
+  document.getElementById('golive-confirm').value = '';
+  document.getElementById('golive-confirm-btn').disabled = true;
+};
+document.getElementById('golive-confirm-btn').onclick = async () => {
+  try {
+    await api('POST', '/admin/config', { mode: 'live' });
+    config.mode = 'live';
+    document.getElementById('golive-modal').classList.remove('open');
+    updateHeaderBadges(); renderDashboard(); toast('System is now live.');
+  } catch (e) { toast(e.message, 'error'); }
+};
+document.getElementById('golive-btn').onclick = () => {
+  if (config?.mode === 'live') return;
+  document.getElementById('golive-modal').classList.add('open');
+};
+document.getElementById('save-config-btn').onclick = async () => {
+  try {
+    await api('POST', '/admin/config', { build_version: document.getElementById('cfg-version').value.trim(), stage_gate: document.getElementById('cfg-stage').value });
+    config.build_version = document.getElementById('cfg-version').value.trim();
+    config.stage_gate    = document.getElementById('cfg-stage').value;
+    updateHeaderBadges(); toast('Configuration saved.');
+  } catch (e) { toast(e.message, 'error'); }
+};
+
+document.querySelectorAll('.tab-btn').forEach(btn => { btn.onclick = () => switchTab(btn.dataset.tab); });
+
+document.getElementById('filter-area').onchange         =
+document.getElementById('filter-severity').onchange     =
+document.getElementById('filter-status').onchange       = renderDefects;
+document.getElementById('filter-feedback').onchange     = renderFeedback;
+document.getElementById('filter-changelog').onchange    = renderChangelog;
+document.getElementById('filter-alert-status').onchange = renderAlerts;
+document.getElementById('filter-qa-status').onchange    =
+document.getElementById('filter-qa-page').onchange      = renderQA;
+document.getElementById('prompt-page-select').onchange  = loadSystemPrompt;
+
+document.getElementById('add-changelog-btn').onclick    = addChangelog;
+document.getElementById('log-defect-btn').onclick       = logDefect;
+document.getElementById('invite-btn').onclick           = inviteReviewer;
+document.getElementById('add-qa-btn').onclick           = addQA;
+document.getElementById('export-defects-btn').onclick   = exportDefectsCSV;
+document.getElementById('export-changelog-btn').onclick = exportChangelogCSV;
+document.getElementById('export-qa-btn').onclick        = exportQACSV;
+document.getElementById('signout-btn').onclick          = signOut;
+
+document.getElementById('login-btn').onclick = async () => {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.getElementById('login-btn');
+  errEl.style.display = 'none';
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  try {
+    const data = await signIn(email, password);
+    saveSession(data); await showAdmin();
+  } catch (e) {
+    errEl.textContent = e.message; errEl.style.display = 'block';
+    btn.textContent = 'Sign In'; btn.disabled = false;
+  }
+};
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-btn').click();
+});
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('admin-shell').style.display  = 'none';
+}
+async function showAdmin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-shell').style.display  = 'flex';
+  document.getElementById('header-user').textContent    = session.user?.email ?? '';
+  await loadAll(); renderDashboard();
+}
+
+const stored = loadSession();
+if (stored?.access_token) { session = stored; showAdmin(); }
+else showLogin();
+</script>
+</body>
+</html>

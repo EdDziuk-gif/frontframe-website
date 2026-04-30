@@ -1,0 +1,6 @@
+cat > .gitignore << 'EOF'
+.DS_Store
+.wrangler
+.claude
+node_modules
+EOF
