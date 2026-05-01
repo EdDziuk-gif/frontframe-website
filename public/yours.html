@@ -282,7 +282,7 @@
     </div>
 
     <div class="cta-wrap">
-      <a href="#" class="cta">See what a FrontFrame site includes</a>
+      <a href="index.html" class="cta">See what a FrontFrame site includes</a>
     </div>
 
   </main>
@@ -344,7 +344,7 @@
     function closeChat() {
       panel.classList.remove('open');
       toggle.style.display = 'flex';
-      sessionStorage.setItem('chatDismissed', 'true');
+      sessionStorage.setItem('chatDismissed_yours', 'true');
     }
 
     toggle.addEventListener('click', openChat);
@@ -374,10 +374,27 @@
 
     async function send(text) {
       if (!text.trim()) return;
+
+      // Detect intake-ready intent before sending to bot
+      const intakeIntent = /\b(ready|get started|start|begin|sign up|sign me up|let'?s go|let'?s do it|i'?m in|yes please|interested|how do i start|where do i start)\b/i.test(text);
+
       addMsg(text, 'user');
       history.push({ role: 'user', content: text });
       input.value = '';
       sendBtn.disabled = true;
+
+      if (intakeIntent) {
+        addTyping();
+        await new Promise(r => setTimeout(r, 900));
+        removeTyping();
+        const handoff = "Perfect. Let me hand you off to our intake form — it takes about five minutes and gives us everything we need to get started on your behalf.";
+        addMsg(handoff, 'agent');
+        history.push({ role: 'assistant', content: handoff });
+        sendBtn.disabled = false;
+        setTimeout(() => { window.location.href = 'intake.html'; }, 2500);
+        return;
+      }
+
       addTyping();
       try {
         const res = await fetch(`${WORKER_URL}/chat`, {
@@ -388,8 +405,16 @@
         const data = await res.json();
         removeTyping();
         const reply = data.response || 'Happy to answer any questions.';
-        addMsg(reply, 'agent');
-        history.push({ role: 'assistant', content: reply });
+        // Check for explicit intake redirect signal from agent
+        if (reply.includes('[INTAKE]')) {
+          const clean = reply.replace('[INTAKE]', '').trim();
+          addMsg(clean, 'agent');
+          history.push({ role: 'assistant', content: clean });
+          setTimeout(() => { window.location.href = 'intake.html'; }, 2500);
+        } else {
+          addMsg(reply, 'agent');
+          history.push({ role: 'assistant', content: reply });
+        }
       } catch {
         removeTyping();
         addMsg('Having trouble connecting. Please try again.', 'agent');
@@ -409,7 +434,7 @@
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(input.value); });
 
     window.addEventListener('load', () => {
-      if (!sessionStorage.getItem('chatDismissed')) {
+      if (!sessionStorage.getItem('chatDismissed_yours')) {
         setTimeout(() => {
           openChat();
           setTimeout(closeChat, 10000);
