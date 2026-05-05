@@ -83,9 +83,7 @@
     }
 
     /* ── CONTEXT ── */
-    .context-block {
-      margin-bottom: 20px;
-    }
+    .context-block { margin-bottom: 20px; }
 
     .context-line {
       font-size: clamp(0.97rem, 2.8vw, 1.1rem);
@@ -94,15 +92,10 @@
       margin-bottom: 0.2em;
     }
 
-    .context-line strong {
-      color: var(--offwhite);
-      font-weight: 500;
-    }
+    .context-line strong { color: var(--offwhite); font-weight: 500; }
 
     /* ── OPENING RHYTHM ── */
-    .if-block {
-      margin-bottom: 40px;
-    }
+    .if-block { margin-bottom: 40px; }
 
     .if-line {
       font-size: clamp(0.97rem, 2.8vw, 1.1rem);
@@ -112,12 +105,7 @@
       padding-left: 1.5em;
     }
 
-    .if-line:first-child { border-top: none; }
-
-    .if-line em {
-      font-style: normal;
-      color: var(--offwhite);
-    }
+    .if-line em { font-style: normal; color: var(--offwhite); }
 
     /* ── START ── */
     .start-line {
@@ -130,9 +118,7 @@
       color: var(--offwhite);
     }
 
-    .start-line span {
-      color: var(--amber);
-    }
+    .start-line span { color: var(--amber); }
 
     .ask-ed {
       font-size: clamp(1rem, 3vw, 1.15rem);
@@ -140,10 +126,7 @@
       margin-bottom: 40px;
     }
 
-    .ask-ed strong {
-      color: var(--offwhite);
-      font-weight: 500;
-    }
+    .ask-ed strong { color: var(--offwhite); font-weight: 500; }
 
     /* ── INLINE CHAT ── */
     .chat-inline {
@@ -155,7 +138,10 @@
       flex-direction: column;
       height: 280px;
       margin-bottom: 72px;
+      transition: height 0.4s ease;
     }
+
+    .chat-inline.expanded { height: 480px; }
 
     .chat-header {
       background: rgba(255,255,255,0.05);
@@ -242,6 +228,7 @@
       background: rgba(255,255,255,0.04);
       border-top: 1px solid var(--border);
       flex-shrink: 0;
+      align-items: flex-end;
     }
 
     .chat-input {
@@ -255,6 +242,12 @@
       color: var(--offwhite);
       outline: none;
       transition: border-color 0.2s;
+      resize: none;
+      overflow: hidden;
+      min-height: 40px;
+      max-height: 120px;
+      line-height: 1.5;
+      display: block;
     }
 
     .chat-input::placeholder { color: var(--dim); }
@@ -384,11 +377,7 @@
     }
 
     .close-statement p + p { margin-top: 1.2em; }
-
-    .close-statement strong {
-      color: var(--offwhite);
-      font-weight: 500;
-    }
+    .close-statement strong { color: var(--offwhite); font-weight: 500; }
 
     .close-final {
       margin-top: 1.4em;
@@ -447,6 +436,7 @@
       .nav-links li:not(:last-child) { display: none; }
       .page { padding: 80px 18px 60px; }
       .chat-inline { height: 240px; }
+      .chat-inline.expanded { height: 420px; }
       .proof-block { padding: 20px 18px; }
       .artifact-item { padding: 18px 16px; }
       footer { padding: 28px 18px; }
@@ -484,7 +474,7 @@
     <p class="ask-ed"><strong>Ask Ed how.</strong> He's right here.</p>
 
     <!-- INLINE CHAT — THE HERO -->
-    <div class="chat-inline">
+    <div class="chat-inline" id="chatInline">
       <div class="chat-header">
         <div class="chat-avatar">Ed</div>
         <div>
@@ -494,7 +484,13 @@
       </div>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="chat-input-row">
-        <input class="chat-input" id="chatInput" type="text" placeholder="Ask Ed a question…" autocomplete="off">
+        <textarea
+          class="chat-input"
+          id="chatInput"
+          placeholder="Ask Ed a question…"
+          autocomplete="off"
+          rows="1"
+        ></textarea>
         <button class="chat-send" id="chatSend">
           <svg viewBox="0 0 24 24" fill="none" stroke="#1E2D40" stroke-width="2.5">
             <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -556,12 +552,34 @@
     const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
     const PAGE = 'yours';
 
-    const msgs    = document.getElementById('chatMessages');
-    const input   = document.getElementById('chatInput');
-    const sendBtn = document.getElementById('chatSend');
+    const chatInline = document.getElementById('chatInline');
+    const msgs       = document.getElementById('chatMessages');
+    const input      = document.getElementById('chatInput');
+    const sendBtn    = document.getElementById('chatSend');
 
     const sessionId = crypto.randomUUID();
-    let history = [];
+    let history  = [];
+    let expanded = false;
+
+    // ── Auto-resize textarea ──
+    function resizeInput() {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    }
+
+    input.addEventListener('input', resizeInput);
+
+    function resetInput() {
+      input.value = '';
+      input.style.height = 'auto';
+    }
+
+    function expandChat() {
+      if (!expanded) {
+        expanded = true;
+        chatInline.classList.add('expanded');
+      }
+    }
 
     function addMsg(text, role) {
       const div = document.createElement('div');
@@ -588,11 +606,13 @@
     async function send(text) {
       if (!text.trim()) return;
 
+      expandChat();
+
       const intakeIntent = /\b(ready|get started|start|begin|sign up|sign me up|let'?s go|let'?s do it|i'?m in|yes please|interested|how do i start|where do i start)\b/i.test(text);
 
       addMsg(text, 'user');
       history.push({ role: 'user', content: text });
-      input.value = '';
+      resetInput();
       sendBtn.disabled = true;
 
       if (intakeIntent) {
@@ -636,14 +656,19 @@
     }
 
     sendBtn.addEventListener('click', () => send(input.value));
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') send(input.value); });
 
-    // Greet on load — no toggle needed, chat is already open
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        send(input.value);
+      }
+    });
+
+    // Greet on load — chat is already open, no toggle
     window.addEventListener('load', () => {
       const greeting = "I'm Ed. You just finished the book — or most of it. If something landed and you want to talk through what it means for your business, I'm here.";
       addMsg(greeting, 'agent');
       history.push({ role: 'assistant', content: greeting });
-
     });
   </script>
 
