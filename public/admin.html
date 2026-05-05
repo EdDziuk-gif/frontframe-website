@@ -102,7 +102,6 @@
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #FAFBFC; }
 
-    /* conversation expansion */
     .convo-row td { padding: 0; border-bottom: 1px solid var(--border); background: var(--offwhite); }
     .convo-row.hidden { display: none; }
     .convo-panel   { padding: 20px 24px; }
@@ -121,6 +120,7 @@
     .prompt-panel { background: var(--offwhite); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }
     .prompt-panel pre { font-family: 'Inter', monospace; font-size: 0.8rem; line-height: 1.65; white-space: pre-wrap; word-break: break-word; color: var(--navy); max-height: 340px; overflow-y: auto; }
     .prompt-panel .prompt-empty { color: var(--gray); font-size: 0.875rem; font-style: italic; }
+    .prompt-edit-area { width: 100%; min-height: 340px; font-family: 'Inter', monospace; font-size: 0.8rem; line-height: 1.65; color: var(--navy); background: transparent; border: none; outline: none; resize: vertical; }
     .prompt-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
     .prompt-controls label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); }
     .prompt-controls select { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.825rem; font-family: 'Inter', sans-serif; color: var(--navy); outline: none; background: white; }
@@ -143,6 +143,7 @@
     .badge-staff     { background: #EBF5FF; color: var(--blue); }
     .badge-contractor{ background: #FEF3E2; color: var(--orange); }
     .badge-client    { background: var(--ltgray); color: var(--gray); }
+    .badge-client_owner { background: #E8F8EE; color: var(--green); }
     .badge-promoted  { background: #E8F8EE; color: var(--green); }
     .badge-go_live   { background: #E8F8EE; color: var(--green); }
     .badge-defect_resolved   { background: #E8F8EE; color: var(--green); }
@@ -154,17 +155,16 @@
     .badge-active_sales_call{ background: #E8F8EE; color: var(--green); }
     .badge-closed           { background: var(--ltgray); color: var(--gray); }
     .badge-test             { background: #FFF3D6; color: #B7680A; }
-    /* Q&A pair statuses */
     .badge-under_review { background: #FEF3E2; color: var(--orange); }
     .badge-redundant    { background: #FDECEA; color: var(--red); }
     .badge-implemented  { background: #E8F8EE; color: var(--green); }
-    /* page scope */
     .badge-all      { background: var(--ltgray); color: var(--gray); }
     .badge-home     { background: #EDE8FF; color: #5B35B8; }
     .badge-intake   { background: #EBF5FF; color: var(--blue); }
     .badge-discovery{ background: #FEF3E2; color: var(--orange); }
     .badge-yours    { background: #E8F8EE; color: var(--green); }
     .badge-proposal { background: #FFF3D6; color: #B7680A; }
+    .badge-admin-page { background: #EDE8FF; color: #5B35B8; }
 
     .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
     .filter-bar select { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.825rem; font-family: 'Inter', sans-serif; color: var(--navy); outline: none; background: white; }
@@ -420,7 +420,13 @@
           <div class="form-group"><label>Email</label><input type="email" id="inv-email" placeholder="reviewer@example.com"></div>
           <div class="form-group"><label>Display Name</label><input type="text" id="inv-name" placeholder="Frank"></div>
           <div class="form-group"><label>Role</label>
-            <select id="inv-role"><option value="frontframe_staff">FrontFrame Staff</option><option value="contractor">Contractor</option><option value="client_tester">Client Tester</option><option value="frontframe_admin">Admin</option></select>
+            <select id="inv-role">
+              <option value="frontframe_staff">FrontFrame Staff</option>
+              <option value="contractor">Contractor</option>
+              <option value="client_tester">Client Tester</option>
+              <option value="client_owner">Client Owner</option>
+              <option value="frontframe_admin">Admin</option>
+            </select>
           </div>
           <button class="btn btn-primary" id="invite-btn">Send Invite</button>
         </div>
@@ -441,16 +447,22 @@
         <div class="card-header">
           <div>
             <div class="card-title">System Prompt</div>
-            <div class="card-subtitle">Ed's base instruction set for the selected page — evaluate Q&A pairs against this.</div>
+            <div class="card-subtitle">Ed's base instruction set for the selected page — evaluate Q&amp;A pairs against this.</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-ghost btn-sm" id="prompt-edit-btn">Edit</button>
+            <button class="btn btn-navy btn-sm hidden" id="prompt-save-btn">Save</button>
+            <button class="btn btn-ghost btn-sm hidden" id="prompt-cancel-btn">Cancel</button>
           </div>
         </div>
         <div class="prompt-controls">
-          <label>Page</label>
+          <label>PAGE</label>
           <select id="prompt-page-select">
             <option value="home">Home</option>
             <option value="intake">Intake</option>
             <option value="discovery">Discovery</option>
             <option value="yours">Yours</option>
+            <option value="admin">Admin</option>
             <option value="proposal">Proposal</option>
           </select>
         </div>
@@ -565,6 +577,7 @@ let changelog = [];
 let reviewers = [];
 let qaPairs   = [];
 let alerts    = [];
+let currentPromptContent = null;
 
 const expandedAlerts = new Set();
 
@@ -962,25 +975,64 @@ async function inviteReviewer() {
 
 // ── Q&A ──
 
-// System prompt loader
+// System prompt — load, edit, save, cancel
 async function loadSystemPrompt() {
   const page  = document.getElementById('prompt-page-select').value;
   const panel = document.getElementById('prompt-panel');
   panel.innerHTML = '<div class="prompt-empty">Loading…</div>';
+  setPromptEditMode(false);
   try {
     const data = await api('GET', `/admin/system-prompt/${page}`);
-    if (!data.content) {
-      panel.innerHTML = '<div class="prompt-empty">No system prompt found for this page.</div>';
-    } else {
-      panel.innerHTML = `<pre>${esc(data.content)}</pre>`;
-    }
+    currentPromptContent = data.content || '';
+    renderPromptReadView();
   } catch (e) {
+    currentPromptContent = null;
     panel.innerHTML = `<div class="prompt-empty">Failed to load: ${esc(e.message)}</div>`;
   }
-
-  // Sync the pairs filter to the selected prompt page and re-render
   document.getElementById('filter-qa-page').value = page;
   renderQA();
+}
+
+function renderPromptReadView() {
+  const panel = document.getElementById('prompt-panel');
+  if (!currentPromptContent) {
+    panel.innerHTML = '<div class="prompt-empty">No system prompt found for this page.</div>';
+  } else {
+    panel.innerHTML = `<pre>${esc(currentPromptContent)}</pre>`;
+  }
+}
+
+function setPromptEditMode(editing) {
+  document.getElementById('prompt-edit-btn').classList.toggle('hidden', editing);
+  document.getElementById('prompt-save-btn').classList.toggle('hidden', !editing);
+  document.getElementById('prompt-cancel-btn').classList.toggle('hidden', !editing);
+  document.getElementById('prompt-page-select').disabled = editing;
+}
+
+function editSystemPrompt() {
+  const panel = document.getElementById('prompt-panel');
+  panel.innerHTML = `<textarea class="prompt-edit-area" id="prompt-edit-textarea">${esc(currentPromptContent || '')}</textarea>`;
+  setPromptEditMode(true);
+  document.getElementById('prompt-edit-textarea').focus();
+}
+
+function cancelEditPrompt() {
+  renderPromptReadView();
+  setPromptEditMode(false);
+}
+
+async function saveSystemPrompt() {
+  const textarea = document.getElementById('prompt-edit-textarea');
+  const content  = textarea ? textarea.value.trim() : '';
+  if (!content) { toast('Prompt cannot be empty.', 'error'); return; }
+  const page = document.getElementById('prompt-page-select').value;
+  try {
+    await api('POST', `/admin/system-prompt/${page}`, { content });
+    currentPromptContent = content;
+    renderPromptReadView();
+    setPromptEditMode(false);
+    toast('System prompt saved.');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 function renderQA() {
@@ -1107,8 +1159,8 @@ function fmtEvent(type) {
   return { defect_resolved:'Resolved', defect_deferred:'Deferred', feedback_promoted:'Promoted', version_bump:'Version', go_live:'Go Live' }[type] ?? type;
 }
 function roleBadge(role) {
-  const map   = { frontframe_admin:'badge-admin', frontframe_staff:'badge-staff', contractor:'badge-contractor', client_tester:'badge-client' };
-  const label = { frontframe_admin:'Admin', frontframe_staff:'Staff', contractor:'Contractor', client_tester:'Client Tester' };
+  const map   = { frontframe_admin:'badge-admin', frontframe_staff:'badge-staff', contractor:'badge-contractor', client_tester:'badge-client', client_owner:'badge-client_owner' };
+  const label = { frontframe_admin:'Admin', frontframe_staff:'Staff', contractor:'Contractor', client_tester:'Client Tester', client_owner:'Client Owner' };
   return `<span class="badge ${map[role]||''}">${label[role]||role}</span>`;
 }
 function downloadCSV(rows, filename) {
@@ -1120,6 +1172,9 @@ function downloadCSV(rows, filename) {
 // ── WIRING ──
 document.getElementById('edit-defect-cancel').onclick = () => document.getElementById('edit-defect-modal').classList.remove('open');
 document.getElementById('edit-defect-save').onclick   = saveEditDefect;
+document.getElementById('prompt-edit-btn').onclick    = editSystemPrompt;
+document.getElementById('prompt-save-btn').onclick    = saveSystemPrompt;
+document.getElementById('prompt-cancel-btn').onclick  = cancelEditPrompt;
 
 document.getElementById('golive-confirm').addEventListener('input', function() {
   document.getElementById('golive-confirm-btn').disabled = this.value.trim() !== 'frontframe.co';
