@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — FrontFrame</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:    #1E2D40;
+      --amber:   #F5A623;
+      --offwhite:#F8F6F1;
+      --gray:    #8A9BAE;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--offwhite);
+      color: var(--navy);
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 64px;
+    }
+
+    .nav-logo {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--offwhite);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-cta {
+      background: var(--amber);
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.875rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 6px;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    /* HERO */
+    .hero {
+      background: var(--navy);
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: clamp(2rem, 5vw, 3rem);
+      color: var(--offwhite);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 span {
+      color: var(--amber);
+    }
+
+    .hero p {
+      font-size: 1.0625rem;
+      color: var(--gray);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.65;
+    }
+
+    /* CONTENT */
+    .content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    }
+
+    .section {
+      margin-bottom: 3rem;
+    }
+
+    .section h2 {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.125rem;
+      color: var(--navy);
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .section h2::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 1.125rem;
+      background: var(--amber);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .section p {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: #3a4f65;
+    }
+
+    /* CONTACT CARD */
+    .contact-card {
+      background: var(--navy);
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
+      margin-top: 1rem;
+    }
+
+    .contact-card .label {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.375rem;
+      color: var(--offwhite);
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .contact-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .contact-key {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--amber);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      min-width: 72px;
+      padding-top: 2px;
+    }
+
+    .contact-val {
+      font-size: 0.9375rem;
+      color: var(--offwhite);
+      line-height: 1.5;
+    }
+
+    .contact-val a {
+      color: var(--offwhite);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(245,166,35,0.4);
+      padding-bottom: 1px;
+      transition: border-color 0.2s;
+    }
+
+    .contact-val a:hover {
+      border-color: var(--amber);
+    }
+
+    /* FOOTER */
+    footer {
+      background: var(--navy);
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.8125rem;
+      color: var(--gray);
+    }
+
+    footer span {
+      color: var(--amber);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="nav-logo">FrontFrame</a>
+    <a href="/intake.html" class="nav-cta">Get Started</a>
+  </nav>
+
+  <div class="hero">
+    <h1>Built for businesses<br>that mean <span>business.</span></h1>
+    <p>FrontFrame designs and delivers complete web presences for solopreneurs and small service businesses — turnkey, owned, and ready to work.</p>
+  </div>
+
+  <div class="content">
+
+    <div class="section">
+      <h2>What we do</h2>
+      <p>FrontFrame delivers turnkey websites, booking systems, and AI-powered assistants to solopreneurs and small service businesses. Every engagement is scoped, priced, and delivered as a complete package — no subscriptions, no surprises. When the project is done, you own it.</p>
+    </div>
+
+    <div class="section">
+      <h2>Who we are</h2>
+      <p>FrontFrame LLC is a single-member limited liability company founded by Edward G. Dziuk and registered in the State of Arizona. Our work is designed to help small businesses look established from day one.</p>
+    </div>
+
+    <div class="section">
+      <h2>Contact</h2>
+      <div class="contact-card">
+        <div class="label">FrontFrame LLC</div>
+        <div class="contact-item">
+          <span class="contact-key">Address</span>
+          <span class="contact-val">2533 W Corrine Dr<br>Phoenix, AZ 85029</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-key">Email</span>
+          <span class="contact-val"><a href="mailto:ed@frontframe.co">ed@frontframe.co</a></span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-key">Web</span>
+          <span class="contact-val"><a href="https://frontframe.co">frontframe.co</a></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 <span>FrontFrame LLC</span> &mdash; Phoenix, Arizona
+  </footer>
+
+</body>
+</html>
