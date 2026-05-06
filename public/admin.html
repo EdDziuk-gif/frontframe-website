@@ -562,6 +562,31 @@
   </div>
 </div>
 
+<!-- ── EDIT Q&A MODAL ── -->
+<div class="modal-overlay" id="edit-qa-modal">
+  <div class="modal">
+    <h2>Edit Q&amp;A Pair</h2>
+    <p>Update the question, answer, or page scope for this pair.</p>
+    <input type="hidden" id="edit-qa-id">
+    <div class="form-group"><label>Question</label><input type="text" id="edit-qa-question"></div>
+    <div class="form-group"><label>Answer</label><textarea id="edit-qa-answer" style="min-height:140px"></textarea></div>
+    <div class="form-group"><label>Page Scope</label>
+      <select id="edit-qa-page">
+        <option value="all">All pages</option>
+        <option value="home">Home</option>
+        <option value="intake">Intake</option>
+        <option value="discovery">Discovery</option>
+        <option value="yours">Yours</option>
+        <option value="proposal">Proposal</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="edit-qa-cancel">Cancel</button>
+      <button class="btn btn-navy"  id="edit-qa-save">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1057,7 +1082,10 @@ function renderQA() {
         </select>
       </td>
       <td><span class="badge badge-${p.source||'seed'}">${p.source||'seed'}</span></td>
-      <td><button class="btn btn-ghost btn-sm" onclick="deleteQA('${p.id}',${i})">Delete</button></td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="openEditQA('${p.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteQA('${p.id}',${i})">Delete</button>
+      </td>
     </tr>`).join('');
 }
 
@@ -1090,6 +1118,31 @@ async function deleteQA(id, idx) {
     await api('DELETE', `/qa/${id}`);
     qaPairs.splice(idx, 1);
     renderQA(); toast('Pair deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function openEditQA(id) {
+  const p = qaPairs.find(x => x.id === id);
+  if (!p) { toast('Pair not found.', 'error'); return; }
+  document.getElementById('edit-qa-id').value       = id;
+  document.getElementById('edit-qa-question').value = p.question || '';
+  document.getElementById('edit-qa-answer').value   = p.answer   || '';
+  document.getElementById('edit-qa-page').value     = p.page     || 'all';
+  document.getElementById('edit-qa-modal').classList.add('open');
+}
+
+async function saveEditQA() {
+  const id       = document.getElementById('edit-qa-id').value;
+  const question = document.getElementById('edit-qa-question').value.trim();
+  const answer   = document.getElementById('edit-qa-answer').value.trim();
+  const page     = document.getElementById('edit-qa-page').value;
+  if (!question || !answer) { toast('Question and answer are required.', 'error'); return; }
+  try {
+    await api('PUT', `/qa/${id}`, { question, answer, page });
+    const idx = qaPairs.findIndex(p => p.id === id);
+    if (idx >= 0) { qaPairs[idx].question = question; qaPairs[idx].answer = answer; qaPairs[idx].page = page; }
+    document.getElementById('edit-qa-modal').classList.remove('open');
+    renderQA(); toast('Pair updated.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -1172,6 +1225,8 @@ function downloadCSV(rows, filename) {
 // ── WIRING ──
 document.getElementById('edit-defect-cancel').onclick = () => document.getElementById('edit-defect-modal').classList.remove('open');
 document.getElementById('edit-defect-save').onclick   = saveEditDefect;
+document.getElementById('edit-qa-cancel').onclick     = () => document.getElementById('edit-qa-modal').classList.remove('open');
+document.getElementById('edit-qa-save').onclick       = saveEditQA;
 document.getElementById('prompt-edit-btn').onclick    = editSystemPrompt;
 document.getElementById('prompt-save-btn').onclick    = saveSystemPrompt;
 document.getElementById('prompt-cancel-btn').onclick  = cancelEditPrompt;
