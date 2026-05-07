@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resources — FrontFrame</title>
+  <meta name="description" content="The book, articles, and conversations from FrontFrame — for owners building a business worth keeping.">
+  <link rel="icon" type="image/png" href="images/Logo_FF.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,700;1,9..40,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:     #1E2D40;
+      --amber:    #F5A623;
+      --offwhite: #F8F6F1;
+      --gray:     #8A9BAE;
+      --white:    #FFFFFF;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--offwhite);
+      color: var(--navy);
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 700;
+    }
+
+    img { display: block; max-width: 100%; }
+    a { text-decoration: none; color: inherit; }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 48px;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(30, 45, 64, 0.97);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 48px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .wordmark {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: #FFFFFF;
+      letter-spacing: -0.01em;
+    }
+
+    .nav-cta {
+      background: var(--amber);
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 10px 22px;
+      border-radius: 6px;
+      transition: opacity 0.2s;
+    }
+
+    .nav-cta:hover { opacity: 0.88; }
+
+    /* ── SHARED ── */
+    .section-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 16px;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      background: var(--amber);
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      padding: 16px 32px;
+      border-radius: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-ghost-dark {
+      display: inline-block;
+      color: var(--gray);
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 16px 4px;
+      border-bottom: 1px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .btn-ghost-dark:hover { color: var(--navy); border-color: rgba(30,45,64,0.4); }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      background: var(--navy);
+      padding: 160px 0 100px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 80% 40%, rgba(245,166,35,0.07) 0%, transparent 60%),
+        radial-gradient(circle at 10% 85%, rgba(138,155,174,0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .page-header-inner {
+      max-width: 760px;
+      position: relative;
+    }
+
+    .page-eyebrow {
+      display: inline-block;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+      font-size: clamp(2.4rem, 4vw, 3.8rem);
+      line-height: 1.1;
+      color: var(--white);
+      margin-bottom: 24px;
+    }
+
+    .page-header-sub {
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.75;
+    }
+
+    /* ── BOOK ── */
+    .book-section {
+      background: var(--offwhite);
+      padding: 120px 0;
+    }
+
+    .book-inner {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 100px;
+      align-items: center;
+    }
+
+    .book-cover {
+      flex-shrink: 0;
+    }
+
+    .book-cover img {
+      width: 320px;
+      border-radius: 6px;
+      box-shadow:
+        0 40px 80px rgba(30,45,64,0.22),
+        0 12px 28px rgba(30,45,64,0.14),
+        4px 0 12px rgba(0,0,0,0.08);
+    }
+
+    /* Fallback when no cover image is placed yet */
+    .book-cover-placeholder {
+      width: 320px;
+      aspect-ratio: 5/8;
+      background: var(--navy);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 32px 28px;
+      box-shadow:
+        0 40px 80px rgba(30,45,64,0.22),
+        0 12px 28px rgba(30,45,64,0.14);
+    }
+
+    .book-cover-placeholder .cover-rule {
+      width: 48px;
+      height: 3px;
+      background: var(--amber);
+      margin-bottom: 20px;
+    }
+
+    .book-cover-placeholder .cover-title {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--white);
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+
+    .book-cover-placeholder .cover-author {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .book-copy h2 {
+      font-size: clamp(1.9rem, 2.8vw, 2.7rem);
+      color: var(--navy);
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+
+    .book-subtitle {
+      font-size: 1rem;
+      color: var(--gray);
+      line-height: 1.5;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+
+    .book-author {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 36px;
+    }
+
+    .book-desc {
+      font-size: 1.05rem;
+      color: var(--gray);
+      line-height: 1.85;
+      max-width: 560px;
+      margin-bottom: 48px;
+    }
+
+    .book-cta-row {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* ── ARTICLES ── */
+    .articles-section {
+      background: var(--navy);
+      padding: 120px 0;
+    }
+
+    .articles-header {
+      max-width: 640px;
+      margin-bottom: 56px;
+    }
+
+    .articles-header h2 {
+      font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .articles-sub {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.75;
+    }
+
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .article-card {
+      padding: 36px 40px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      transition: background 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .article-card:hover { background: rgba(255,255,255,0.055); }
+
+    .article-topic {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--white);
+      line-height: 1.35;
+    }
+
+    .article-desc {
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.52);
+      line-height: 1.75;
+      flex: 1;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-top: 8px;
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--amber);
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── CONVERSATIONS ── */
+    .conversations-section {
+      background: var(--offwhite);
+      padding: 120px 0;
+    }
+
+    .conversations-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 100px;
+      align-items: center;
+    }
+
+    .conversations-copy h2 {
+      font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+      color: var(--navy);
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .conversations-desc {
+      font-size: 1rem;
+      color: var(--gray);
+      line-height: 1.8;
+    }
+
+    .coming-card {
+      background: var(--navy);
+      border-radius: 16px;
+      padding: 52px 44px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .coming-card::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(245,166,35,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .coming-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+
+    .coming-eyebrow::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--amber);
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .coming-hosts {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: var(--white);
+      line-height: 1.3;
+    }
+
+    .coming-hosts span {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 400;
+      font-family: 'Inter', sans-serif;
+      color: var(--gray);
+      margin-top: 4px;
+    }
+
+    .coming-divider {
+      width: 36px;
+      height: 2px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .coming-desc {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.75;
+    }
+
+    /* ── FINAL CTA ── */
+    .final-cta {
+      background: var(--navy);
+      padding: 120px 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .final-cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at 50% 60%, rgba(245,166,35,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .final-cta h2 {
+      font-size: clamp(2rem, 3.5vw, 3.2rem);
+      color: var(--white);
+      margin-bottom: 20px;
+      line-height: 1.2;
+      position: relative;
+    }
+
+    .final-cta p {
+      font-size: 1.05rem;
+      color: rgba(255,255,255,0.6);
+      max-width: 480px;
+      margin: 0 auto 44px;
+      line-height: 1.75;
+      position: relative;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy);
+      padding: 40px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-wordmark {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: -0.01em;
+    }
+
+    .footer-right {
+      font-size: 0.8rem;
+      color: var(--gray);
+    }
+
+    /* ── CHAT WIDGET ── */
+    .chat-widget {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .chat-toggle {
+      width: 56px;
+      height: 56px;
+      background: var(--amber);
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(245,166,35,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-left: auto;
+    }
+
+    .chat-toggle:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 24px rgba(245,166,35,0.5);
+    }
+
+    .chat-toggle svg { width: 24px; height: 24px; }
+
+    .chat-panel {
+      position: absolute;
+      bottom: 68px;
+      right: 0;
+      width: 360px;
+      height: 480px;
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(12px) scale(0.97);
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s, height 0.35s ease;
+    }
+
+    .chat-panel.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: all;
+    }
+
+    .chat-panel.expanded { height: 560px; }
+
+    .chat-header {
+      background: var(--navy);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .chat-avatar {
+      width: 36px; height: 36px;
+      background: var(--amber);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--navy);
+      flex-shrink: 0;
+    }
+
+    .chat-header-info { flex: 1; }
+
+    .chat-header-name {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--white);
+    }
+
+    .chat-header-status { font-size: 0.75rem; color: var(--gray); }
+
+    .chat-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--gray); padding: 8px;
+      display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; flex-shrink: 0;
+      transition: color 0.2s;
+    }
+
+    .chat-close:hover { color: var(--white); }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 20px;
+      display: flex; flex-direction: column; gap: 12px;
+      background: var(--offwhite);
+    }
+
+    .msg {
+      max-width: 85%; padding: 10px 14px;
+      border-radius: 12px; font-size: 0.875rem; line-height: 1.55;
+    }
+
+    .msg.agent {
+      background: var(--white); color: var(--navy);
+      align-self: flex-start; border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .msg.user {
+      background: var(--navy); color: var(--white);
+      align-self: flex-end; border-bottom-right-radius: 4px;
+    }
+
+    .msg.typing {
+      background: var(--white); align-self: flex-start; color: var(--gray);
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--white);
+      border-top: 1px solid #EAEAEA;
+      flex-shrink: 0;
+      align-items: flex-end;
+    }
+
+    .chat-input {
+      flex: 1;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      color: var(--navy);
+      outline: none;
+      transition: border-color 0.2s;
+      resize: none;
+      overflow: hidden;
+      min-height: 38px;
+      max-height: 120px;
+      line-height: 1.5;
+      display: block;
+    }
+
+    .chat-input:focus { border-color: var(--navy); }
+
+    .chat-send {
+      background: var(--amber); border: none; border-radius: 8px;
+      width: 38px; height: 38px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: opacity 0.2s;
+    }
+
+    .chat-send:hover { opacity: 0.85; }
+    .chat-send svg { width: 16px; height: 16px; }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1280px) {
+      .container { max-width: 1160px; padding: 0 40px; }
+      .nav-inner { max-width: 1160px; padding: 0 40px; }
+    }
+
+    @media (max-width: 900px) {
+      .book-inner {
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+
+      .book-cover img,
+      .book-cover-placeholder {
+        width: 240px;
+      }
+
+      .conversations-inner {
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+
+      .articles-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-panel { width: 320px; }
+      .container { padding: 0 20px; }
+      .nav-inner { padding: 0 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="/">
+        <span class="wordmark">FrontFrame</span>
+      </a>
+      <a class="nav-cta" href="intake.html">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- PAGE HEADER -->
+  <section class="page-header">
+    <div class="container">
+      <div class="page-header-inner reveal">
+        <span class="page-eyebrow">Resources</span>
+        <h1>For owners who are building<br>something worth keeping.</h1>
+        <p class="page-header-sub">A book, articles in progress, and conversations on the way.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOOK -->
+  <section class="book-section">
+    <div class="container">
+      <div class="book-inner">
+
+        <div class="book-cover reveal">
+          <img src="images/book-cover-kdp.jpg" alt="Your Business Is Invisible — Ed Dziuk">
+        </div>
+
+        <div class="book-copy reveal">
+          <p class="section-label">The Book</p>
+          <h2>Your Business Is Invisible</h2>
+          <p class="book-subtitle">The Difference Between Self-Employment and a Transferable Business</p>
+          <p class="book-author">Ed Dziuk &nbsp;·&nbsp; FrontFrame, LLC</p>
+          <p class="book-desc">Most service businesses are built entirely around their owner — and that's exactly what makes them impossible to sell. This book shows you the difference between a job you own and a business that transfers, and how to start building the latter before you think you need to.</p>
+          <div class="book-cta-row">
+            <!-- STRIPE: replace href with your Stripe payment link -->
+            <a class="btn-primary" href="#" target="_blank" rel="noopener">Get the Book — $XX</a>
+            <!-- AMAZON: replace href with your Amazon ASIN link once live -->
+            <a class="btn-ghost-dark" href="#" target="_blank" rel="noopener">Also on Amazon →</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ARTICLES -->
+  <section class="articles-section">
+    <div class="container">
+      <div class="articles-header reveal">
+        <p class="section-label">Articles</p>
+        <h2>Written for owners who think ahead.</h2>
+        <p class="articles-sub">These develop from the curriculum Ed and Nolan Baum are building for CPE. First pieces in progress now.</p>
+      </div>
+      <div class="articles-grid">
+
+        <div class="article-card reveal">
+          <p class="article-topic">What buyers actually look for — and why most owners miss it</p>
+          <p class="article-desc">A business that depends on its owner is not an asset. Buyers know this. Most sellers find out too late. This piece walks through the criteria buyers apply and what you can do now to meet them.</p>
+          <span class="status-badge">In progress</span>
+        </div>
+
+        <div class="article-card reveal">
+          <p class="article-topic">The four-year window: starting before you think you need to</p>
+          <p class="article-desc">Preparation for a business transition takes longer than most owners expect — not because it's complicated, but because the habits that make a business transferable take time to document and embed.</p>
+          <span class="status-badge">In progress</span>
+        </div>
+
+        <div class="article-card reveal">
+          <p class="article-topic">Your website is a business asset. Most owners treat it like a cost.</p>
+          <p class="article-desc">When a buyer evaluates your business, your web presence is part of what they're buying. This piece examines what a transferable web presence looks like and what it signals to someone writing a check.</p>
+          <span class="status-badge">In progress</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CONVERSATIONS -->
+  <section class="conversations-section">
+    <div class="container">
+      <div class="conversations-inner">
+
+        <div class="conversations-copy reveal">
+          <p class="section-label">Conversations</p>
+          <h2>When Ed and Nolan sit down to record.</h2>
+          <p class="conversations-desc">Ed Dziuk and Nolan Baum — a Certified Business Intermediary with a career built on business transitions — are developing a body of recorded content for owners at every stage of the four-year preparation timeline. The same material that anchors their CPE curriculum. Sessions are coming.</p>
+        </div>
+
+        <div class="coming-card reveal">
+          <span class="coming-eyebrow">Coming</span>
+          <div>
+            <p class="coming-hosts">Ed Dziuk
+              <span>Founder, FrontFrame</span>
+            </p>
+          </div>
+          <div class="coming-divider"></div>
+          <div>
+            <p class="coming-hosts">Nolan Baum, CBI
+              <span>Certified Business Intermediary</span>
+            </p>
+          </div>
+          <p class="coming-desc">Conversations on building, preparing, and transitioning a service business — from the people who spend their careers on it.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <div class="container">
+      <div class="reveal">
+        <h2>Start building something worth keeping.</h2>
+        <p>A web presence built to transfer starts the same day you do. Tell us about your business.</p>
+        <a class="btn-primary" href="intake.html">Get Started</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <span class="footer-wordmark">FrontFrame</span>
+        <p class="footer-right">© 2026 FrontFrame · frontframe.co</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- CHAT WIDGET -->
+  <div class="chat-widget" id="chatWidget">
+    <div class="chat-panel" id="chatPanel">
+      <div class="chat-header">
+        <div class="chat-avatar">Ed</div>
+        <div class="chat-header-info">
+          <div class="chat-header-name">Ed · FrontFrame</div>
+          <div class="chat-header-status">Ready when you are</div>
+        </div>
+        <button class="chat-close" id="chatClose" aria-label="Close chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <textarea
+          class="chat-input"
+          id="chatInput"
+          placeholder="Ask Ed a question…"
+          autocomplete="off"
+          rows="1"
+        ></textarea>
+        <button class="chat-send" id="chatSend" aria-label="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <button class="chat-toggle" id="chatToggle" aria-label="Open chat with Ed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1E2D40" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    </button>
+  </div>
+
+  <script>
+    // ── Scroll Reveal ──
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    reveals.forEach(el => observer.observe(el));
+
+    // ── Chat Widget ──
+    const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
+    const PAGE = 'home'; // resources page uses home system prompt
+
+    const panel    = document.getElementById('chatPanel');
+    const toggle   = document.getElementById('chatToggle');
+    const closeBtn = document.getElementById('chatClose');
+    const messages = document.getElementById('chatMessages');
+    const input    = document.getElementById('chatInput');
+    const sendBtn  = document.getElementById('chatSend');
+
+    const sessionId = crypto.randomUUID();
+    let isOpen      = false;
+    let history     = [];
+    let greeted     = false;
+    let expanded    = false;
+
+    function resizeInput() {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    }
+
+    input.addEventListener('input', resizeInput);
+
+    function resetInput() {
+      input.value = '';
+      input.style.height = 'auto';
+    }
+
+    function expandPanel() {
+      if (!expanded) {
+        expanded = true;
+        panel.classList.add('expanded');
+      }
+    }
+
+    function openChat() {
+      isOpen = true;
+      panel.classList.add('open');
+      toggle.style.display = 'none';
+      if (!greeted) { greeted = true; greet(); }
+      setTimeout(() => input.focus(), 300);
+    }
+
+    function closeChat() {
+      isOpen = false;
+      panel.classList.remove('open');
+      toggle.style.display = 'flex';
+    }
+
+    toggle.addEventListener('click', openChat);
+    closeBtn.addEventListener('click', closeChat);
+
+    function addMessage(text, role) {
+      const div = document.createElement('div');
+      div.className = `msg ${role === 'user' ? 'user' : 'agent'}`;
+      div.textContent = text;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function addTyping() {
+      const div = document.createElement('div');
+      div.className = 'msg typing';
+      div.textContent = 'Ed is typing…';
+      div.id = 'typing-indicator';
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function removeTyping() {
+      const el = document.getElementById('typing-indicator');
+      if (el) el.remove();
+    }
+
+    async function sendMessage(text) {
+      if (!text.trim()) return;
+      expandPanel();
+      addMessage(text, 'user');
+      history.push({ role: 'user', content: text });
+      resetInput();
+      sendBtn.disabled = true;
+      addTyping();
+      try {
+        const res = await fetch(`${WORKER_URL}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page: PAGE, message: text, history: history.slice(-10), session_id: sessionId }),
+        });
+        const data = await res.json();
+        removeTyping();
+        const reply = data.response || 'Sorry, something went wrong.';
+        addMessage(reply, 'agent');
+        history.push({ role: 'assistant', content: reply });
+      } catch {
+        removeTyping();
+        addMessage('Having trouble connecting right now. Please try again.', 'agent');
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+
+    function greet() {
+      const msg = "Hi, I'm Ed. Happy to answer questions about the book or anything else on this page.";
+      addMessage(msg, 'agent');
+      history.push({ role: 'assistant', content: msg });
+    }
+
+    sendBtn.addEventListener('click', () => sendMessage(input.value));
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(input.value);
+      }
+    });
+
+    // No auto-open on this page — user is here to read, not be prompted
+  </script>
+
+</body>
+</html>
