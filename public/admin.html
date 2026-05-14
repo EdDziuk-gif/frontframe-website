@@ -116,7 +116,6 @@
     .convo-msg.user .convo-role { color: rgba(255,255,255,0.6); text-align: right; }
     .convo-msg.ed   .convo-role { color: var(--amber); }
 
-    /* system prompt panel */
     .prompt-panel { background: var(--offwhite); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }
     .prompt-panel pre { font-family: 'Inter', monospace; font-size: 0.8rem; line-height: 1.65; white-space: pre-wrap; word-break: break-word; color: var(--navy); max-height: 340px; overflow-y: auto; }
     .prompt-panel .prompt-empty { color: var(--gray); font-size: 0.875rem; font-style: italic; }
@@ -165,6 +164,8 @@
     .badge-yours    { background: #E8F8EE; color: var(--green); }
     .badge-proposal { background: #FFF3D6; color: #B7680A; }
     .badge-admin-page { background: #EDE8FF; color: #5B35B8; }
+    .badge-visible  { background: #E8F8EE; color: var(--green); }
+    .badge-hidden   { background: var(--ltgray); color: var(--gray); }
 
     .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
     .filter-bar select { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.825rem; font-family: 'Inter', sans-serif; color: var(--navy); outline: none; background: white; }
@@ -193,9 +194,13 @@
     .qa-answer     { max-width: 340px; white-space: normal; line-height: 1.4; }
     .text-truncate { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+    /* Episode transcript preview in table */
+    .transcript-preview { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gray); font-size: 0.8rem; }
+
     .modal-overlay { position: fixed; inset: 0; background: rgba(30,45,64,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
     .modal { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+    .modal.modal-wide { max-width: 720px; }
     .modal h2 { font-size: 1.1rem; margin-bottom: 6px; }
     .modal p  { font-size: 0.85rem; color: var(--gray); margin-bottom: 24px; line-height: 1.6; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
@@ -220,6 +225,11 @@
     .pw-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 0; color: var(--gray); display: flex; align-items: center; width: auto; }
     .pw-toggle:hover { color: var(--navy); opacity: 1; }
 
+    /* Visible toggle */
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+    .toggle-wrap label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--navy); cursor: pointer; }
+    .toggle-wrap input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--amber); cursor: pointer; }
+
     @media (max-width: 600px) {
       .tab-content { padding: 16px; }
       .mode-card { flex-direction: column; }
@@ -229,7 +239,7 @@
 </head>
 <body>
 
-<!-- ── LOGIN ── -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo"><span class="brand" style="font-size:1.4rem;color:var(--navy)">FrontFrame</span></div>
@@ -250,7 +260,7 @@
   </div>
 </div>
 
-<!-- ── ADMIN SHELL ── -->
+<!-- ADMIN SHELL -->
 <div id="admin-shell">
 
   <header class="admin-header">
@@ -273,11 +283,12 @@
     <button class="tab-btn" data-tab="changelog">Changelog</button>
     <button class="tab-btn" data-tab="reviewers">Reviewers</button>
     <button class="tab-btn" data-tab="qa">Q&amp;A</button>
+    <button class="tab-btn" data-tab="podcasts">Podcasts</button>
   </nav>
 
   <div class="tab-content">
 
-    <!-- ── DASHBOARD ── -->
+    <!-- DASHBOARD -->
     <div class="tab-panel active" id="tab-dashboard">
       <div class="mode-card" id="mode-card">
         <div>
@@ -317,7 +328,7 @@
       </div>
     </div>
 
-    <!-- ── LEAD ALERTS ── -->
+    <!-- LEAD ALERTS -->
     <div class="tab-panel" id="tab-lead-alerts">
       <div class="card">
         <div class="card-header">
@@ -345,7 +356,7 @@
       </div>
     </div>
 
-    <!-- ── DEFECTS ── -->
+    <!-- DEFECTS -->
     <div class="tab-panel" id="tab-defects">
       <div class="card">
         <div class="card-header"><div class="card-title">Log a Defect</div></div>
@@ -377,7 +388,7 @@
       </div>
     </div>
 
-    <!-- ── FEEDBACK ── -->
+    <!-- FEEDBACK -->
     <div class="tab-panel" id="tab-feedback">
       <div class="filter-bar">
         <select id="filter-feedback"><option value="unpromoted">Unpromoted only</option><option value="all">All entries</option></select>
@@ -386,7 +397,7 @@
       <div id="feedback-list"><div class="empty-state"><p>No feedback entries yet.</p></div></div>
     </div>
 
-    <!-- ── CHANGELOG ── -->
+    <!-- CHANGELOG -->
     <div class="tab-panel" id="tab-changelog">
       <div class="card">
         <div class="card-header"><div class="card-title">Add Entry</div></div>
@@ -412,7 +423,7 @@
       </div>
     </div>
 
-    <!-- ── REVIEWERS ── -->
+    <!-- REVIEWERS -->
     <div class="tab-panel" id="tab-reviewers">
       <div class="card">
         <div class="card-header"><div class="card-title">Invite Reviewer</div></div>
@@ -439,10 +450,8 @@
       </div>
     </div>
 
-    <!-- ── Q&A ── -->
+    <!-- Q&A -->
     <div class="tab-panel" id="tab-qa">
-
-      <!-- System prompt panel -->
       <div class="card">
         <div class="card-header">
           <div>
@@ -470,8 +479,6 @@
           <div class="prompt-empty">Select a page to load the system prompt.</div>
         </div>
       </div>
-
-      <!-- Add pair form -->
       <div class="card">
         <div class="card-header">
           <div class="card-title">Add Q&amp;A Pair</div>
@@ -493,8 +500,6 @@
         <div class="form-group"><label>Answer</label><textarea id="new-a" placeholder="Ed's answer..."></textarea></div>
         <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" id="add-qa-btn">Add Pair</button></div>
       </div>
-
-      <!-- Pairs table -->
       <div class="card">
         <div class="filter-bar">
           <select id="filter-qa-status">
@@ -518,10 +523,7 @@
             <thead><tr>
               <th style="min-width:180px">Question</th>
               <th style="min-width:240px">Answer</th>
-              <th>Page</th>
-              <th>Status</th>
-              <th>Source</th>
-              <th>Actions</th>
+              <th>Page</th><th>Status</th><th>Source</th><th>Actions</th>
             </tr></thead>
             <tbody id="qa-tbody"><tr><td colspan="6" class="empty-state">No pairs loaded.</td></tr></tbody>
           </table>
@@ -529,10 +531,64 @@
       </div>
     </div>
 
+    <!-- PODCASTS -->
+    <div class="tab-panel" id="tab-podcasts">
+
+      <!-- Add episode -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Add Episode</div>
+          <div class="card-subtitle">Audio file must already be deployed to <code>/audio/</code> on the site.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="form-group" style="margin-bottom:0"><label>Series</label><input type="text" id="new-ep-series" placeholder="The Real Estate Invisible Practice"></div>
+          <div class="form-group" style="margin-bottom:0"><label>Title</label><input type="text" id="new-ep-title" placeholder="The Agent Who Built Everything and Owned Nothing"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:14px;align-items:end;margin-bottom:14px">
+          <div class="form-group" style="margin-bottom:0"><label>Audio Path</label><input type="text" id="new-ep-audio" placeholder="/audio/ep-01-real-estate.m4a"></div>
+          <div class="form-group" style="margin-bottom:0"><label>Published Date</label><input type="date" id="new-ep-date"></div>
+          <div class="toggle-wrap" style="padding-bottom:2px">
+            <input type="checkbox" id="new-ep-visible" checked>
+            <label for="new-ep-visible">Visible on site</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Transcript</label>
+          <textarea id="new-ep-transcript" style="min-height:320px;font-size:0.85rem;line-height:1.8" placeholder="Paste the full episode transcript here…"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="btn btn-primary" id="add-episode-btn">Add Episode</button>
+        </div>
+      </div>
+
+      <!-- Episodes list -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All Episodes</div>
+          <div class="card-subtitle">Includes hidden episodes. Published newest first.</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Series</th>
+              <th style="min-width:220px">Title</th>
+              <th>Audio</th>
+              <th>Transcript</th>
+              <th>Visible</th>
+              <th>Published</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="episodes-tbody"><tr><td colspan="7" class="empty-state">No episodes yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
   </div>
 </div>
 
-<!-- ── GO-LIVE MODAL ── -->
+<!-- GO-LIVE MODAL -->
 <div class="modal-overlay" id="golive-modal">
   <div class="modal">
     <h2>Flip to Live</h2>
@@ -545,7 +601,7 @@
   </div>
 </div>
 
-<!-- ── EDIT DEFECT MODAL ── -->
+<!-- EDIT DEFECT MODAL -->
 <div class="modal-overlay" id="edit-defect-modal">
   <div class="modal">
     <h2>Edit Defect</h2>
@@ -562,7 +618,7 @@
   </div>
 </div>
 
-<!-- ── EDIT Q&A MODAL ── -->
+<!-- EDIT Q&A MODAL -->
 <div class="modal-overlay" id="edit-qa-modal">
   <div class="modal">
     <h2>Edit Q&amp;A Pair</h2>
@@ -587,6 +643,35 @@
   </div>
 </div>
 
+<!-- EDIT EPISODE MODAL -->
+<div class="modal-overlay" id="edit-episode-modal">
+  <div class="modal modal-wide">
+    <h2>Edit Episode</h2>
+    <p>Update any field. Transcript changes take effect immediately on the public site.</p>
+    <input type="hidden" id="edit-ep-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="form-group" style="margin-bottom:0"><label>Series</label><input type="text" id="edit-ep-series"></div>
+      <div class="form-group" style="margin-bottom:0"><label>Title</label><input type="text" id="edit-ep-title"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:14px;align-items:end;margin-bottom:14px">
+      <div class="form-group" style="margin-bottom:0"><label>Audio Path</label><input type="text" id="edit-ep-audio"></div>
+      <div class="form-group" style="margin-bottom:0"><label>Published Date</label><input type="date" id="edit-ep-date"></div>
+      <div class="toggle-wrap" style="padding-bottom:2px">
+        <input type="checkbox" id="edit-ep-visible">
+        <label for="edit-ep-visible">Visible</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Transcript</label>
+      <textarea id="edit-ep-transcript" style="min-height:320px;font-size:0.85rem;line-height:1.8"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="edit-ep-cancel">Cancel</button>
+      <button class="btn btn-navy"  id="edit-ep-save">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -602,11 +687,11 @@ let changelog = [];
 let reviewers = [];
 let qaPairs   = [];
 let alerts    = [];
-let currentPromptContent = null;
+let episodes  = [];
 
 const expandedAlerts = new Set();
 
-// ── AUTH ──
+// AUTH
 async function signIn(email, password) {
   const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
@@ -622,7 +707,7 @@ async function signOut() {
 function saveSession(s) { session = s; sessionStorage.setItem('ff_session', JSON.stringify(s)); }
 function loadSession()   { try { return JSON.parse(sessionStorage.getItem('ff_session')); } catch { return null; } }
 
-// ── API ──
+// API
 async function api(method, path, body = null) {
   const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` } };
   if (body) opts.body = JSON.stringify(body);
@@ -632,14 +717,14 @@ async function api(method, path, body = null) {
   return text ? JSON.parse(text) : null;
 }
 
-// ── TOAST ──
+// TOAST
 function toast(msg, type = 'success') {
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = `show ${type}`;
   clearTimeout(el._t); el._t = setTimeout(() => { el.className = ''; }, 3000);
 }
 
-// ── TABS ──
+// TABS
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
@@ -652,13 +737,14 @@ function switchTab(name) {
     if (name === 'changelog')   renderChangelog();
     if (name === 'reviewers')   renderReviewers();
     if (name === 'qa')          { renderQA(); loadSystemPrompt(); }
+    if (name === 'podcasts')    renderEpisodes();
   });
 }
 
-// ── DATA ──
+// DATA
 async function loadAll() {
   try {
-    [config, defects, feedback, changelog, reviewers, qaPairs, alerts] = await Promise.all([
+    [config, defects, feedback, changelog, reviewers, qaPairs, alerts, episodes] = await Promise.all([
       api('GET', '/admin/config'),
       api('GET', '/admin/defects'),
       api('GET', '/admin/feedback'),
@@ -666,6 +752,7 @@ async function loadAll() {
       api('GET', '/admin/reviewers'),
       api('GET', '/qa'),
       api('GET', '/admin/lead-alerts'),
+      api('GET', '/admin/podcast-episodes'),
     ]);
     updateHeaderBadges();
   } catch (e) { toast('Failed to load data. ' + e.message, 'error'); }
@@ -687,7 +774,7 @@ function setBadge(id, count) {
   else             el.classList.add('hidden');
 }
 
-// ── DASHBOARD ──
+// DASHBOARD
 function renderDashboard() {
   if (!config) return;
   const mode = config.mode ?? 'testing';
@@ -722,7 +809,7 @@ function renderDashboard() {
     </li>`).join('');
 }
 
-// ── LEAD ALERTS ──
+// LEAD ALERTS
 function renderAlerts() {
   const statusFilter = document.getElementById('filter-alert-status').value;
   let rows = [...alerts];
@@ -821,7 +908,7 @@ async function deleteAlert(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── DEFECTS ──
+// DEFECTS
 function renderDefects() {
   const area     = document.getElementById('filter-area').value;
   const severity = document.getElementById('filter-severity').value;
@@ -888,7 +975,7 @@ function exportDefectsCSV() {
   downloadCSV(rows, 'frontframe-defects.csv');
 }
 
-// ── FEEDBACK ──
+// FEEDBACK
 function renderFeedback() {
   const filterVal = document.getElementById('filter-feedback').value;
   let items = filterVal === 'unpromoted' ? feedback.filter(f => !f.promoted) : [...feedback];
@@ -933,7 +1020,7 @@ async function dismissFeedback(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── CHANGELOG ──
+// CHANGELOG
 async function addChangelog() {
   const summary       = document.getElementById('new-changelog-summary').value.trim();
   const event_type    = document.getElementById('new-changelog-type').value;
@@ -970,7 +1057,7 @@ function exportChangelogCSV() {
   downloadCSV(rows, 'frontframe-changelog-delivery.csv');
 }
 
-// ── REVIEWERS ──
+// REVIEWERS
 function renderReviewers() {
   const tbody = document.getElementById('reviewers-tbody');
   if (!reviewers.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><p>No reviewers yet.</p></div></td></tr>'; return; }
@@ -998,9 +1085,7 @@ async function inviteReviewer() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Q&A ──
-
-// System prompt — load, edit, save, cancel
+// Q&A
 async function loadSystemPrompt() {
   const page  = document.getElementById('prompt-page-select').value;
   const panel = document.getElementById('prompt-panel');
@@ -1017,6 +1102,8 @@ async function loadSystemPrompt() {
   document.getElementById('filter-qa-page').value = page;
   renderQA();
 }
+
+let currentPromptContent = null;
 
 function renderPromptReadView() {
   const panel = document.getElementById('prompt-panel');
@@ -1159,6 +1246,92 @@ function exportQACSV() {
   downloadCSV(rows, 'frontframe-qa-pairs.csv');
 }
 
+// PODCASTS
+function renderEpisodes() {
+  const tbody = document.getElementById('episodes-tbody');
+  if (!episodes || !episodes.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>No episodes yet.</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = episodes.map(ep => `
+    <tr>
+      <td class="text-sm text-gray">${esc(ep.series)}</td>
+      <td><strong>${esc(ep.title)}</strong></td>
+      <td class="text-sm">${ep.audio_path ? `<code style="font-size:0.75rem">${esc(ep.audio_path)}</code>` : '<span class="text-gray">—</span>'}</td>
+      <td><span class="badge ${ep.transcript ? 'badge-resolved' : 'badge-cosmetic'}">${ep.transcript ? 'Yes' : 'No'}</span></td>
+      <td><span class="badge ${ep.visible ? 'badge-visible' : 'badge-hidden'}">${ep.visible ? 'Visible' : 'Hidden'}</span></td>
+      <td class="text-gray text-sm">${ep.published_at ? ep.published_at.slice(0,10) : '—'}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="openEditEpisode(${ep.id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteEpisode(${ep.id})">Delete</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function addEpisode() {
+  const series     = document.getElementById('new-ep-series').value.trim();
+  const title      = document.getElementById('new-ep-title').value.trim();
+  const audio_path = document.getElementById('new-ep-audio').value.trim() || null;
+  const transcript = document.getElementById('new-ep-transcript').value.trim() || null;
+  const visible    = document.getElementById('new-ep-visible').checked;
+  const published_at = document.getElementById('new-ep-date').value || new Date().toISOString().slice(0,10);
+
+  if (!series || !title) { toast('Series and title are required.', 'error'); return; }
+  try {
+    const res = await api('POST', '/admin/podcast-episodes', { series, title, audio_path, transcript, visible, published_at });
+    episodes.unshift(res[0] ?? res);
+    document.getElementById('new-ep-series').value     = '';
+    document.getElementById('new-ep-title').value      = '';
+    document.getElementById('new-ep-audio').value      = '';
+    document.getElementById('new-ep-transcript').value = '';
+    document.getElementById('new-ep-date').value       = '';
+    document.getElementById('new-ep-visible').checked  = true;
+    renderEpisodes(); toast('Episode added.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function openEditEpisode(id) {
+  const ep = episodes.find(e => e.id === id);
+  if (!ep) { toast('Episode not found.', 'error'); return; }
+  document.getElementById('edit-ep-id').value         = id;
+  document.getElementById('edit-ep-series').value     = ep.series      || '';
+  document.getElementById('edit-ep-title').value      = ep.title       || '';
+  document.getElementById('edit-ep-audio').value      = ep.audio_path  || '';
+  document.getElementById('edit-ep-transcript').value = ep.transcript  || '';
+  document.getElementById('edit-ep-date').value       = ep.published_at ? ep.published_at.slice(0,10) : '';
+  document.getElementById('edit-ep-visible').checked  = !!ep.visible;
+  document.getElementById('edit-episode-modal').classList.add('open');
+}
+
+async function saveEditEpisode() {
+  const id         = Number(document.getElementById('edit-ep-id').value);
+  const series     = document.getElementById('edit-ep-series').value.trim();
+  const title      = document.getElementById('edit-ep-title').value.trim();
+  const audio_path = document.getElementById('edit-ep-audio').value.trim() || null;
+  const transcript = document.getElementById('edit-ep-transcript').value.trim() || null;
+  const visible    = document.getElementById('edit-ep-visible').checked;
+  const published_at = document.getElementById('edit-ep-date').value || null;
+
+  if (!series || !title) { toast('Series and title are required.', 'error'); return; }
+  try {
+    await api('PATCH', `/admin/podcast-episodes/${id}`, { series, title, audio_path, transcript, visible, published_at });
+    const idx = episodes.findIndex(e => e.id === id);
+    if (idx >= 0) Object.assign(episodes[idx], { series, title, audio_path, transcript, visible, published_at });
+    document.getElementById('edit-episode-modal').classList.remove('open');
+    renderEpisodes(); toast('Episode updated.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteEpisode(id) {
+  if (!confirm('Delete this episode? This cannot be undone.')) return;
+  try {
+    await api('DELETE', `/admin/podcast-episodes/${id}`);
+    episodes = episodes.filter(e => e.id !== id);
+    renderEpisodes(); toast('Episode deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// HELPERS
 async function resetPassword(email) {
   if (!email) { toast('No email on record for this reviewer.', 'error'); return; }
   if (!confirm(`Send password reset email to ${email}?`)) return;
@@ -1198,7 +1371,6 @@ async function saveEditDefect() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── HELPERS ──
 function esc(str) {
   if (!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1222,14 +1394,17 @@ function downloadCSV(rows, filename) {
   a.click(); URL.revokeObjectURL(a.href);
 }
 
-// ── WIRING ──
-document.getElementById('edit-defect-cancel').onclick = () => document.getElementById('edit-defect-modal').classList.remove('open');
-document.getElementById('edit-defect-save').onclick   = saveEditDefect;
-document.getElementById('edit-qa-cancel').onclick     = () => document.getElementById('edit-qa-modal').classList.remove('open');
-document.getElementById('edit-qa-save').onclick       = saveEditQA;
-document.getElementById('prompt-edit-btn').onclick    = editSystemPrompt;
-document.getElementById('prompt-save-btn').onclick    = saveSystemPrompt;
-document.getElementById('prompt-cancel-btn').onclick  = cancelEditPrompt;
+// WIRING
+document.getElementById('edit-defect-cancel').onclick  = () => document.getElementById('edit-defect-modal').classList.remove('open');
+document.getElementById('edit-defect-save').onclick    = saveEditDefect;
+document.getElementById('edit-qa-cancel').onclick      = () => document.getElementById('edit-qa-modal').classList.remove('open');
+document.getElementById('edit-qa-save').onclick        = saveEditQA;
+document.getElementById('edit-ep-cancel').onclick      = () => document.getElementById('edit-episode-modal').classList.remove('open');
+document.getElementById('edit-ep-save').onclick        = saveEditEpisode;
+document.getElementById('prompt-edit-btn').onclick     = editSystemPrompt;
+document.getElementById('prompt-save-btn').onclick     = saveSystemPrompt;
+document.getElementById('prompt-cancel-btn').onclick   = cancelEditPrompt;
+document.getElementById('add-episode-btn').onclick     = addEpisode;
 
 document.getElementById('golive-confirm').addEventListener('input', function() {
   document.getElementById('golive-confirm-btn').disabled = this.value.trim() !== 'frontframe.co';
