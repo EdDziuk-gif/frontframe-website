@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrontFrame — Look Established. Launch Tomorrow.</title>
+  <meta name="description" content="FrontFrame delivers turnkey websites and booking systems to solopreneurs and small service businesses. Professional web presence, ready in days.">
+  <link rel="icon" type="image/png" href="images/Logo_FF.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,700;1,9..40,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:     #1E2D40;
+      --amber:    #F5A623;
+      --offwhite: #F8F6F1;
+      --gray:     #8A9BAE;
+      --white:    #FFFFFF;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--offwhite);
+      color: var(--navy);
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, .brand {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 700;
+    }
+
+    img { display: block; max-width: 100%; }
+    a { text-decoration: none; color: inherit; }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 48px;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(30, 45, 64, 0.97);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 48px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .wordmark {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: #FFFFFF;
+      letter-spacing: -0.01em;
+    }
+
+    .nav-cta {
+      background: var(--amber);
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 10px 22px;
+      border-radius: 6px;
+      transition: opacity 0.2s;
+    }
+
+    .nav-cta:hover { opacity: 0.88; }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--navy);
+      padding: 160px 0 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at 70% 50%, rgba(245,166,35,0.07) 0%, transparent 60%),
+                        radial-gradient(circle at 10% 80%, rgba(138,155,174,0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: end;
+    }
+
+    .hero-copy { padding-bottom: 48px; }
+
+    .hero-eyebrow {
+      display: inline-block;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.8rem, 4.5vw, 4.4rem);
+      line-height: 1.08;
+      color: var(--white);
+      margin-bottom: 28px;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--amber);
+    }
+
+    .hero-sub {
+      font-size: 1.2rem;
+      line-height: 1.75;
+      color: rgba(255,255,255,0.72);
+      max-width: 560px;
+      margin-bottom: 44px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      background: var(--amber);
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      padding: 16px 32px;
+      border-radius: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-ghost {
+      display: inline-block;
+      color: rgba(255,255,255,0.6);
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 16px 4px;
+      border-bottom: 1px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .btn-ghost:hover { color: var(--white); border-color: rgba(255,255,255,0.4); }
+
+    .hero-image {
+      position: relative;
+      align-self: stretch;
+    }
+
+    .hero-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 12px 12px 0 0;
+      filter: brightness(0.9);
+    }
+
+    .hero-proof {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-top: 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .proof-dot {
+      width: 8px; height: 8px;
+      background: #4CAF50;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .proof-text {
+      font-size: 0.825rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.4;
+    }
+
+    .proof-text strong {
+      color: var(--white);
+      font-weight: 500;
+    }
+
+    /* ── TRANSFER ── */
+    .transfer {
+      background: var(--navy);
+      padding: 120px 0;
+    }
+
+    .transfer-header {
+      max-width: 720px;
+      margin-bottom: 64px;
+    }
+
+    .transfer-header h2 {
+      font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .transfer-sub {
+      font-size: 1.05rem;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.75;
+    }
+
+    .transfer-artifacts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .artifact {
+      padding: 36px 40px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      transition: background 0.2s;
+    }
+
+    .artifact:hover {
+      background: rgba(255,255,255,0.055);
+    }
+
+    .artifact-name {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--amber);
+      margin-bottom: 12px;
+    }
+
+    .artifact-desc {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.7;
+    }
+
+    @media (max-width: 768px) {
+      .transfer-artifacts { grid-template-columns: 1fr; }
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      background: var(--offwhite);
+      padding: 120px 0;
+    }
+
+    .section-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 16px;
+    }
+
+    .how-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 120px;
+      align-items: center;
+    }
+
+    .how h2 {
+      font-size: clamp(2rem, 3vw, 3rem);
+      line-height: 1.2;
+      color: var(--navy);
+      margin-bottom: 20px;
+    }
+
+    .how-lead {
+      font-size: 1.05rem;
+      color: var(--gray);
+      line-height: 1.75;
+      margin-bottom: 52px;
+    }
+
+    .steps { display: flex; flex-direction: column; gap: 32px; }
+
+    .step { display: flex; gap: 20px; align-items: flex-start; }
+
+    .step-num {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--amber);
+      line-height: 1;
+      flex-shrink: 0;
+      width: 40px;
+    }
+
+    .step-content h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+
+    .step-content p {
+      font-size: 0.9rem;
+      color: var(--gray);
+      line-height: 1.6;
+    }
+
+    .how-image img {
+      width: 100%;
+      border-radius: 12px;
+      object-fit: cover;
+      aspect-ratio: 3/4;
+      filter: brightness(0.95);
+    }
+
+    /* ── WHO IT'S FOR ── */
+    .who {
+      background: var(--navy);
+      padding: 120px 0;
+    }
+
+    .who-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 120px;
+      align-items: center;
+    }
+
+    .who-image img {
+      width: 100%;
+      border-radius: 12px;
+      object-fit: cover;
+      aspect-ratio: 3/4;
+    }
+
+    .who h2 {
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .who-lead {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+
+    .who-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+
+    .who-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.5;
+    }
+
+    .who-list li::before {
+      content: '→';
+      color: var(--amber);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── PROOF ── */
+    .proof {
+      background: var(--offwhite);
+      padding: 120px 0;
+    }
+
+    .proof-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 120px;
+      align-items: center;
+    }
+
+    .proof h2 {
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      color: var(--navy);
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .proof-body {
+      font-size: 1rem;
+      color: var(--gray);
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+
+    .proof-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--navy);
+      border-bottom: 2px solid var(--amber);
+      padding-bottom: 2px;
+      transition: color 0.2s;
+    }
+
+    .proof-link:hover { color: var(--amber); }
+
+    .proof-image-wrap { position: relative; }
+
+    .proof-image-wrap img {
+      width: 100%;
+      border-radius: 12px;
+      object-fit: cover;
+      aspect-ratio: 3/4;
+    }
+
+    .proof-badge {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: var(--navy);
+      color: var(--white);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .proof-badge strong {
+      display: block;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--amber);
+    }
+
+    /* ── PRICING ── */
+    .pricing {
+      background: var(--navy);
+      padding: 120px 0;
+    }
+
+    .pricing-header {
+      text-align: center;
+      margin-bottom: 72px;
+    }
+
+    .pricing-header h2 {
+      font-size: clamp(2rem, 3vw, 3rem);
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+
+    .pricing-header p {
+      font-size: 1.05rem;
+      color: rgba(255,255,255,0.65);
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.75;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    .pricing-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 40px;
+      position: relative;
+    }
+
+    .pricing-card.featured {
+      background: var(--offwhite);
+      border-color: var(--amber);
+    }
+
+    .tier-name {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 16px;
+    }
+
+    .pricing-card.featured .tier-name { color: var(--gray); }
+
+    .price {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .pricing-card.featured .price { color: var(--navy); }
+
+    .price-note {
+      font-size: 0.825rem;
+      color: var(--gray);
+      margin-bottom: 32px;
+    }
+
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.5;
+    }
+
+    .pricing-card.featured .feature-item { color: var(--navy); }
+
+    .feature-item::before {
+      content: '✓';
+      color: var(--amber);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .pricing-card.featured .feature-item::before { color: var(--navy); }
+
+    .card-cta {
+      display: block;
+      text-align: center;
+      padding: 13px;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: opacity 0.2s;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      color: var(--white);
+    }
+
+    .pricing-card.featured .card-cta {
+      background: var(--amber);
+      color: var(--navy);
+      border-color: var(--amber);
+    }
+
+    .card-cta:hover { opacity: 0.85; }
+
+    /* ── FINAL CTA ── */
+    .final-cta {
+      background: var(--offwhite);
+      padding: 120px 0;
+      text-align: center;
+    }
+
+    .final-cta h2 {
+      font-size: clamp(2.2rem, 3.5vw, 3.4rem);
+      color: var(--navy);
+      margin-bottom: 24px;
+      line-height: 1.2;
+    }
+
+    .final-cta p {
+      font-size: 1.05rem;
+      color: var(--gray);
+      max-width: 560px;
+      margin: 0 auto 44px;
+      line-height: 1.75;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy);
+      padding: 40px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-wordmark {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: -0.01em;
+    }
+
+    .footer-right {
+      font-size: 0.8rem;
+      color: var(--gray);
+    }
+
+    /* ── CHAT WIDGET ── */
+    .chat-widget {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .chat-toggle {
+      width: 56px;
+      height: 56px;
+      background: var(--amber);
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(245,166,35,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-left: auto;
+    }
+
+    .chat-toggle:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 24px rgba(245,166,35,0.5);
+    }
+
+    .chat-toggle svg { width: 24px; height: 24px; }
+
+    .chat-panel {
+      position: absolute;
+      bottom: 68px;
+      right: 0;
+      width: 360px;
+      height: 480px;
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(12px) scale(0.97);
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s, height 0.35s ease;
+    }
+
+    .chat-panel.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: all;
+    }
+
+    /* Expands when conversation is active */
+    .chat-panel.expanded {
+      height: 560px;
+    }
+
+    .chat-header {
+      background: var(--navy);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .chat-avatar {
+      width: 36px; height: 36px;
+      background: var(--amber);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--navy);
+      flex-shrink: 0;
+    }
+
+    .chat-header-info { flex: 1; }
+
+    .chat-header-name {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--white);
+    }
+
+    .chat-header-status { font-size: 0.75rem; color: var(--gray); }
+
+    .chat-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--gray); padding: 8px;
+      display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; flex-shrink: 0;
+      transition: color 0.2s;
+    }
+
+    .chat-close:hover { color: var(--white); }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 20px;
+      display: flex; flex-direction: column; gap: 12px;
+      background: var(--offwhite);
+    }
+
+    .msg {
+      max-width: 85%; padding: 10px 14px;
+      border-radius: 12px; font-size: 0.875rem; line-height: 1.55;
+    }
+
+    .msg.agent {
+      background: var(--white); color: var(--navy);
+      align-self: flex-start; border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .msg.user {
+      background: var(--navy); color: var(--white);
+      align-self: flex-end; border-bottom-right-radius: 4px;
+    }
+
+    .msg.typing {
+      background: var(--white); align-self: flex-start; color: var(--gray);
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--white);
+      border-top: 1px solid #EAEAEA;
+      flex-shrink: 0;
+      align-items: flex-end;
+    }
+
+    .chat-input {
+      flex: 1;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      color: var(--navy);
+      outline: none;
+      transition: border-color 0.2s;
+      resize: none;
+      overflow: hidden;
+      min-height: 38px;
+      max-height: 120px;
+      line-height: 1.5;
+      display: block;
+    }
+
+    .chat-input:focus { border-color: var(--navy); }
+
+    .chat-send {
+      background: var(--amber); border: none; border-radius: 8px;
+      width: 38px; height: 38px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: opacity 0.2s;
+    }
+
+    .chat-send:hover { opacity: 0.85; }
+    .chat-send svg { width: 16px; height: 16px; }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1280px) {
+      .container { max-width: 1160px; padding: 0 40px; }
+      .nav-inner { max-width: 1160px; padding: 0 40px; }
+      .hero-inner { max-width: 1160px; padding: 0 40px; gap: 60px; }
+      .how-inner, .who-inner, .proof-inner { gap: 80px; }
+    }
+
+    @media (max-width: 768px) {
+      .hero-inner, .how-inner, .who-inner, .proof-inner {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .hero-image { order: -1; }
+      .who-image { order: -1; }
+      .hero-inner { padding-bottom: 60px; }
+      .hero-copy { padding-bottom: 0; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .chat-panel { width: 320px; }
+      .container { padding: 0 20px; }
+      .nav-inner { padding: 0 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="/">
+        <span class="wordmark">FrontFrame</span>
+      </a>
+      <a class="nav-cta" href="intake.html">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <span class="hero-eyebrow">Web Presence for Service Businesses</span>
+        <h1>Look established.<br><em>Launch tomorrow.</em></h1>
+        <p class="hero-sub">FrontFrame delivers a complete web presence — professional site, appointment booking, and AI assistant — configured and ready to take clients in days, not months.</p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="intake.html">Get Started</a>
+          <a class="btn-ghost" href="#how">See how it works →</a>
+        </div>
+        <div class="hero-proof">
+          <div class="proof-dot"></div>
+          <p class="proof-text">
+            <strong>Elie's Bird Sitting</strong> — live in Phoenix, AZ. Built on the same stack FrontFrame delivers to every client.
+            <a href="https://eliesbirdsitting.com" target="_blank" rel="noopener" style="color: var(--amber); margin-left: 4px;">See the site →</a>
+          </p>
+        </div>
+      </div>
+      <div class="hero-image">
+        <img src="images/FrontFrame-Hero.png" alt="Eleanor's cockatiel — a happy bird sitting client">
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how">
+    <div class="container">
+      <div class="how-inner">
+        <div class="reveal">
+          <p class="section-label">How It Works</p>
+          <h2>From conversation to live site in days.</h2>
+          <p class="how-lead">No developers to hire. No tools to learn. No guesswork. You tell us about your business and we take it from there.</p>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">01</div>
+              <div class="step-content">
+                <h3>Tell us about your business</h3>
+                <p>A short intake process — takes about five minutes. We ask the questions that matter and route you to the right tier.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">02</div>
+              <div class="step-content">
+                <h3>We build it</h3>
+                <p>Your site, booking system, and AI assistant — configured, branded, and ready. You don't touch a line of code.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">03</div>
+              <div class="step-content">
+                <h3>You run your business</h3>
+                <p>Go live and start taking clients. We stay available for questions and updates so you never feel alone with it.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="how-image reveal">
+          <img src="images/How_it_works.png" alt="How FrontFrame works">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHO IT'S FOR -->
+  <section class="who">
+    <div class="container">
+      <div class="who-inner">
+        <div class="who-image reveal">
+          <img src="images/business_owner_laptop.png" alt="Service business owner">
+        </div>
+        <div class="reveal">
+          <p class="section-label">Who It's For</p>
+          <h2>Built for people who are good at what they do.</h2>
+          <p class="who-lead">FrontFrame is for solopreneurs and small service businesses that need to compete and win — not just exist online.</p>
+          <ul class="who-list">
+            <li>Pet care, grooming, and veterinary services</li>
+            <li>Home services — landscaping, pool care, cleaning</li>
+            <li>Wellness, fitness, and personal training</li>
+            <li>Tutoring, coaching, and consulting</li>
+            <li>Trades and specialty services</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROOF -->
+  <section class="proof">
+    <div class="container">
+      <div class="proof-inner">
+        <div class="reveal">
+          <p class="section-label">Live Reference</p>
+          <h2>Real business. Real stack. Already working.</h2>
+          <p class="proof-body">Elie's Bird Sitting in Phoenix, AZ is a live, operating bird sitting business built on the exact same stack FrontFrame delivers to every client. Same technology. Same design system. Same AI assistant. You can visit it right now.</p>
+          <a class="proof-link" href="https://eliesbirdsitting.com" target="_blank" rel="noopener">
+            Visit eliesbirdsitting.com →
+          </a>
+        </div>
+        <div class="proof-image-wrap reveal">
+          <img src="images/FrontFrame-Hero.png" alt="Elie's Bird Sitting">
+          <div class="proof-badge">
+            <strong>Elie's Bird Sitting</strong>
+            Phoenix, AZ · Launched March 2026
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div class="pricing-header reveal">
+        <p class="section-label">Pricing</p>
+        <h2>Two tiers. No surprises.</h2>
+        <p>A flat project fee covers everything — design, build, and launch. No monthly platform fees, no hidden costs. You own your site.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="pricing-card reveal">
+          <p class="tier-name">Standard</p>
+          <p class="price">$3,000</p>
+          <p class="price-note">One-time project fee · 50% deposit to start</p>
+          <ul class="feature-list">
+            <li class="feature-item">Professional website — designed and built</li>
+            <li class="feature-item">Appointment booking system</li>
+            <li class="feature-item">AI assistant powered by Claude</li>
+            <li class="feature-item">Mobile-first, fast, and secure</li>
+            <li class="feature-item">30 days of included maintenance</li>
+            <li class="feature-item">You own the code on final payment</li>
+          </ul>
+          <a class="card-cta" href="intake.html">Get Started</a>
+        </div>
+        <div class="pricing-card featured reveal">
+          <p class="tier-name">Professional</p>
+          <p class="price">$5,000</p>
+          <p class="price-note">One-time project fee · 50% deposit to start</p>
+          <ul class="feature-list">
+            <li class="feature-item">Everything in Standard</li>
+            <li class="feature-item">Advanced client management</li>
+            <li class="feature-item">Multi-service booking configuration</li>
+            <li class="feature-item">Priority build and support</li>
+            <li class="feature-item">60 days of included maintenance</li>
+            <li class="feature-item">Franchise-ready territory structure</li>
+          </ul>
+          <a class="card-cta" href="intake.html">Get Started</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRANSFER -->
+  <section class="transfer">
+    <div class="container">
+      <div class="transfer-header reveal">
+        <p class="section-label">What Transfers With the Sale</p>
+        <h2>Everything transfers. Review it before you commit.</h2>
+        <p class="transfer-sub">We document everything. Review it. Audit it. Hand it to your attorney or your buyer. It's yours.</p>
+      </div>
+      <div class="transfer-artifacts">
+        <div class="artifact reveal">
+          <p class="artifact-name">Code Book</p>
+          <p class="artifact-desc">Fully annotated source code, structured for pickup by any developer on the planet.</p>
+        </div>
+        <div class="artifact reveal">
+          <p class="artifact-name">Change Log</p>
+          <p class="artifact-desc">A timestamped record of every modification made to your site, from first build to last.</p>
+        </div>
+        <div class="artifact reveal">
+          <p class="artifact-name">System Prompt Record</p>
+          <p class="artifact-desc">The complete AI briefing that defines your business voice — transferable at point of sale.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <div class="container">
+      <div class="reveal">
+        <h2>Ready to look established?</h2>
+        <p>Tell us about your business and we'll have a site live faster than you expect.</p>
+        <a class="btn-primary" href="intake.html">Get Started</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <span class="footer-wordmark">FrontFrame</span>
+        <p class="footer-right">© 2026 FrontFrame · frontframe.co</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- CHAT WIDGET -->
+  <div class="chat-widget" id="chatWidget">
+    <div class="chat-panel" id="chatPanel">
+      <div class="chat-header">
+        <div class="chat-avatar">Ed</div>
+        <div class="chat-header-info">
+          <div class="chat-header-name">Ed · FrontFrame</div>
+          <div class="chat-header-status">Ready when you are</div>
+        </div>
+        <button class="chat-close" id="chatClose" aria-label="Close chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <textarea
+          class="chat-input"
+          id="chatInput"
+          placeholder="Ask Ed a question…"
+          autocomplete="off"
+          rows="1"
+        ></textarea>
+        <button class="chat-send" id="chatSend" aria-label="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <button class="chat-toggle" id="chatToggle" aria-label="Open chat with Ed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1E2D40" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    </button>
+  </div>
+
+  <script>
+    // ── Scroll Reveal ──
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    reveals.forEach(el => observer.observe(el));
+
+    // ── Chat Widget ──
+    const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
+    const PAGE = 'home';
+
+    const panel    = document.getElementById('chatPanel');
+    const toggle   = document.getElementById('chatToggle');
+    const closeBtn = document.getElementById('chatClose');
+    const messages = document.getElementById('chatMessages');
+    const input    = document.getElementById('chatInput');
+    const sendBtn  = document.getElementById('chatSend');
+
+    const sessionId = crypto.randomUUID();
+    let isOpen      = false;
+    let history     = [];
+    let greeted     = false;
+    let expanded    = false;
+
+    // ── Auto-resize textarea ──
+    function resizeInput() {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    }
+
+    input.addEventListener('input', resizeInput);
+
+    function resetInput() {
+      input.value = '';
+      input.style.height = 'auto';
+    }
+
+    function expandPanel() {
+      if (!expanded) {
+        expanded = true;
+        panel.classList.add('expanded');
+      }
+    }
+
+    function openChat() {
+      isOpen = true;
+      panel.classList.add('open');
+      toggle.style.display = 'none';
+      if (!greeted) { greeted = true; greet(); }
+      setTimeout(() => input.focus(), 300);
+    }
+
+    function closeChat() {
+      isOpen = false;
+      panel.classList.remove('open');
+      toggle.style.display = 'flex';
+      sessionStorage.setItem('chatDismissed_home', 'true');
+    }
+
+    toggle.addEventListener('click', openChat);
+    closeBtn.addEventListener('click', closeChat);
+
+    function addMessage(text, role) {
+      const div = document.createElement('div');
+      div.className = `msg ${role === 'user' ? 'user' : 'agent'}`;
+      div.textContent = text;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function addTyping() {
+      const div = document.createElement('div');
+      div.className = 'msg typing';
+      div.textContent = 'Ed is typing…';
+      div.id = 'typing-indicator';
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function removeTyping() {
+      const el = document.getElementById('typing-indicator');
+      if (el) el.remove();
+    }
+
+    async function sendMessage(text) {
+      if (!text.trim()) return;
+      expandPanel();
+      addMessage(text, 'user');
+      history.push({ role: 'user', content: text });
+      resetInput();
+      sendBtn.disabled = true;
+      addTyping();
+      try {
+        const res = await fetch(`${WORKER_URL}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page: PAGE, message: text, history: history.slice(-10), session_id: sessionId }),
+        });
+        const data = await res.json();
+        removeTyping();
+        const reply = data.response || 'Sorry, something went wrong.';
+        addMessage(reply, 'agent');
+        history.push({ role: 'assistant', content: reply });
+      } catch {
+        removeTyping();
+        addMessage('Having trouble connecting right now. Please try again.', 'agent');
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+
+    function greet() {
+      const msg = "Hi, I'm Ed. If you have any questions while you look around I'll be right here.";
+      addMessage(msg, 'agent');
+      history.push({ role: 'assistant', content: msg });
+    }
+
+    sendBtn.addEventListener('click', () => sendMessage(input.value));
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(input.value);
+      }
+    });
+
+    // Auto-open after 3 seconds — skipped if user already dismissed this session
+    if (!sessionStorage.getItem('chatDismissed_home')) {
+      setTimeout(() => {
+        openChat();
+        setTimeout(() => {
+          if (isOpen) closeChat();
+        }, 17000);
+      }, 3000);
+    }
+  </script>
+
+</body>
+</html>

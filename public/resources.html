@@ -43,7 +43,7 @@
       padding: 0 48px;
     }
 
-    /* ── NAV ── */
+    /* NAV */
     nav {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -84,7 +84,7 @@
 
     .nav-cta:hover { opacity: 0.88; }
 
-    /* ── SHARED ── */
+    /* SHARED */
     .section-label {
       font-family: 'DM Sans', sans-serif;
       font-size: 0.75rem;
@@ -121,7 +121,7 @@
 
     .btn-ghost-dark:hover { color: var(--navy); border-color: rgba(30,45,64,0.4); }
 
-    /* ── PAGE HEADER ── */
+    /* PAGE HEADER */
     .page-header {
       background: var(--navy);
       padding: 160px 0 100px;
@@ -139,10 +139,7 @@
       pointer-events: none;
     }
 
-    .page-header-inner {
-      max-width: 760px;
-      position: relative;
-    }
+    .page-header-inner { max-width: 760px; position: relative; }
 
     .page-eyebrow {
       display: inline-block;
@@ -168,11 +165,8 @@
       line-height: 1.75;
     }
 
-    /* ── BOOK ── */
-    .book-section {
-      background: var(--offwhite);
-      padding: 120px 0;
-    }
+    /* BOOK */
+    .book-section { background: var(--offwhite); padding: 120px 0; }
 
     .book-inner {
       display: grid;
@@ -181,9 +175,7 @@
       align-items: center;
     }
 
-    .book-cover {
-      flex-shrink: 0;
-    }
+    .book-cover { flex-shrink: 0; }
 
     .book-cover img {
       width: 320px;
@@ -194,47 +186,6 @@
         4px 0 12px rgba(0,0,0,0.08);
     }
 
-    /* Fallback when no cover image is placed yet */
-    .book-cover-placeholder {
-      width: 320px;
-      aspect-ratio: 5/8;
-      background: var(--navy);
-      border-radius: 6px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      justify-content: flex-end;
-      padding: 32px 28px;
-      box-shadow:
-        0 40px 80px rgba(30,45,64,0.22),
-        0 12px 28px rgba(30,45,64,0.14);
-    }
-
-    .book-cover-placeholder .cover-rule {
-      width: 48px;
-      height: 3px;
-      background: var(--amber);
-      margin-bottom: 20px;
-    }
-
-    .book-cover-placeholder .cover-title {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 1.25rem;
-      color: var(--white);
-      line-height: 1.3;
-      margin-bottom: 12px;
-    }
-
-    .book-cover-placeholder .cover-author {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
-    }
-
     .book-copy h2 {
       font-size: clamp(1.9rem, 2.8vw, 2.7rem);
       color: var(--navy);
@@ -243,67 +194,37 @@
     }
 
     .book-subtitle {
-      font-size: 1rem;
-      color: var(--gray);
-      line-height: 1.5;
-      margin-bottom: 10px;
-      font-style: italic;
+      font-size: 1rem; color: var(--gray);
+      line-height: 1.5; margin-bottom: 10px; font-style: italic;
     }
 
     .book-author {
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--amber);
-      margin-bottom: 36px;
+      font-size: 0.8rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--amber); margin-bottom: 36px;
     }
 
     .book-desc {
-      font-size: 1.05rem;
-      color: var(--gray);
-      line-height: 1.85;
-      max-width: 560px;
-      margin-bottom: 48px;
+      font-size: 1.05rem; color: var(--gray);
+      line-height: 1.85; max-width: 560px; margin-bottom: 48px;
     }
 
-    .book-cta-row {
-      display: flex;
-      gap: 28px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+    .book-cta-row { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
 
-    /* ── ARTICLES ── */
-    .articles-section {
-      background: var(--navy);
-      padding: 120px 0;
-    }
+    /* ARTICLES */
+    .articles-section { background: var(--navy); padding: 120px 0; }
 
-    .articles-header {
-      max-width: 640px;
-      margin-bottom: 56px;
-    }
+    .articles-header { max-width: 640px; margin-bottom: 56px; }
 
     .articles-header h2 {
       font-size: clamp(1.8rem, 2.8vw, 2.6rem);
-      color: var(--white);
-      line-height: 1.2;
-      margin-bottom: 16px;
+      color: var(--white); line-height: 1.2; margin-bottom: 16px;
     }
 
-    .articles-sub {
-      font-size: 1rem;
-      color: rgba(255,255,255,0.6);
-      line-height: 1.75;
-    }
+    .articles-sub { font-size: 1rem; color: rgba(255,255,255,0.6); line-height: 1.75; }
 
-    .articles-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-    }
+    .articles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 
     .article-card {
       padding: 36px 40px;
@@ -311,48 +232,34 @@
       border-radius: 12px;
       background: rgba(255,255,255,0.03);
       transition: background 0.2s;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+      display: flex; flex-direction: column; gap: 14px;
     }
 
     .article-card:hover { background: rgba(255,255,255,0.055); }
 
     .article-topic {
       font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 1.1rem;
-      color: var(--white);
-      line-height: 1.35;
+      font-weight: 700; font-size: 1.1rem;
+      color: var(--white); line-height: 1.35;
     }
 
     .article-desc {
-      font-size: 0.875rem;
-      color: rgba(255,255,255,0.52);
-      line-height: 1.75;
-      flex: 1;
+      font-size: 0.875rem; color: rgba(255,255,255,0.52);
+      line-height: 1.75; flex: 1;
     }
 
     .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
+      display: inline-flex; align-items: center; gap: 7px;
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--amber);
-      margin-top: 8px;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--amber); margin-top: 8px;
     }
 
     .status-badge::before {
       content: '';
-      width: 6px;
-      height: 6px;
-      background: var(--amber);
-      border-radius: 50%;
-      flex-shrink: 0;
+      width: 6px; height: 6px;
+      background: var(--amber); border-radius: 50%; flex-shrink: 0;
       animation: pulse 2s ease-in-out infinite;
     }
 
@@ -361,262 +268,253 @@
       50% { opacity: 0.4; }
     }
 
-    /* ── CONVERSATIONS ── */
-    .conversations-section {
-      background: var(--offwhite);
-      padding: 120px 0;
-    }
+    /* CONVERSATIONS */
+    .conversations-section { background: var(--offwhite); padding: 120px 0; }
 
-    .conversations-inner {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 100px;
-      align-items: center;
-    }
+    .conversations-header { max-width: 680px; margin-bottom: 64px; }
 
-    .conversations-copy h2 {
+    .conversations-header h2 {
       font-size: clamp(1.8rem, 2.8vw, 2.6rem);
-      color: var(--navy);
-      line-height: 1.2;
-      margin-bottom: 20px;
+      color: var(--navy); line-height: 1.2; margin-bottom: 16px;
     }
 
-    .conversations-desc {
-      font-size: 1rem;
-      color: var(--gray);
-      line-height: 1.8;
+    .conversations-sub { font-size: 1rem; color: var(--gray); line-height: 1.75; }
+
+    /* EPISODE CARDS */
+    .episodes-list { display: flex; flex-direction: column; gap: 32px; margin-bottom: 64px; }
+
+    .episode-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 48px 52px;
+      box-shadow: 0 2px 20px rgba(30,45,64,0.07);
+      transition: box-shadow 0.2s;
     }
+
+    .episode-card:hover { box-shadow: 0 6px 32px rgba(30,45,64,0.11); }
+
+    .episode-series {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--amber); margin-bottom: 12px;
+    }
+
+    .episode-title {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.3rem, 2vw, 1.75rem);
+      color: var(--navy); line-height: 1.25; margin-bottom: 32px;
+    }
+
+    .episode-audio {
+      width: 100%; height: 44px;
+      margin-bottom: 24px;
+      accent-color: var(--amber);
+    }
+
+    /* EPISODE ACTION BUTTONS */
+    .episode-actions {
+      display: flex; align-items: center;
+      gap: 10px; flex-wrap: wrap;
+    }
+
+    .episode-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      border: 1.5px solid rgba(30,45,64,0.18);
+      border-radius: 7px; padding: 9px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700; font-size: 0.84rem;
+      color: var(--navy); background: none; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      text-decoration: none;
+    }
+
+    .episode-btn:hover {
+      border-color: var(--navy);
+      background: rgba(30,45,64,0.04);
+    }
+
+    .episode-btn svg {
+      width: 14px; height: 14px; flex-shrink: 0;
+    }
+
+    .episode-btn .chevron { transition: transform 0.25s; }
+    .episode-btn.open .chevron { transform: rotate(180deg); }
+
+    .episode-actions-divider {
+      width: 1px; height: 18px;
+      background: rgba(30,45,64,0.12); flex-shrink: 0;
+    }
+
+    /* TRANSCRIPT */
+    .transcript-body {
+      display: none;
+      margin-top: 32px; padding-top: 32px;
+      border-top: 1px solid rgba(30,45,64,0.09);
+    }
+
+    .transcript-body.visible { display: block; }
+
+    .transcript-text {
+      font-size: 0.975rem; color: var(--navy);
+      line-height: 2; white-space: pre-line;
+      max-width: 720px; margin-bottom: 20px;
+    }
+
+    .transcript-copyright {
+      font-size: 0.78rem; color: var(--gray); font-style: italic;
+    }
+
+    .episodes-loading { font-size: 0.9rem; color: var(--gray); padding: 8px 0 32px; }
+
+    /* COMING ROW */
+    .coming-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 100px; align-items: center;
+      padding-top: 32px;
+      border-top: 1px solid rgba(30,45,64,0.08);
+    }
+
+    .coming-row-copy h3 {
+      font-size: clamp(1.4rem, 2vw, 1.9rem);
+      color: var(--navy); line-height: 1.25; margin-bottom: 16px;
+    }
+
+    .coming-row-desc { font-size: 1rem; color: var(--gray); line-height: 1.8; }
 
     .coming-card {
-      background: var(--navy);
-      border-radius: 16px;
-      padding: 52px 44px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      position: relative;
-      overflow: hidden;
+      background: var(--navy); border-radius: 16px;
+      padding: 52px 44px; display: flex; flex-direction: column;
+      gap: 24px; position: relative; overflow: hidden;
     }
 
     .coming-card::before {
       content: '';
-      position: absolute;
-      top: -60px; right: -60px;
+      position: absolute; top: -60px; right: -60px;
       width: 180px; height: 180px;
       background: radial-gradient(circle, rgba(245,166,35,0.08) 0%, transparent 70%);
       pointer-events: none;
     }
 
     .coming-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
+      display: inline-flex; align-items: center; gap: 7px;
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--amber);
     }
 
     .coming-eyebrow::before {
       content: '';
-      width: 6px;
-      height: 6px;
-      background: var(--amber);
-      border-radius: 50%;
-      flex-shrink: 0;
+      width: 6px; height: 6px;
+      background: var(--amber); border-radius: 50%; flex-shrink: 0;
       animation: pulse 2s ease-in-out infinite;
     }
 
     .coming-hosts {
       font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 1.3rem;
-      color: var(--white);
-      line-height: 1.3;
+      font-weight: 700; font-size: 1.3rem;
+      color: var(--white); line-height: 1.3;
     }
 
     .coming-hosts span {
-      display: block;
-      font-size: 0.8rem;
-      font-weight: 400;
-      font-family: 'Inter', sans-serif;
-      color: var(--gray);
-      margin-top: 4px;
+      display: block; font-size: 0.8rem; font-weight: 400;
+      font-family: 'Inter', sans-serif; color: var(--gray); margin-top: 4px;
     }
 
-    .coming-divider {
-      width: 36px;
-      height: 2px;
-      background: rgba(255,255,255,0.1);
-    }
+    .coming-divider { width: 36px; height: 2px; background: rgba(255,255,255,0.1); }
 
-    .coming-desc {
-      font-size: 0.9rem;
-      color: rgba(255,255,255,0.55);
-      line-height: 1.75;
-    }
+    .coming-desc { font-size: 0.9rem; color: rgba(255,255,255,0.55); line-height: 1.75; }
 
-    /* ── FINAL CTA ── */
+    /* FINAL CTA */
     .final-cta {
-      background: var(--navy);
-      padding: 120px 0;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
+      background: var(--navy); padding: 120px 0;
+      text-align: center; position: relative; overflow: hidden;
     }
 
     .final-cta::before {
       content: '';
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
       background-image: radial-gradient(circle at 50% 60%, rgba(245,166,35,0.06) 0%, transparent 60%);
       pointer-events: none;
     }
 
     .final-cta h2 {
       font-size: clamp(2rem, 3.5vw, 3.2rem);
-      color: var(--white);
-      margin-bottom: 20px;
-      line-height: 1.2;
-      position: relative;
+      color: var(--white); margin-bottom: 20px; line-height: 1.2; position: relative;
     }
 
     .final-cta p {
-      font-size: 1.05rem;
-      color: rgba(255,255,255,0.6);
-      max-width: 480px;
-      margin: 0 auto 44px;
-      line-height: 1.75;
-      position: relative;
+      font-size: 1.05rem; color: rgba(255,255,255,0.6);
+      max-width: 480px; margin: 0 auto 44px;
+      line-height: 1.75; position: relative;
     }
 
-    /* ── FOOTER ── */
-    footer {
-      background: var(--navy);
-      padding: 40px 0;
-      border-top: 1px solid rgba(255,255,255,0.06);
-    }
+    /* FOOTER */
+    footer { background: var(--navy); padding: 40px 0; border-top: 1px solid rgba(255,255,255,0.06); }
 
     .footer-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
+      display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 16px;
     }
 
     .footer-wordmark {
       font-family: 'DM Sans', system-ui, sans-serif;
-      font-weight: 700;
-      font-size: 1.2rem;
-      color: rgba(255,255,255,0.7);
-      letter-spacing: -0.01em;
+      font-weight: 700; font-size: 1.2rem;
+      color: rgba(255,255,255,0.7); letter-spacing: -0.01em;
     }
 
-    .footer-right {
-      font-size: 0.8rem;
-      color: var(--gray);
-    }
+    .footer-right { font-size: 0.8rem; color: var(--gray); }
 
-    /* ── CHAT WIDGET ── */
-    .chat-widget {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 1000;
-      font-family: 'Inter', sans-serif;
-    }
+    /* CHAT WIDGET */
+    .chat-widget { position: fixed; bottom: 24px; right: 24px; z-index: 1000; font-family: 'Inter', sans-serif; }
 
     .chat-toggle {
-      width: 56px;
-      height: 56px;
-      background: var(--amber);
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 56px; height: 56px; background: var(--amber);
+      border-radius: 50%; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 20px rgba(245,166,35,0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
-      margin-left: auto;
+      transition: transform 0.2s, box-shadow 0.2s; margin-left: auto;
     }
 
-    .chat-toggle:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 24px rgba(245,166,35,0.5);
-    }
-
+    .chat-toggle:hover { transform: scale(1.05); box-shadow: 0 6px 24px rgba(245,166,35,0.5); }
     .chat-toggle svg { width: 24px; height: 24px; }
 
     .chat-panel {
-      position: absolute;
-      bottom: 68px;
-      right: 0;
-      width: 360px;
-      height: 480px;
-      background: var(--white);
-      border-radius: 16px;
+      position: absolute; bottom: 68px; right: 0;
+      width: 360px; height: 480px;
+      background: var(--white); border-radius: 16px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(12px) scale(0.97);
+      display: flex; flex-direction: column; overflow: hidden;
+      opacity: 0; transform: translateY(12px) scale(0.97);
       pointer-events: none;
       transition: opacity 0.25s, transform 0.25s, height 0.35s ease;
     }
 
-    .chat-panel.open {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      pointer-events: all;
-    }
-
+    .chat-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
     .chat-panel.expanded { height: 560px; }
 
     .chat-header {
-      background: var(--navy);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
+      background: var(--navy); padding: 16px 20px;
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
     }
 
     .chat-avatar {
-      width: 36px; height: 36px;
-      background: var(--amber);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 0.9rem;
-      color: var(--navy);
-      flex-shrink: 0;
+      width: 36px; height: 36px; background: var(--amber);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.9rem;
+      color: var(--navy); flex-shrink: 0;
     }
 
     .chat-header-info { flex: 1; }
-
-    .chat-header-name {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 0.95rem;
-      color: var(--white);
-    }
-
+    .chat-header-name { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--white); }
     .chat-header-status { font-size: 0.75rem; color: var(--gray); }
 
     .chat-close {
-      background: none; border: none; cursor: pointer;
-      color: var(--gray); padding: 8px;
-      display: flex; align-items: center; justify-content: center;
-      width: 36px; height: 36px; flex-shrink: 0;
-      transition: color 0.2s;
+      background: none; border: none; cursor: pointer; color: var(--gray);
+      padding: 8px; display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; flex-shrink: 0; transition: color 0.2s;
     }
 
     .chat-close:hover { color: var(--white); }
@@ -627,10 +525,7 @@
       background: var(--offwhite);
     }
 
-    .msg {
-      max-width: 85%; padding: 10px 14px;
-      border-radius: 12px; font-size: 0.875rem; line-height: 1.55;
-    }
+    .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.875rem; line-height: 1.55; }
 
     .msg.agent {
       background: var(--white); color: var(--navy);
@@ -638,41 +533,21 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
 
-    .msg.user {
-      background: var(--navy); color: var(--white);
-      align-self: flex-end; border-bottom-right-radius: 4px;
-    }
-
-    .msg.typing {
-      background: var(--white); align-self: flex-start; color: var(--gray);
-    }
+    .msg.user { background: var(--navy); color: var(--white); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .msg.typing { background: var(--white); align-self: flex-start; color: var(--gray); }
 
     .chat-input-row {
-      display: flex;
-      gap: 8px;
-      padding: 12px 16px;
-      background: var(--white);
-      border-top: 1px solid #EAEAEA;
-      flex-shrink: 0;
-      align-items: flex-end;
+      display: flex; gap: 8px; padding: 12px 16px;
+      background: var(--white); border-top: 1px solid #EAEAEA;
+      flex-shrink: 0; align-items: flex-end;
     }
 
     .chat-input {
-      flex: 1;
-      border: 1.5px solid #E0E0E0;
-      border-radius: 8px;
-      padding: 9px 12px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.875rem;
-      color: var(--navy);
-      outline: none;
-      transition: border-color 0.2s;
-      resize: none;
-      overflow: hidden;
-      min-height: 38px;
-      max-height: 120px;
-      line-height: 1.5;
-      display: block;
+      flex: 1; border: 1.5px solid #E0E0E0; border-radius: 8px;
+      padding: 9px 12px; font-family: 'Inter', sans-serif; font-size: 0.875rem;
+      color: var(--navy); outline: none; transition: border-color 0.2s;
+      resize: none; overflow: hidden; min-height: 38px; max-height: 120px;
+      line-height: 1.5; display: block;
     }
 
     .chat-input:focus { border-color: var(--navy); }
@@ -687,41 +562,22 @@
     .chat-send:hover { opacity: 0.85; }
     .chat-send svg { width: 16px; height: 16px; }
 
-    /* ── SCROLL REVEAL ── */
-    .reveal {
-      opacity: 0;
-      transform: translateY(24px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-
+    /* SCROLL REVEAL */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .reveal.visible { opacity: 1; transform: translateY(0); }
 
-    /* ── RESPONSIVE ── */
+    /* RESPONSIVE */
     @media (max-width: 1280px) {
       .container { max-width: 1160px; padding: 0 40px; }
       .nav-inner { max-width: 1160px; padding: 0 40px; }
     }
 
     @media (max-width: 900px) {
-      .book-inner {
-        grid-template-columns: 1fr;
-        gap: 48px;
-      }
-
-      .book-cover img,
-      .book-cover-placeholder {
-        width: 240px;
-      }
-
-      .conversations-inner {
-        grid-template-columns: 1fr;
-        gap: 48px;
-      }
-
-      .articles-grid {
-        grid-template-columns: 1fr;
-      }
-
+      .book-inner { grid-template-columns: 1fr; gap: 48px; }
+      .book-cover img { width: 240px; }
+      .coming-row { grid-template-columns: 1fr; gap: 48px; }
+      .articles-grid { grid-template-columns: 1fr; }
+      .episode-card { padding: 36px 28px; }
       .chat-panel { width: 320px; }
       .container { padding: 0 20px; }
       .nav-inner { padding: 0 20px; }
@@ -733,9 +589,7 @@
   <!-- NAV -->
   <nav>
     <div class="nav-inner">
-      <a class="nav-logo" href="/">
-        <span class="wordmark">FrontFrame</span>
-      </a>
+      <a class="nav-logo" href="/"><span class="wordmark">FrontFrame</span></a>
       <a class="nav-cta" href="intake.html">Get Started</a>
     </div>
   </nav>
@@ -755,11 +609,9 @@
   <section class="book-section">
     <div class="container">
       <div class="book-inner">
-
         <div class="book-cover reveal">
           <img src="images/book-cover-kdp.jpg" alt="Your Business Is Invisible — Ed Dziuk">
         </div>
-
         <div class="book-copy reveal">
           <p class="section-label">The Book</p>
           <h2>Your Business Is Invisible</h2>
@@ -767,13 +619,10 @@
           <p class="book-author">Ed Dziuk &nbsp;·&nbsp; FrontFrame, LLC</p>
           <p class="book-desc">Most service businesses are built entirely around their owner — and that's exactly what makes them impossible to sell. This book shows you the difference between a job you own and a business that transfers, and how to start building the latter before you think you need to.</p>
           <div class="book-cta-row">
-            <!-- STRIPE: replace href with your Stripe payment link -->
             <a class="btn-primary" href="#" target="_blank" rel="noopener">Get the Book — $XX</a>
-            <!-- AMAZON: replace href with your Amazon ASIN link once live -->
             <a class="btn-ghost-dark" href="#" target="_blank" rel="noopener">Also on Amazon →</a>
           </div>
         </div>
-
       </div>
     </div>
   </section>
@@ -787,25 +636,21 @@
         <p class="articles-sub">These develop from the curriculum Ed and Nolan Baum are building for CPE. First pieces in progress now.</p>
       </div>
       <div class="articles-grid">
-
         <div class="article-card reveal">
           <p class="article-topic">What buyers actually look for — and why most owners miss it</p>
           <p class="article-desc">A business that depends on its owner is not an asset. Buyers know this. Most sellers find out too late. This piece walks through the criteria buyers apply and what you can do now to meet them.</p>
           <span class="status-badge">In progress</span>
         </div>
-
         <div class="article-card reveal">
           <p class="article-topic">The four-year window: starting before you think you need to</p>
           <p class="article-desc">Preparation for a business transition takes longer than most owners expect — not because it's complicated, but because the habits that make a business transferable take time to document and embed.</p>
           <span class="status-badge">In progress</span>
         </div>
-
         <div class="article-card reveal">
           <p class="article-topic">Your website is a business asset. Most owners treat it like a cost.</p>
           <p class="article-desc">When a buyer evaluates your business, your web presence is part of what they're buying. This piece examines what a transferable web presence looks like and what it signals to someone writing a check.</p>
           <span class="status-badge">In progress</span>
         </div>
-
       </div>
     </div>
   </section>
@@ -813,31 +658,35 @@
   <!-- CONVERSATIONS -->
   <section class="conversations-section">
     <div class="container">
-      <div class="conversations-inner">
 
-        <div class="conversations-copy reveal">
-          <p class="section-label">Conversations</p>
-          <h2>When Ed and Nolan sit down to record.</h2>
-          <p class="conversations-desc">Ed Dziuk and Nolan Baum — a Certified Business Intermediary with a career built on business transitions — are developing a body of recorded content for owners at every stage of the four-year preparation timeline. The same material that anchors their CPE curriculum. Sessions are coming.</p>
+      <div class="conversations-header reveal">
+        <p class="section-label">Conversations</p>
+        <h2>The businesses that recognize themselves.</h2>
+        <p class="conversations-sub">Stories from the verticals we serve — in audio and in print. Every owner who hears them will know someone who lived them.</p>
+      </div>
+
+      <div id="episodesContainer">
+        <p class="episodes-loading">Loading episodes…</p>
+      </div>
+
+      <div class="coming-row reveal">
+        <div class="coming-row-copy">
+          <h3>When Ed and Nolan sit down to record.</h3>
+          <p class="coming-row-desc">Ed Dziuk and Nolan Baum — a Certified Business Intermediary with a career built on business transitions — are developing recorded content for owners at every stage of the four-year preparation timeline. The same material that anchors their CPE curriculum. Sessions are coming.</p>
         </div>
-
-        <div class="coming-card reveal">
+        <div class="coming-card">
           <span class="coming-eyebrow">Coming</span>
           <div>
-            <p class="coming-hosts">Ed Dziuk
-              <span>Founder, FrontFrame</span>
-            </p>
+            <p class="coming-hosts">Ed Dziuk<span>Founder, FrontFrame</span></p>
           </div>
           <div class="coming-divider"></div>
           <div>
-            <p class="coming-hosts">Nolan Baum, CBI
-              <span>Certified Business Intermediary</span>
-            </p>
+            <p class="coming-hosts">Nolan Baum, CBI<span>Certified Business Intermediary</span></p>
           </div>
           <p class="coming-desc">Conversations on building, preparing, and transitioning a service business — from the people who spend their careers on it.</p>
         </div>
-
       </div>
+
     </div>
   </section>
 
@@ -879,13 +728,7 @@
       </div>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="chat-input-row">
-        <textarea
-          class="chat-input"
-          id="chatInput"
-          placeholder="Ask Ed a question…"
-          autocomplete="off"
-          rows="1"
-        ></textarea>
+        <textarea class="chat-input" id="chatInput" placeholder="Ask Ed a question…" autocomplete="off" rows="1"></textarea>
         <button class="chat-send" id="chatSend" aria-label="Send">
           <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
             <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -901,21 +744,153 @@
   </div>
 
   <script>
-    // ── Scroll Reveal ──
-    const reveals = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver((entries) => {
+    // Scroll Reveal
+    const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach((e, i) => {
         if (e.isIntersecting) {
           setTimeout(() => e.target.classList.add('visible'), i * 80);
-          observer.unobserve(e.target);
+          revealObserver.unobserve(e.target);
         }
       });
     }, { threshold: 0.12 });
-    reveals.forEach(el => observer.observe(el));
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-    // ── Chat Widget ──
+    // Episode Loader
     const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
-    const PAGE = 'home'; // resources page uses home system prompt
+    const COPYRIGHT  = '\u00A9 2026 FrontFrame LLC. All rights reserved.';
+
+    const DOWNLOAD_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>`;
+
+    const CHEVRON_ICON = `<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>`;
+
+    async function loadEpisodes() {
+      const container = document.getElementById('episodesContainer');
+      try {
+        const res  = await fetch(`${WORKER_URL}/podcast-episodes`);
+        const data = await res.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+
+        container.innerHTML = `<div class="episodes-list">${data.map(renderEpisode).join('')}</div>`;
+
+        // Transcript toggle
+        container.querySelectorAll('.transcript-toggle').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const card = btn.closest('.episode-card');
+            const body = card.querySelector('.transcript-body');
+            const open = body.classList.toggle('visible');
+            btn.classList.toggle('open', open);
+            btn.setAttribute('aria-expanded', String(open));
+            btn.querySelector('.toggle-label').textContent = open ? 'Hide Transcript' : 'Read Transcript';
+          });
+        });
+
+        // Transcript download
+        container.querySelectorAll('.btn-dl-transcript').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const card = btn.closest('.episode-card');
+            downloadTranscript(
+              card.dataset.series,
+              card.dataset.title,
+              card.dataset.transcript
+            );
+          });
+        });
+
+        // Reveal newly added cards
+        container.querySelectorAll('.episode-card').forEach(card => revealObserver.observe(card));
+
+      } catch (err) {
+        console.error('Episode load failed:', err);
+        container.innerHTML = '';
+      }
+    }
+
+    function renderEpisode(ep) {
+      const safeTranscript = ep.transcript || '';
+
+      const audioPlayer = ep.audio_path
+        ? `<audio class="episode-audio" controls preload="none" src="${ep.audio_path}"></audio>`
+        : '';
+
+      const audioDownload = ep.audio_path
+        ? `<a class="episode-btn" href="${ep.audio_path}" download>
+             ${DOWNLOAD_ICON} Audio
+           </a>`
+        : '';
+
+      const transcriptBtns = safeTranscript
+        ? `<div class="episode-actions-divider"></div>
+           <button class="episode-btn btn-dl-transcript">
+             ${DOWNLOAD_ICON} Transcript
+           </button>
+           <div class="episode-actions-divider"></div>
+           <button class="episode-btn transcript-toggle" aria-expanded="false">
+             ${CHEVRON_ICON}
+             <span class="toggle-label">Read Transcript</span>
+           </button>`
+        : '';
+
+      const transcriptBody = safeTranscript
+        ? `<div class="transcript-body">
+             <p class="transcript-text">${escHtml(safeTranscript)}</p>
+             <p class="transcript-copyright">${COPYRIGHT}</p>
+           </div>`
+        : '';
+
+      return `
+        <div class="episode-card reveal"
+          data-series="${escAttr(ep.series)}"
+          data-title="${escAttr(ep.title)}"
+          data-transcript="${escAttr(safeTranscript)}">
+          <p class="episode-series">${escHtml(ep.series)}</p>
+          <h3 class="episode-title">${escHtml(ep.title)}</h3>
+          ${audioPlayer}
+          <div class="episode-actions">
+            ${audioDownload}
+            ${transcriptBtns}
+          </div>
+          ${transcriptBody}
+        </div>`;
+    }
+
+    function downloadTranscript(series, title, transcript) {
+      const content  = [series, title, '', transcript, '', COPYRIGHT].join('\n');
+      const blob     = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url      = URL.createObjectURL(blob);
+      const a        = Object.assign(document.createElement('a'), { href: url, download: slugify(title) + '.txt' });
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function slugify(str) {
+      return String(str).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function escAttr(str) {
+      return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    loadEpisodes();
+
+    // Chat Widget
+    const WORKER = 'https://frontframe-worker.ed-e5c.workers.dev';
+    const PAGE   = 'home';
 
     const panel    = document.getElementById('chatPanel');
     const toggle   = document.getElementById('chatToggle');
@@ -925,113 +900,75 @@
     const sendBtn  = document.getElementById('chatSend');
 
     const sessionId = crypto.randomUUID();
-    let isOpen      = false;
-    let history     = [];
-    let greeted     = false;
-    let expanded    = false;
+    let history = [], greeted = false, expanded = false;
 
-    function resizeInput() {
+    input.addEventListener('input', () => {
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 120) + 'px';
-    }
+    });
 
-    input.addEventListener('input', resizeInput);
-
-    function resetInput() {
-      input.value = '';
-      input.style.height = 'auto';
-    }
-
-    function expandPanel() {
-      if (!expanded) {
-        expanded = true;
-        panel.classList.add('expanded');
-      }
-    }
-
-    function openChat() {
-      isOpen = true;
+    toggle.addEventListener('click', () => {
       panel.classList.add('open');
       toggle.style.display = 'none';
       if (!greeted) { greeted = true; greet(); }
       setTimeout(() => input.focus(), 300);
-    }
+    });
 
-    function closeChat() {
-      isOpen = false;
+    closeBtn.addEventListener('click', () => {
       panel.classList.remove('open');
       toggle.style.display = 'flex';
-    }
+    });
 
-    toggle.addEventListener('click', openChat);
-    closeBtn.addEventListener('click', closeChat);
-
-    function addMessage(text, role) {
-      const div = document.createElement('div');
-      div.className = `msg ${role === 'user' ? 'user' : 'agent'}`;
-      div.textContent = text;
-      messages.appendChild(div);
+    function addMsg(text, role) {
+      const d = document.createElement('div');
+      d.className = `msg ${role === 'user' ? 'user' : 'agent'}`;
+      d.textContent = text;
+      messages.appendChild(d);
       messages.scrollTop = messages.scrollHeight;
     }
 
-    function addTyping() {
-      const div = document.createElement('div');
-      div.className = 'msg typing';
-      div.textContent = 'Ed is typing…';
-      div.id = 'typing-indicator';
-      messages.appendChild(div);
-      messages.scrollTop = messages.scrollHeight;
-    }
-
-    function removeTyping() {
-      const el = document.getElementById('typing-indicator');
-      if (el) el.remove();
+    function greet() {
+      const msg = "Hi, I'm Ed. Happy to answer questions about the book or anything else on this page.";
+      addMsg(msg, 'agent');
+      history.push({ role: 'assistant', content: msg });
     }
 
     async function sendMessage(text) {
       if (!text.trim()) return;
-      expandPanel();
-      addMessage(text, 'user');
+      if (!expanded) { expanded = true; panel.classList.add('expanded'); }
+      addMsg(text, 'user');
       history.push({ role: 'user', content: text });
-      resetInput();
+      input.value = ''; input.style.height = 'auto';
       sendBtn.disabled = true;
-      addTyping();
+
+      const typing = document.createElement('div');
+      typing.className = 'msg typing'; typing.id = 'typing'; typing.textContent = 'Ed is typing…';
+      messages.appendChild(typing); messages.scrollTop = messages.scrollHeight;
+
       try {
-        const res = await fetch(`${WORKER_URL}/chat`, {
+        const res  = await fetch(`${WORKER}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ page: PAGE, message: text, history: history.slice(-10), session_id: sessionId }),
         });
-        const data = await res.json();
-        removeTyping();
+        const data  = await res.json();
+        document.getElementById('typing')?.remove();
         const reply = data.response || 'Sorry, something went wrong.';
-        addMessage(reply, 'agent');
+        addMsg(reply, 'agent');
         history.push({ role: 'assistant', content: reply });
       } catch {
-        removeTyping();
-        addMessage('Having trouble connecting right now. Please try again.', 'agent');
+        document.getElementById('typing')?.remove();
+        addMsg('Having trouble connecting right now. Please try again.', 'agent');
       } finally {
         sendBtn.disabled = false;
         input.focus();
       }
     }
 
-    function greet() {
-      const msg = "Hi, I'm Ed. Happy to answer questions about the book or anything else on this page.";
-      addMessage(msg, 'agent');
-      history.push({ role: 'assistant', content: msg });
-    }
-
     sendBtn.addEventListener('click', () => sendMessage(input.value));
-
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage(input.value);
-      }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input.value); }
     });
-
-    // No auto-open on this page — user is here to read, not be prompted
   </script>
 
 </body>
