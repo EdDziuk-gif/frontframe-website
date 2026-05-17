@@ -221,6 +221,15 @@
       font-style: italic;
     }
 
+    .msg.confirmed {
+      background: rgba(245,166,35,0.12);
+      border: 1px solid rgba(245,166,35,0.3);
+      color: var(--offwhite);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      max-width: 92%;
+    }
+
     .chat-input-row {
       display: flex;
       gap: 8px;
@@ -285,16 +294,6 @@
       border-radius: 12px;
       background: rgba(245,166,35,0.04);
       margin-bottom: 48px;
-    }
-
-    .proof-label {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 0.68rem;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--amber);
-      margin-bottom: 12px;
     }
 
     .proof-statement {
@@ -436,7 +435,7 @@
       .nav-links li:not(:last-child) { display: none; }
       .page { padding: 80px 18px 60px; }
       .chat-inline { height: 240px; }
-      .chat-inline.expanded { height: 420px; }
+      .chat-inline.expanded { height: 480px; }
       .proof-block { padding: 20px 18px; }
       .artifact-item { padding: 18px 16px; }
       footer { padding: 28px 18px; }
@@ -459,27 +458,27 @@
 
     <!-- CONTEXT -->
     <div class="context-block">
-      <p class="context-line">In the best cases this is a <strong>four year process.</strong> The foundation you build today is what a buyer evaluates tomorrow. The next step is the one that no longer depends on memory.</p>
+      <p class="context-line">Every owner-operated business has a list. The problems that never get solved because <strong>the work never stops long enough to address them.</strong> That list is where this starts.</p>
     </div>
 
-    <!-- OPENING RHYTHM FROM THE BOOK -->
+    <!-- OPENING RHYTHM -->
     <div class="if-block">
-      <p class="if-line">If <em>no one can find you</em> — that is where it begins.</p>
-      <p class="if-line">If <em>you're too busy to find the next job</em> — that is where it begins.</p>
-      <p class="if-line">If <em>you can't name all of your customers</em> — that is where it begins.</p>
-      <p class="if-line">If <em>every new prospect feels like you've just opened your doors</em> — that is where it begins.</p>
+      <p class="if-line">If <em>something is keeping you up at night</em> — that is where it begins.</p>
+      <p class="if-line">If <em>you've delivered the work and waited to get paid</em> — that is where it begins.</p>
+      <p class="if-line">If <em>your pipeline runs dry every time you get busy</em> — that is where it begins.</p>
+      <p class="if-line">If <em>you're riffing your sales pitch every time you talk to a prospect</em> — that is where it begins.</p>
     </div>
 
     <h1 class="start-line">Start<span>.</span></h1>
-    <p class="ask-ed"><strong>Ask Ed how.</strong> He's right here.</p>
+    <p class="ask-ed"><strong>Tell Ed what's broken.</strong> He's right here.</p>
 
-    <!-- INLINE CHAT — THE HERO -->
+    <!-- INLINE CHAT -->
     <div class="chat-inline" id="chatInline">
       <div class="chat-header">
-        <div class="chat-avatar">Ed</div>
+        <div class="chat-avatar">FF</div>
         <div>
-          <div class="chat-header-name">Ed · FrontFrame</div>
-          <div class="chat-header-status">Ready when you are</div>
+          <div class="chat-header-name">FrontFrame</div>
+          <div class="chat-header-status">Ed will follow up personally</div>
         </div>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
@@ -487,7 +486,7 @@
         <textarea
           class="chat-input"
           id="chatInput"
-          placeholder="Ask Ed a question…"
+          placeholder="What's the problem that's costing you the most right now?"
           autocomplete="off"
           rows="1"
         ></textarea>
@@ -503,35 +502,35 @@
     <div class="section-divider"></div>
 
     <div class="proof-block">
-      <p class="proof-statement">You're already in it.</p>
-      <p class="proof-detail">This page is a FrontFrame delivery. So is Ed.</p>
-      <p class="proof-detail">You're not reading about it. You're in it.</p>
-      <p class="proof-detail">The conversation you start here is answered, recorded, and carried forward.</p>
-      <p class="proof-detail">That is not a description of the instrument. That is the instrument, running now.</p>
+      <p class="proof-statement">One thing. Today.</p>
+      <p class="proof-detail">Not a plan. Not a system overhaul. Not a rebrand.</p>
+      <p class="proof-detail">The one thing that moves you forward on the problem that matters most right now.</p>
+      <p class="proof-detail">Tomorrow there is another one. That is how the list gets shorter.</p>
+      <p class="proof-detail">FrontFrame doesn't solve your problems. You do. It just makes sure you're working on the right one.</p>
     </div>
 
-    <p class="section-label">When it's built this way, something changes.</p>
-    <h2 class="section-heading">What you walk away with is not access.<br>It's ownership.</h2>
+    <p class="section-label">The list is different for everyone.</p>
+    <h2 class="section-heading">The approach is always<br>the same.</h2>
 
     <ul class="artifacts">
       <li class="artifact-item">
-        <p class="artifact-title">The Code</p>
-        <p class="artifact-body">Structured so anyone can take it over. No platform lock-in, no permission required to hand it to a buyer or an attorney.</p>
+        <p class="artifact-title">Name It</p>
+        <p class="artifact-body">Write down every problem in your business that keeps you up at night or slows you down every week. Don't filter. Don't prioritize yet. Get it out of your head and onto the list.</p>
       </li>
       <li class="artifact-item">
-        <p class="artifact-title">The Business Record</p>
-        <p class="artifact-body">Every client, every interaction, captured in a form a buyer can read before they make an offer.</p>
+        <p class="artifact-title">Pick One</p>
+        <p class="artifact-body">What is the single problem costing you the most right now — in money, time, or sleep? That is the one you work on today. Everything else waits.</p>
       </li>
       <li class="artifact-item">
-        <p class="artifact-title">The Training</p>
-        <p class="artifact-body">The instructions that teach your site how to represent you — your voice, your answers, your rules. Owned by you, transferable at point of sale.</p>
+        <p class="artifact-title">Do One Thing</p>
+        <p class="artifact-body">Not everything. One thing that moves you toward a solution. A system built. A conversation had. A policy set. Then tomorrow, one more.</p>
       </li>
     </ul>
 
     <div class="close-statement">
-      <p>Most businesses reach the end with something they can use.</p>
-      <p>Not something they can hand over.</p>
-      <p class="close-final">This is built so the answer is different.</p>
+      <p>The website, the booking system, the payment structure, the marketing — those are answers.</p>
+      <p>FrontFrame doesn't decide what your questions are. <strong>You do.</strong></p>
+      <p class="close-final">Start with the problem. Everything else follows.</p>
     </div>
 
   </main>
@@ -550,23 +549,23 @@
 
   <script>
     const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
-    const PAGE = 'yours';
+    const PAGE       = 'yours';
 
     const chatInline = document.getElementById('chatInline');
     const msgs       = document.getElementById('chatMessages');
     const input      = document.getElementById('chatInput');
     const sendBtn    = document.getElementById('chatSend');
 
-    const sessionId = crypto.randomUUID();
-    let history  = [];
-    let expanded = false;
+    const sessionId  = crypto.randomUUID();
+    let history      = [];
+    let expanded     = false;
+    let handoffDone  = false;
 
-    // ── Auto-resize textarea ──
+    // ── Textarea auto-resize ──────────────────────────────────────────────────
     function resizeInput() {
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 120) + 'px';
     }
-
     input.addEventListener('input', resizeInput);
 
     function resetInput() {
@@ -581,9 +580,10 @@
       }
     }
 
+    // ── Message rendering ─────────────────────────────────────────────────────
     function addMsg(text, role) {
       const div = document.createElement('div');
-      div.className = `msg ${role === 'user' ? 'user' : 'agent'}`;
+      div.className = `msg ${role === 'user' ? 'user' : role === 'confirmed' ? 'confirmed' : 'agent'}`;
       div.textContent = text;
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
@@ -593,7 +593,7 @@
       const div = document.createElement('div');
       div.className = 'msg typing';
       div.id = 'typing';
-      div.textContent = 'Ed is typing…';
+      div.textContent = '···';
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
     }
@@ -603,54 +603,97 @@
       if (el) el.remove();
     }
 
+    // ── Parse [COLLECTED:{...}] signal from AI ────────────────────────────────
+    function parseCollected(reply) {
+      const match = reply.match(/\[COLLECTED:([\s\S]*?)\]/);
+      if (!match) return null;
+      try { return JSON.parse(match[1]); }
+      catch { return null; }
+    }
+
+    // ── Notify Ed via worker ──────────────────────────────────────────────────
+    async function notifyEd(contactData) {
+      if (handoffDone) return;
+      handoffDone = true;
+
+      const transcript = history
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => `${m.role === 'user' ? 'Visitor' : 'Assistant'}: ${m.content}`)
+        .join('\n');
+
+      try {
+        await fetch(`${WORKER_URL}/notify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId,
+            name:       contactData.name    || '',
+            contact:    contactData.contact || '',
+            method:     contactData.method  || '',
+            summary:    contactData.summary || '',
+            transcript: transcript,
+            source:     'yours',
+          }),
+        });
+      } catch {
+        // Silent — confirmation already shown to visitor
+      }
+    }
+
+    // ── Main send handler ─────────────────────────────────────────────────────
     async function send(text) {
       if (!text.trim()) return;
 
       expandChat();
-
-      const intakeIntent = /\b(ready|get started|start|begin|sign up|sign me up|let'?s go|let'?s do it|i'?m in|yes please|interested|how do i start|where do i start)\b/i.test(text);
-
       addMsg(text, 'user');
       history.push({ role: 'user', content: text });
       resetInput();
       sendBtn.disabled = true;
-
-      if (intakeIntent) {
-        addTyping();
-        await new Promise(r => setTimeout(r, 900));
-        removeTyping();
-        const handoff = "Perfect. Let me hand you off to our intake form — it takes about five minutes and gives us everything we need to get started.";
-        addMsg(handoff, 'agent');
-        history.push({ role: 'assistant', content: handoff });
-        sendBtn.disabled = false;
-        setTimeout(() => { window.location.href = 'intake.html'; }, 2500);
-        return;
-      }
-
       addTyping();
+
       try {
         const res = await fetch(`${WORKER_URL}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ page: PAGE, message: text, history: history.slice(-10), session_id: sessionId }),
+          body: JSON.stringify({
+            page:       PAGE,
+            message:    text,
+            history:    history.slice(-14),
+            session_id: sessionId,
+          }),
         });
+
         const data = await res.json();
         removeTyping();
-        const reply = data.response || 'Happy to answer any questions.';
-        if (reply.includes('[INTAKE]')) {
-          const clean = reply.replace('[INTAKE]', '').trim();
-          addMsg(clean, 'agent');
-          history.push({ role: 'assistant', content: clean });
-          setTimeout(() => { window.location.href = 'intake.html'; }, 2500);
-        } else {
-          addMsg(reply, 'agent');
-          history.push({ role: 'assistant', content: reply });
+        let reply  = data.response || 'Happy to keep going — what else can you tell me?';
+
+        // ── Contact collection signal ─────────────────────────────────────────
+        const collected = parseCollected(reply);
+        if (collected) {
+          const clean = reply.replace(/\[COLLECTED:[\s\S]*?\]/, '').trim();
+          if (clean) {
+            addMsg(clean, 'agent');
+            history.push({ role: 'assistant', content: clean });
+          }
+          setTimeout(() => {
+            addMsg("Got it. Ed will be in touch — you'll hear from him directly, not from a system.", 'confirmed');
+            input.disabled    = true;
+            sendBtn.disabled  = true;
+            input.placeholder = 'Ed has your details.';
+          }, 600);
+          await notifyEd(collected);
+          return;
         }
+
+        // ── Standard reply ────────────────────────────────────────────────────
+        addMsg(reply, 'agent');
+        history.push({ role: 'assistant', content: reply });
+
       } catch {
         removeTyping();
-        addMsg('Having trouble connecting. Please try again.', 'agent');
+        addMsg('Having trouble connecting. Try again in a moment.', 'agent');
       } finally {
-        sendBtn.disabled = false;
+        if (!handoffDone) sendBtn.disabled = false;
         input.focus();
       }
     }
@@ -664,9 +707,9 @@
       }
     });
 
-    // Greet on load — chat is already open, no toggle
+    // ── Opening message ───────────────────────────────────────────────────────
     window.addEventListener('load', () => {
-      const greeting = "I'm Ed. You just finished the book — or most of it. If something landed and you want to talk through what it means for your business, I'm here.";
+      const greeting = "Every business has a list of problems that never get solved because the work never stops long enough to address them. What's at the top of yours?";
       addMsg(greeting, 'agent');
       history.push({ role: 'assistant', content: greeting });
     });

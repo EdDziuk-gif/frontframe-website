@@ -18,209 +18,61 @@
       --white:    #FFFFFF;
     }
 
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--offwhite);
-      color: var(--navy);
-      min-height: 100vh;
-    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--offwhite); color: var(--navy); min-height: 100vh; }
 
     h1, h2, h3, label { font-family: 'DM Sans', system-ui, sans-serif; font-weight: 700; }
     a { text-decoration: none; color: inherit; }
     img { display: block; max-width: 100%; }
 
-    nav {
-      background: var(--navy);
-      padding: 0 48px;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .nav-wordmark {
-      font-family: 'DM Sans', system-ui, sans-serif;
-      font-weight: 700;
-      font-size: 1.5rem;
-      color: var(--white);
-      letter-spacing: -0.01em;
-    }
-
+    nav { background: var(--navy); padding: 0 48px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-wordmark { font-family: 'DM Sans', system-ui, sans-serif; font-weight: 700; font-size: 1.5rem; color: var(--white); letter-spacing: -0.01em; }
     .nav-back { font-size: 0.85rem; color: var(--gray); transition: color 0.2s; }
     .nav-back:hover { color: var(--white); }
 
-    .page-header {
-      background: var(--navy);
-      padding: 60px 32px;
-      text-align: center;
-    }
+    .page-header { background: var(--navy); padding: 60px 32px; text-align: center; }
+    .page-eyebrow { font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin-bottom: 16px; }
+    .page-header h1 { font-size: clamp(1.8rem, 3vw, 2.4rem); color: var(--white); margin-bottom: 14px; line-height: 1.2; }
+    .page-header p { font-size: 1rem; color: var(--gray); max-width: 520px; margin: 0 auto; line-height: 1.7; }
 
-    .page-eyebrow {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--amber);
-      margin-bottom: 16px;
-    }
+    .form-container { max-width: 680px; margin: 0 auto; padding: 60px 32px 80px; }
+    .form-group { margin-bottom: 28px; }
 
-    .page-header h1 {
-      font-size: clamp(1.8rem, 3vw, 2.4rem);
-      color: var(--white);
-      margin-bottom: 14px;
-      line-height: 1.2;
-    }
-
-    .page-header p {
-      font-size: 1rem;
-      color: var(--gray);
-      max-width: 520px;
-      margin: 0 auto;
-      line-height: 1.7;
-    }
-
-    .form-container {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 60px 32px 80px;
-    }
-
-    .form-group {
-      margin-bottom: 28px;
-    }
-
-    label {
-      display: block;
-      font-size: 0.8rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--navy);
-      margin-bottom: 8px;
-    }
-
+    label { display: block; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--navy); margin-bottom: 8px; }
     label .required { color: var(--amber); margin-left: 2px; }
     label .hint { font-family: 'Inter', sans-serif; font-weight: 400; font-size: 0.8rem; text-transform: none; letter-spacing: 0; color: var(--gray); margin-left: 6px; }
 
-    input[type="text"],
-    input[type="email"],
-    textarea,
-    select {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1.5px solid #D8DFE6;
-      border-radius: 8px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.95rem;
-      color: var(--navy);
-      background: var(--white);
-      outline: none;
-      transition: border-color 0.2s;
-      appearance: none;
+    input[type="text"], input[type="email"], textarea, select {
+      width: 100%; padding: 12px 16px; border: 1.5px solid #D8DFE6; border-radius: 8px;
+      font-family: 'Inter', sans-serif; font-size: 0.95rem; color: var(--navy);
+      background: var(--white); outline: none; transition: border-color 0.2s; appearance: none;
     }
 
     input:focus, textarea:focus, select:focus { border-color: var(--navy); }
-
     textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
 
     .select-wrap { position: relative; }
-    .select-wrap::after {
-      content: '▾'; position: absolute; right: 14px; top: 50%;
-      transform: translateY(-50%); color: var(--gray); pointer-events: none;
-    }
+    .select-wrap::after { content: '▾'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; }
 
-    .tier-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
+    .tier-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
-    .tier-option {
-      border: 2px solid #D8DFE6;
-      border-radius: 12px;
-      padding: 20px;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      position: relative;
-    }
-
+    .tier-option { border: 2px solid #D8DFE6; border-radius: 12px; padding: 20px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; }
     .tier-option:hover { border-color: var(--navy); }
     .tier-option.selected { border-color: var(--amber); background: #FFFBF3; }
+    .tier-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
 
-    .tier-option input[type="radio"] {
-      position: absolute;
-      opacity: 0;
-      width: 0; height: 0;
-    }
-
-    .tier-label {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 0.75rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--gray);
-      margin-bottom: 6px;
-    }
-
-    .tier-price {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 1.6rem;
-      color: var(--navy);
-      margin-bottom: 6px;
-    }
-
+    .tier-label { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; }
+    .tier-price { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.6rem; color: var(--navy); margin-bottom: 6px; }
     .tier-option.selected .tier-price { color: var(--amber); }
+    .tier-desc { font-size: 0.8rem; color: var(--gray); line-height: 1.5; }
 
-    .tier-desc {
-      font-size: 0.8rem;
-      color: var(--gray);
-      line-height: 1.5;
-    }
+    .section-divider { border: none; border-top: 1px solid #D8DFE6; margin: 40px 0; }
+    .section-title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 24px; padding-bottom: 10px; border-bottom: 2px solid var(--amber); display: inline-block; }
 
-    .section-divider {
-      border: none;
-      border-top: 1px solid #D8DFE6;
-      margin: 40px 0;
-    }
-
-    .section-title {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 1rem;
-      color: var(--navy);
-      margin-bottom: 24px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid var(--amber);
-      display: inline-block;
-    }
-
-    .submit-btn {
-      width: 100%;
-      padding: 15px;
-      background: var(--amber);
-      color: var(--navy);
-      border: none;
-      border-radius: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: opacity 0.2s;
-    }
-
+    .submit-btn { width: 100%; padding: 15px; background: var(--amber); color: var(--navy); border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
     .submit-btn:hover { opacity: 0.88; }
     .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .form-note {
-      font-size: 0.78rem;
-      color: var(--gray);
-      text-align: center;
-      margin-top: 16px;
-      line-height: 1.5;
-    }
+    .form-note { font-size: 0.78rem; color: var(--gray); text-align: center; margin-top: 16px; line-height: 1.5; }
 
     /* ── CHAT WIDGET ── */
     .chat-widget { position: fixed; bottom: 24px; right: 24px; z-index: 1000; font-family: 'Inter', sans-serif; }
@@ -241,6 +93,7 @@
     .msg.agent { background: var(--white); color: var(--navy); align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
     .msg.user { background: var(--navy); color: var(--white); align-self: flex-end; border-bottom-right-radius: 4px; }
     .msg.typing { background: var(--white); align-self: flex-start; color: var(--gray); }
+    .msg.confirmed { background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3); color: var(--navy); align-self: flex-start; border-bottom-left-radius: 4px; max-width: 92%; }
     .chat-input-row { display: flex; gap: 8px; padding: 12px 16px; background: var(--white); border-top: 1px solid #EAEAEA; flex-shrink: 0; }
     .chat-input { flex: 1; border: 1.5px solid #E0E0E0; border-radius: 8px; padding: 9px 12px; font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--navy); outline: none; transition: border-color 0.2s; }
     .chat-input:focus { border-color: var(--navy); }
@@ -258,9 +111,7 @@
 <body>
 
   <nav>
-    <a class="nav-logo" href="/">
-      <span class="nav-wordmark">FrontFrame</span>
-    </a>
+    <a class="nav-logo" href="/"><span class="nav-wordmark">FrontFrame</span></a>
     <a class="nav-back" href="intake-confirmation.html">← Back</a>
   </nav>
 
@@ -331,9 +182,7 @@
       </div>
 
       <div class="form-group">
-        <label for="anything_else">Anything else we should know?
-          <span class="hint">Optional</span>
-        </label>
+        <label for="anything_else">Anything else we should know? <span class="hint">Optional</span></label>
         <textarea id="anything_else" name="anything_else" placeholder="Existing site URL, specific requirements, questions for us — anything helps."></textarea>
       </div>
 
@@ -347,10 +196,10 @@
   <div class="chat-widget" id="chatWidget">
     <div class="chat-panel" id="chatPanel">
       <div class="chat-header">
-        <div class="chat-avatar">Ed</div>
+        <div class="chat-avatar">FF</div>
         <div class="chat-header-info">
-          <div class="chat-header-name">Ed · FrontFrame</div>
-          <div class="chat-header-status">Here to help</div>
+          <div class="chat-header-name">FrontFrame</div>
+          <div class="chat-header-status">Ed will follow up personally</div>
         </div>
         <button class="chat-close" id="chatClose" aria-label="Close chat">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -377,11 +226,11 @@
 
   <script>
     const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
-    const PAGE = 'discovery';
+    const PAGE       = 'discovery';
 
     const params = new URLSearchParams(window.location.search);
 
-    // ── Tier Selection ──
+    // ── Tier Selection ────────────────────────────────────────────────────────
     let selectedTier = null;
 
     function selectTier(tier) {
@@ -391,7 +240,7 @@
       document.getElementById(`radio${tier.charAt(0).toUpperCase() + tier.slice(1)}`).checked = true;
     }
 
-    // ── Form Submission ──
+    // ── Form Submission ───────────────────────────────────────────────────────
     document.getElementById('discoveryForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const btn = document.getElementById('submitBtn');
@@ -430,7 +279,7 @@
       `;
     });
 
-    // ── Chat Widget ──
+    // ── Chat Widget ───────────────────────────────────────────────────────────
     const panel    = document.getElementById('chatPanel');
     const toggle   = document.getElementById('chatToggle');
     const closeBtn = document.getElementById('chatClose');
@@ -439,8 +288,9 @@
     const sendBtn  = document.getElementById('chatSend');
 
     const sessionId = crypto.randomUUID();
-    let history = [];
-    let greeted = false;
+    let history     = [];
+    let greeted     = false;
+    let handoffDone = false;
 
     function openChat() {
       panel.classList.add('open');
@@ -458,9 +308,10 @@
     toggle.addEventListener('click', openChat);
     closeBtn.addEventListener('click', closeChat);
 
+    // ── Message rendering ─────────────────────────────────────────────────────
     function addMsg(text, role) {
       const div = document.createElement('div');
-      div.className = `msg ${role === 'user' ? 'user' : 'agent'}`;
+      div.className = `msg ${role === 'user' ? 'user' : role === 'confirmed' ? 'confirmed' : 'agent'}`;
       div.textContent = text;
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
@@ -469,7 +320,7 @@
     function addTyping() {
       const div = document.createElement('div');
       div.className = 'msg typing';
-      div.textContent = 'Ed is typing…';
+      div.textContent = '···';
       div.id = 'typing';
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
@@ -480,6 +331,40 @@
       if (el) el.remove();
     }
 
+    // ── Parse [COLLECTED:{...}] signal ────────────────────────────────────────
+    function parseCollected(reply) {
+      const match = reply.match(/\[COLLECTED:([\s\S]*?)\]/);
+      if (!match) return null;
+      try { return JSON.parse(match[1]); }
+      catch { return null; }
+    }
+
+    // ── Notify Ed ─────────────────────────────────────────────────────────────
+    async function notifyEd(contactData) {
+      if (handoffDone) return;
+      handoffDone = true;
+      const transcript = history
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => `${m.role === 'user' ? 'Visitor' : 'Assistant'}: ${m.content}`)
+        .join('\n');
+      try {
+        await fetch(`${WORKER_URL}/notify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId,
+            name:       contactData.name    || '',
+            contact:    contactData.contact || '',
+            method:     contactData.method  || '',
+            summary:    contactData.summary || '',
+            transcript: transcript,
+            source:     'discovery',
+          }),
+        });
+      } catch { /* silent */ }
+    }
+
+    // ── Main send handler ─────────────────────────────────────────────────────
     async function send(text) {
       if (!text.trim()) return;
       addMsg(text, 'user');
@@ -493,22 +378,37 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ page: PAGE, message: text, history: history.slice(-10), session_id: sessionId }),
         });
-        const data = await res.json();
+        const data  = await res.json();
         removeTyping();
-        const reply = data.response || 'Happy to help with any questions.';
+        let reply   = data.response || 'Happy to help with any questions.';
+
+        const collected = parseCollected(reply);
+        if (collected) {
+          const clean = reply.replace(/\[COLLECTED:[\s\S]*?\]/, '').trim();
+          if (clean) { addMsg(clean, 'agent'); history.push({ role: 'assistant', content: clean }); }
+          setTimeout(() => {
+            addMsg("Got it. Ed will be in touch — you'll hear from him directly, not from a system.", 'confirmed');
+            input.disabled    = true;
+            sendBtn.disabled  = true;
+            input.placeholder = 'Ed has your details.';
+          }, 600);
+          await notifyEd(collected);
+          return;
+        }
+
         addMsg(reply, 'agent');
         history.push({ role: 'assistant', content: reply });
       } catch {
         removeTyping();
         addMsg('Having trouble connecting. Please try again.', 'agent');
       } finally {
-        sendBtn.disabled = false;
+        if (!handoffDone) sendBtn.disabled = false;
         input.focus();
       }
     }
 
     function greet() {
-      const greeting = 'Happy to help you choose between Standard and Professional. What questions do you have?';
+      const greeting = 'Questions about the tiers or what happens next? Happy to help.';
       addMsg(greeting, 'agent');
       history.push({ role: 'assistant', content: greeting });
     }

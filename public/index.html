@@ -258,9 +258,7 @@
       transition: background 0.2s;
     }
 
-    .artifact:hover {
-      background: rgba(255,255,255,0.055);
-    }
+    .artifact:hover { background: rgba(255,255,255,0.055); }
 
     .artifact-name {
       font-family: 'DM Sans', sans-serif;
@@ -318,7 +316,6 @@
     }
 
     .steps { display: flex; flex-direction: column; gap: 32px; }
-
     .step { display: flex; gap: 20px; align-items: flex-start; }
 
     .step-num {
@@ -331,18 +328,8 @@
       width: 40px;
     }
 
-    .step-content h3 {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 6px;
-    }
-
-    .step-content p {
-      font-size: 0.9rem;
-      color: var(--gray);
-      line-height: 1.6;
-    }
+    .step-content h3 { font-size: 1.05rem; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+    .step-content p { font-size: 0.9rem; color: var(--gray); line-height: 1.6; }
 
     .how-image img {
       width: 100%;
@@ -353,10 +340,7 @@
     }
 
     /* ── WHO IT'S FOR ── */
-    .who {
-      background: var(--navy);
-      padding: 120px 0;
-    }
+    .who { background: var(--navy); padding: 120px 0; }
 
     .who-inner {
       display: grid;
@@ -365,446 +349,160 @@
       align-items: center;
     }
 
-    .who-image img {
-      width: 100%;
-      border-radius: 12px;
-      object-fit: cover;
-      aspect-ratio: 3/4;
-    }
+    .who-image img { width: 100%; border-radius: 12px; object-fit: cover; aspect-ratio: 3/4; }
 
-    .who h2 {
-      font-size: clamp(1.8rem, 3vw, 2.6rem);
-      color: var(--white);
-      line-height: 1.2;
-      margin-bottom: 20px;
-    }
-
-    .who-lead {
-      font-size: 1rem;
-      color: rgba(255,255,255,0.75);
-      line-height: 1.7;
-      margin-bottom: 40px;
-    }
+    .who h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); color: var(--white); line-height: 1.2; margin-bottom: 20px; }
+    .who-lead { font-size: 1rem; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 40px; }
 
     .who-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
 
     .who-list li {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      font-size: 0.95rem;
-      color: rgba(255,255,255,0.75);
-      line-height: 1.5;
+      display: flex; align-items: flex-start; gap: 12px;
+      font-size: 0.95rem; color: rgba(255,255,255,0.75); line-height: 1.5;
     }
 
-    .who-list li::before {
-      content: '→';
-      color: var(--amber);
-      font-weight: 700;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
+    .who-list li::before { content: '→'; color: var(--amber); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
 
     /* ── PROOF ── */
-    .proof {
-      background: var(--offwhite);
-      padding: 120px 0;
-    }
+    .proof { background: var(--offwhite); padding: 120px 0; }
 
-    .proof-inner {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 120px;
-      align-items: center;
-    }
+    .proof-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 120px; align-items: center; }
 
-    .proof h2 {
-      font-size: clamp(1.8rem, 3vw, 2.6rem);
-      color: var(--navy);
-      line-height: 1.2;
-      margin-bottom: 20px;
-    }
-
-    .proof-body {
-      font-size: 1rem;
-      color: var(--gray);
-      line-height: 1.7;
-      margin-bottom: 32px;
-    }
+    .proof h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); color: var(--navy); line-height: 1.2; margin-bottom: 20px; }
+    .proof-body { font-size: 1rem; color: var(--gray); line-height: 1.7; margin-bottom: 32px; }
 
     .proof-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 0.9rem;
-      color: var(--navy);
-      border-bottom: 2px solid var(--amber);
-      padding-bottom: 2px;
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.9rem;
+      color: var(--navy); border-bottom: 2px solid var(--amber); padding-bottom: 2px;
       transition: color 0.2s;
     }
 
     .proof-link:hover { color: var(--amber); }
-
     .proof-image-wrap { position: relative; }
-
-    .proof-image-wrap img {
-      width: 100%;
-      border-radius: 12px;
-      object-fit: cover;
-      aspect-ratio: 3/4;
-    }
+    .proof-image-wrap img { width: 100%; border-radius: 12px; object-fit: cover; aspect-ratio: 3/4; }
 
     .proof-badge {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      background: var(--navy);
-      color: var(--white);
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 500;
+      position: absolute; bottom: 20px; left: 20px;
+      background: var(--navy); color: var(--white);
+      padding: 10px 16px; border-radius: 8px;
+      font-size: 0.8rem; font-weight: 500;
     }
 
-    .proof-badge strong {
-      display: block;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
-      color: var(--amber);
-    }
+    .proof-badge strong { display: block; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--amber); }
 
     /* ── PRICING ── */
-    .pricing {
-      background: var(--navy);
-      padding: 120px 0;
-    }
+    .pricing { background: var(--navy); padding: 120px 0; }
 
-    .pricing-header {
-      text-align: center;
-      margin-bottom: 72px;
-    }
+    .pricing-header { text-align: center; margin-bottom: 72px; }
+    .pricing-header h2 { font-size: clamp(2rem, 3vw, 3rem); color: var(--white); margin-bottom: 16px; }
+    .pricing-header p { font-size: 1.05rem; color: rgba(255,255,255,0.65); max-width: 560px; margin: 0 auto; line-height: 1.75; }
 
-    .pricing-header h2 {
-      font-size: clamp(2rem, 3vw, 3rem);
-      color: var(--white);
-      margin-bottom: 16px;
-    }
-
-    .pricing-header p {
-      font-size: 1.05rem;
-      color: rgba(255,255,255,0.65);
-      max-width: 560px;
-      margin: 0 auto;
-      line-height: 1.75;
-    }
-
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 32px;
-      max-width: 1040px;
-      margin: 0 auto;
-    }
+    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1040px; margin: 0 auto; }
 
     .pricing-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      padding: 40px;
-      position: relative;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 40px; position: relative;
     }
 
-    .pricing-card.featured {
-      background: var(--offwhite);
-      border-color: var(--amber);
-    }
+    .pricing-card.featured { background: var(--offwhite); border-color: var(--amber); }
 
     .tier-name {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--gray);
-      margin-bottom: 16px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); margin-bottom: 16px;
     }
 
-    .pricing-card.featured .tier-name { color: var(--gray); }
-
-    .price {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 3rem;
-      font-weight: 700;
-      color: var(--white);
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-
+    .price { font-family: 'DM Sans', sans-serif; font-size: 3rem; font-weight: 700; color: var(--white); line-height: 1; margin-bottom: 4px; }
     .pricing-card.featured .price { color: var(--navy); }
+    .price-note { font-size: 0.825rem; color: var(--gray); margin-bottom: 32px; }
 
-    .price-note {
-      font-size: 0.825rem;
-      color: var(--gray);
-      margin-bottom: 32px;
-    }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 36px; }
 
-    .feature-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 36px;
-    }
-
-    .feature-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      font-size: 0.9rem;
-      color: rgba(255,255,255,0.72);
-      line-height: 1.5;
-    }
-
+    .feature-item { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; color: rgba(255,255,255,0.72); line-height: 1.5; }
     .pricing-card.featured .feature-item { color: var(--navy); }
-
-    .feature-item::before {
-      content: '✓';
-      color: var(--amber);
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
+    .feature-item::before { content: '✓'; color: var(--amber); font-weight: 700; flex-shrink: 0; }
     .pricing-card.featured .feature-item::before { color: var(--navy); }
 
     .card-cta {
-      display: block;
-      text-align: center;
-      padding: 13px;
-      border-radius: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 0.95rem;
-      transition: opacity 0.2s;
-      border: 1.5px solid rgba(255,255,255,0.2);
-      color: var(--white);
+      display: block; text-align: center; padding: 13px; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.95rem;
+      transition: opacity 0.2s; border: 1.5px solid rgba(255,255,255,0.2); color: var(--white);
     }
 
-    .pricing-card.featured .card-cta {
-      background: var(--amber);
-      color: var(--navy);
-      border-color: var(--amber);
-    }
-
+    .pricing-card.featured .card-cta { background: var(--amber); color: var(--navy); border-color: var(--amber); }
     .card-cta:hover { opacity: 0.85; }
 
     /* ── FINAL CTA ── */
-    .final-cta {
-      background: var(--offwhite);
-      padding: 120px 0;
-      text-align: center;
-    }
-
-    .final-cta h2 {
-      font-size: clamp(2.2rem, 3.5vw, 3.4rem);
-      color: var(--navy);
-      margin-bottom: 24px;
-      line-height: 1.2;
-    }
-
-    .final-cta p {
-      font-size: 1.05rem;
-      color: var(--gray);
-      max-width: 560px;
-      margin: 0 auto 44px;
-      line-height: 1.75;
-    }
+    .final-cta { background: var(--offwhite); padding: 120px 0; text-align: center; }
+    .final-cta h2 { font-size: clamp(2.2rem, 3.5vw, 3.4rem); color: var(--navy); margin-bottom: 24px; line-height: 1.2; }
+    .final-cta p { font-size: 1.05rem; color: var(--gray); max-width: 560px; margin: 0 auto 44px; line-height: 1.75; }
 
     /* ── FOOTER ── */
-    footer {
-      background: var(--navy);
-      padding: 40px 0;
-      border-top: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .footer-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .footer-wordmark {
-      font-family: 'DM Sans', system-ui, sans-serif;
-      font-weight: 700;
-      font-size: 1.2rem;
-      color: rgba(255,255,255,0.7);
-      letter-spacing: -0.01em;
-    }
-
-    .footer-right {
-      font-size: 0.8rem;
-      color: var(--gray);
-    }
+    footer { background: var(--navy); padding: 40px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-wordmark { font-family: 'DM Sans', system-ui, sans-serif; font-weight: 700; font-size: 1.2rem; color: rgba(255,255,255,0.7); letter-spacing: -0.01em; }
+    .footer-right { font-size: 0.8rem; color: var(--gray); }
 
     /* ── CHAT WIDGET ── */
-    .chat-widget {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 1000;
-      font-family: 'Inter', sans-serif;
-    }
+    .chat-widget { position: fixed; bottom: 24px; right: 24px; z-index: 1000; font-family: 'Inter', sans-serif; }
 
     .chat-toggle {
-      width: 56px;
-      height: 56px;
-      background: var(--amber);
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 20px rgba(245,166,35,0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
+      width: 56px; height: 56px; background: var(--amber); border-radius: 50%; border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(245,166,35,0.4); transition: transform 0.2s, box-shadow 0.2s;
       margin-left: auto;
     }
 
-    .chat-toggle:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 24px rgba(245,166,35,0.5);
-    }
-
+    .chat-toggle:hover { transform: scale(1.05); box-shadow: 0 6px 24px rgba(245,166,35,0.5); }
     .chat-toggle svg { width: 24px; height: 24px; }
 
     .chat-panel {
-      position: absolute;
-      bottom: 68px;
-      right: 0;
-      width: 360px;
-      height: 480px;
-      background: var(--white);
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(12px) scale(0.97);
-      pointer-events: none;
+      position: absolute; bottom: 68px; right: 0; width: 360px; height: 480px;
+      background: var(--white); border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      display: flex; flex-direction: column; overflow: hidden;
+      opacity: 0; transform: translateY(12px) scale(0.97); pointer-events: none;
       transition: opacity 0.25s, transform 0.25s, height 0.35s ease;
     }
 
-    .chat-panel.open {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      pointer-events: all;
-    }
+    .chat-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
+    .chat-panel.expanded { height: 560px; }
 
-    /* Expands when conversation is active */
-    .chat-panel.expanded {
-      height: 560px;
-    }
-
-    .chat-header {
-      background: var(--navy);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
-    }
+    .chat-header { background: var(--navy); padding: 16px 20px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 
     .chat-avatar {
-      width: 36px; height: 36px;
-      background: var(--amber);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 0.9rem;
-      color: var(--navy);
-      flex-shrink: 0;
+      width: 36px; height: 36px; background: var(--amber); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.9rem;
+      color: var(--navy); flex-shrink: 0;
     }
 
     .chat-header-info { flex: 1; }
-
-    .chat-header-name {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 0.95rem;
-      color: var(--white);
-    }
-
+    .chat-header-name { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--white); }
     .chat-header-status { font-size: 0.75rem; color: var(--gray); }
 
     .chat-close {
-      background: none; border: none; cursor: pointer;
-      color: var(--gray); padding: 8px;
+      background: none; border: none; cursor: pointer; color: var(--gray); padding: 8px;
       display: flex; align-items: center; justify-content: center;
-      width: 36px; height: 36px; flex-shrink: 0;
-      transition: color 0.2s;
+      width: 36px; height: 36px; flex-shrink: 0; transition: color 0.2s;
     }
 
     .chat-close:hover { color: var(--white); }
 
-    .chat-messages {
-      flex: 1; overflow-y: auto; padding: 20px;
-      display: flex; flex-direction: column; gap: 12px;
-      background: var(--offwhite);
-    }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: var(--offwhite); }
 
-    .msg {
-      max-width: 85%; padding: 10px 14px;
-      border-radius: 12px; font-size: 0.875rem; line-height: 1.55;
-    }
+    .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.875rem; line-height: 1.55; }
+    .msg.agent { background: var(--white); color: var(--navy); align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .msg.user { background: var(--navy); color: var(--white); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .msg.typing { background: var(--white); align-self: flex-start; color: var(--gray); }
+    .msg.confirmed { background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3); color: var(--navy); align-self: flex-start; border-bottom-left-radius: 4px; max-width: 92%; }
 
-    .msg.agent {
-      background: var(--white); color: var(--navy);
-      align-self: flex-start; border-bottom-left-radius: 4px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    }
-
-    .msg.user {
-      background: var(--navy); color: var(--white);
-      align-self: flex-end; border-bottom-right-radius: 4px;
-    }
-
-    .msg.typing {
-      background: var(--white); align-self: flex-start; color: var(--gray);
-    }
-
-    .chat-input-row {
-      display: flex;
-      gap: 8px;
-      padding: 12px 16px;
-      background: var(--white);
-      border-top: 1px solid #EAEAEA;
-      flex-shrink: 0;
-      align-items: flex-end;
-    }
+    .chat-input-row { display: flex; gap: 8px; padding: 12px 16px; background: var(--white); border-top: 1px solid #EAEAEA; flex-shrink: 0; align-items: flex-end; }
 
     .chat-input {
-      flex: 1;
-      border: 1.5px solid #E0E0E0;
-      border-radius: 8px;
-      padding: 9px 12px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.875rem;
-      color: var(--navy);
-      outline: none;
-      transition: border-color 0.2s;
-      resize: none;
-      overflow: hidden;
-      min-height: 38px;
-      max-height: 120px;
-      line-height: 1.5;
-      display: block;
+      flex: 1; border: 1.5px solid #E0E0E0; border-radius: 8px; padding: 9px 12px;
+      font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--navy);
+      outline: none; transition: border-color 0.2s;
+      resize: none; overflow: hidden; min-height: 38px; max-height: 120px; line-height: 1.5; display: block;
     }
 
     .chat-input:focus { border-color: var(--navy); }
@@ -820,12 +518,7 @@
     .chat-send svg { width: 16px; height: 16px; }
 
     /* ── SCROLL REVEAL ── */
-    .reveal {
-      opacity: 0;
-      transform: translateY(24px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .reveal.visible { opacity: 1; transform: translateY(0); }
 
     /* ── RESPONSIVE ── */
@@ -837,11 +530,7 @@
     }
 
     @media (max-width: 768px) {
-      .hero-inner, .how-inner, .who-inner, .proof-inner {
-        grid-template-columns: 1fr;
-        gap: 40px;
-      }
-
+      .hero-inner, .how-inner, .who-inner, .proof-inner { grid-template-columns: 1fr; gap: 40px; }
       .hero-image { order: -1; }
       .who-image { order: -1; }
       .hero-inner { padding-bottom: 60px; }
@@ -858,9 +547,7 @@
   <!-- NAV -->
   <nav>
     <div class="nav-inner">
-      <a class="nav-logo" href="/">
-        <span class="wordmark">FrontFrame</span>
-      </a>
+      <a class="nav-logo" href="/"><span class="wordmark">FrontFrame</span></a>
       <a class="nav-cta" href="intake.html">Get Started</a>
     </div>
   </nav>
@@ -960,9 +647,7 @@
           <p class="section-label">Live Reference</p>
           <h2>Real business. Real stack. Already working.</h2>
           <p class="proof-body">Elie's Bird Sitting in Phoenix, AZ is a live, operating bird sitting business built on the exact same stack FrontFrame delivers to every client. Same technology. Same design system. Same AI assistant. You can visit it right now.</p>
-          <a class="proof-link" href="https://eliesbirdsitting.com" target="_blank" rel="noopener">
-            Visit eliesbirdsitting.com →
-          </a>
+          <a class="proof-link" href="https://eliesbirdsitting.com" target="_blank" rel="noopener">Visit eliesbirdsitting.com →</a>
         </div>
         <div class="proof-image-wrap reveal">
           <img src="images/FrontFrame-Hero.png" alt="Elie's Bird Sitting">
@@ -1066,10 +751,10 @@
   <div class="chat-widget" id="chatWidget">
     <div class="chat-panel" id="chatPanel">
       <div class="chat-header">
-        <div class="chat-avatar">Ed</div>
+        <div class="chat-avatar">FF</div>
         <div class="chat-header-info">
-          <div class="chat-header-name">Ed · FrontFrame</div>
-          <div class="chat-header-status">Ready when you are</div>
+          <div class="chat-header-name">FrontFrame</div>
+          <div class="chat-header-status">Ed will follow up personally</div>
         </div>
         <button class="chat-close" id="chatClose" aria-label="Close chat">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -1082,7 +767,7 @@
         <textarea
           class="chat-input"
           id="chatInput"
-          placeholder="Ask Ed a question…"
+          placeholder="Ask a question…"
           autocomplete="off"
           rows="1"
         ></textarea>
@@ -1093,7 +778,7 @@
         </button>
       </div>
     </div>
-    <button class="chat-toggle" id="chatToggle" aria-label="Open chat with Ed">
+    <button class="chat-toggle" id="chatToggle" aria-label="Open chat">
       <svg viewBox="0 0 24 24" fill="none" stroke="#1E2D40" stroke-width="2">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
@@ -1101,7 +786,7 @@
   </div>
 
   <script>
-    // ── Scroll Reveal ──
+    // ── Scroll Reveal ──────────────────────────────────────────────────────────
     const reveals = document.querySelectorAll('.reveal');
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((e, i) => {
@@ -1113,9 +798,9 @@
     }, { threshold: 0.12 });
     reveals.forEach(el => observer.observe(el));
 
-    // ── Chat Widget ──
+    // ── Chat Widget ───────────────────────────────────────────────────────────
     const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
-    const PAGE = 'home';
+    const PAGE       = 'home';
 
     const panel    = document.getElementById('chatPanel');
     const toggle   = document.getElementById('chatToggle');
@@ -1129,13 +814,13 @@
     let history     = [];
     let greeted     = false;
     let expanded    = false;
+    let handoffDone = false;
 
-    // ── Auto-resize textarea ──
+    // ── Auto-resize textarea ──────────────────────────────────────────────────
     function resizeInput() {
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 120) + 'px';
     }
-
     input.addEventListener('input', resizeInput);
 
     function resetInput() {
@@ -1144,10 +829,7 @@
     }
 
     function expandPanel() {
-      if (!expanded) {
-        expanded = true;
-        panel.classList.add('expanded');
-      }
+      if (!expanded) { expanded = true; panel.classList.add('expanded'); }
     }
 
     function openChat() {
@@ -1168,9 +850,10 @@
     toggle.addEventListener('click', openChat);
     closeBtn.addEventListener('click', closeChat);
 
+    // ── Message rendering ─────────────────────────────────────────────────────
     function addMessage(text, role) {
       const div = document.createElement('div');
-      div.className = `msg ${role === 'user' ? 'user' : 'agent'}`;
+      div.className = `msg ${role === 'user' ? 'user' : role === 'confirmed' ? 'confirmed' : 'agent'}`;
       div.textContent = text;
       messages.appendChild(div);
       messages.scrollTop = messages.scrollHeight;
@@ -1179,7 +862,7 @@
     function addTyping() {
       const div = document.createElement('div');
       div.className = 'msg typing';
-      div.textContent = 'Ed is typing…';
+      div.textContent = '···';
       div.id = 'typing-indicator';
       messages.appendChild(div);
       messages.scrollTop = messages.scrollHeight;
@@ -1190,6 +873,40 @@
       if (el) el.remove();
     }
 
+    // ── Parse [COLLECTED:{...}] signal ────────────────────────────────────────
+    function parseCollected(reply) {
+      const match = reply.match(/\[COLLECTED:([\s\S]*?)\]/);
+      if (!match) return null;
+      try { return JSON.parse(match[1]); }
+      catch { return null; }
+    }
+
+    // ── Notify Ed ─────────────────────────────────────────────────────────────
+    async function notifyEd(contactData) {
+      if (handoffDone) return;
+      handoffDone = true;
+      const transcript = history
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => `${m.role === 'user' ? 'Visitor' : 'Assistant'}: ${m.content}`)
+        .join('\n');
+      try {
+        await fetch(`${WORKER_URL}/notify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId,
+            name:       contactData.name    || '',
+            contact:    contactData.contact || '',
+            method:     contactData.method  || '',
+            summary:    contactData.summary || '',
+            transcript: transcript,
+            source:     'home',
+          }),
+        });
+      } catch { /* silent */ }
+    }
+
+    // ── Main send handler ─────────────────────────────────────────────────────
     async function sendMessage(text) {
       if (!text.trim()) return;
       expandPanel();
@@ -1202,24 +919,39 @@
         const res = await fetch(`${WORKER_URL}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ page: PAGE, message: text, history: history.slice(-10), session_id: sessionId }),
+          body: JSON.stringify({ page: PAGE, message: text, history: history.slice(-14), session_id: sessionId }),
         });
-        const data = await res.json();
+        const data  = await res.json();
         removeTyping();
-        const reply = data.response || 'Sorry, something went wrong.';
+        let reply   = data.response || 'Happy to help — what would you like to know?';
+
+        const collected = parseCollected(reply);
+        if (collected) {
+          const clean = reply.replace(/\[COLLECTED:[\s\S]*?\]/, '').trim();
+          if (clean) { addMessage(clean, 'agent'); history.push({ role: 'assistant', content: clean }); }
+          setTimeout(() => {
+            addMessage("Got it. Ed will be in touch — you'll hear from him directly, not from a system.", 'confirmed');
+            input.disabled    = true;
+            sendBtn.disabled  = true;
+            input.placeholder = 'Ed has your details.';
+          }, 600);
+          await notifyEd(collected);
+          return;
+        }
+
         addMessage(reply, 'agent');
         history.push({ role: 'assistant', content: reply });
       } catch {
         removeTyping();
         addMessage('Having trouble connecting right now. Please try again.', 'agent');
       } finally {
-        sendBtn.disabled = false;
+        if (!handoffDone) sendBtn.disabled = false;
         input.focus();
       }
     }
 
     function greet() {
-      const msg = "Hi, I'm Ed. If you have any questions while you look around I'll be right here.";
+      const msg = "Questions while you look around? Happy to help.";
       addMessage(msg, 'agent');
       history.push({ role: 'assistant', content: msg });
     }
@@ -1227,19 +959,14 @@
     sendBtn.addEventListener('click', () => sendMessage(input.value));
 
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage(input.value);
-      }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input.value); }
     });
 
-    // Auto-open after 3 seconds — skipped if user already dismissed this session
+    // Auto-open after 3s — skipped if dismissed this session
     if (!sessionStorage.getItem('chatDismissed_home')) {
       setTimeout(() => {
         openChat();
-        setTimeout(() => {
-          if (isOpen) closeChat();
-        }, 17000);
+        setTimeout(() => { if (isOpen) closeChat(); }, 17000);
       }, 3000);
     }
   </script>

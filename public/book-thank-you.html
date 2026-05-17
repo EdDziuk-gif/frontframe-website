@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thank You — FrontFrame</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="images/Logo_FF.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,700;1,9..40,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+	*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+	:root {
+	  --navy:     #1E2D40;
+	  --amber:    #F5A623;
+	  --offwhite: #F8F6F1;
+	  --gray:     #8A9BAE;
+	  --white:    #FFFFFF;
+	}
+
+	body {
+	  font-family: 'Inter', system-ui, sans-serif;
+	  background: var(--navy);
+	  color: var(--white);
+	  min-height: 100vh;
+	  display: flex;
+	  flex-direction: column;
+	}
+
+	h1, h2, h3 {
+	  font-family: 'DM Sans', system-ui, sans-serif;
+	  font-weight: 700;
+	}
+
+	a { text-decoration: none; color: inherit; }
+
+	/* NAV */
+	nav {
+	  background: rgba(30, 45, 64, 0.97);
+	  border-bottom: 1px solid rgba(255,255,255,0.06);
+	}
+
+	.nav-inner {
+	  max-width: 1400px;
+	  margin: 0 auto;
+	  padding: 0 48px;
+	  height: 68px;
+	  display: flex;
+	  align-items: center;
+	  justify-content: space-between;
+	}
+
+	.wordmark {
+	  font-family: 'DM Sans', system-ui, sans-serif;
+	  font-weight: 700;
+	  font-size: 1.5rem;
+	  color: #FFFFFF;
+	  letter-spacing: -0.01em;
+	}
+
+	/* MAIN */
+	main {
+	  flex: 1;
+	  display: flex;
+	  align-items: center;
+	  justify-content: center;
+	  padding: 80px 48px;
+	  position: relative;
+	  overflow: hidden;
+	}
+
+	main::before {
+	  content: '';
+	  position: absolute;
+	  inset: 0;
+	  background-image:
+		radial-gradient(circle at 60% 30%, rgba(245,166,35,0.07) 0%, transparent 55%),
+		radial-gradient(circle at 20% 80%, rgba(138,155,174,0.06) 0%, transparent 50%);
+	  pointer-events: none;
+	}
+
+	.confirmation-card {
+	  max-width: 600px;
+	  width: 100%;
+	  text-align: center;
+	  position: relative;
+	}
+
+	.check-mark {
+	  width: 72px;
+	  height: 72px;
+	  background: rgba(245,166,35,0.12);
+	  border: 2px solid rgba(245,166,35,0.3);
+	  border-radius: 50%;
+	  display: flex;
+	  align-items: center;
+	  justify-content: center;
+	  margin: 0 auto 36px;
+	}
+
+	.check-mark svg {
+	  width: 32px;
+	  height: 32px;
+	  color: var(--amber);
+	}
+
+	.eyebrow {
+	  font-family: 'DM Sans', sans-serif;
+	  font-size: 0.75rem;
+	  font-weight: 700;
+	  letter-spacing: 0.12em;
+	  text-transform: uppercase;
+	  color: var(--amber);
+	  margin-bottom: 16px;
+	}
+
+	h1 {
+	  font-size: clamp(2rem, 4vw, 3rem);
+	  line-height: 1.15;
+	  color: var(--white);
+	  margin-bottom: 24px;
+	}
+
+	.sub {
+	  font-size: 1.05rem;
+	  color: rgba(255,255,255,0.6);
+	  line-height: 1.8;
+	  margin-bottom: 48px;
+	}
+
+	.delivery-box {
+	  background: rgba(255,255,255,0.04);
+	  border: 1px solid rgba(255,255,255,0.08);
+	  border-radius: 12px;
+	  padding: 32px 36px;
+	  text-align: left;
+	  margin-bottom: 48px;
+	}
+
+	.delivery-box h3 {
+	  font-size: 1rem;
+	  color: var(--white);
+	  margin-bottom: 16px;
+	}
+
+	.delivery-box p {
+	  font-size: 0.9rem;
+	  color: rgba(255,255,255,0.55);
+	  line-height: 1.75;
+	}
+
+	.delivery-box p + p { margin-top: 12px; }
+
+	.btn-amber {
+	  display: inline-block;
+	  background: var(--amber);
+	  color: var(--navy);
+	  font-family: 'DM Sans', sans-serif;
+	  font-weight: 700;
+	  font-size: 1rem;
+	  padding: 14px 32px;
+	  border-radius: 8px;
+	  transition: opacity 0.2s;
+	}
+
+	.btn-amber:hover { opacity: 0.88; }
+
+	/* FOOTER */
+	footer {
+	  background: rgba(0,0,0,0.2);
+	  border-top: 1px solid rgba(255,255,255,0.06);
+	  padding: 28px 48px;
+	  text-align: center;
+	}
+
+	.footer-text { font-size: 0.8rem; color: var(--gray); }
+
+	@media (max-width: 600px) {
+	  .nav-inner { padding: 0 20px; }
+	  main { padding: 60px 20px; }
+	  footer { padding: 28px 20px; }
+	  .delivery-box { padding: 24px 20px; }
+	}
+  </style>
+</head>
+<body>
+
+  <nav>
+	<div class="nav-inner">
+	  <a href="/"><span class="wordmark">FrontFrame</span></a>
+	</div>
+  </nav>
+
+  <main>
+	<div class="confirmation-card">
+
+	  <div class="check-mark">
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+		  <polyline points="20 6 9 17 4 12"/>
+		</svg>
+	  </div>
+
+	  <p class="eyebrow">Purchase Complete</p>
+	  <h1>Your copy is on its way.</h1>
+	  <p class="sub">Thank you for picking up <em>Your Business Is Invisible</em>. Check the email address you used at checkout — your receipt is there, and your download link will follow from Amazon shortly.</p>
+
+	  <div class="delivery-box">
+		<h3>What happens next</h3>
+		<p>Amazon KDP will send your book to the email address on your order. If you have a Kindle, it may arrive there automatically. You can also read it in the free Kindle app on any device.</p>
+		<p>If you don't see anything within a few minutes, check your spam folder. Still nothing? Reply to your Stripe receipt and Ed will sort it out personally.</p>
+	  </div>
+
+	  <a class="btn-amber" href="/">Back to FrontFrame</a>
+
+	</div>
+  </main>
+
+  <footer>
+	<p class="footer-text">© 2026 FrontFrame, LLC · frontframe.co</p>
+  </footer>
+
+</body>
+</html>
