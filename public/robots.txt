@@ -1,2 +1,41 @@
 User-agent: *
-Disallow: /
+Disallow: /admin
+Disallow: /login
+Disallow: /intake
+Disallow: /intake-confirmation
+Disallow: /discovery
+Disallow: /about
+Disallow: /book-thank-you
+Disallow: /yours
+
+User-agent: GPTBot
+Allow: /yours
+Disallow: /admin
+Disallow: /login
+Disallow: /intake
+Disallow: /intake-confirmation
+Disallow: /discovery
+Disallow: /about
+Disallow: /book-thank-you
+
+User-agent: ClaudeBot
+Allow: /yours
+Disallow: /admin
+Disallow: /login
+Disallow: /intake
+Disallow: /intake-confirmation
+Disallow: /discovery
+Disallow: /about
+Disallow: /book-thank-you
+
+User-agent: anthropic-ai
+Allow: /yours
+Disallow: /admin
+Disallow: /login
+Disallow: /intake
+Disallow: /intake-confirmation
+Disallow: /discovery
+Disallow: /about
+Disallow: /book-thank-you
+
+Sitemap: https://frontframe.co/sitemap.xml

@@ -6,8 +6,9 @@ const SALT        = "ff_preview_2026";
 const COOKIE_NAME = "ff_session";
 
 // Public paths — no authentication required.
+// / and /resources are public for search indexing and general visitors.
 // /yours is the QR code destination on business cards (contact only, no gated content).
-const PUBLIC_PATHS = ["/login", "/api/login", "/yours"];
+const PUBLIC_PATHS = ["/login", "/api/login", "/yours", "/", "/resources"];
 
 async function hashPassword(password) {
   const encoder = new TextEncoder();
@@ -35,7 +36,7 @@ export async function onRequest(context) {
 
   // Always allow public paths and static assets
   if (
-    PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
+    PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
     pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf)$/)
   ) {
     return next();
