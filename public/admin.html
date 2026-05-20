@@ -230,6 +230,54 @@
     .toggle-wrap label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--navy); cursor: pointer; }
     .toggle-wrap input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--amber); cursor: pointer; }
 
+    /* Solutions tab */
+    .mkt-question-box {
+      background: var(--offwhite);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--navy);
+      white-space: pre-wrap;
+      border-left: 3px solid var(--amber);
+    }
+    .mkt-prior-box {
+      background: var(--offwhite);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      border-left: 3px solid var(--gray);
+    }
+    .mkt-prior-label {
+      font-size: 0.68rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gray);
+      margin-bottom: 6px;
+    }
+    .mkt-prior-text {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--navy);
+      line-height: 1.5;
+    }
+    .mkt-note-input {
+      width: 100%;
+      min-width: 180px;
+      padding: 6px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      background: white;
+      color: var(--navy);
+      transition: border-color 0.15s;
+    }
+    .mkt-note-input:focus { border-color: var(--navy); }
+
     @media (max-width: 600px) {
       .tab-content { padding: 16px; }
       .mode-card { flex-direction: column; }
@@ -284,6 +332,7 @@
     <button class="tab-btn" data-tab="reviewers">Reviewers</button>
     <button class="tab-btn" data-tab="qa">Q&amp;A</button>
     <button class="tab-btn" data-tab="podcasts">Podcasts</button>
+    <button class="tab-btn" data-tab="marketing">Solutions</button>
   </nav>
 
   <div class="tab-content">
@@ -585,6 +634,39 @@
 
     </div>
 
+    <!-- SOLUTIONS -->
+    <div class="tab-panel" id="tab-marketing">
+
+      <!-- Session panel (dynamically rendered) -->
+      <div class="card" id="mkt-session-card">
+        <div class="empty-state"><p>Loading session…</p></div>
+      </div>
+
+      <!-- Log -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Session Log</div>
+            <div class="card-subtitle">Last 10 sessions. Results are editable inline.</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th style="width:80px">Date</th>
+              <th style="min-width:200px">Challenge</th>
+              <th style="min-width:180px">Action Committed</th>
+              <th style="min-width:200px">Result</th>
+            </tr></thead>
+            <tbody id="mkt-log-tbody">
+              <tr><td colspan="4"><div class="empty-state"><p>No sessions logged yet.</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
   </div>
 </div>
 
@@ -689,6 +771,12 @@ let qaPairs   = [];
 let alerts    = [];
 let episodes  = [];
 
+// Solutions state
+let marketingLog      = [];
+let marketingPlatform = 'General';
+let mktQuestion       = null;
+let mktPendingEntryId = null;
+
 const expandedAlerts = new Set();
 
 // AUTH
@@ -729,6 +817,12 @@ function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
   expandedAlerts.clear();
+
+  if (name === 'marketing') {
+    loadMarketingTab();
+    return;
+  }
+
   loadAll().then(() => {
     if (name === 'dashboard')   renderDashboard();
     if (name === 'lead-alerts') renderAlerts();
@@ -1330,6 +1424,218 @@ async function deleteEpisode(id) {
     renderEpisodes(); toast('Episode deleted.');
   } catch (e) { toast(e.message, 'error'); }
 }
+
+// ─── SOLUTIONS ────────────────────────────────────────────────────────────────
+
+async function loadMarketingTab() {
+  renderMarketingSession('loading');
+  try {
+    marketingLog = await api('GET', `/admin/marketing-log?platform=${encodeURIComponent(marketingPlatform)}`);
+  } catch (e) {
+    toast('Failed to load marketing log: ' + e.message, 'error');
+    marketingLog = [];
+  }
+  renderMarketingLog();
+
+  const mostRecent = marketingLog[0];
+
+  // If the prior session has a commitment but no follow-up note, collect it first
+  if (mostRecent && mostRecent.action_committed && !mostRecent.notes) {
+    mktPendingEntryId = mostRecent.id;
+    renderMarketingSession('note', mostRecent);
+  } else {
+    await loadMarketingQuestion();
+  }
+}
+
+async function loadMarketingQuestion() {
+  renderMarketingSession('loading');
+  try {
+    // Build conversation history from prior entries (oldest first, up to 10)
+    const priorEntries = [...marketingLog].slice(0, 10).reverse();
+    const history = [];
+    priorEntries.forEach(entry => {
+      history.push({ role: 'assistant', content: entry.question });
+      const parts = [entry.answer, entry.action_committed ? `Action committed: ${entry.action_committed}` : '', entry.notes ? `Follow-up: ${entry.notes}` : ''].filter(Boolean);
+      if (parts.length) history.push({ role: 'user', content: parts.join('\n\n') });
+    });
+
+    const message = `You are helping a small business owner work on their business one step at a time. Based on our prior sessions, ask one open, specific question to help them identify or make progress on what is taking the most energy in their business right now. If we have been working on a specific challenge, ask the next most useful question to move it forward. One question only.`;
+
+    const res = await fetch(`${WORKER_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ page: 'admin', message, history }),
+    });
+    if (!res.ok) throw new Error(`Chat request failed: ${res.status}`);
+    const data = await res.json();
+    mktQuestion = data.response;
+    renderMarketingSession('question');
+  } catch (e) {
+    toast('Could not generate question: ' + e.message, 'error');
+    renderMarketingSession('error');
+  }
+}
+
+function renderMarketingSession(state, data) {
+  const card = document.getElementById('mkt-session-card');
+  if (!card) return;
+
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  if (state === 'loading') {
+    card.innerHTML = `<div class="empty-state"><p style="color:var(--gray)">Loading session…</p></div>`;
+    return;
+  }
+
+  if (state === 'note') {
+    card.innerHTML = `
+      <div class="card-header" style="margin-bottom:20px">
+        <div>
+          <div class="card-title">Before We Begin</div>
+          <div class="card-subtitle">Follow-up on last session</div>
+        </div>
+      </div>
+      <div class="mkt-prior-box">
+        <div class="mkt-prior-label">Last time you committed to</div>
+        <div class="mkt-prior-text">${esc(data.action_committed)}</div>
+      </div>
+      <div class="form-group">
+        <label>How did it go?</label>
+        <textarea id="mkt-note-input" style="min-height:100px" placeholder="Write what actually happened — what you did, what worked, what didn't…"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button class="btn btn-ghost" onclick="skipNote()">Skip</button>
+        <button class="btn btn-primary" onclick="submitNote()">Save Note &amp; Continue</button>
+      </div>`;
+    setTimeout(() => document.getElementById('mkt-note-input')?.focus(), 50);
+    return;
+  }
+
+  if (state === 'question') {
+    card.innerHTML = `
+      <div class="card-header" style="margin-bottom:20px">
+        <div>
+          <div class="card-title">Today's Question</div>
+          <div class="card-subtitle">${today}</div>
+        </div>
+      </div>
+      <div class="mkt-question-box">${esc(mktQuestion ?? '')}</div>
+      <div class="form-group">
+        <label>Your Answer</label>
+        <textarea id="mkt-answer-input" style="min-height:100px" placeholder="Write your thinking in your own words…"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Action Committed</label>
+        <input type="text" id="mkt-action-input" placeholder="One specific thing you will do today…">
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" onclick="submitSession()">Log Session</button>
+      </div>`;
+    setTimeout(() => document.getElementById('mkt-answer-input')?.focus(), 50);
+    return;
+  }
+
+  if (state === 'saved') {
+    card.innerHTML = `
+      <div class="empty-state">
+        <div style="font-size:1.6rem;margin-bottom:8px;color:var(--green)">✓</div>
+        <p style="font-weight:500;color:var(--navy)">Session logged.</p>
+        <p style="margin-top:4px">Come back tomorrow.</p>
+      </div>`;
+    return;
+  }
+
+  if (state === 'error') {
+    card.innerHTML = `
+      <div class="empty-state">
+        <p>Could not load question.</p>
+        <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="loadMarketingQuestion()">Retry</button>
+      </div>`;
+    return;
+  }
+}
+
+async function submitNote() {
+  const noteEl = document.getElementById('mkt-note-input');
+  const note   = noteEl ? noteEl.value.trim() : '';
+  if (!note) { toast('Write a note before saving.', 'error'); return; }
+  try {
+    await api('PATCH', `/admin/marketing-log/${mktPendingEntryId}`, { notes: note });
+    const idx = marketingLog.findIndex(e => e.id === mktPendingEntryId);
+    if (idx >= 0) marketingLog[idx].notes = note;
+    mktPendingEntryId = null;
+    renderMarketingLog();
+    toast('Note saved.');
+    await loadMarketingQuestion();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function skipNote() {
+  mktPendingEntryId = null;
+  await loadMarketingQuestion();
+}
+
+async function submitSession() {
+  const answer = document.getElementById('mkt-answer-input')?.value.trim();
+  const action = document.getElementById('mkt-action-input')?.value.trim();
+  if (!answer) { toast('Write your answer before logging.', 'error'); return; }
+  if (!action) { toast('Commit to a specific action before logging.', 'error'); return; }
+  try {
+    const entry = await api('POST', '/admin/marketing-log', {
+      platform:         marketingPlatform,
+      question:         mktQuestion,
+      answer,
+      action_committed: action,
+    });
+    marketingLog.unshift(entry[0] ?? entry);
+    renderMarketingLog();
+    renderMarketingSession('saved');
+    toast('Session logged.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function saveInlineNote(id, value) {
+  try {
+    await api('PATCH', `/admin/marketing-log/${id}`, { notes: value });
+    const idx = marketingLog.findIndex(e => e.id === id);
+    if (idx >= 0) marketingLog[idx].notes = value;
+  } catch (e) { toast('Note save failed: ' + e.message, 'error'); }
+}
+
+function renderMarketingLog() {
+  const tbody = document.getElementById('mkt-log-tbody');
+  if (!tbody) return;
+  const rows = marketingLog.slice(0, 10);
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><p>No sessions logged yet.</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(e => `
+    <tr>
+      <td class="text-gray text-sm" style="white-space:nowrap">${fmtLogDate(e.log_date)}</td>
+      <td style="max-width:240px;font-size:0.875rem;line-height:1.45;white-space:normal">${esc(e.question)}</td>
+      <td style="max-width:200px;font-size:0.875rem;white-space:normal">${esc(e.action_committed ?? '—')}</td>
+      <td>
+        <input
+          class="mkt-note-input"
+          type="text"
+          value="${esc(e.notes ?? '')}"
+          placeholder="Add note…"
+          onblur="saveInlineNote('${e.id}', this.value); this.style.borderColor='var(--border)'"
+          onfocus="this.style.borderColor='var(--navy)'"
+          placeholder="How did it go…">
+      </td>
+    </tr>`).join('');
+}
+
+function fmtLogDate(dateStr) {
+  if (!dateStr) return '—';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// ─── END SOLUTIONS ────────────────────────────────────────────────────────────
 
 // HELPERS
 async function resetPassword(email) {
