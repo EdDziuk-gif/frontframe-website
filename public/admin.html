@@ -231,41 +231,39 @@
     .toggle-wrap input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--amber); cursor: pointer; }
 
     /* Solutions tab */
-    .mkt-question-box {
-      background: var(--offwhite);
-      border-radius: 8px;
-      padding: 20px 24px;
-      margin-bottom: 20px;
-      font-size: 1rem;
-      line-height: 1.7;
-      color: var(--navy);
-      white-space: pre-wrap;
+    .sol-orientation {
       border-left: 3px solid var(--amber);
-    }
-    .mkt-prior-box {
-      background: var(--offwhite);
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin-bottom: 20px;
-      border-left: 3px solid var(--gray);
-    }
-    .mkt-prior-label {
-      font-size: 0.68rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--gray);
-      margin-bottom: 6px;
-    }
-    .mkt-prior-text {
-      font-size: 0.95rem;
-      font-weight: 500;
+      padding: 18px 22px;
+      line-height: 1.75;
       color: var(--navy);
-      line-height: 1.5;
+      font-size: 0.9rem;
+      margin-bottom: 16px;
     }
-    .mkt-note-input {
+    .sol-problem-card {
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .sol-problem-card.active { border-color: var(--amber); background: #FFFBF3; }
+    .sol-problem-title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .sol-problem-outcome { font-size: 0.8rem; color: var(--gray); line-height: 1.45; }
+    .sol-problem-meta { font-size: 0.7rem; color: var(--gray); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .sol-problem-edit-area { width: 100%; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--navy); outline: none; margin-bottom: 8px; resize: vertical; }
+    .sol-problem-edit-area:focus { border-color: var(--navy); }
+
+    /* Chat bubbles */
+    .sol-msg { max-width: 78%; padding: 10px 14px; border-radius: 10px; font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+    .sol-msg.user   { background: var(--navy); color: white; align-self: flex-end; border-bottom-right-radius: 3px; }
+    .sol-msg.claude { background: white; color: var(--navy); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 3px; }
+    .sol-msg-role { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .sol-msg.user   .sol-msg-role { color: rgba(255,255,255,0.55); text-align: right; }
+    .sol-msg.claude .sol-msg-role { color: var(--amber); }
+    .sol-typing { color: var(--gray); font-size: 0.8rem; font-style: italic; padding: 4px 0; align-self: flex-start; }
+
+    .sol-result-input {
       width: 100%;
-      min-width: 180px;
       padding: 6px 10px;
       border: 1.5px solid var(--border);
       border-radius: 6px;
@@ -276,7 +274,7 @@
       color: var(--navy);
       transition: border-color 0.15s;
     }
-    .mkt-note-input:focus { border-color: var(--navy); }
+    .sol-result-input:focus { border-color: var(--navy); }
 
     @media (max-width: 600px) {
       .tab-content { padding: 16px; }
@@ -637,12 +635,58 @@
     <!-- SOLUTIONS -->
     <div class="tab-panel" id="tab-marketing">
 
-      <!-- Session panel (dynamically rendered) -->
-      <div class="card" id="mkt-session-card">
-        <div class="empty-state"><p>Loading session…</p></div>
+      <!-- Orientation -->
+      <div class="card sol-orientation">
+        Tell Claude what's on your mind — a problem, a frustration, something costing you time or money. Claude will ask questions until the real issue is clear. When you're ready, commit to one action. That commitment gets logged and we'll follow up next session.
       </div>
 
-      <!-- Log -->
+      <!-- Problem Statements -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Problems</div>
+            <div class="card-subtitle">Select one to begin a session. Edit anytime as your thinking evolves.</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="sol-toggle-add-btn" onclick="toggleAddProblem()">+ Add Problem</button>
+        </div>
+        <!-- Add form -->
+        <div id="sol-add-form" class="hidden" style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--ltgray)">
+          <div class="form-group"><label>Title</label><input type="text" id="sol-new-title" placeholder="e.g. Clients don't pay on time"></div>
+          <div class="form-group"><label>Description</label><textarea id="sol-new-description" placeholder="Describe the problem in your own words…"></textarea></div>
+          <div class="form-group"><label>Ideal Outcome</label><textarea id="sol-new-outcome" placeholder="What does success look like?"></textarea></div>
+          <div style="display:flex;justify-content:flex-end;gap:10px">
+            <button class="btn btn-ghost" onclick="toggleAddProblem()">Cancel</button>
+            <button class="btn btn-primary" onclick="addProblemStatement()">Save Problem</button>
+          </div>
+        </div>
+        <!-- Problem list -->
+        <div id="sol-problem-list">
+          <div class="empty-state"><p>No problems defined yet. Add one to begin.</p></div>
+        </div>
+      </div>
+
+      <!-- Chat -->
+      <div class="card hidden" id="sol-chat-card">
+        <!-- Active problem header -->
+        <div id="sol-active-header" style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--ltgray)"></div>
+        <!-- Messages -->
+        <div id="sol-messages" style="display:flex;flex-direction:column;gap:10px;min-height:80px;max-height:420px;overflow-y:auto;margin-bottom:16px;padding:4px 0"></div>
+        <!-- Input -->
+        <div style="display:flex;gap:10px;align-items:flex-end">
+          <textarea id="sol-input"
+            style="flex:1;min-height:60px;max-height:160px;resize:vertical;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:0.9rem;color:var(--navy);outline:none;transition:border-color 0.15s"
+            placeholder="Type your response…"
+            onkeydown="solInputKeydown(event)"
+            onfocus="this.style.borderColor='var(--navy)'"
+            onblur="this.style.borderColor='var(--border)'"></textarea>
+          <button class="btn btn-navy" id="sol-send-btn" onclick="sendSolutionMessage()">Send</button>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:12px">
+          <button class="btn btn-primary" onclick="concludeSession()">Conclude Session</button>
+        </div>
+      </div>
+
+      <!-- Session Log -->
       <div class="card">
         <div class="card-header">
           <div>
@@ -654,11 +698,11 @@
           <table>
             <thead><tr>
               <th style="width:80px">Date</th>
-              <th style="min-width:200px">Challenge</th>
-              <th style="min-width:180px">Action Committed</th>
+              <th style="min-width:160px">Problem</th>
+              <th style="min-width:200px">Action Committed</th>
               <th style="min-width:200px">Result</th>
             </tr></thead>
-            <tbody id="mkt-log-tbody">
+            <tbody id="sol-log-tbody">
               <tr><td colspan="4"><div class="empty-state"><p>No sessions logged yet.</p></div></td></tr>
             </tbody>
           </table>
@@ -772,10 +816,13 @@ let alerts    = [];
 let episodes  = [];
 
 // Solutions state
-let marketingLog      = [];
-let marketingPlatform = 'General';
-let mktQuestion       = null;
-let mktPendingEntryId = null;
+let problemStatements = [];
+let activeProblem     = null;
+let solutionsHistory  = [];
+let solDeliverables   = [];
+let solSending        = false;
+let solFirstQuestion  = null;
+let solLastUserMsg    = null;
 
 const expandedAlerts = new Set();
 
@@ -819,7 +866,7 @@ function switchTab(name) {
   expandedAlerts.clear();
 
   if (name === 'marketing') {
-    loadMarketingTab();
+    loadSolutionsTab();
     return;
   }
 
@@ -1427,206 +1474,300 @@ async function deleteEpisode(id) {
 
 // ─── SOLUTIONS ────────────────────────────────────────────────────────────────
 
-async function loadMarketingTab() {
-  renderMarketingSession('loading');
+async function loadSolutionsTab() {
   try {
-    marketingLog = await api('GET', `/admin/marketing-log?platform=${encodeURIComponent(marketingPlatform)}`);
+    [problemStatements, solDeliverables] = await Promise.all([
+      api('GET', '/admin/problem-statements'),
+      api('GET', '/admin/deliverables'),
+    ]);
   } catch (e) {
-    toast('Failed to load marketing log: ' + e.message, 'error');
-    marketingLog = [];
+    toast('Failed to load solutions data: ' + e.message, 'error');
+    problemStatements = []; solDeliverables = [];
   }
-  renderMarketingLog();
-
-  const mostRecent = marketingLog[0];
-
-  // If the prior session has a commitment but no follow-up note, collect it first
-  if (mostRecent && mostRecent.action_committed && !mostRecent.notes) {
-    mktPendingEntryId = mostRecent.id;
-    renderMarketingSession('note', mostRecent);
-  } else {
-    await loadMarketingQuestion();
-  }
+  renderProblemStatements();
+  renderSolLog();
+  // Reset chat
+  activeProblem    = null;
+  solutionsHistory = [];
+  document.getElementById('sol-chat-card').classList.add('hidden');
 }
 
-async function loadMarketingQuestion() {
-  renderMarketingSession('loading');
+function renderProblemStatements() {
+  const list = document.getElementById('sol-problem-list');
+  if (!list) return;
+  const active = problemStatements.filter(p => p.status === 'active');
+  const paused = problemStatements.filter(p => p.status === 'paused');
+  const all    = [...active, ...paused];
+  if (!all.length) {
+    list.innerHTML = '<div class="empty-state"><p>No problems defined yet. Add one to begin.</p></div>';
+    return;
+  }
+  list.innerHTML = all.map(p => {
+    const isActive = activeProblem?.id === p.id;
+    return `
+    <div class="sol-problem-card ${isActive ? 'active' : ''}" id="sol-pc-${p.id}">
+      <div id="sol-view-${p.id}">
+        <div class="sol-problem-title">${esc(p.title)}</div>
+        <div class="sol-problem-outcome">${esc(p.ideal_outcome)}</div>
+        <div class="sol-problem-meta">${p.status}</div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn btn-navy btn-sm" onclick="selectProblem('${p.id}')">Work on this</button>
+          <button class="btn btn-ghost btn-sm" onclick="openEditProblem('${p.id}')">Edit</button>
+          <button class="btn btn-ghost btn-sm" onclick="updateProblemStatus('${p.id}','${p.status === 'active' ? 'paused' : 'active'}')">${p.status === 'active' ? 'Pause' : 'Resume'}</button>
+          <button class="btn btn-ghost btn-sm" onclick="updateProblemStatus('${p.id}','resolved')">Resolve</button>
+        </div>
+      </div>
+      <div id="sol-edit-${p.id}" class="hidden">
+        <div style="margin-bottom:6px"><label style="font-size:0.7rem;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray)">Title</label>
+          <input class="sol-problem-edit-area" type="text" id="sol-edit-title-${p.id}" value="${esc(p.title)}"></div>
+        <div style="margin-bottom:6px"><label style="font-size:0.7rem;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray)">Description</label>
+          <textarea class="sol-problem-edit-area" id="sol-edit-desc-${p.id}" rows="3">${esc(p.description)}</textarea></div>
+        <div style="margin-bottom:10px"><label style="font-size:0.7rem;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray)">Ideal Outcome</label>
+          <textarea class="sol-problem-edit-area" id="sol-edit-outcome-${p.id}" rows="2">${esc(p.ideal_outcome)}</textarea></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="cancelEditProblem('${p.id}')">Cancel</button>
+          <button class="btn btn-navy btn-sm" onclick="saveProblemEdit('${p.id}')">Save</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAddProblem() {
+  const form = document.getElementById('sol-add-form');
+  const btn  = document.getElementById('sol-toggle-add-btn');
+  const hidden = form.classList.toggle('hidden');
+  btn.textContent = hidden ? '+ Add Problem' : 'Cancel';
+  if (!hidden) setTimeout(() => document.getElementById('sol-new-title')?.focus(), 50);
+}
+
+async function addProblemStatement() {
+  const title       = document.getElementById('sol-new-title')?.value.trim();
+  const description = document.getElementById('sol-new-description')?.value.trim();
+  const outcome     = document.getElementById('sol-new-outcome')?.value.trim();
+  if (!title || !description || !outcome) { toast('All three fields are required.', 'error'); return; }
   try {
-    // Build conversation history from prior entries (oldest first, up to 10)
-    const priorEntries = [...marketingLog].slice(0, 10).reverse();
-    const history = [];
-    priorEntries.forEach(entry => {
-      history.push({ role: 'assistant', content: entry.question });
-      const parts = [entry.answer, entry.action_committed ? `Action committed: ${entry.action_committed}` : '', entry.notes ? `Follow-up: ${entry.notes}` : ''].filter(Boolean);
-      if (parts.length) history.push({ role: 'user', content: parts.join('\n\n') });
-    });
+    const res = await api('POST', '/admin/problem-statements', { title, description, ideal_outcome: outcome });
+    problemStatements.unshift(res[0] ?? res);
+    document.getElementById('sol-new-title').value       = '';
+    document.getElementById('sol-new-description').value = '';
+    document.getElementById('sol-new-outcome').value     = '';
+    toggleAddProblem();
+    renderProblemStatements();
+    toast('Problem saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
 
-    const message = `You are helping a small business owner work on their business one step at a time. Based on our prior sessions, ask one open, specific question to help them identify or make progress on what is taking the most energy in their business right now. If we have been working on a specific challenge, ask the next most useful question to move it forward. One question only.`;
+function openEditProblem(id) {
+  document.getElementById(`sol-view-${id}`)?.classList.add('hidden');
+  document.getElementById(`sol-edit-${id}`)?.classList.remove('hidden');
+  setTimeout(() => document.getElementById(`sol-edit-title-${id}`)?.focus(), 50);
+}
 
+function cancelEditProblem(id) {
+  document.getElementById(`sol-edit-${id}`)?.classList.add('hidden');
+  document.getElementById(`sol-view-${id}`)?.classList.remove('hidden');
+}
+
+async function saveProblemEdit(id) {
+  const title       = document.getElementById(`sol-edit-title-${id}`)?.value.trim();
+  const description = document.getElementById(`sol-edit-desc-${id}`)?.value.trim();
+  const outcome     = document.getElementById(`sol-edit-outcome-${id}`)?.value.trim();
+  if (!title || !description || !outcome) { toast('All three fields are required.', 'error'); return; }
+  try {
+    await api('PATCH', `/admin/problem-statements/${id}`, { title, description, ideal_outcome: outcome });
+    const idx = problemStatements.findIndex(p => p.id === id);
+    if (idx >= 0) Object.assign(problemStatements[idx], { title, description, ideal_outcome: outcome });
+    renderProblemStatements();
+    toast('Problem updated.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function updateProblemStatus(id, status) {
+  try {
+    await api('PATCH', `/admin/problem-statements/${id}`, { status });
+    const idx = problemStatements.findIndex(p => p.id === id);
+    if (idx >= 0) problemStatements[idx].status = status;
+    if (activeProblem?.id === id) {
+      activeProblem = null;
+      document.getElementById('sol-chat-card').classList.add('hidden');
+    }
+    renderProblemStatements();
+    toast(`Problem marked ${status}.`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function selectProblem(id) {
+  activeProblem    = problemStatements.find(p => p.id === id);
+  solutionsHistory = [];
+  solFirstQuestion = null;
+  solLastUserMsg   = null;
+  renderProblemStatements();
+
+  // Show chat card
+  const chatCard = document.getElementById('sol-chat-card');
+  chatCard.classList.remove('hidden');
+
+  // Render active problem header
+  document.getElementById('sol-active-header').innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <div class="card-title">${esc(activeProblem.title)}</div>
+        <div class="card-subtitle" style="margin-top:3px">Ideal outcome: ${esc(activeProblem.ideal_outcome)}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openEditProblem('${id}');document.getElementById('sol-chat-card').classList.add('hidden')">Edit Problem</button>
+    </div>`;
+
+  // Clear messages and show typing
+  const msgs = document.getElementById('sol-messages');
+  msgs.innerHTML = '<div class="sol-typing">Claude is thinking…</div>';
+
+  // Send opening message to Claude
+  const openingMsg = `I am working on a problem in my business.\n\nTitle: ${activeProblem.title}\n\nDescription: ${activeProblem.description}\n\nMy ideal outcome: ${activeProblem.ideal_outcome}\n\nPlease ask me one focused, open question to help me think through this more clearly or make progress on it today. Build on any prior context we have from previous sessions.`;
+
+  try {
     const res = await fetch(`${WORKER_URL}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ page: 'admin', message, history }),
+      body: JSON.stringify({ page: 'admin', message: openingMsg, history: [] }),
     });
-    if (!res.ok) throw new Error(`Chat request failed: ${res.status}`);
+    if (!res.ok) throw new Error(`Chat failed: ${res.status}`);
     const data = await res.json();
-    mktQuestion = data.response;
-    renderMarketingSession('question');
+    solFirstQuestion = data.response;
+    solutionsHistory = [
+      { role: 'user',      content: openingMsg    },
+      { role: 'assistant', content: data.response },
+    ];
+    msgs.innerHTML = '';
+    appendSolMessage('claude', data.response);
+    setTimeout(() => document.getElementById('sol-input')?.focus(), 50);
+    chatCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch (e) {
-    toast('Could not generate question: ' + e.message, 'error');
-    renderMarketingSession('error');
+    msgs.innerHTML = `<div class="empty-state"><p>Could not start session: ${esc(e.message)}</p><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="selectProblem('${id}')">Retry</button></div>`;
   }
 }
 
-function renderMarketingSession(state, data) {
-  const card = document.getElementById('mkt-session-card');
-  if (!card) return;
-
-  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-  if (state === 'loading') {
-    card.innerHTML = `<div class="empty-state"><p style="color:var(--gray)">Loading session…</p></div>`;
-    return;
-  }
-
-  if (state === 'note') {
-    card.innerHTML = `
-      <div class="card-header" style="margin-bottom:20px">
-        <div>
-          <div class="card-title">Before We Begin</div>
-          <div class="card-subtitle">Follow-up on last session</div>
-        </div>
-      </div>
-      <div class="mkt-prior-box">
-        <div class="mkt-prior-label">Last time you committed to</div>
-        <div class="mkt-prior-text">${esc(data.action_committed)}</div>
-      </div>
-      <div class="form-group">
-        <label>How did it go?</label>
-        <textarea id="mkt-note-input" style="min-height:100px" placeholder="Write what actually happened — what you did, what worked, what didn't…"></textarea>
-      </div>
-      <div style="display:flex;justify-content:flex-end;gap:10px">
-        <button class="btn btn-ghost" onclick="skipNote()">Skip</button>
-        <button class="btn btn-primary" onclick="submitNote()">Save Note &amp; Continue</button>
-      </div>`;
-    setTimeout(() => document.getElementById('mkt-note-input')?.focus(), 50);
-    return;
-  }
-
-  if (state === 'question') {
-    card.innerHTML = `
-      <div class="card-header" style="margin-bottom:20px">
-        <div>
-          <div class="card-title">Today's Question</div>
-          <div class="card-subtitle">${today}</div>
-        </div>
-      </div>
-      <div class="mkt-question-box">${esc(mktQuestion ?? '')}</div>
-      <div class="form-group">
-        <label>Your Answer</label>
-        <textarea id="mkt-answer-input" style="min-height:100px" placeholder="Write your thinking in your own words…"></textarea>
-      </div>
-      <div class="form-group">
-        <label>Action Committed</label>
-        <input type="text" id="mkt-action-input" placeholder="One specific thing you will do today…">
-      </div>
-      <div style="display:flex;justify-content:flex-end">
-        <button class="btn btn-primary" onclick="submitSession()">Log Session</button>
-      </div>`;
-    setTimeout(() => document.getElementById('mkt-answer-input')?.focus(), 50);
-    return;
-  }
-
-  if (state === 'saved') {
-    card.innerHTML = `
-      <div class="empty-state">
-        <div style="font-size:1.6rem;margin-bottom:8px;color:var(--green)">✓</div>
-        <p style="font-weight:500;color:var(--navy)">Session logged.</p>
-        <p style="margin-top:4px">Come back tomorrow.</p>
-      </div>`;
-    return;
-  }
-
-  if (state === 'error') {
-    card.innerHTML = `
-      <div class="empty-state">
-        <p>Could not load question.</p>
-        <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="loadMarketingQuestion()">Retry</button>
-      </div>`;
-    return;
-  }
+function appendSolMessage(role, content) {
+  const msgs = document.getElementById('sol-messages');
+  if (!msgs) return;
+  const div = document.createElement('div');
+  div.className = `sol-msg ${role === 'user' ? 'user' : 'claude'}`;
+  div.innerHTML = `<div class="sol-msg-role">${role === 'user' ? 'You' : 'Claude'}</div>${esc(content)}`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
-async function submitNote() {
-  const noteEl = document.getElementById('mkt-note-input');
-  const note   = noteEl ? noteEl.value.trim() : '';
-  if (!note) { toast('Write a note before saving.', 'error'); return; }
+function solInputKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendSolutionMessage(); }
+}
+
+async function sendSolutionMessage() {
+  if (solSending) return;
+  const input   = document.getElementById('sol-input');
+  const message = input?.value.trim();
+  if (!message) return;
+  input.value = '';
+  input.style.borderColor = 'var(--border)';
+
+  solLastUserMsg = message;
+  appendSolMessage('user', message);
+  solutionsHistory.push({ role: 'user', content: message });
+
+  solSending = true;
+  document.getElementById('sol-send-btn').disabled = true;
+
+  const msgs = document.getElementById('sol-messages');
+  const typing = document.createElement('div');
+  typing.className = 'sol-typing';
+  typing.textContent = 'Claude is thinking…';
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+
   try {
-    await api('PATCH', `/admin/marketing-log/${mktPendingEntryId}`, { notes: note });
-    const idx = marketingLog.findIndex(e => e.id === mktPendingEntryId);
-    if (idx >= 0) marketingLog[idx].notes = note;
-    mktPendingEntryId = null;
-    renderMarketingLog();
-    toast('Note saved.');
-    await loadMarketingQuestion();
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function skipNote() {
-  mktPendingEntryId = null;
-  await loadMarketingQuestion();
-}
-
-async function submitSession() {
-  const answer = document.getElementById('mkt-answer-input')?.value.trim();
-  const action = document.getElementById('mkt-action-input')?.value.trim();
-  if (!answer) { toast('Write your answer before logging.', 'error'); return; }
-  if (!action) { toast('Commit to a specific action before logging.', 'error'); return; }
-  try {
-    const entry = await api('POST', '/admin/marketing-log', {
-      platform:         marketingPlatform,
-      question:         mktQuestion,
-      answer,
-      action_committed: action,
+    const res = await fetch(`${WORKER_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ page: 'admin', message, history: solutionsHistory.slice(0, -1) }),
     });
-    marketingLog.unshift(entry[0] ?? entry);
-    renderMarketingLog();
-    renderMarketingSession('saved');
+    if (!res.ok) throw new Error(`Chat failed: ${res.status}`);
+    const data = await res.json();
+    msgs.removeChild(typing);
+    solutionsHistory.push({ role: 'assistant', content: data.response });
+    appendSolMessage('claude', data.response);
+  } catch (e) {
+    msgs.removeChild(typing);
+    toast('Could not reach Claude: ' + e.message, 'error');
+    solutionsHistory.pop(); // remove the user message that failed
+  } finally {
+    solSending = false;
+    document.getElementById('sol-send-btn').disabled = false;
+    setTimeout(() => input?.focus(), 50);
+  }
+}
+
+async function concludeSession() {
+  if (!activeProblem) { toast('Select a problem first.', 'error'); return; }
+  if (solutionsHistory.length < 2) { toast('Have a conversation first before concluding.', 'error'); return; }
+
+  const action = prompt('What one action are you committing to from this session?');
+  if (!action || !action.trim()) return;
+
+  try {
+    const entry = await api('POST', '/admin/deliverables', {
+      problem_id:       activeProblem.id,
+      challenge:        solFirstQuestion ?? 'Session',
+      response:         solLastUserMsg   ?? '',
+      action_committed: action.trim(),
+    });
+    solDeliverables.unshift(entry[0] ?? entry);
+    renderSolLog();
     toast('Session logged.');
+
+    // Reset chat
+    activeProblem    = null;
+    solutionsHistory = [];
+    solFirstQuestion = null;
+    solLastUserMsg   = null;
+    document.getElementById('sol-chat-card').classList.add('hidden');
+    document.getElementById('sol-messages').innerHTML = '';
+    renderProblemStatements();
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function saveInlineNote(id, value) {
+async function saveDeliverableObservation(id, value) {
   try {
-    await api('PATCH', `/admin/marketing-log/${id}`, { notes: value });
-    const idx = marketingLog.findIndex(e => e.id === id);
-    if (idx >= 0) marketingLog[idx].notes = value;
-  } catch (e) { toast('Note save failed: ' + e.message, 'error'); }
+    await api('PATCH', `/admin/deliverables/${id}`, { observation: value });
+    const idx = solDeliverables.findIndex(d => d.id === id);
+    if (idx >= 0) solDeliverables[idx].observation = value;
+  } catch (e) { toast('Save failed: ' + e.message, 'error'); }
 }
 
-function renderMarketingLog() {
-  const tbody = document.getElementById('mkt-log-tbody');
+function renderSolLog() {
+  const tbody = document.getElementById('sol-log-tbody');
   if (!tbody) return;
-  const rows = marketingLog.slice(0, 10);
+  const rows = solDeliverables.slice(0, 10);
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><p>No sessions logged yet.</p></div></td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map(e => `
+  tbody.innerHTML = rows.map(d => {
+    const prob = problemStatements.find(p => p.id === d.problem_id);
+    return `
     <tr>
-      <td class="text-gray text-sm" style="white-space:nowrap">${fmtLogDate(e.log_date)}</td>
-      <td style="max-width:240px;font-size:0.875rem;line-height:1.45;white-space:normal">${esc(e.question)}</td>
-      <td style="max-width:200px;font-size:0.875rem;white-space:normal">${esc(e.action_committed ?? '—')}</td>
+      <td class="text-gray text-sm" style="white-space:nowrap">${fmtLogDate(d.session_date)}</td>
+      <td style="max-width:160px;font-size:0.875rem;white-space:normal;font-weight:500">${esc(prob?.title ?? '—')}</td>
+      <td style="max-width:200px;font-size:0.875rem;white-space:normal">${esc(d.action_committed ?? '—')}</td>
       <td>
         <input
-          class="mkt-note-input"
+          class="sol-result-input"
           type="text"
-          value="${esc(e.notes ?? '')}"
-          placeholder="Add note…"
-          onblur="saveInlineNote('${e.id}', this.value); this.style.borderColor='var(--border)'"
-          onfocus="this.style.borderColor='var(--navy)'"
-          placeholder="How did it go…">
+          value="${esc(d.observation ?? '')}"
+          placeholder="How did it go…"
+          onblur="saveDeliverableObservation('${d.id}', this.value); this.style.borderColor='var(--border)'"
+          onfocus="this.style.borderColor='var(--navy)'">
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function fmtLogDate(dateStr) {
