@@ -704,10 +704,7 @@
       pointer-events: all;
     }
 
-    /* Expands when conversation is active */
-    .chat-panel.expanded {
-      height: 560px;
-    }
+    .chat-panel.expanded { height: 560px; }
 
     .chat-header {
       background: var(--navy);
@@ -777,6 +774,16 @@
 
     .msg.typing {
       background: var(--white); align-self: flex-start; color: var(--gray);
+    }
+
+    /* Confirmation bubble — shown after contact handoff */
+    .msg.confirmed {
+      background: rgba(245,166,35,0.1);
+      border: 1px solid rgba(245,166,35,0.3);
+      color: var(--navy);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      max-width: 92%;
     }
 
     .chat-input-row {
@@ -1124,11 +1131,13 @@
     const input    = document.getElementById('chatInput');
     const sendBtn  = document.getElementById('chatSend');
 
-    const sessionId = crypto.randomUUID();
-    let isOpen      = false;
-    let history     = [];
-    let greeted     = false;
-    let expanded    = false;
+    const sessionId  = crypto.randomUUID();
+    let isOpen       = false;
+    let history      = [];
+    let greeted      = false;
+    let expanded     = false;
+    let handoffDone  = false;
+    let autoCloseTimer = null;   // cancelled on first user message
 
     // ── Auto-resize textarea ──
     function resizeInput() {
@@ -1168,9 +1177,10 @@
     toggle.addEventListener('click', openChat);
     closeBtn.addEventListener('click', closeChat);
 
+    // ── Message rendering ──
     function addMessage(text, role) {
       const div = document.createElement('div');
-      div.className = `msg ${role === 'user' ? 'user' : 'agent'}`;
+      div.className = `msg ${role === 'user' ? 'user' : role === 'confirmed' ? 'confirmed' : 'agent'}`;
       div.textContent = text;
       messages.appendChild(div);
       messages.scrollTop = messages.scrollHeight;
@@ -1190,14 +1200,56 @@
       if (el) el.remove();
     }
 
+    // ── Parse [COLLECTED:{...}] signal ──
+    function parseCollected(reply) {
+      const match = reply.match(/\[COLLECTED:([\s\S]*?)\]/);
+      if (!match) return null;
+      try { return JSON.parse(match[1]); }
+      catch { return null; }
+    }
+
+    // ── Notify Ed via Worker ──
+    async function notifyEd(contactData) {
+      if (handoffDone) return;
+      handoffDone = true;
+      const transcript = history
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => `${m.role === 'user' ? 'Visitor' : 'Assistant'}: ${m.content}`)
+        .join('\n');
+      try {
+        await fetch(`${WORKER_URL}/notify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId,
+            name:       contactData.name    || '',
+            contact:    contactData.contact || '',
+            method:     contactData.method  || '',
+            summary:    contactData.summary || '',
+            transcript: transcript,
+            source:     'agent',
+          }),
+        });
+      } catch { /* silent — confirmation already shown */ }
+    }
+
+    // ── Main send handler ──
     async function sendMessage(text) {
       if (!text.trim()) return;
+
+      // Cancel the auto-close timer the moment the visitor sends anything
+      if (autoCloseTimer) {
+        clearTimeout(autoCloseTimer);
+        autoCloseTimer = null;
+      }
+
       expandPanel();
       addMessage(text, 'user');
       history.push({ role: 'user', content: text });
       resetInput();
       sendBtn.disabled = true;
       addTyping();
+
       try {
         const res = await fetch(`${WORKER_URL}/chat`, {
           method: 'POST',
@@ -1206,14 +1258,35 @@
         });
         const data = await res.json();
         removeTyping();
-        const reply = data.response || 'Sorry, something went wrong.';
+        let reply = data.response || 'Sorry, something went wrong.';
+
+        // ── COLLECTED signal: strip marker, confirm, notify ──
+        const collected = parseCollected(reply);
+        if (collected) {
+          const clean = reply.replace(/\[COLLECTED:[\s\S]*?\]/, '').trim();
+          if (clean) {
+            addMessage(clean, 'agent');
+            history.push({ role: 'assistant', content: clean });
+          }
+          setTimeout(() => {
+            addMessage("Got it. Ed will be in touch — you'll hear from him directly, not from a system.", 'confirmed');
+            input.disabled    = true;
+            sendBtn.disabled  = true;
+            input.placeholder = 'Ed has your details.';
+          }, 600);
+          await notifyEd(collected);
+          return;
+        }
+
+        // ── Standard reply ──
         addMessage(reply, 'agent');
         history.push({ role: 'assistant', content: reply });
+
       } catch {
         removeTyping();
         addMessage('Having trouble connecting right now. Please try again.', 'agent');
       } finally {
-        sendBtn.disabled = false;
+        if (!handoffDone) sendBtn.disabled = false;
         input.focus();
       }
     }
@@ -1233,11 +1306,13 @@
       }
     });
 
-    // Auto-open after 3 seconds — skipped if user already dismissed this session
+    // Auto-open after 3 s — skipped if visitor already dismissed this session.
+    // Auto-close after 17 s of inactivity, but only if the visitor has not
+    // sent a message (autoCloseTimer is cleared on first send).
     if (!sessionStorage.getItem('chatDismissed_home')) {
       setTimeout(() => {
         openChat();
-        setTimeout(() => {
+        autoCloseTimer = setTimeout(() => {
           if (isOpen) closeChat();
         }, 17000);
       }, 3000);
