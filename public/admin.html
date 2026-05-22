@@ -230,40 +230,42 @@
     .toggle-wrap label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--navy); cursor: pointer; }
     .toggle-wrap input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--amber); cursor: pointer; }
 
-    /* Solutions tab */
-    .sol-orientation {
-      border-left: 3px solid var(--amber);
-      padding: 18px 22px;
-      line-height: 1.75;
-      color: var(--navy);
-      font-size: 0.9rem;
-      margin-bottom: 16px;
-    }
-    .sol-problem-card {
-      padding: 14px 16px;
-      border: 1.5px solid var(--border);
+    /* Marketing tab */
+    .mkt-question-box {
+      background: var(--offwhite);
       border-radius: 8px;
-      margin-bottom: 10px;
-      transition: border-color 0.15s, background 0.15s;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--navy);
+      white-space: pre-wrap;
+      border-left: 3px solid var(--amber);
     }
-    .sol-problem-card.active { border-color: var(--amber); background: #FFFBF3; }
-    .sol-problem-title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
-    .sol-problem-outcome { font-size: 0.8rem; color: var(--gray); line-height: 1.45; }
-    .sol-problem-meta { font-size: 0.7rem; color: var(--gray); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
-    .sol-problem-edit-area { width: 100%; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--navy); outline: none; margin-bottom: 8px; resize: vertical; }
-    .sol-problem-edit-area:focus { border-color: var(--navy); }
-
-    /* Chat bubbles */
-    .sol-msg { max-width: 78%; padding: 10px 14px; border-radius: 10px; font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-    .sol-msg.user   { background: var(--navy); color: white; align-self: flex-end; border-bottom-right-radius: 3px; }
-    .sol-msg.claude { background: white; color: var(--navy); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 3px; }
-    .sol-msg-role { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-    .sol-msg.user   .sol-msg-role { color: rgba(255,255,255,0.55); text-align: right; }
-    .sol-msg.claude .sol-msg-role { color: var(--amber); }
-    .sol-typing { color: var(--gray); font-size: 0.8rem; font-style: italic; padding: 4px 0; align-self: flex-start; }
-
-    .sol-result-input {
+    .mkt-prior-box {
+      background: var(--offwhite);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      border-left: 3px solid var(--gray);
+    }
+    .mkt-prior-label {
+      font-size: 0.68rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gray);
+      margin-bottom: 6px;
+    }
+    .mkt-prior-text {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--navy);
+      line-height: 1.5;
+    }
+    .mkt-note-input {
       width: 100%;
+      min-width: 180px;
       padding: 6px 10px;
       border: 1.5px solid var(--border);
       border-radius: 6px;
@@ -274,6 +276,36 @@
       color: var(--navy);
       transition: border-color 0.15s;
     }
+    .mkt-note-input:focus { border-color: var(--navy); }
+
+    .badge-pending      { background: var(--ltgray);  color: var(--gray); }
+    .badge-submitted    { background: #EBF5FF;         color: var(--blue); }
+    .badge-provisioned  { background: #FEF3E2;         color: var(--orange); }
+    .badge-active       { background: #E8F8EE;         color: var(--green); }
+    .badge-paused       { background: var(--ltgray);   color: var(--gray); }
+    .badge-surge        { background: #FFF3D6;         color: #B7680A; }
+    .badge-stripe       { background: #EDE8FF;         color: #5B35B8; }
+    .badge-supabase     { background: #E8F8EE;         color: var(--green); }
+    .badge-cloudflare   { background: #FEF3E2;         color: var(--orange); }
+    .badge-anthropic    { background: #FDECEA;         color: var(--red); }
+
+    /* Solutions tab */
+    .sol-orientation { border-left: 3px solid var(--amber); padding: 18px 22px; line-height: 1.75; color: var(--navy); font-size: 0.9rem; margin-bottom: 16px; }
+    .sol-problem-card { padding: 14px 16px; border: 1.5px solid var(--border); border-radius: 8px; margin-bottom: 10px; transition: border-color 0.15s, background 0.15s; }
+    .sol-problem-card.active { border-color: var(--amber); background: #FFFBF3; }
+    .sol-problem-title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .sol-problem-outcome { font-size: 0.8rem; color: var(--gray); line-height: 1.45; }
+    .sol-problem-meta { font-size: 0.7rem; color: var(--gray); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .sol-problem-edit-area { width: 100%; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--navy); outline: none; margin-bottom: 8px; resize: vertical; }
+    .sol-problem-edit-area:focus { border-color: var(--navy); }
+    .sol-msg { max-width: 78%; padding: 10px 14px; border-radius: 10px; font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+    .sol-msg.user   { background: var(--navy); color: white; align-self: flex-end; border-bottom-right-radius: 3px; }
+    .sol-msg.claude { background: white; color: var(--navy); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 3px; }
+    .sol-msg-role { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .sol-msg.user   .sol-msg-role { color: rgba(255,255,255,0.55); text-align: right; }
+    .sol-msg.claude .sol-msg-role { color: var(--amber); }
+    .sol-typing { color: var(--gray); font-size: 0.8rem; font-style: italic; padding: 4px 0; align-self: flex-start; }
+    .sol-result-input { width: 100%; padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.85rem; font-family: 'Inter', sans-serif; outline: none; background: white; color: var(--navy); transition: border-color 0.15s; }
     .sol-result-input:focus { border-color: var(--navy); }
 
     @media (max-width: 600px) {
@@ -331,6 +363,7 @@
     <button class="tab-btn" data-tab="qa">Q&amp;A</button>
     <button class="tab-btn" data-tab="podcasts">Podcasts</button>
     <button class="tab-btn" data-tab="marketing">Solutions</button>
+    <button class="tab-btn" data-tab="subscriptions">Subscriptions</button>
   </nav>
 
   <div class="tab-content">
@@ -635,12 +668,10 @@
     <!-- SOLUTIONS -->
     <div class="tab-panel" id="tab-marketing">
 
-      <!-- Orientation -->
       <div class="card sol-orientation">
         Tell Claude what's on your mind — a problem, a frustration, something costing you time or money. Claude will ask questions until the real issue is clear. When you're ready, commit to one action. That commitment gets logged and we'll follow up next session.
       </div>
 
-      <!-- Problem Statements -->
       <div class="card">
         <div class="card-header">
           <div>
@@ -649,7 +680,6 @@
           </div>
           <button class="btn btn-ghost btn-sm" id="sol-toggle-add-btn" onclick="toggleAddProblem()">+ Add Problem</button>
         </div>
-        <!-- Add form -->
         <div id="sol-add-form" class="hidden" style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--ltgray)">
           <div class="form-group"><label>Title</label><input type="text" id="sol-new-title" placeholder="e.g. Clients don't pay on time"></div>
           <div class="form-group"><label>Description</label><textarea id="sol-new-description" placeholder="Describe the problem in your own words…"></textarea></div>
@@ -659,19 +689,12 @@
             <button class="btn btn-primary" onclick="addProblemStatement()">Save Problem</button>
           </div>
         </div>
-        <!-- Problem list -->
-        <div id="sol-problem-list">
-          <div class="empty-state"><p>No problems defined yet. Add one to begin.</p></div>
-        </div>
+        <div id="sol-problem-list"><div class="empty-state"><p>No problems defined yet. Add one to begin.</p></div></div>
       </div>
 
-      <!-- Chat -->
       <div class="card hidden" id="sol-chat-card">
-        <!-- Active problem header -->
         <div id="sol-active-header" style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--ltgray)"></div>
-        <!-- Messages -->
         <div id="sol-messages" style="display:flex;flex-direction:column;gap:10px;min-height:80px;max-height:420px;overflow-y:auto;margin-bottom:16px;padding:4px 0"></div>
-        <!-- Input -->
         <div style="display:flex;gap:10px;align-items:flex-end">
           <textarea id="sol-input"
             style="flex:1;min-height:60px;max-height:160px;resize:vertical;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:0.9rem;color:var(--navy);outline:none;transition:border-color 0.15s"
@@ -686,13 +709,9 @@
         </div>
       </div>
 
-      <!-- Session Log -->
       <div class="card">
         <div class="card-header">
-          <div>
-            <div class="card-title">Session Log</div>
-            <div class="card-subtitle">Last 10 sessions. Results are editable inline.</div>
-          </div>
+          <div><div class="card-title">Session Log</div><div class="card-subtitle">Last 10 sessions. Results are editable inline.</div></div>
         </div>
         <div class="table-wrap">
           <table>
@@ -704,6 +723,61 @@
             </tr></thead>
             <tbody id="sol-log-tbody">
               <tr><td colspan="4"><div class="empty-state"><p>No sessions logged yet.</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SUBSCRIPTIONS -->
+    <div class="tab-panel" id="tab-subscriptions">
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Add Subscription</div>
+            <div class="card-subtitle">Track third-party platform accounts connected to FrontFrame.</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px">
+          <div class="form-group"><label>Platform</label>
+            <select id="sub-new-platform">
+              <option value="surge">Surge</option>
+              <option value="stripe">Stripe</option>
+              <option value="supabase">Supabase</option>
+              <option value="cloudflare">Cloudflare</option>
+              <option value="anthropic">Anthropic</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Provisioned By</label>
+            <select id="sub-new-provisioned-by">
+              <option value="frontframe">FrontFrame</option>
+              <option value="client">Client</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="form-group" style="margin-bottom:0"><label>Account Email</label><input type="email" id="sub-new-email" placeholder="account@example.com"></div>
+          <div class="form-group" style="margin-bottom:0"><label>Account Identifier</label><input type="text" id="sub-new-identifier" placeholder="Phone number, org name, domain…"></div>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="sub-new-notes" placeholder="Any relevant setup notes…" style="min-height:60px"></textarea></div>
+        <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" onclick="addSubscription()">Add Subscription</button></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">All Subscriptions</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Platform</th><th>Status</th><th>By</th>
+              <th style="min-width:160px">Account Email</th>
+              <th style="min-width:160px">Identifier</th>
+              <th style="min-width:120px">Notes</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="sub-tbody">
+              <tr><td colspan="7"><div class="empty-state"><p>No subscriptions yet.</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -815,6 +889,7 @@ let qaPairs   = [];
 let alerts    = [];
 let episodes  = [];
 
+// Marketing state
 // Solutions state
 let problemStatements = [];
 let activeProblem     = null;
@@ -823,6 +898,9 @@ let solDeliverables   = [];
 let solSending        = false;
 let solFirstQuestion  = null;
 let solLastUserMsg    = null;
+
+// Subscriptions state
+let subscriptions = [];
 
 const expandedAlerts = new Set();
 
@@ -867,6 +945,11 @@ function switchTab(name) {
 
   if (name === 'marketing') {
     loadSolutionsTab();
+    return;
+  }
+
+  if (name === 'subscriptions') {
+    loadSubscriptionsTab();
     return;
   }
 
@@ -1486,7 +1569,6 @@ async function loadSolutionsTab() {
   }
   renderProblemStatements();
   renderSolLog();
-  // Reset chat
   activeProblem    = null;
   solutionsHistory = [];
   document.getElementById('sol-chat-card').classList.add('hidden');
@@ -1498,10 +1580,7 @@ function renderProblemStatements() {
   const active = problemStatements.filter(p => p.status === 'active');
   const paused = problemStatements.filter(p => p.status === 'paused');
   const all    = [...active, ...paused];
-  if (!all.length) {
-    list.innerHTML = '<div class="empty-state"><p>No problems defined yet. Add one to begin.</p></div>';
-    return;
-  }
+  if (!all.length) { list.innerHTML = '<div class="empty-state"><p>No problems defined yet. Add one to begin.</p></div>'; return; }
   list.innerHTML = all.map(p => {
     const isActive = activeProblem?.id === p.id;
     return `
@@ -1588,10 +1667,7 @@ async function updateProblemStatus(id, status) {
     await api('PATCH', `/admin/problem-statements/${id}`, { status });
     const idx = problemStatements.findIndex(p => p.id === id);
     if (idx >= 0) problemStatements[idx].status = status;
-    if (activeProblem?.id === id) {
-      activeProblem = null;
-      document.getElementById('sol-chat-card').classList.add('hidden');
-    }
+    if (activeProblem?.id === id) { activeProblem = null; document.getElementById('sol-chat-card').classList.add('hidden'); }
     renderProblemStatements();
     toast(`Problem marked ${status}.`);
   } catch (e) { toast(e.message, 'error'); }
@@ -1604,11 +1680,9 @@ async function selectProblem(id) {
   solLastUserMsg   = null;
   renderProblemStatements();
 
-  // Show chat card
   const chatCard = document.getElementById('sol-chat-card');
   chatCard.classList.remove('hidden');
 
-  // Render active problem header
   document.getElementById('sol-active-header').innerHTML = `
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <div>
@@ -1618,11 +1692,9 @@ async function selectProblem(id) {
       <button class="btn btn-ghost btn-sm" onclick="openEditProblem('${id}');document.getElementById('sol-chat-card').classList.add('hidden')">Edit Problem</button>
     </div>`;
 
-  // Clear messages and show typing
   const msgs = document.getElementById('sol-messages');
   msgs.innerHTML = '<div class="sol-typing">Claude is thinking…</div>';
 
-  // Send opening message to Claude
   const openingMsg = `I am working on a problem in my business.\n\nTitle: ${activeProblem.title}\n\nDescription: ${activeProblem.description}\n\nMy ideal outcome: ${activeProblem.ideal_outcome}\n\nPlease ask me one focused, open question to help me think through this more clearly or make progress on it today. Build on any prior context we have from previous sessions.`;
 
   try {
@@ -1668,21 +1740,17 @@ async function sendSolutionMessage() {
   if (!message) return;
   input.value = '';
   input.style.borderColor = 'var(--border)';
-
   solLastUserMsg = message;
   appendSolMessage('user', message);
   solutionsHistory.push({ role: 'user', content: message });
-
   solSending = true;
   document.getElementById('sol-send-btn').disabled = true;
-
-  const msgs = document.getElementById('sol-messages');
+  const msgs   = document.getElementById('sol-messages');
   const typing = document.createElement('div');
   typing.className = 'sol-typing';
   typing.textContent = 'Claude is thinking…';
   msgs.appendChild(typing);
   msgs.scrollTop = msgs.scrollHeight;
-
   try {
     const res = await fetch(`${WORKER_URL}/chat`, {
       method: 'POST',
@@ -1697,7 +1765,7 @@ async function sendSolutionMessage() {
   } catch (e) {
     msgs.removeChild(typing);
     toast('Could not reach Claude: ' + e.message, 'error');
-    solutionsHistory.pop(); // remove the user message that failed
+    solutionsHistory.pop();
   } finally {
     solSending = false;
     document.getElementById('sol-send-btn').disabled = false;
@@ -1708,10 +1776,8 @@ async function sendSolutionMessage() {
 async function concludeSession() {
   if (!activeProblem) { toast('Select a problem first.', 'error'); return; }
   if (solutionsHistory.length < 2) { toast('Have a conversation first before concluding.', 'error'); return; }
-
   const action = prompt('What one action are you committing to from this session?');
   if (!action || !action.trim()) return;
-
   try {
     const entry = await api('POST', '/admin/deliverables', {
       problem_id:       activeProblem.id,
@@ -1722,8 +1788,6 @@ async function concludeSession() {
     solDeliverables.unshift(entry[0] ?? entry);
     renderSolLog();
     toast('Session logged.');
-
-    // Reset chat
     activeProblem    = null;
     solutionsHistory = [];
     solFirstQuestion = null;
@@ -1746,10 +1810,7 @@ function renderSolLog() {
   const tbody = document.getElementById('sol-log-tbody');
   if (!tbody) return;
   const rows = solDeliverables.slice(0, 10);
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><p>No sessions logged yet.</p></div></td></tr>';
-    return;
-  }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><p>No sessions logged yet.</p></div></td></tr>'; return; }
   tbody.innerHTML = rows.map(d => {
     const prob = problemStatements.find(p => p.id === d.problem_id);
     return `
@@ -1758,11 +1819,7 @@ function renderSolLog() {
       <td style="max-width:160px;font-size:0.875rem;white-space:normal;font-weight:500">${esc(prob?.title ?? '—')}</td>
       <td style="max-width:200px;font-size:0.875rem;white-space:normal">${esc(d.action_committed ?? '—')}</td>
       <td>
-        <input
-          class="sol-result-input"
-          type="text"
-          value="${esc(d.observation ?? '')}"
-          placeholder="How did it go…"
+        <input class="sol-result-input" type="text" value="${esc(d.observation ?? '')}" placeholder="How did it go…"
           onblur="saveDeliverableObservation('${d.id}', this.value); this.style.borderColor='var(--border)'"
           onfocus="this.style.borderColor='var(--navy)'">
       </td>
@@ -1777,6 +1834,81 @@ function fmtLogDate(dateStr) {
 }
 
 // ─── END SOLUTIONS ────────────────────────────────────────────────────────────
+
+// ─── SUBSCRIPTIONS ────────────────────────────────────────────────────────────
+
+async function loadSubscriptionsTab() {
+  try {
+    subscriptions = await api('GET', '/admin/subscriptions');
+  } catch (e) {
+    toast('Failed to load subscriptions: ' + e.message, 'error');
+    subscriptions = [];
+  }
+  renderSubscriptions();
+}
+
+function renderSubscriptions() {
+  const tbody = document.getElementById('sub-tbody');
+  if (!tbody) return;
+  if (!subscriptions.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>No subscriptions yet.</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = subscriptions.map(s => `
+    <tr>
+      <td><span class="badge badge-${s.platform}">${s.platform}</span></td>
+      <td><span class="badge badge-${s.status}">${s.status}</span></td>
+      <td><span class="badge ${s.provisioned_by === 'frontframe' ? 'badge-admin' : 'badge-client'}">${s.provisioned_by}</span></td>
+      <td class="text-sm">${esc(s.account_email ?? '—')}</td>
+      <td class="text-sm">${esc(s.account_identifier ?? '—')}</td>
+      <td class="text-sm text-gray" style="max-width:140px;white-space:normal">${esc(s.notes ?? '—')}</td>
+      <td style="white-space:nowrap">
+        ${s.status === 'pending' || s.status === 'submitted'
+          ? `<button class="btn btn-primary btn-sm" onclick="sendSubscription('${s.id}')">Send to FrontFrame</button> `
+          : ''}
+        <button class="btn btn-ghost btn-sm" onclick="markProvisioned('${s.id}')">Mark Active</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function addSubscription() {
+  const platform        = document.getElementById('sub-new-platform').value;
+  const provisioned_by  = document.getElementById('sub-new-provisioned-by').value;
+  const account_email   = document.getElementById('sub-new-email').value.trim() || null;
+  const account_identifier = document.getElementById('sub-new-identifier').value.trim() || null;
+  const notes           = document.getElementById('sub-new-notes').value.trim() || null;
+  try {
+    const res = await api('POST', '/admin/subscriptions', { platform, provisioned_by, account_email, account_identifier, notes });
+    subscriptions.push(res[0] ?? res);
+    document.getElementById('sub-new-email').value      = '';
+    document.getElementById('sub-new-identifier').value = '';
+    document.getElementById('sub-new-notes').value      = '';
+    renderSubscriptions();
+    toast('Subscription added.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function sendSubscription(id) {
+  try {
+    await api('POST', `/admin/subscriptions/${id}/send`);
+    const idx = subscriptions.findIndex(s => s.id === id);
+    if (idx >= 0) subscriptions[idx].status = 'submitted';
+    renderSubscriptions();
+    toast('Sent to FrontFrame.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function markProvisioned(id) {
+  try {
+    await api('PATCH', `/admin/subscriptions/${id}`, { status: 'active', provisioned_at: new Date().toISOString() });
+    const idx = subscriptions.findIndex(s => s.id === id);
+    if (idx >= 0) subscriptions[idx].status = 'active';
+    renderSubscriptions();
+    toast('Marked active.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── END SUBSCRIPTIONS ────────────────────────────────────────────────────────
 
 // HELPERS
 async function resetPassword(email) {
