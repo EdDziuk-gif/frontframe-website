@@ -556,7 +556,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Name</th><th>Email</th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Actions</th></tr></thead>
             <tbody id="reviewers-tbody"></tbody>
           </table>
         </div>
@@ -751,20 +751,21 @@
 <div class="modal-backdrop" id="reviewer-modal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">Invite Reviewer</div>
+      <div class="modal-title" id="rv-modal-title">Add Reviewer</div>
       <button class="modal-close" onclick="closeModal('reviewer-modal')">×</button>
+    </div>
+    <input type="hidden" id="rv-id">
+    <div class="form-group">
+      <label>Display Name</label>
+      <input type="text" id="rv-name">
     </div>
     <div class="form-group">
       <label>Email</label>
       <input type="email" id="rv-email">
     </div>
-    <div class="form-group">
-      <label>Display Name</label>
-      <input type="text" id="rv-name">
-    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('reviewer-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveReviewer()">Send Invite</button>
+      <button class="btn btn-primary" id="rv-save-btn" onclick="saveReviewer()">Add Reviewer</button>
     </div>
   </div>
 </div>
@@ -1683,26 +1684,70 @@ async function loadReviewers() {
 
 function renderReviewers() {
   const tbody = document.getElementById('reviewers-tbody');
-  if (!reviewers.length) { tbody.innerHTML = `<tr><td colspan="2"><div class="empty-state">No reviewers</div></td></tr>`; return; }
+  if (!reviewers.length) { tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">No reviewers</div></td></tr>`; return; }
   tbody.innerHTML = reviewers.map(r => `
     <tr>
       <td><strong>${esc(r.display_name)}</strong></td>
       <td class="text-small text-gray">${esc(r.email)}</td>
+      <td>
+        <div class="flex-row">
+          <button class="btn btn-ghost btn-xs" onclick="openEditReviewerModal('${r.id}')">Edit</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteReviewer('${r.id}','${esc(r.display_name)}')">Del</button>
+        </div>
+      </td>
     </tr>
   `).join('');
 }
 
-function openReviewerModal() { document.getElementById('reviewer-modal').classList.add('open'); }
+function openReviewerModal() {
+  document.getElementById('rv-modal-title').textContent = 'Add Reviewer';
+  document.getElementById('rv-save-btn').textContent    = 'Add Reviewer';
+  document.getElementById('rv-id').value    = '';
+  document.getElementById('rv-name').value  = '';
+  document.getElementById('rv-email').value = '';
+  document.getElementById('reviewer-modal').classList.add('open');
+}
+
+function openEditReviewerModal(id) {
+  const r = reviewers.find(r => r.id === id);
+  if (!r) return;
+  document.getElementById('rv-modal-title').textContent = 'Edit Reviewer';
+  document.getElementById('rv-save-btn').textContent    = 'Save Changes';
+  document.getElementById('rv-id').value    = r.id;
+  document.getElementById('rv-name').value  = r.display_name;
+  document.getElementById('rv-email').value = r.email;
+  document.getElementById('reviewer-modal').classList.add('open');
+}
 
 async function saveReviewer() {
+  const id    = document.getElementById('rv-id').value;
   const email = document.getElementById('rv-email').value.trim();
   const name  = document.getElementById('rv-name').value.trim();
-  if (!email || !name) { toast('Email and name required.', 'error'); return; }
+  if (!email || !name) { toast('Name and email are required.', 'error'); return; }
   try {
-    await api('POST', '/admin/reviewers/invite', { email, display_name: name, role: 'client_tester' });
-    closeModal('reviewer-modal');
-    await loadReviewers();
-    toast('Added ' + name + '.');
+    if (id) {
+      await api('PATCH', `/admin/reviewers/${id}`, { display_name: name, email });
+      const idx = reviewers.findIndex(r => r.id === id);
+      if (idx >= 0) { reviewers[idx].display_name = name; reviewers[idx].email = email; }
+      closeModal('reviewer-modal');
+      renderReviewers();
+      toast('Updated.');
+    } else {
+      await api('POST', '/admin/reviewers/invite', { email, display_name: name, role: 'client_tester' });
+      closeModal('reviewer-modal');
+      await loadReviewers();
+      toast('Added ' + name + '.');
+    }
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteReviewer(id, name) {
+  if (!confirm(`Remove ${name} from reviewers?`)) return;
+  try {
+    await api('DELETE', `/admin/reviewers/${id}`);
+    reviewers = reviewers.filter(r => r.id !== id);
+    renderReviewers();
+    toast(name + ' removed.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
