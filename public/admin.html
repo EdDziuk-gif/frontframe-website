@@ -961,7 +961,7 @@ async function sendMagicLink(email) {
   const res = await fetch(`${WORKER_URL}/auth/magic-link`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, redirect_to: 'https://frontframe.co/admin' }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
