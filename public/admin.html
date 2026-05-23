@@ -1,2073 +1,1916 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FrontFrame Admin</title>
-  <link rel="icon" type="image/png" href="images/Logo_FF.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FrontFrame Admin</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
 
-    :root {
-      --navy:     #1E2D40;
-      --amber:    #F5A623;
-      --offwhite: #F8F6F1;
-      --gray:     #8A9BAE;
-      --white:    #FFFFFF;
-      --ltgray:   #E8ECF0;
-      --red:      #C0392B;
-      --orange:   #E67E22;
-      --blue:     #2980B9;
-      --green:    #27AE60;
-      --border:   #D8DFE8;
-    }
+  :root {
+    --navy:    #1E2D40;
+    --amber:   #F5A623;
+    --offwhite:#F8F6F1;
+    --gray:    #8A9BAE;
+    --midgray: #C4CDD6;
+    --border:  #E4E8EE;
+    --green:   #27AE60;
+    --red:     #E74C3C;
+    --yellow:  #F39C12;
+    --white:   #FFFFFF;
+    --sidebar: 220px;
+  }
 
-    body { font-family: 'Inter', system-ui, sans-serif; font-size: 14px; background: var(--offwhite); color: var(--navy); min-height: 100vh; }
-    h1, h2, h3, .brand { font-family: 'DM Sans', system-ui, sans-serif; font-weight: 700; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    #login-screen { min-height: 100vh; background: var(--navy); display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .login-box { background: var(--offwhite); border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 400px; }
-    .login-logo { margin-bottom: 32px; }
-    .login-box h1 { font-size: 1.4rem; margin-bottom: 6px; }
-    .login-box p  { color: var(--gray); font-size: 0.875rem; margin-bottom: 32px; line-height: 1.6; }
-    .form-group { margin-bottom: 20px; }
-    .form-group label { display: block; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--navy); margin-bottom: 6px; }
-    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--navy); background: white; outline: none; transition: border-color 0.15s; }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--navy); }
-    .form-group textarea { resize: vertical; min-height: 80px; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--offwhite);
+    color: var(--navy);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
 
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s, transform 0.1s; text-decoration: none; }
-    .btn:hover { opacity: 0.88; } .btn:active { transform: scale(0.98); }
-    .btn-primary { background: var(--amber); color: var(--navy); }
-    .btn-navy    { background: var(--navy);  color: white; }
-    .btn-ghost   { background: transparent;  color: var(--navy); border: 1.5px solid var(--border); }
-    .btn-danger  { background: #FDE8E6;      color: var(--red); }
-    .btn-sm      { padding: 6px 12px; font-size: 0.8rem; }
-    .btn-full    { width: 100%; justify-content: center; }
-    .error-msg   { color: var(--red); font-size: 0.8rem; margin-top: 10px; display: none; }
+  /* ── Login ─────────────────────────────────────────────────────────── */
+  #login-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: var(--offwhite);
+  }
+  .login-box {
+    background: white; border-radius: 16px; padding: 48px 40px;
+    width: 100%; max-width: 400px; box-shadow: 0 4px 32px rgba(30,45,64,.10);
+  }
+  .login-logo { margin-bottom: 32px; }
+  .login-box h1 { font-family: 'DM Sans', sans-serif; font-size: 1.4rem; margin-bottom: 8px; }
+  .login-box p  { color: var(--gray); margin-bottom: 24px; }
+  .login-box p strong { color: var(--navy); }
+  .login-sent-icon { font-size: 2.5rem; margin-bottom: 16px; }
 
-    #admin-shell { display: none; flex-direction: column; min-height: 100vh; }
+  /* ── Layout ─────────────────────────────────────────────────────────── */
+  #app-shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: var(--sidebar); background: var(--navy); color: white;
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 20px; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.05rem;
+    border-bottom: 1px solid rgba(255,255,255,.1); letter-spacing: -.2px;
+  }
+  .sidebar-logo span { color: var(--amber); }
+  .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+    color: rgba(255,255,255,.7); cursor: pointer; border-radius: 0;
+    font-size: 0.875rem; font-weight: 500; transition: all .15s; border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover  { background: rgba(255,255,255,.08); color: white; }
+  .nav-item.active { background: rgba(245,166,35,.15); color: var(--amber); }
+  .nav-badge {
+    margin-left: auto; background: var(--amber); color: var(--navy);
+    border-radius: 10px; font-size: 0.7rem; font-weight: 700; padding: 1px 7px; min-width: 20px; text-align: center;
+  }
+  .nav-badge.hidden { display: none; }
+  .sidebar-footer {
+    padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.1);
+    font-size: 0.75rem; color: rgba(255,255,255,.4);
+  }
+  .sidebar-footer a { color: rgba(255,255,255,.4); text-decoration: none; }
+  .sidebar-footer a:hover { color: rgba(255,255,255,.7); }
 
-    .admin-header { background: var(--navy); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .header-left  { display: flex; align-items: center; gap: 16px; }
-    .header-wordmark { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.1rem; color: white; letter-spacing: -0.01em; }
-    .mode-badge { padding: 3px 10px; border-radius: 20px; font-family: 'DM Sans', sans-serif; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
-    .mode-badge.testing { background: var(--amber); color: var(--navy); }
-    .mode-badge.live    { background: var(--green);  color: white; }
-    .header-right { display: flex; align-items: center; gap: 16px; }
-    .header-user  { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
-    .btn-signout  { font-size: 0.75rem; color: rgba(255,255,255,0.5); background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif; transition: color 0.15s; }
-    .btn-signout:hover { color: white; }
+  .main-content { margin-left: var(--sidebar); flex: 1; padding: 32px; max-width: calc(100vw - var(--sidebar)); }
 
-    .tab-bar { background: white; border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; padding: 0 24px; }
-    .tab-bar::-webkit-scrollbar { display: none; }
-    .tab-btn { padding: 14px 18px; border: none; border-bottom: 2px solid transparent; background: none; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 700; color: var(--gray); cursor: pointer; white-space: nowrap; transition: color 0.15s, border-color 0.15s; }
-    .tab-btn:hover { color: var(--navy); }
-    .tab-btn.active { color: var(--navy); border-bottom-color: var(--amber); }
-    .tab-badge { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 9px; background: var(--red); color: white; font-size: 0.65rem; font-weight: 700; margin-left: 5px; }
+  .page-header { margin-bottom: 28px; }
+  .page-title  { font-family: 'DM Sans', sans-serif; font-size: 1.5rem; font-weight: 700; }
+  .page-sub    { color: var(--gray); font-size: 0.875rem; margin-top: 4px; }
 
-    .tab-content { padding: 24px; max-width: 1200px; flex: 1; }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+  /* ── Cards ─────────────────────────────────────────────────────────── */
+  .card {
+    background: white; border-radius: 12px; border: 1px solid var(--border);
+    margin-bottom: 24px; overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
+  }
+  .card-title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1rem; }
+  .card-body  { padding: 20px; }
 
-    .card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 24px; margin-bottom: 16px; }
-    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--ltgray); }
-    .card-title    { font-size: 1rem; font-family: 'DM Sans', sans-serif; font-weight: 700; }
-    .card-subtitle { font-size: 0.8rem; color: var(--gray); margin-top: 3px; }
+  /* ── Stats ─────────────────────────────────────────────────────────── */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: white; border-radius: 12px; border: 1px solid var(--border);
+    padding: 18px 20px;
+  }
+  .stat-label { font-size: 0.75rem; color: var(--gray); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .stat-value { font-family: 'DM Sans', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--navy); }
 
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .stat-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
-    .stat-number { font-size: 2.2rem; font-family: 'DM Sans', sans-serif; font-weight: 700; line-height: 1; margin-bottom: 6px; }
-    .stat-label  { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); font-weight: 500; }
-    .stat-red    { color: var(--red); }   .stat-orange { color: var(--orange); }
-    .stat-blue   { color: var(--blue); }  .stat-gray   { color: var(--gray); }
-    .stat-amber  { color: var(--amber); } .stat-green  { color: var(--green); }
+  /* ── Tables ─────────────────────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 10px 16px; font-size: 0.75rem; font-weight: 600;
+    color: var(--gray); text-transform: uppercase; letter-spacing: .4px;
+    border-bottom: 1px solid var(--border); background: var(--offwhite);
+  }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #FAFBFC; }
 
-    .mode-card { background: var(--navy); color: white; border-radius: 12px; padding: 28px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-    .mode-card h2 { font-size: 1.2rem; color: white; margin-bottom: 4px; }
-    .mode-card p  { font-size: 0.8rem; color: rgba(255,255,255,0.55); }
+  /* ── Buttons ─────────────────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+    border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+    border: none; transition: all .15s; text-decoration: none; white-space: nowrap;
+  }
+  .btn-primary  { background: var(--navy); color: white; }
+  .btn-primary:hover { background: #2a3f5a; }
+  .btn-amber    { background: var(--amber); color: var(--navy); }
+  .btn-amber:hover { background: #e8971a; }
+  .btn-ghost    { background: transparent; color: var(--navy); border: 1.5px solid var(--border); }
+  .btn-ghost:hover { background: var(--offwhite); }
+  .btn-danger   { background: #FDF0EF; color: var(--red); border: 1.5px solid #FADBD8; }
+  .btn-danger:hover { background: #FADBD8; }
+  .btn-sm { padding: 5px 10px; font-size: 0.8rem; border-radius: 6px; }
+  .btn-xs { padding: 3px 8px; font-size: 0.75rem; border-radius: 5px; }
+  .btn-full { width: 100%; justify-content: center; padding: 12px 16px; }
+  .btn-link { background: none; border: none; color: var(--navy); text-decoration: underline; cursor: pointer; font-size: inherit; padding: 0; font-weight: 500; }
 
-    .build-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
-    .build-row label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); }
-    .build-row input, .build-row select { padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.85rem; font-family: 'Inter', sans-serif; color: var(--navy); outline: none; }
-    .build-row input { width: 120px; }
+  /* ── Forms ─────────────────────────────────────────────────────────── */
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 0.875rem; }
+  input[type=text], input[type=email], input[type=password], input[type=number], input[type=url],
+  textarea, select {
+    width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: 0.875rem; color: var(--navy); background: white;
+    transition: border-color .15s; outline: none;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--navy); }
+  textarea { resize: vertical; min-height: 100px; }
+  .error-msg { color: var(--red); font-size: 0.8rem; margin-top: 8px; min-height: 18px; }
 
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; padding: 10px 14px; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); background: var(--offwhite); border-bottom: 1px solid var(--border); }
-    td { padding: 12px 14px; border-bottom: 1px solid var(--ltgray); vertical-align: top; font-size: 0.875rem; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #FAFBFC; }
+  /* ── Badges / Pills ─────────────────────────────────────────────────── */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
+  }
+  .badge-new        { background: #EBF5FB; color: #2980B9; }
+  .badge-active     { background: #E8F8EE; color: var(--green); }
+  .badge-closed     { background: #F2F3F4; color: var(--gray); }
+  .badge-active_sales_call { background: #FEF9E7; color: var(--yellow); }
+  .badge-sent       { background: #EBF5FB; color: #2980B9; }
+  .badge-signed     { background: #E8F8EE; color: var(--green); }
+  .badge-live       { background: #E8F8EE; color: var(--green); }
+  .badge-testing    { background: #FEF9E7; color: var(--yellow); }
+  .badge-open       { background: #FEF9E7; color: var(--yellow); }
+  .badge-resolved   { background: #E8F8EE; color: var(--green); }
+  .badge-low        { background: #E8F8EE; color: var(--green); }
+  .badge-medium     { background: #FEF9E7; color: var(--yellow); }
+  .badge-high       { background: #FDECEA; color: var(--red); }
+  .badge-promoted   { background: #E8F8EE; color: var(--green); }
+  .badge-approved   { background: #E8F8EE; color: var(--green); }
 
-    .convo-row td { padding: 0; border-bottom: 1px solid var(--border); background: var(--offwhite); }
-    .convo-row.hidden { display: none; }
-    .convo-panel   { padding: 20px 24px; }
-    .convo-loading { padding: 20px 24px; color: var(--gray); font-size: 0.875rem; }
-    .convo-empty   { padding: 20px 24px; color: var(--gray); font-size: 0.875rem; font-style: italic; }
-    .convo-meta    { font-size: 0.75rem; color: var(--gray); margin-bottom: 16px; }
-    .convo-messages { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
-    .convo-msg { max-width: 75%; padding: 10px 14px; border-radius: 10px; font-size: 0.875rem; line-height: 1.55; }
-    .convo-msg.user { background: var(--navy); color: white; align-self: flex-end; border-bottom-right-radius: 3px; }
-    .convo-msg.ed   { background: white; color: var(--navy); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 3px; }
-    .convo-role { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-    .convo-msg.user .convo-role { color: rgba(255,255,255,0.6); text-align: right; }
-    .convo-msg.ed   .convo-role { color: var(--amber); }
+  /* ── Tabs ─────────────────────────────────────────────────────────── */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
 
-    .prompt-panel { background: var(--offwhite); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }
-    .prompt-panel pre { font-family: 'Inter', monospace; font-size: 0.8rem; line-height: 1.65; white-space: pre-wrap; word-break: break-word; color: var(--navy); max-height: 340px; overflow-y: auto; }
-    .prompt-panel .prompt-empty { color: var(--gray); font-size: 0.875rem; font-style: italic; }
-    .prompt-edit-area { width: 100%; min-height: 340px; font-family: 'Inter', monospace; font-size: 0.8rem; line-height: 1.65; color: var(--navy); background: transparent; border: none; outline: none; resize: vertical; }
-    .prompt-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-    .prompt-controls label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); }
-    .prompt-controls select { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.825rem; font-family: 'Inter', sans-serif; color: var(--navy); outline: none; background: white; }
+  /* ── Toggle ─────────────────────────────────────────────────────────── */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-weight: 500; }
+  .toggle-sub   { font-size: 0.8rem; color: var(--gray); margin-top: 2px; }
+  .toggle {
+    position: relative; width: 44px; height: 24px;
+    background: var(--midgray); border-radius: 12px; cursor: pointer;
+    transition: background .2s; border: none;
+  }
+  .toggle.on { background: var(--green); }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px; border-radius: 50%; background: white; transition: transform .2s;
+  }
+  .toggle.on::after { transform: translateX(20px); }
 
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
-    .badge-blocking  { background: #FDECEA; color: var(--red); }
-    .badge-major     { background: #FEF3E2; color: var(--orange); }
-    .badge-minor     { background: #EBF5FF; color: var(--blue); }
-    .badge-cosmetic  { background: var(--ltgray); color: var(--gray); }
-    .badge-open      { background: #FEF3E2; color: var(--orange); }
-    .badge-in_review { background: #EBF5FF; color: var(--blue); }
-    .badge-resolved  { background: #E8F8EE; color: var(--green); }
-    .badge-deferred  { background: var(--ltgray); color: var(--gray); }
-    .badge-retain    { background: #E8F8EE; color: var(--green); }
-    .badge-delete    { background: #FDECEA; color: var(--red); }
-    .badge-testing   { background: #FFF3D6; color: #B7680A; }
-    .badge-live      { background: #E8F8EE; color: var(--green); }
-    .badge-seed      { background: var(--ltgray); color: var(--gray); }
-    .badge-admin     { background: #EDE8FF; color: #5B35B8; }
-    .badge-staff     { background: #EBF5FF; color: var(--blue); }
-    .badge-contractor{ background: #FEF3E2; color: var(--orange); }
-    .badge-client    { background: var(--ltgray); color: var(--gray); }
-    .badge-client_owner { background: #E8F8EE; color: var(--green); }
-    .badge-promoted  { background: #E8F8EE; color: var(--green); }
-    .badge-go_live   { background: #E8F8EE; color: var(--green); }
-    .badge-defect_resolved   { background: #E8F8EE; color: var(--green); }
-    .badge-defect_deferred   { background: var(--ltgray); color: var(--gray); }
-    .badge-feedback_promoted { background: #EBF5FF; color: var(--blue); }
-    .badge-version_bump      { background: #EDE8FF; color: #5B35B8; }
-    .badge-new              { background: #EBF5FF; color: var(--blue); }
-    .badge-reviewing        { background: #FEF3E2; color: var(--orange); }
-    .badge-active_sales_call{ background: #E8F8EE; color: var(--green); }
-    .badge-closed           { background: var(--ltgray); color: var(--gray); }
-    .badge-test             { background: #FFF3D6; color: #B7680A; }
-    .badge-under_review { background: #FEF3E2; color: var(--orange); }
-    .badge-redundant    { background: #FDECEA; color: var(--red); }
-    .badge-implemented  { background: #E8F8EE; color: var(--green); }
-    .badge-all      { background: var(--ltgray); color: var(--gray); }
-    .badge-home     { background: #EDE8FF; color: #5B35B8; }
-    .badge-intake   { background: #EBF5FF; color: var(--blue); }
-    .badge-discovery{ background: #FEF3E2; color: var(--orange); }
-    .badge-yours    { background: #E8F8EE; color: var(--green); }
-    .badge-proposal { background: #FFF3D6; color: #B7680A; }
-    .badge-admin-page { background: #EDE8FF; color: #5B35B8; }
-    .badge-visible  { background: #E8F8EE; color: var(--green); }
-    .badge-hidden   { background: var(--ltgray); color: var(--gray); }
+  /* ── Filter bar ─────────────────────────────────────────────────────── */
+  .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-bar input, .filter-bar select { width: auto; flex: 1; min-width: 160px; }
 
-    .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
-    .filter-bar select { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.825rem; font-family: 'Inter', sans-serif; color: var(--navy); outline: none; background: white; }
+  /* ── Pipeline cards ─────────────────────────────────────────────────── */
+  .pipeline-section-title {
+    font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.85rem;
+    text-transform: uppercase; letter-spacing: .5px; color: var(--gray);
+    margin-bottom: 12px; margin-top: 4px;
+  }
+  .pipeline-card {
+    background: white; border-radius: 12px;
+    border: 1.5px solid var(--amber); margin-bottom: 16px; overflow: hidden;
+  }
+  .pipeline-card-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 16px 20px 12px; gap: 12px;
+  }
+  .pipeline-lead-name { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1rem; }
+  .pipeline-lead-meta { font-size: 0.78rem; color: var(--gray); margin-top: 2px; }
+  .pipeline-steps { border-top: 1px solid var(--border); }
+  .pipeline-step {
+    display: flex; align-items: center; gap: 12px; padding: 11px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pipeline-step:last-child { border-bottom: none; }
+  .pipeline-step.step-done { background: #F6FEF9; }
+  .pipeline-step.step-locked { opacity: .45; pointer-events: none; }
+  .step-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--navy); color: white;
+    font-size: 0.72rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .step-done .step-num { background: var(--green); }
+  .step-locked .step-num { background: var(--midgray); }
+  .step-label { flex: 1; font-size: 0.875rem; font-weight: 500; }
+  .step-meta  { font-size: 0.75rem; color: var(--gray); margin-top: 1px; }
+  .step-action { margin-left: auto; flex-shrink: 0; }
 
-    .feedback-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 12px; }
-    .feedback-card.promoted { opacity: 0.5; }
-    .feedback-q  { font-weight: 500; margin-bottom: 8px; }
-    .feedback-ed { font-size: 0.8rem; color: var(--gray); padding: 10px; background: var(--offwhite); border-radius: 6px; margin-bottom: 12px; line-height: 1.5; }
-    .feedback-ed strong { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); margin-bottom: 4px; }
-    .feedback-actions { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; margin-top: 12px; }
-    .feedback-suggest { flex: 1; min-width: 200px; }
-    .feedback-suggest input { width: 100%; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.85rem; font-family: 'Inter', sans-serif; outline: none; }
-    .feedback-suggest input:focus { border-color: var(--navy); }
+  /* ── Modal ─────────────────────────────────────────────────────────── */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(30,45,64,.5); z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: white; border-radius: 16px; padding: 32px;
+    width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 8px 48px rgba(30,45,64,.2);
+  }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .modal-title  { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.1rem; }
+  .modal-close  { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--gray); line-height: 1; padding: 4px; }
+  .modal-close:hover { color: var(--navy); }
+  .modal-footer { margin-top: 24px; display: flex; gap: 8px; justify-content: flex-end; }
 
-    .changelog-list { list-style: none; }
-    .changelog-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--ltgray); }
-    .changelog-item:last-child { border-bottom: none; }
-    .changelog-dot  { width: 10px; height: 10px; border-radius: 50%; background: var(--amber); margin-top: 5px; flex-shrink: 0; }
-    .changelog-body { flex: 1; }
-    .changelog-summary { font-size: 0.875rem; margin-bottom: 4px; }
-    .changelog-meta   { font-size: 0.75rem; color: var(--gray); }
+  /* ── Toast ─────────────────────────────────────────────────────────── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 999;
+    background: var(--navy); color: white; padding: 12px 20px;
+    border-radius: 10px; font-size: 0.875rem; font-weight: 500;
+    opacity: 0; transform: translateY(8px); pointer-events: none;
+    transition: all .25s; max-width: 320px; box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.error { background: var(--red); }
 
-    .invite-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--ltgray); }
-    .invite-row .form-group { margin-bottom: 0; flex: 1; min-width: 160px; }
-
-    .qa-answer     { max-width: 340px; white-space: normal; line-height: 1.4; }
-    .text-truncate { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    /* Episode transcript preview in table */
-    .transcript-preview { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gray); font-size: 0.8rem; }
-
-    .modal-overlay { position: fixed; inset: 0; background: rgba(30,45,64,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-    .modal { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
-    .modal.modal-wide { max-width: 720px; }
-    .modal h2 { font-size: 1.1rem; margin-bottom: 6px; }
-    .modal p  { font-size: 0.85rem; color: var(--gray); margin-bottom: 24px; line-height: 1.6; }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
-
-    .golive-confirm-input { width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-family: 'Inter', sans-serif; outline: none; margin-top: 8px; }
-    .golive-confirm-input:focus { border-color: var(--red); }
-
-    .empty-state { text-align: center; padding: 48px 24px; color: var(--gray); }
-    .empty-state p { font-size: 0.875rem; margin-top: 8px; }
-
-    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy); color: white; padding: 12px 20px; border-radius: 8px; font-size: 0.875rem; font-family: 'DM Sans', sans-serif; font-weight: 700; z-index: 300; transform: translateY(80px); opacity: 0; transition: transform 0.25s, opacity 0.25s; max-width: 320px; }
-    #toast.show { transform: translateY(0); opacity: 1; }
-    #toast.success { border-left: 4px solid var(--green); }
-    #toast.error   { border-left: 4px solid var(--red); }
-
-    .flex { display: flex; } .items-center { align-items: center; } .gap-8 { gap: 8px; }
-    .text-sm { font-size: 0.8rem; } .text-gray { color: var(--gray); }
-    .font-bold { font-weight: 700; } .hidden { display: none !important; }
-
-    .pw-wrap { position: relative; }
-    .pw-wrap input[type="password"], .pw-wrap input[type="text"] { padding-right: 40px; }
-    .pw-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 0; color: var(--gray); display: flex; align-items: center; width: auto; }
-    .pw-toggle:hover { color: var(--navy); opacity: 1; }
-
-    /* Visible toggle */
-    .toggle-wrap { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
-    .toggle-wrap label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--navy); cursor: pointer; }
-    .toggle-wrap input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--amber); cursor: pointer; }
-
-    /* Marketing tab */
-    .mkt-question-box {
-      background: var(--offwhite);
-      border-radius: 8px;
-      padding: 20px 24px;
-      margin-bottom: 20px;
-      font-size: 1rem;
-      line-height: 1.7;
-      color: var(--navy);
-      white-space: pre-wrap;
-      border-left: 3px solid var(--amber);
-    }
-    .mkt-prior-box {
-      background: var(--offwhite);
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin-bottom: 20px;
-      border-left: 3px solid var(--gray);
-    }
-    .mkt-prior-label {
-      font-size: 0.68rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--gray);
-      margin-bottom: 6px;
-    }
-    .mkt-prior-text {
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: var(--navy);
-      line-height: 1.5;
-    }
-    .mkt-note-input {
-      width: 100%;
-      min-width: 180px;
-      padding: 6px 10px;
-      border: 1.5px solid var(--border);
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-family: 'Inter', sans-serif;
-      outline: none;
-      background: white;
-      color: var(--navy);
-      transition: border-color 0.15s;
-    }
-    .mkt-note-input:focus { border-color: var(--navy); }
-
-    .badge-pending      { background: var(--ltgray);  color: var(--gray); }
-    .badge-submitted    { background: #EBF5FF;         color: var(--blue); }
-    .badge-provisioned  { background: #FEF3E2;         color: var(--orange); }
-    .badge-active       { background: #E8F8EE;         color: var(--green); }
-    .badge-paused       { background: var(--ltgray);   color: var(--gray); }
-    .badge-surge        { background: #FFF3D6;         color: #B7680A; }
-    .badge-stripe       { background: #EDE8FF;         color: #5B35B8; }
-    .badge-supabase     { background: #E8F8EE;         color: var(--green); }
-    .badge-cloudflare   { background: #FEF3E2;         color: var(--orange); }
-    .badge-anthropic    { background: #FDECEA;         color: var(--red); }
-
-    /* Solutions tab */
-    .sol-orientation { border-left: 3px solid var(--amber); padding: 18px 22px; line-height: 1.75; color: var(--navy); font-size: 0.9rem; margin-bottom: 16px; }
-    .sol-problem-card { padding: 14px 16px; border: 1.5px solid var(--border); border-radius: 8px; margin-bottom: 10px; transition: border-color 0.15s, background 0.15s; }
-    .sol-problem-card.active { border-color: var(--amber); background: #FFFBF3; }
-    .sol-problem-title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
-    .sol-problem-outcome { font-size: 0.8rem; color: var(--gray); line-height: 1.45; }
-    .sol-problem-meta { font-size: 0.7rem; color: var(--gray); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
-    .sol-problem-edit-area { width: 100%; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--navy); outline: none; margin-bottom: 8px; resize: vertical; }
-    .sol-problem-edit-area:focus { border-color: var(--navy); }
-    .sol-msg { max-width: 78%; padding: 10px 14px; border-radius: 10px; font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-    .sol-msg.user   { background: var(--navy); color: white; align-self: flex-end; border-bottom-right-radius: 3px; }
-    .sol-msg.claude { background: white; color: var(--navy); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 3px; }
-    .sol-msg-role { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-    .sol-msg.user   .sol-msg-role { color: rgba(255,255,255,0.55); text-align: right; }
-    .sol-msg.claude .sol-msg-role { color: var(--amber); }
-    .sol-typing { color: var(--gray); font-size: 0.8rem; font-style: italic; padding: 4px 0; align-self: flex-start; }
-    .sol-result-input { width: 100%; padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.85rem; font-family: 'Inter', sans-serif; outline: none; background: white; color: var(--navy); transition: border-color 0.15s; }
-    .sol-result-input:focus { border-color: var(--navy); }
-
-    @media (max-width: 600px) {
-      .tab-content { padding: 16px; }
-      .mode-card { flex-direction: column; }
-      .stat-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-  </style>
+  /* ── Misc ─────────────────────────────────────────────────────────── */
+  .hidden { display: none !important; }
+  .text-gray  { color: var(--gray); }
+  .text-small { font-size: 0.8rem; }
+  .mono { font-family: 'SF Mono', 'Fira Mono', monospace; font-size: 0.8rem; }
+  .flex-row { display: flex; align-items: center; gap: 8px; }
+  .gap-8 { gap: 8px; }
+  .mt-8 { margin-top: 8px; }
+  .mb-16 { margin-bottom: 16px; }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--gray); }
+  .empty-state-icon { font-size: 2rem; margin-bottom: 8px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .session-bubble {
+    padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; max-width: 85%;
+    font-size: 0.875rem; line-height: 1.5;
+  }
+  .session-bubble.user      { background: var(--offwhite); margin-right: auto; }
+  .session-bubble.assistant { background: #EBF5FB; margin-left: auto; }
+  .session-role { font-size: 0.72rem; color: var(--gray); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; }
+</style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- ── Login ──────────────────────────────────────────────────────────── -->
 <div id="login-screen">
   <div class="login-box">
-    <div class="login-logo"><span class="brand" style="font-size:1.4rem;color:var(--navy)">FrontFrame</span></div>
-    <h1>Admin Portal</h1>
-    <p>Sign in with your FrontFrame admin credentials to access the testing dashboard.</p>
-    <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@frontframe.co" autocomplete="email"></div>
-    <div class="form-group">
-      <label>Password</label>
-      <div class="pw-wrap">
-        <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
-        <button type="button" class="pw-toggle" onclick="togglePw('login-password',this)" tabindex="-1">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
-      </div>
+    <div class="login-logo">
+      <span style="font-family:'DM Sans',sans-serif;font-size:1.3rem;font-weight:700;color:var(--navy)">Front<span style="color:var(--amber)">Frame</span></span>
     </div>
-    <button class="btn btn-primary btn-full" id="login-btn">Sign In</button>
-    <div class="error-msg" id="login-error"></div>
+
+    <div id="login-email-view">
+      <h1>Admin Portal</h1>
+      <p>Enter your email and we'll send you a secure sign-in link.</p>
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" placeholder="ed@frontframe.co" autocomplete="email">
+      </div>
+      <button class="btn btn-primary btn-full" id="send-link-btn">Send Sign-In Link</button>
+      <div class="error-msg" id="login-error"></div>
+    </div>
+
+    <div id="login-sent-view" class="hidden">
+      <div class="login-sent-icon">✉️</div>
+      <h1>Check Your Email</h1>
+      <p>A sign-in link was sent to <strong id="login-sent-to"></strong>. Click the link in that email to access the admin portal.</p>
+      <button class="btn btn-ghost btn-full mt-8" id="login-back-btn" style="margin-top:20px">Use a different email</button>
+    </div>
   </div>
 </div>
 
-<!-- ADMIN SHELL -->
-<div id="admin-shell">
+<!-- ── App Shell ───────────────────────────────────────────────────────── -->
+<div id="app-shell" class="hidden">
 
-  <header class="admin-header">
-    <div class="header-left">
-      <span class="header-wordmark">FrontFrame</span>
-      <span class="mode-badge testing" id="header-mode-badge">Testing</span>
-      <span class="text-sm" style="color:rgba(255,255,255,0.4)" id="header-version"></span>
+  <nav class="sidebar">
+    <div class="sidebar-logo">Front<span>Frame</span> <span style="font-size:.7rem;opacity:.5;font-weight:400">Admin</span></div>
+    <div class="sidebar-nav">
+      <button class="nav-item" data-tab="pipeline"       onclick="switchTab('pipeline')">📋 Pipeline <span class="nav-badge hidden" id="badge-pipeline">0</span></button>
+      <button class="nav-item" data-tab="qa"             onclick="switchTab('qa')">💬 Q&amp;A</button>
+      <button class="nav-item" data-tab="system-prompt"  onclick="switchTab('system-prompt')">🧠 System Prompt</button>
+      <button class="nav-item" data-tab="defects"        onclick="switchTab('defects')">🐛 Defects <span class="nav-badge hidden" id="badge-defects">0</span></button>
+      <button class="nav-item" data-tab="feedback"       onclick="switchTab('feedback')">📝 Feedback <span class="nav-badge hidden" id="badge-feedback">0</span></button>
+      <button class="nav-item" data-tab="changelog"      onclick="switchTab('changelog')">📖 Changelog</button>
+      <button class="nav-item" data-tab="solutions"      onclick="switchTab('solutions')">💡 Solutions</button>
+      <button class="nav-item" data-tab="subscriptions"  onclick="switchTab('subscriptions')">📱 Subscriptions</button>
+      <button class="nav-item" data-tab="reviewers"      onclick="switchTab('reviewers')">👥 Reviewers</button>
+      <button class="nav-item" data-tab="episodes"       onclick="switchTab('episodes')">🎙 Episodes</button>
+      <button class="nav-item" data-tab="config"         onclick="switchTab('config')">⚙️ Config</button>
     </div>
-    <div class="header-right">
-      <span class="header-user" id="header-user"></span>
-      <button class="btn-signout" id="signout-btn">Sign out</button>
+    <div class="sidebar-footer">
+      <div>ed@frontframe.co</div>
+      <div style="margin-top:4px"><a href="#" onclick="signOut()">Sign out</a></div>
     </div>
-  </header>
-
-  <nav class="tab-bar">
-    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
-    <button class="tab-btn" data-tab="lead-alerts">Lead Alerts <span class="tab-badge hidden" id="badge-alerts">0</span></button>
-    <button class="tab-btn" data-tab="defects">Defects <span class="tab-badge hidden" id="badge-defects">0</span></button>
-    <button class="tab-btn" data-tab="feedback">Feedback <span class="tab-badge hidden" id="badge-feedback">0</span></button>
-    <button class="tab-btn" data-tab="changelog">Changelog</button>
-    <button class="tab-btn" data-tab="reviewers">Reviewers</button>
-    <button class="tab-btn" data-tab="qa">Q&amp;A</button>
-    <button class="tab-btn" data-tab="podcasts">Podcasts</button>
-    <button class="tab-btn" data-tab="marketing">Solutions</button>
-    <button class="tab-btn" data-tab="subscriptions">Subscriptions</button>
   </nav>
 
-  <div class="tab-content">
+  <main class="main-content">
 
-    <!-- DASHBOARD -->
-    <div class="tab-panel active" id="tab-dashboard">
-      <div class="mode-card" id="mode-card">
-        <div>
-          <h2 id="mode-heading">System Mode: Testing</h2>
-          <p id="mode-desc">Pre-launch. Bot is in feedback mode. Site is not indexed.</p>
-        </div>
-        <button class="btn btn-primary" id="golive-btn">Flip to Live</button>
+    <!-- ── Pipeline ───────────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-pipeline">
+      <div class="page-header">
+        <div class="page-title">Pipeline</div>
+        <div class="page-sub">Active sales calls and all visitor alerts</div>
       </div>
+
+      <div id="pipeline-active-section"></div>
+
       <div class="card">
         <div class="card-header">
-          <div><div class="card-title">Build Configuration</div><div class="card-subtitle">Stamped on all defect records</div></div>
-          <button class="btn btn-ghost btn-sm" id="save-config-btn">Save</button>
-        </div>
-        <div class="build-row">
-          <label>Build Version</label><input type="text" id="cfg-version" placeholder="v0.1.0">
-          <label>Stage Gate</label>
-          <select id="cfg-stage">
-            <option value="discovery">Discovery</option><option value="build">Build</option>
-            <option value="review">Review</option><option value="pre-launch">Pre-Launch</option>
-            <option value="live">Live</option>
-          </select>
-        </div>
-      </div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="stat-number stat-blue"   id="stat-new-alerts">—</div><div class="stat-label">New Alerts</div></div>
-        <div class="stat-card"><div class="stat-number stat-green"  id="stat-active-calls">—</div><div class="stat-label">Active Sales</div></div>
-        <div class="stat-card"><div class="stat-number stat-red"    id="stat-blocking">—</div><div class="stat-label">Blocking</div></div>
-        <div class="stat-card"><div class="stat-number stat-orange" id="stat-major">—</div><div class="stat-label">Major</div></div>
-        <div class="stat-card"><div class="stat-number stat-amber"  id="stat-feedback">—</div><div class="stat-label">Feedback Gaps</div></div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Recent Changelog</div>
-          <button class="btn btn-ghost btn-sm" onclick="switchTab('changelog')">View all</button>
-        </div>
-        <ul class="changelog-list" id="dashboard-changelog"><li class="empty-state"><p>No entries yet.</p></li></ul>
-      </div>
-    </div>
-
-    <!-- LEAD ALERTS -->
-    <div class="tab-panel" id="tab-lead-alerts">
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Lead Alerts</div>
-            <div class="card-subtitle">Every escalation Ed has flagged. Click a row to read the conversation.</div>
-          </div>
-        </div>
-        <div class="filter-bar">
-          <select id="filter-alert-status">
-            <option value="">All Statuses</option>
-            <option value="new">New</option>
-            <option value="reviewing">Reviewing</option>
-            <option value="active_sales_call">Active Sales Call</option>
-            <option value="closed">Closed</option>
-            <option value="test">Test</option>
-          </select>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th></th><th>Prospect</th><th>Signal</th><th>Page</th><th>Current Site</th><th>SMS</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
-            <tbody id="alerts-tbody"><tr><td colspan="9" class="empty-state">No alerts yet.</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- DEFECTS -->
-    <div class="tab-panel" id="tab-defects">
-      <div class="card">
-        <div class="card-header"><div class="card-title">Log a Defect</div></div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
-          <div class="form-group"><label>Area</label>
-            <select id="new-area"><option value="bot">Bot</option><option value="ui">UI</option><option value="content">Content</option><option value="form">Form</option><option value="payment">Payment</option><option value="contract">Contract</option><option value="other">Other</option></select>
-          </div>
-          <div class="form-group"><label>Severity</label>
-            <select id="new-severity"><option value="blocking">Blocking</option><option value="major">Major</option><option value="minor" selected>Minor</option><option value="cosmetic">Cosmetic</option></select>
-          </div>
-          <div class="form-group"><label>Disposition</label>
-            <select id="new-disposition"><option value="retain" selected>Retain</option><option value="delete">Delete</option></select>
-          </div>
-        </div>
-        <div class="form-group"><label>Description</label><textarea id="new-description" placeholder="Describe what you observed..."></textarea></div>
-        <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn btn-primary" id="log-defect-btn">Log Defect</button></div>
-      </div>
-      <div class="card">
-        <div class="filter-bar">
-          <select id="filter-area"><option value="">All Areas</option><option value="bot">Bot</option><option value="ui">UI</option><option value="content">Content</option><option value="form">Form</option><option value="payment">Payment</option><option value="contract">Contract</option><option value="other">Other</option></select>
-          <select id="filter-severity"><option value="">All Severities</option><option value="blocking">Blocking</option><option value="major">Major</option><option value="minor">Minor</option><option value="cosmetic">Cosmetic</option></select>
-          <select id="filter-status"><option value="">All Statuses</option><option value="open">Open</option><option value="in_review">In Review</option><option value="resolved">Resolved</option><option value="deferred">Deferred</option></select>
-          <button class="btn btn-ghost btn-sm" id="export-defects-btn">Export CSV</button>
-        </div>
-        <div class="table-wrap">
-          <table><thead><tr><th>Area</th><th>Severity</th><th style="min-width:240px">Description</th><th>Status</th><th>Disposition</th><th>Reported</th><th>Actions</th></tr></thead>
-          <tbody id="defects-tbody"><tr><td colspan="7" class="empty-state">No defects logged.</td></tr></tbody></table>
-        </div>
-      </div>
-    </div>
-
-    <!-- FEEDBACK -->
-    <div class="tab-panel" id="tab-feedback">
-      <div class="filter-bar">
-        <select id="filter-feedback"><option value="unpromoted">Unpromoted only</option><option value="all">All entries</option></select>
-        <span class="text-sm text-gray" id="feedback-count-label"></span>
-      </div>
-      <div id="feedback-list"><div class="empty-state"><p>No feedback entries yet.</p></div></div>
-    </div>
-
-    <!-- CHANGELOG -->
-    <div class="tab-panel" id="tab-changelog">
-      <div class="card">
-        <div class="card-header"><div class="card-title">Add Entry</div></div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px">
-          <div class="form-group"><label>Event Type</label>
-            <select id="new-changelog-type"><option value="version_bump">Version Bump</option><option value="defect_resolved">Defect Resolved</option><option value="defect_deferred">Defect Deferred</option><option value="feedback_promoted">Feedback Promoted</option><option value="go_live">Go Live</option></select>
-          </div>
-          <div class="form-group"><label>Build Version</label><input type="text" id="new-changelog-version" placeholder="v0.2.0"></div>
-          <div class="form-group"><label>Disposition</label><select id="new-changelog-disposition"><option value="retain">Retain</option><option value="delete">Delete</option></select></div>
-        </div>
-        <div class="form-group"><label>Summary</label><textarea id="new-changelog-summary" placeholder="Describe what changed..."></textarea></div>
-        <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" id="add-changelog-btn">Add Entry</button></div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Audit Trail</div>
-          <button class="btn btn-ghost btn-sm" id="export-changelog-btn">Export retain CSV</button>
-        </div>
-        <div class="filter-bar" style="margin-bottom:16px">
-          <select id="filter-changelog"><option value="">All Events</option><option value="defect_resolved">Defect Resolved</option><option value="defect_deferred">Defect Deferred</option><option value="feedback_promoted">Feedback Promoted</option><option value="version_bump">Version Bump</option><option value="go_live">Go Live</option></select>
-        </div>
-        <ul class="changelog-list" id="changelog-list"><li class="empty-state"><p>No entries yet.</p></li></ul>
-      </div>
-    </div>
-
-    <!-- REVIEWERS -->
-    <div class="tab-panel" id="tab-reviewers">
-      <div class="card">
-        <div class="card-header"><div class="card-title">Invite Reviewer</div></div>
-        <div class="invite-row">
-          <div class="form-group"><label>Email</label><input type="email" id="inv-email" placeholder="reviewer@example.com"></div>
-          <div class="form-group"><label>Display Name</label><input type="text" id="inv-name" placeholder="Frank"></div>
-          <div class="form-group"><label>Role</label>
-            <select id="inv-role">
-              <option value="frontframe_staff">FrontFrame Staff</option>
-              <option value="contractor">Contractor</option>
-              <option value="client_tester">Client Tester</option>
-              <option value="client_owner">Client Owner</option>
-              <option value="frontframe_admin">Admin</option>
+          <div class="card-title">All Alerts</div>
+          <div class="filter-bar">
+            <input type="text" id="alert-filter" placeholder="Search alerts…" oninput="renderAlerts()">
+            <select id="alert-status-filter" onchange="renderAlerts()">
+              <option value="">All statuses</option>
+              <option value="new">New</option>
+              <option value="active_sales_call">Active Sales Call</option>
+              <option value="closed">Closed</option>
             </select>
           </div>
-          <button class="btn btn-primary" id="invite-btn">Send Invite</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="table-wrap">
-          <table><thead><tr><th>Name</th><th>Role</th><th>Invited</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="reviewers-tbody"><tr><td colspan="5" class="empty-state">No reviewers yet.</td></tr></tbody></table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Q&A -->
-    <div class="tab-panel" id="tab-qa">
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">System Prompt</div>
-            <div class="card-subtitle">Ed's base instruction set for the selected page — evaluate Q&amp;A pairs against this.</div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button class="btn btn-ghost btn-sm" id="prompt-edit-btn">Edit</button>
-            <button class="btn btn-navy btn-sm hidden" id="prompt-save-btn">Save</button>
-            <button class="btn btn-ghost btn-sm hidden" id="prompt-cancel-btn">Cancel</button>
-          </div>
-        </div>
-        <div class="prompt-controls">
-          <label>PAGE</label>
-          <select id="prompt-page-select">
-            <option value="home">Home</option>
-            <option value="intake">Intake</option>
-            <option value="discovery">Discovery</option>
-            <option value="yours">Yours</option>
-            <option value="admin">Admin</option>
-            <option value="proposal">Proposal</option>
-          </select>
-        </div>
-        <div class="prompt-panel" id="prompt-panel">
-          <div class="prompt-empty">Select a page to load the system prompt.</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Add Q&amp;A Pair</div>
-          <button class="btn btn-ghost btn-sm" id="export-qa-btn">Export CSV</button>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end;margin-bottom:14px">
-          <div class="form-group" style="margin-bottom:0"><label>Question</label><input type="text" id="new-q" placeholder="What does FrontFrame do?"></div>
-          <div class="form-group" style="margin-bottom:0"><label>Page scope</label>
-            <select id="new-q-page">
-              <option value="all">All pages</option>
-              <option value="home">Home</option>
-              <option value="intake">Intake</option>
-              <option value="discovery">Discovery</option>
-              <option value="yours">Yours</option>
-              <option value="proposal">Proposal</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group"><label>Answer</label><textarea id="new-a" placeholder="Ed's answer..."></textarea></div>
-        <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" id="add-qa-btn">Add Pair</button></div>
-      </div>
-      <div class="card">
-        <div class="filter-bar">
-          <select id="filter-qa-status">
-            <option value="under_review">Under Review</option>
-            <option value="implemented">Implemented</option>
-            <option value="redundant">Redundant</option>
-            <option value="">All Statuses</option>
-          </select>
-          <select id="filter-qa-page">
-            <option value="">All Pages</option>
-            <option value="all">All (global)</option>
-            <option value="home">Home</option>
-            <option value="intake">Intake</option>
-            <option value="discovery">Discovery</option>
-            <option value="yours">Yours</option>
-            <option value="proposal">Proposal</option>
-          </select>
         </div>
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th style="min-width:180px">Question</th>
-              <th style="min-width:240px">Answer</th>
-              <th>Page</th><th>Status</th><th>Source</th><th>Actions</th>
+              <th>Prospect</th><th>Signal</th><th>Page</th>
+              <th>Status</th><th>SMS</th><th>Date</th><th>Actions</th>
             </tr></thead>
-            <tbody id="qa-tbody"><tr><td colspan="6" class="empty-state">No pairs loaded.</td></tr></tbody>
+            <tbody id="alerts-tbody"></tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- PODCASTS -->
-    <div class="tab-panel" id="tab-podcasts">
-
-      <!-- Add episode -->
+    <!-- ── Q&A ────────────────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-qa">
+      <div class="page-header">
+        <div class="page-title">Q&amp;A Pairs</div>
+        <div class="page-sub">Knowledge base served to all agents</div>
+      </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Add Episode</div>
-          <div class="card-subtitle">Audio file must already be deployed to <code>/audio/</code> on the site.</div>
+          <div class="card-title">Pairs</div>
+          <button class="btn btn-primary btn-sm" onclick="openQaModal()">+ Add Pair</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-          <div class="form-group" style="margin-bottom:0"><label>Series</label><input type="text" id="new-ep-series" placeholder="The Real Estate Invisible Practice"></div>
-          <div class="form-group" style="margin-bottom:0"><label>Title</label><input type="text" id="new-ep-title" placeholder="The Agent Who Built Everything and Owned Nothing"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:14px;align-items:end;margin-bottom:14px">
-          <div class="form-group" style="margin-bottom:0"><label>Audio Path</label><input type="text" id="new-ep-audio" placeholder="/audio/ep-01-real-estate.m4a"></div>
-          <div class="form-group" style="margin-bottom:0"><label>Published Date</label><input type="date" id="new-ep-date"></div>
-          <div class="toggle-wrap" style="padding-bottom:2px">
-            <input type="checkbox" id="new-ep-visible" checked>
-            <label for="new-ep-visible">Visible on site</label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Transcript</label>
-          <textarea id="new-ep-transcript" style="min-height:320px;font-size:0.85rem;line-height:1.8" placeholder="Paste the full episode transcript here…"></textarea>
-        </div>
-        <div style="display:flex;justify-content:flex-end">
-          <button class="btn btn-primary" id="add-episode-btn">Add Episode</button>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Question</th><th>Answer</th><th>Page</th><th>Actions</th></tr></thead>
+            <tbody id="qa-tbody"></tbody>
+          </table>
         </div>
       </div>
+    </div>
 
-      <!-- Episodes list -->
+    <!-- ── System Prompt ──────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-system-prompt">
+      <div class="page-header">
+        <div class="page-title">System Prompt</div>
+        <div class="page-sub">Base instructions for each page agent</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Edit Prompt</div>
+          <select id="prompt-page-select" onchange="loadPromptForPage()">
+            <option value="home">home</option>
+            <option value="intake">intake</option>
+            <option value="discovery">discovery</option>
+            <option value="yours">yours</option>
+            <option value="admin">admin</option>
+            <option value="proposal">proposal</option>
+          </select>
+        </div>
+        <div class="card-body">
+          <textarea id="prompt-content" rows="18" placeholder="Enter system prompt content…"></textarea>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-primary" onclick="savePrompt()">Save Prompt</button>
+            <button class="btn btn-ghost"   onclick="loadPromptForPage()">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Defects ─────────────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-defects">
+      <div class="page-header">
+        <div class="page-title">Defects</div>
+        <div class="page-sub">Issues logged during testing and live operation</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All Defects</div>
+          <button class="btn btn-primary btn-sm" onclick="openDefectModal()">+ Log Defect</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Area</th><th>Description</th><th>Severity</th><th>Status</th><th>Build</th><th>Actions</th></tr></thead>
+            <tbody id="defects-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Feedback ────────────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-feedback">
+      <div class="page-header">
+        <div class="page-title">Feedback / Gaps</div>
+        <div class="page-sub">Questions the agent couldn't answer confidently</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All Entries</div>
+          <button class="btn btn-primary btn-sm" onclick="openFeedbackModal()">+ Add Entry</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Question</th><th>Suggested Answer</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="feedback-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Changelog ───────────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-changelog">
+      <div class="page-header">
+        <div class="page-title">Changelog</div>
+        <div class="page-sub">Build events and decisions</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Entries</div>
+          <button class="btn btn-primary btn-sm" onclick="openChangelogModal()">+ Log Event</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Event</th><th>Summary</th><th>Build</th><th>Date</th></tr></thead>
+            <tbody id="changelog-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Solutions ───────────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-solutions">
+      <div class="page-header">
+        <div class="page-title">Solutions</div>
+        <div class="page-sub">Business problem sessions and daily deliverables</div>
+      </div>
+      <div id="solutions-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Problem Statements</div>
+            <button class="btn btn-primary btn-sm" onclick="openProblemModal()">+ Add Problem</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Title</th><th>Ideal Outcome</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="problems-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card" id="deliverables-card" style="display:none">
+          <div class="card-header">
+            <div class="card-title" id="deliverables-title">Deliverables</div>
+            <button class="btn btn-ghost btn-sm" onclick="closeDeliverables()">← Back</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Challenge</th><th>Response</th><th>Action Committed</th><th>Date</th></tr></thead>
+              <tbody id="deliverables-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card" id="mkt-log-card">
+          <div class="card-header">
+            <div class="card-title">Solutions Log</div>
+            <button class="btn btn-primary btn-sm" onclick="openMktModal()">+ Add Entry</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Platform</th><th>Question</th><th>Answer</th><th>Action</th><th>Date</th></tr></thead>
+              <tbody id="mkt-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Subscriptions ───────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-subscriptions">
+      <div class="page-header">
+        <div class="page-title">Subscriptions</div>
+        <div class="page-sub">SMS platform provisioning and compliance records</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Platforms</div>
+          <button class="btn btn-primary btn-sm" onclick="openSubModal()">+ Add Platform</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Platform</th><th>Provisioned By</th><th>Number</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="subs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Reviewers ───────────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-reviewers">
+      <div class="page-header">
+        <div class="page-title">Reviewers</div>
+        <div class="page-sub">Portal access for testers and clients</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All Reviewers</div>
+          <button class="btn btn-primary btn-sm" onclick="openReviewerModal()">+ Invite Reviewer</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Invited</th><th>Actions</th></tr></thead>
+            <tbody id="reviewers-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Episodes ────────────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-episodes">
+      <div class="page-header">
+        <div class="page-title">Podcast Episodes</div>
+        <div class="page-sub">Published episodes shown on the podcast page</div>
+      </div>
       <div class="card">
         <div class="card-header">
           <div class="card-title">All Episodes</div>
-          <div class="card-subtitle">Includes hidden episodes. Published newest first.</div>
+          <button class="btn btn-primary btn-sm" onclick="openEpisodeModal()">+ Add Episode</button>
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr>
-              <th>Series</th>
-              <th style="min-width:220px">Title</th>
-              <th>Audio</th>
-              <th>Transcript</th>
-              <th>Visible</th>
-              <th>Published</th>
-              <th>Actions</th>
-            </tr></thead>
-            <tbody id="episodes-tbody"><tr><td colspan="7" class="empty-state">No episodes yet.</td></tr></tbody>
+            <thead><tr><th>Series</th><th>Title</th><th>Published</th><th>Visible</th><th>Actions</th></tr></thead>
+            <tbody id="episodes-tbody"></tbody>
           </table>
         </div>
       </div>
-
     </div>
 
-    <!-- SOLUTIONS -->
-    <div class="tab-panel" id="tab-marketing">
-
-      <div class="card sol-orientation">
-        Tell Claude what's on your mind — a problem, a frustration, something costing you time or money. Claude will ask questions until the real issue is clear. When you're ready, commit to one action. That commitment gets logged and we'll follow up next session.
+    <!-- ── Config ─────────────────────────────────────────────────────── -->
+    <div class="tab-panel" id="tab-config">
+      <div class="page-header">
+        <div class="page-title">Config</div>
+        <div class="page-sub">Operational mode and feature flags</div>
       </div>
-
       <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Problems</div>
-            <div class="card-subtitle">Select one to begin a session. Edit anytime as your thinking evolves.</div>
-          </div>
-          <button class="btn btn-ghost btn-sm" id="sol-toggle-add-btn" onclick="toggleAddProblem()">+ Add Problem</button>
-        </div>
-        <div id="sol-add-form" class="hidden" style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--ltgray)">
-          <div class="form-group"><label>Title</label><input type="text" id="sol-new-title" placeholder="e.g. Clients don't pay on time"></div>
-          <div class="form-group"><label>Description</label><textarea id="sol-new-description" placeholder="Describe the problem in your own words…"></textarea></div>
-          <div class="form-group"><label>Ideal Outcome</label><textarea id="sol-new-outcome" placeholder="What does success look like?"></textarea></div>
-          <div style="display:flex;justify-content:flex-end;gap:10px">
-            <button class="btn btn-ghost" onclick="toggleAddProblem()">Cancel</button>
-            <button class="btn btn-primary" onclick="addProblemStatement()">Save Problem</button>
-          </div>
-        </div>
-        <div id="sol-problem-list"><div class="empty-state"><p>No problems defined yet. Add one to begin.</p></div></div>
-      </div>
-
-      <div class="card hidden" id="sol-chat-card">
-        <div id="sol-active-header" style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--ltgray)"></div>
-        <div id="sol-messages" style="display:flex;flex-direction:column;gap:10px;min-height:80px;max-height:420px;overflow-y:auto;margin-bottom:16px;padding:4px 0"></div>
-        <div style="display:flex;gap:10px;align-items:flex-end">
-          <textarea id="sol-input"
-            style="flex:1;min-height:60px;max-height:160px;resize:vertical;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:0.9rem;color:var(--navy);outline:none;transition:border-color 0.15s"
-            placeholder="Type your response…"
-            onkeydown="solInputKeydown(event)"
-            onfocus="this.style.borderColor='var(--navy)'"
-            onblur="this.style.borderColor='var(--border)'"></textarea>
-          <button class="btn btn-navy" id="sol-send-btn" onclick="sendSolutionMessage()">Send</button>
-        </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:12px">
-          <button class="btn btn-primary" onclick="concludeSession()">Conclude Session</button>
+        <div class="card-body" id="config-body">
+          <div class="empty-state"><div class="empty-state-icon">⚙️</div>Loading config…</div>
         </div>
       </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div><div class="card-title">Session Log</div><div class="card-subtitle">Last 10 sessions. Results are editable inline.</div></div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th style="width:80px">Date</th>
-              <th style="min-width:160px">Problem</th>
-              <th style="min-width:200px">Action Committed</th>
-              <th style="min-width:200px">Result</th>
-            </tr></thead>
-            <tbody id="sol-log-tbody">
-              <tr><td colspan="4"><div class="empty-state"><p>No sessions logged yet.</p></div></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
     </div>
 
-    <!-- SUBSCRIPTIONS -->
-    <div class="tab-panel" id="tab-subscriptions">
-
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Add Subscription</div>
-            <div class="card-subtitle">Track third-party platform accounts connected to FrontFrame.</div>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px">
-          <div class="form-group"><label>Platform</label>
-            <select id="sub-new-platform">
-              <option value="surge">Surge</option>
-              <option value="stripe">Stripe</option>
-              <option value="supabase">Supabase</option>
-              <option value="cloudflare">Cloudflare</option>
-              <option value="anthropic">Anthropic</option>
-            </select>
-          </div>
-          <div class="form-group"><label>Provisioned By</label>
-            <select id="sub-new-provisioned-by">
-              <option value="frontframe">FrontFrame</option>
-              <option value="client">Client</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-          <div class="form-group" style="margin-bottom:0"><label>Account Email</label><input type="email" id="sub-new-email" placeholder="account@example.com"></div>
-          <div class="form-group" style="margin-bottom:0"><label>Account Identifier</label><input type="text" id="sub-new-identifier" placeholder="Phone number, org name, domain…"></div>
-        </div>
-        <div class="form-group"><label>Notes</label><textarea id="sub-new-notes" placeholder="Any relevant setup notes…" style="min-height:60px"></textarea></div>
-        <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" onclick="addSubscription()">Add Subscription</button></div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-title">All Subscriptions</div></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th>Platform</th><th>Status</th><th>By</th>
-              <th style="min-width:160px">Account Email</th>
-              <th style="min-width:160px">Identifier</th>
-              <th style="min-width:120px">Notes</th>
-              <th>Actions</th>
-            </tr></thead>
-            <tbody id="sub-tbody">
-              <tr><td colspan="7"><div class="empty-state"><p>No subscriptions yet.</p></div></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
+  </main>
 </div>
 
-<!-- GO-LIVE MODAL -->
-<div class="modal-overlay" id="golive-modal">
+<!-- ── Modals ───────────────────────────────────────────────────────────── -->
+
+<!-- Link Lead Modal -->
+<div class="modal-backdrop" id="link-lead-modal">
   <div class="modal">
-    <h2>Flip to Live</h2>
-    <p>This action sets the system to <strong>live mode</strong>. Type <strong>frontframe.co</strong> to confirm.</p>
-    <input type="text" class="golive-confirm-input" id="golive-confirm" placeholder="frontframe.co">
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="golive-cancel">Cancel</button>
-      <button class="btn btn-danger" id="golive-confirm-btn" disabled>Go Live</button>
+    <div class="modal-header">
+      <div class="modal-title">Link Lead to Alert</div>
+      <button class="modal-close" onclick="closeModal('link-lead-modal')">×</button>
+    </div>
+    <p class="text-gray mb-16" style="font-size:.875rem">Create a lead record to attach to this alert and start the pipeline.</p>
+    <input type="hidden" id="link-lead-alert-id">
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" id="link-lead-name" placeholder="Prospect name">
+    </div>
+    <div class="form-group">
+      <label>Email *</label>
+      <input type="email" id="link-lead-email" placeholder="prospect@example.com">
+    </div>
+    <div class="form-group">
+      <label>Business Name</label>
+      <input type="text" id="link-lead-business" placeholder="Optional">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('link-lead-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="linkLeadAndStart()">Create Lead &amp; Start Pipeline</button>
     </div>
   </div>
 </div>
 
-<!-- EDIT DEFECT MODAL -->
-<div class="modal-overlay" id="edit-defect-modal">
-  <div class="modal">
-    <h2>Edit Defect</h2>
-    <p>Update the area or description for this defect record.</p>
-    <input type="hidden" id="edit-defect-id">
-    <div class="form-group"><label>Area</label>
-      <select id="edit-defect-area"><option value="bot">Bot</option><option value="ui">UI</option><option value="content">Content</option><option value="form">Form</option><option value="payment">Payment</option><option value="contract">Contract</option><option value="other">Other</option></select>
+<!-- Session Viewer Modal -->
+<div class="modal-backdrop" id="session-modal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div class="modal-title" id="session-modal-title">Chat Session</div>
+      <button class="modal-close" onclick="closeModal('session-modal')">×</button>
     </div>
-    <div class="form-group"><label>Description</label><textarea id="edit-defect-description" style="min-height:120px"></textarea></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="edit-defect-cancel">Cancel</button>
-      <button class="btn btn-navy"  id="edit-defect-save">Save Changes</button>
-    </div>
+    <div id="session-modal-body" style="max-height:480px;overflow-y:auto;padding:4px 0"></div>
   </div>
 </div>
 
-<!-- EDIT Q&A MODAL -->
-<div class="modal-overlay" id="edit-qa-modal">
+<!-- Q&A Modal -->
+<div class="modal-backdrop" id="qa-modal">
   <div class="modal">
-    <h2>Edit Q&amp;A Pair</h2>
-    <p>Update the question, answer, or page scope for this pair.</p>
-    <input type="hidden" id="edit-qa-id">
-    <div class="form-group"><label>Question</label><input type="text" id="edit-qa-question"></div>
-    <div class="form-group"><label>Answer</label><textarea id="edit-qa-answer" style="min-height:140px"></textarea></div>
-    <div class="form-group"><label>Page Scope</label>
-      <select id="edit-qa-page">
-        <option value="all">All pages</option>
-        <option value="home">Home</option>
-        <option value="intake">Intake</option>
-        <option value="discovery">Discovery</option>
-        <option value="yours">Yours</option>
-        <option value="proposal">Proposal</option>
+    <div class="modal-header">
+      <div class="modal-title" id="qa-modal-title">Add Q&amp;A Pair</div>
+      <button class="modal-close" onclick="closeModal('qa-modal')">×</button>
+    </div>
+    <input type="hidden" id="qa-modal-id">
+    <div class="form-group">
+      <label>Question</label>
+      <input type="text" id="qa-question" placeholder="What does FrontFrame do?">
+    </div>
+    <div class="form-group">
+      <label>Answer</label>
+      <textarea id="qa-answer" rows="5" placeholder="FrontFrame builds…"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Page</label>
+      <select id="qa-page">
+        <option value="all">all (global)</option>
+        <option value="home">home</option>
+        <option value="intake">intake</option>
+        <option value="discovery">discovery</option>
+        <option value="yours">yours</option>
       </select>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="edit-qa-cancel">Cancel</button>
-      <button class="btn btn-navy"  id="edit-qa-save">Save Changes</button>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('qa-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQaPair()">Save Pair</button>
     </div>
   </div>
 </div>
 
-<!-- EDIT EPISODE MODAL -->
-<div class="modal-overlay" id="edit-episode-modal">
-  <div class="modal modal-wide">
-    <h2>Edit Episode</h2>
-    <p>Update any field. Transcript changes take effect immediately on the public site.</p>
-    <input type="hidden" id="edit-ep-id">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-      <div class="form-group" style="margin-bottom:0"><label>Series</label><input type="text" id="edit-ep-series"></div>
-      <div class="form-group" style="margin-bottom:0"><label>Title</label><input type="text" id="edit-ep-title"></div>
+<!-- Defect Modal -->
+<div class="modal-backdrop" id="defect-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Log Defect</div>
+      <button class="modal-close" onclick="closeModal('defect-modal')">×</button>
     </div>
-    <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:14px;align-items:end;margin-bottom:14px">
-      <div class="form-group" style="margin-bottom:0"><label>Audio Path</label><input type="text" id="edit-ep-audio"></div>
-      <div class="form-group" style="margin-bottom:0"><label>Published Date</label><input type="date" id="edit-ep-date"></div>
-      <div class="toggle-wrap" style="padding-bottom:2px">
-        <input type="checkbox" id="edit-ep-visible">
-        <label for="edit-ep-visible">Visible</label>
-      </div>
+    <div class="form-group">
+      <label>Area</label>
+      <input type="text" id="defect-area" placeholder="conversation / ui / data">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="defect-desc" rows="4"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Severity</label>
+      <select id="defect-severity">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('defect-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDefect()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback Modal -->
+<div class="modal-backdrop" id="feedback-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Feedback Entry</div>
+      <button class="modal-close" onclick="closeModal('feedback-modal')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Question</label>
+      <input type="text" id="fb-question" placeholder="Question the agent couldn't answer">
+    </div>
+    <div class="form-group">
+      <label>Suggested Answer</label>
+      <textarea id="fb-suggested" rows="4"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('feedback-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFeedback()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Changelog Modal -->
+<div class="modal-backdrop" id="changelog-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Log Event</div>
+      <button class="modal-close" onclick="closeModal('changelog-modal')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Event Type</label>
+      <input type="text" id="cl-event-type" placeholder="deployment / decision / fix">
+    </div>
+    <div class="form-group">
+      <label>Summary</label>
+      <textarea id="cl-summary" rows="4"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('changelog-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveChangelog()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reviewer Modal -->
+<div class="modal-backdrop" id="reviewer-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Invite Reviewer</div>
+      <button class="modal-close" onclick="closeModal('reviewer-modal')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="rv-email">
+    </div>
+    <div class="form-group">
+      <label>Display Name</label>
+      <input type="text" id="rv-name">
+    </div>
+    <div class="form-group">
+      <label>Role</label>
+      <select id="rv-role">
+        <option value="client_tester">Client Tester</option>
+        <option value="client_owner">Client Owner</option>
+        <option value="contractor">Contractor</option>
+        <option value="frontframe_staff">FrontFrame Staff</option>
+        <option value="frontframe_admin">FrontFrame Admin</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('reviewer-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveReviewer()">Send Invite</button>
+    </div>
+  </div>
+</div>
+
+<!-- Episode Modal -->
+<div class="modal-backdrop" id="episode-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="ep-modal-title">Add Episode</div>
+      <button class="modal-close" onclick="closeModal('episode-modal')">×</button>
+    </div>
+    <input type="hidden" id="ep-id">
+    <div class="form-group">
+      <label>Series</label>
+      <input type="text" id="ep-series">
+    </div>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="ep-title">
+    </div>
+    <div class="form-group">
+      <label>Published Date</label>
+      <input type="text" id="ep-date" placeholder="YYYY-MM-DD">
+    </div>
+    <div class="form-group">
+      <label>Audio Path</label>
+      <input type="text" id="ep-audio">
     </div>
     <div class="form-group">
       <label>Transcript</label>
-      <textarea id="edit-ep-transcript" style="min-height:320px;font-size:0.85rem;line-height:1.8"></textarea>
+      <textarea id="ep-transcript" rows="5"></textarea>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="edit-ep-cancel">Cancel</button>
-      <button class="btn btn-navy"  id="edit-ep-save">Save Changes</button>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('episode-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEpisode()">Save</button>
     </div>
   </div>
 </div>
 
+<!-- Subscription Modal -->
+<div class="modal-backdrop" id="sub-modal">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <div class="modal-title">Add Platform Subscription</div>
+      <button class="modal-close" onclick="closeModal('sub-modal')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Platform</label>
+      <input type="text" id="sub-platform" placeholder="Surge">
+    </div>
+    <div class="form-group">
+      <label>Provisioned By</label>
+      <input type="text" id="sub-prov-by" value="frontframe">
+    </div>
+    <div class="form-group">
+      <label>Approved Number</label>
+      <input type="text" id="sub-number" placeholder="(844) 940-0984">
+    </div>
+    <div class="form-group">
+      <label>Campaign Type</label>
+      <input type="text" id="sub-campaign" placeholder="Mixed">
+    </div>
+    <div class="form-group">
+      <label>Opt-In Method</label>
+      <input type="text" id="sub-opt-in" placeholder="Web form">
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="sub-notes" rows="3"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('sub-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSubscription()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Problem Statement Modal -->
+<div class="modal-backdrop" id="problem-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Problem Statement</div>
+      <button class="modal-close" onclick="closeModal('problem-modal')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="ps-title">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="ps-desc" rows="3"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Ideal Outcome</label>
+      <textarea id="ps-outcome" rows="3"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('problem-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProblem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Marketing Log Modal -->
+<div class="modal-backdrop" id="mkt-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Solutions Log Entry</div>
+      <button class="modal-close" onclick="closeModal('mkt-modal')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Platform / Context</label>
+      <input type="text" id="mkt-platform" placeholder="LinkedIn">
+    </div>
+    <div class="form-group">
+      <label>Question / Challenge</label>
+      <input type="text" id="mkt-question">
+    </div>
+    <div class="form-group">
+      <label>Answer / Response</label>
+      <textarea id="mkt-answer" rows="3"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Action Committed</label>
+      <input type="text" id="mkt-action" placeholder="Optional">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('mkt-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMkt()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
 <div id="toast"></div>
 
 <script>
-const SUPABASE_URL  = 'https://ifjsepyzdnpmwyuytppr.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmanNlcHl6ZG5wbXd5dXl0cHByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUzMjksImV4cCI6MjA5MjExMTMyOX0.D4rt9LMNta78wGhNpT6P-pMM5pEdltAAxz1nQqJ1b80';
-const WORKER_URL    = 'https://frontframe-worker.ed-e5c.workers.dev';
+const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
 
-let session   = null;
-let config    = null;
-let defects   = [];
-let feedback  = [];
-let changelog = [];
-let reviewers = [];
-let qaPairs   = [];
-let alerts    = [];
-let episodes  = [];
+let session      = null;
+let alerts       = [];
+let agreements   = [];
+let qaPairs      = [];
+let defects      = [];
+let feedback     = [];
+let changelog    = [];
+let reviewers    = [];
+let episodes     = [];
+let subscriptions= [];
+let mktLog       = [];
+let problems     = [];
+let deliverables = [];
+let currentTab   = '';
 
-// Marketing state
-// Solutions state
-let problemStatements = [];
-let activeProblem     = null;
-let solutionsHistory  = [];
-let solDeliverables   = [];
-let solSending        = false;
-let solFirstQuestion  = null;
-let solLastUserMsg    = null;
+// ── Auth ────────────────────────────────────────────────────────────────
 
-// Subscriptions state
-let subscriptions = [];
+function saveSession(s) {
+  session = s;
+  try { sessionStorage.setItem('ff_session', JSON.stringify(s)); } catch {}
+}
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem('ff_session')); } catch { return null; }
+}
+function clearSession() {
+  session = null;
+  try { sessionStorage.removeItem('ff_session'); } catch {}
+}
 
-const expandedAlerts = new Set();
+function handleMagicLinkCallback() {
+  const hash = window.location.hash;
+  if (!hash || !hash.includes('access_token')) return false;
+  const params      = new URLSearchParams(hash.substring(1));
+  const accessToken = params.get('access_token');
+  const refreshToken= params.get('refresh_token');
+  if (!accessToken) return false;
+  saveSession({ access_token: accessToken, refresh_token: refreshToken, user: { email: ADMIN_EMAIL_HINT } });
+  window.history.replaceState({}, '', window.location.pathname);
+  return true;
+}
 
-// AUTH
-async function signIn(email, password) {
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
-    body: JSON.stringify({ email, password }),
+const ADMIN_EMAIL_HINT = 'ed@frontframe.co';
+
+async function sendMagicLink(email) {
+  const res = await fetch(`${WORKER_URL}/auth/magic-link`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
   });
-  if (!res.ok) { const err = await res.json(); throw new Error(err.error_description || 'Sign in failed.'); }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to send sign-in link.');
+  }
+}
+
+document.getElementById('send-link-btn').addEventListener('click', async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  if (!email) { errEl.textContent = 'Email is required.'; return; }
+  const btn = document.getElementById('send-link-btn');
+  btn.textContent = 'Sending…'; btn.disabled = true;
+  try {
+    await sendMagicLink(email);
+    document.getElementById('login-sent-to').textContent = email;
+    document.getElementById('login-email-view').classList.add('hidden');
+    document.getElementById('login-sent-view').classList.remove('hidden');
+  } catch (e) {
+    errEl.textContent = e.message;
+  } finally {
+    btn.textContent = 'Send Sign-In Link'; btn.disabled = false;
+  }
+});
+
+document.getElementById('login-email').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('send-link-btn').click();
+});
+
+document.getElementById('login-back-btn').addEventListener('click', () => {
+  document.getElementById('login-sent-view').classList.add('hidden');
+  document.getElementById('login-email-view').classList.remove('hidden');
+});
+
+function signOut() {
+  clearSession();
+  location.reload();
+}
+
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app-shell').classList.add('hidden');
+}
+function showAdmin() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-shell').classList.remove('hidden');
+  switchTab('pipeline');
+}
+
+// ── API ──────────────────────────────────────────────────────────────────
+
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(WORKER_URL + path, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Request failed: ${res.status}`);
+  }
   return res.json();
 }
-async function signOut() {
-  try { await fetch(`${SUPABASE_URL}/auth/v1/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPABASE_ANON } }); } catch {}
-  sessionStorage.removeItem('ff_session'); session = null; showLogin();
-}
-function saveSession(s) { session = s; sessionStorage.setItem('ff_session', JSON.stringify(s)); }
-function loadSession()   { try { return JSON.parse(sessionStorage.getItem('ff_session')); } catch { return null; } }
 
-// API
-async function api(method, path, body = null) {
-  const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` } };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`${WORKER_URL}${path}`, opts);
-  if (!res.ok) throw new Error(`API ${method} ${path} failed: ${await res.text()}`);
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
-}
+// ── Tab switching ─────────────────────────────────────────────────────────
 
-// TOAST
-function toast(msg, type = 'success') {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.className = `show ${type}`;
-  clearTimeout(el._t); el._t = setTimeout(() => { el.className = ''; }, 3000);
-}
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('tab-' + tab);
+  if (panel) panel.classList.add('active');
+  const btn = document.querySelector(`[data-tab="${tab}"]`);
+  if (btn) btn.classList.add('active');
 
-// TABS
-function switchTab(name) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
-  expandedAlerts.clear();
-
-  if (name === 'marketing') {
-    loadSolutionsTab();
-    return;
+  switch (tab) {
+    case 'pipeline':      loadPipelineTab(); break;
+    case 'qa':            loadQa(); break;
+    case 'system-prompt': loadPromptForPage(); break;
+    case 'defects':       loadDefects(); break;
+    case 'feedback':      loadFeedback(); break;
+    case 'changelog':     loadChangelog(); break;
+    case 'solutions':     loadSolutions(); break;
+    case 'subscriptions': loadSubscriptions(); break;
+    case 'reviewers':     loadReviewers(); break;
+    case 'episodes':      loadEpisodes(); break;
+    case 'config':        loadConfig(); break;
   }
-
-  if (name === 'subscriptions') {
-    loadSubscriptionsTab();
-    return;
-  }
-
-  loadAll().then(() => {
-    if (name === 'dashboard')   renderDashboard();
-    if (name === 'lead-alerts') renderAlerts();
-    if (name === 'defects')     renderDefects();
-    if (name === 'feedback')    renderFeedback();
-    if (name === 'changelog')   renderChangelog();
-    if (name === 'reviewers')   renderReviewers();
-    if (name === 'qa')          { renderQA(); loadSystemPrompt(); }
-    if (name === 'podcasts')    renderEpisodes();
-  });
 }
 
-// DATA
-async function loadAll() {
+// ── Pipeline ──────────────────────────────────────────────────────────────
+
+async function loadPipelineTab() {
   try {
-    [config, defects, feedback, changelog, reviewers, qaPairs, alerts, episodes] = await Promise.all([
-      api('GET', '/admin/config'),
-      api('GET', '/admin/defects'),
-      api('GET', '/admin/feedback'),
-      api('GET', '/admin/changelog'),
-      api('GET', '/admin/reviewers'),
-      api('GET', '/qa'),
+    [alerts, agreements] = await Promise.all([
       api('GET', '/admin/lead-alerts'),
-      api('GET', '/admin/podcast-episodes'),
+      api('GET', '/admin/agreements'),
     ]);
-    updateHeaderBadges();
-  } catch (e) { toast('Failed to load data. ' + e.message, 'error'); }
+    updateBadges();
+  } catch (e) { toast('Failed to load pipeline: ' + e.message, 'error'); }
+  renderPipeline();
 }
 
-function updateHeaderBadges() {
-  const mode  = config?.mode ?? 'testing';
-  const badge = document.getElementById('header-mode-badge');
-  badge.textContent = mode === 'live' ? 'Live' : 'Testing';
-  badge.className   = `mode-badge ${mode}`;
-  document.getElementById('header-version').textContent = config?.build_version ?? '';
-  setBadge('badge-defects',  defects.filter(d => d.status === 'open' || d.status === 'in_review').length);
-  setBadge('badge-feedback', feedback.filter(f => !f.promoted).length);
-  setBadge('badge-alerts',   alerts.filter(a => a.status === 'new').length);
-}
-function setBadge(id, count) {
-  const el = document.getElementById(id);
-  if (count > 0) { el.textContent = count; el.classList.remove('hidden'); }
-  else             el.classList.add('hidden');
+function renderPipeline() {
+  const active = alerts.filter(a => a.status === 'active_sales_call');
+  renderActivePipeline(active);
+  renderAlerts();
 }
 
-// DASHBOARD
-function renderDashboard() {
-  if (!config) return;
-  const mode = config.mode ?? 'testing';
-  document.getElementById('mode-card').style.background = mode === 'live' ? 'var(--green)' : 'var(--navy)';
-  document.getElementById('mode-heading').textContent = `System Mode: ${mode === 'live' ? 'Live' : 'Testing'}`;
-  document.getElementById('mode-desc').textContent    = mode === 'live'
-    ? 'Public. Bot is in prospect mode. Site is indexed.'
-    : 'Pre-launch. Bot is in feedback mode. Site is not indexed.';
-  const glBtn = document.getElementById('golive-btn');
-  glBtn.textContent = mode === 'live' ? 'Currently Live' : 'Flip to Live';
-  glBtn.disabled    = mode === 'live';
-  document.getElementById('cfg-version').value = config.build_version ?? '';
-  document.getElementById('cfg-stage').value   = config.stage_gate    ?? 'build';
+function renderActivePipeline(activeAlerts) {
+  const section = document.getElementById('pipeline-active-section');
+  if (!activeAlerts.length) { section.innerHTML = ''; return; }
+  let html = `<div class="pipeline-section-title">Active Sales Calls (${activeAlerts.length})</div>`;
+  html += activeAlerts.map(alert => {
+    const agreement = agreements.find(a => a.lead_id === alert.lead_id) ?? null;
+    return renderPipelineCard(alert, agreement);
+  }).join('');
+  section.innerHTML = html;
+}
 
-  const open = defects.filter(d => d.status !== 'resolved' && d.status !== 'deferred');
-  document.getElementById('stat-new-alerts').textContent   = alerts.filter(a => a.status === 'new').length;
-  document.getElementById('stat-active-calls').textContent = alerts.filter(a => a.status === 'active_sales_call').length;
-  document.getElementById('stat-blocking').textContent     = open.filter(d => d.severity === 'blocking').length;
-  document.getElementById('stat-major').textContent        = open.filter(d => d.severity === 'major').length;
-  document.getElementById('stat-feedback').textContent     = feedback.filter(f => !f.promoted).length;
+function renderPipelineCard(alert, agreement) {
+  const hasLead          = !!alert.lead_id;
+  const letterSent       = !!agreement;
+  const letterSigned     = !!agreement?.signed_at || agreement?.status === 'signed';
+  const paymentRequested = !!agreement?.payment_request_sent_at;
+  const paymentReceived  = !!agreement?.payment_received_at;
+  const called           = !!agreement?.client_called_at;
 
-  const ul = document.getElementById('dashboard-changelog');
-  const recent = [...changelog].slice(0, 5);
-  if (!recent.length) { ul.innerHTML = '<li class="empty-state"><p>No entries yet.</p></li>'; return; }
-  ul.innerHTML = recent.map(e => `
-    <li class="changelog-item">
-      <div class="changelog-dot"></div>
-      <div class="changelog-body">
-        <div class="changelog-summary"><span class="badge badge-${e.event_type}">${fmtEvent(e.event_type)}</span>&nbsp;${esc(e.summary)}</div>
-        <div class="changelog-meta">${fmtDate(e.created_at)} · v${esc(e.build_version ?? '—')}</div>
+  // Step states: 'start' = needs link, 'ready' = action available, 'waiting' = sent pending, 'done', 'locked'
+  const s1 = !hasLead ? 'start' : !letterSent ? 'ready' : letterSigned ? 'done' : 'waiting';
+  const s2 = !letterSigned ? 'locked' : !paymentRequested ? 'ready' : paymentReceived ? 'done' : 'waiting';
+  const s3 = !paymentReceived ? 'locked' : !called ? 'ready' : 'done';
+  const s4 = !called ? 'locked' : 'ready';
+
+  const s1meta = s1 === 'waiting' ? 'Sent · Awaiting signature'
+               : s1 === 'done'    ? 'Signed ' + fmtDateShort(agreement?.signed_at)
+               : '';
+  const s2meta = s2 === 'waiting' ? 'Sent ' + fmtDateShort(agreement?.payment_request_sent_at) + ' · Awaiting payment'
+               : s2 === 'done'    ? 'Received ' + fmtDateShort(agreement?.payment_received_at)
+               : '';
+  const s3meta = s3 === 'done' ? 'Called ' + fmtDateShort(agreement?.client_called_at) : '';
+
+  const step1 = pipelineStep(1, 'Due Diligence Letter', s1, s1meta,
+    s1 === 'start'  ? `openLinkLeadModal('${alert.alert_id}')` :
+    s1 === 'ready'  ? `sendLetter('${alert.alert_id}','${alert.lead_id}')` : null,
+    s1 === 'start'  ? 'Link Lead' : 'Send');
+
+  const step2 = pipelineStep(2, 'Payment Request ($500)', s2, s2meta,
+    s2 === 'ready'  ? `sendPaymentRequest('${alert.lead_id}','${agreement?.id ?? ''}')` : null,
+    'Send');
+
+  const step3 = pipelineStep(3, 'Call Client', s3, s3meta,
+    s3 === 'ready'  ? `markCalled('${agreement?.id}')` : null,
+    'Mark Called');
+
+  const step4 = pipelineStep(4, 'Data Gathering', s4, '',
+    s4 === 'ready'  ? `copyStartLink('${alert.lead_id}')` : null,
+    'Copy Link');
+
+  return `<div class="pipeline-card">
+    <div class="pipeline-card-header">
+      <div>
+        <div class="pipeline-lead-name">${esc(alert.prospect_name ?? 'Visitor')}</div>
+        <div class="pipeline-lead-meta">${esc(alert.trigger_reason ?? '')}${alert.trigger_reason ? ' · ' : ''}${fmtDate(alert.triggered_at)}</div>
       </div>
-    </li>`).join('');
+      <div class="flex-row">
+        ${agreement?.document_url ? `<a href="${agreement.document_url}" target="_blank" class="btn btn-ghost btn-sm">📄 PDF</a>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="moveAlertStatus('${alert.alert_id}','closed')">Close</button>
+      </div>
+    </div>
+    <div class="pipeline-steps">${step1}${step2}${step3}${step4}</div>
+  </div>`;
 }
 
-// LEAD ALERTS
+function pipelineStep(num, label, state, meta, actionFn, actionLabel) {
+  const isDone    = state === 'done';
+  const isLocked  = state === 'locked';
+  const isWaiting = state === 'waiting';
+  const cls = isDone ? 'step-done' : isLocked ? 'step-locked' : '';
+  const numContent = isDone ? '✓' : num;
+  let actionEl = '';
+  if (actionFn && !isDone && !isLocked && !isWaiting) {
+    actionEl = `<div class="step-action"><button class="btn btn-amber btn-sm" onclick="${actionFn}">${actionLabel}</button></div>`;
+  }
+  return `<div class="pipeline-step ${cls}">
+    <div class="step-num">${numContent}</div>
+    <div class="step-label">${label}${meta ? `<div class="step-meta">${meta}</div>` : ''}</div>
+    ${actionEl}
+  </div>`;
+}
+
+async function sendLetter(alertId, leadId) {
+  if (!leadId) { toast('No lead linked to this alert.', 'error'); return; }
+  try {
+    await api('POST', '/admin/agreements/send-diligence', { lead_id: leadId });
+    toast('Due Diligence Letter sent.');
+    await loadPipelineTab();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function sendPaymentRequest(leadId, agreementId) {
+  try {
+    const body = { lead_id: leadId };
+    if (agreementId) body.agreement_id = agreementId;
+    await api('POST', '/admin/payments/send-request', body);
+    toast('Payment request sent.');
+    await loadPipelineTab();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function markCalled(agreementId) {
+  try {
+    await api('PATCH', `/admin/agreements/${agreementId}`, { client_called_at: new Date().toISOString() });
+    toast('Call marked.');
+    await loadPipelineTab();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function copyStartLink(leadId) {
+  const url = `https://frontframe.co/start?lead=${leadId}`;
+  navigator.clipboard.writeText(url).then(() => toast('Start link copied.')).catch(() => toast('Copy failed — ' + url, 'error'));
+}
+
+async function moveAlertStatus(alertId, status) {
+  try {
+    await api('PATCH', `/admin/lead-alerts/${alertId}`, { status });
+    const idx = alerts.findIndex(a => a.alert_id === alertId);
+    if (idx >= 0) alerts[idx].status = status;
+    renderPipeline();
+    toast(`Alert moved to ${status}.`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Link Lead Modal ────────────────────────────────────────────────────────
+
+function openLinkLeadModal(alertId) {
+  const alert = alerts.find(a => a.alert_id === alertId);
+  document.getElementById('link-lead-alert-id').value = alertId;
+  document.getElementById('link-lead-name').value     = alert?.prospect_name ?? '';
+  document.getElementById('link-lead-email').value    = '';
+  document.getElementById('link-lead-business').value = '';
+  document.getElementById('link-lead-modal').classList.add('open');
+}
+
+async function linkLeadAndStart() {
+  const alertId  = document.getElementById('link-lead-alert-id').value;
+  const name     = document.getElementById('link-lead-name').value.trim();
+  const email    = document.getElementById('link-lead-email').value.trim();
+  const business = document.getElementById('link-lead-business').value.trim();
+  if (!name || !email) { toast('Name and email are required.', 'error'); return; }
+  try {
+    const leadArr = await api('POST', '/admin/leads', { name, email, business_name: business || null, source: 'pipeline', status: 'new' });
+    const leadId  = Array.isArray(leadArr) ? leadArr[0]?.id : leadArr?.id;
+    await api('PATCH', `/admin/lead-alerts/${alertId}`, { lead_id: leadId, status: 'active_sales_call' });
+    closeModal('link-lead-modal');
+    toast('Lead linked. Pipeline started.');
+    await loadPipelineTab();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Alerts table ─────────────────────────────────────────────────────────
+
 function renderAlerts() {
-  const statusFilter = document.getElementById('filter-alert-status').value;
-  let rows = [...alerts];
-  if (statusFilter) rows = rows.filter(a => a.status === statusFilter);
+  const filter     = (document.getElementById('alert-filter')?.value ?? '').toLowerCase();
+  const statusFilt = document.getElementById('alert-status-filter')?.value ?? '';
+  const filtered   = alerts.filter(a => {
+    const matchStatus = !statusFilt || a.status === statusFilt;
+    const matchText   = !filter ||
+      (a.prospect_name ?? '').toLowerCase().includes(filter) ||
+      (a.trigger_reason ?? '').toLowerCase().includes(filter) ||
+      (a.page ?? '').toLowerCase().includes(filter);
+    return matchStatus && matchText;
+  });
 
   const tbody = document.getElementById('alerts-tbody');
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>No alerts match the current filter.</p></div></td></tr>'; return; }
-
-  tbody.innerHTML = rows.map(a => {
-    const hasSession = !!a.session_id;
-    const isExpanded = expandedAlerts.has(a.alert_id);
-    return `
-    <tr id="alert-row-${a.alert_id}" style="cursor:${hasSession?'pointer':'default'}" onclick="${hasSession?`toggleConversation('${a.alert_id}')`:''}" >
-      <td style="width:28px;color:var(--gray);font-size:0.8rem">${hasSession?(isExpanded?'▾':'▸'):'—'}</td>
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">No alerts</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(a => `
+    <tr>
       <td><strong>${esc(a.prospect_name ?? 'Visitor')}</strong></td>
-      <td class="text-sm">${esc(a.trigger_reason ?? '—')}</td>
-      <td><span class="text-sm text-gray">${esc(a.page ?? '—')}</span></td>
-      <td>${a.current_site?`<a href="${esc(a.current_site)}" target="_blank" rel="noopener" style="color:var(--blue);font-size:0.8rem;word-break:break-all" onclick="event.stopPropagation()">${esc(a.current_site)}</a>`:'<span class="text-gray text-sm">—</span>'}</td>
-      <td><span class="badge ${a.sms_sent?'badge-resolved':'badge-cosmetic'}">${a.sms_sent?'Sent':'No'}</span></td>
-      <td onclick="event.stopPropagation()">
-        <select onchange="updateAlertStatus('${a.alert_id}', this.value)"
-          style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:0.8rem;font-family:'Inter',sans-serif;color:var(--navy);outline:none;background:white">
-          ${['new','reviewing','active_sales_call','closed','test'].map(s=>`<option value="${s}" ${a.status===s?'selected':''}>${s.replace(/_/g,' ')}</option>`).join('')}
-        </select>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(a.trigger_reason ?? '')}">${esc(a.trigger_reason ?? '—')}</td>
+      <td class="text-small text-gray">${esc(a.page ?? '')}</td>
+      <td><span class="badge badge-${a.status ?? 'new'}">${a.status ?? 'new'}</span></td>
+      <td><span class="${a.sms_sent ? 'badge badge-approved' : 'badge badge-closed'}">${a.sms_sent ? 'Sent' : 'No'}</span></td>
+      <td class="text-small text-gray">${fmtDate(a.triggered_at)}</td>
+      <td>
+        <div class="flex-row">
+          ${a.session_id ? `<button class="btn btn-ghost btn-xs" onclick="viewSession('${a.alert_id}','${esc(a.prospect_name ?? 'Visitor')}')">Session</button>` : ''}
+          ${a.status !== 'active_sales_call' ? `<button class="btn btn-ghost btn-xs" onclick="moveAlertStatus('${a.alert_id}','active_sales_call')">→ Pipeline</button>` : ''}
+          ${a.status !== 'closed' ? `<button class="btn btn-ghost btn-xs" onclick="moveAlertStatus('${a.alert_id}','closed')">Close</button>` : ''}
+          <button class="btn btn-danger btn-xs" onclick="deleteAlert('${a.alert_id}')">Del</button>
+        </div>
       </td>
-      <td class="text-gray text-sm">${fmtDate(a.triggered_at)}</td>
-      <td onclick="event.stopPropagation()"><button class="btn btn-danger btn-sm" onclick="deleteAlert('${a.alert_id}')">Delete</button></td>
     </tr>
-    <tr id="convo-row-${a.alert_id}" class="convo-row${isExpanded?'':' hidden'}">
-      <td colspan="9"><div id="convo-content-${a.alert_id}" class="convo-loading">Loading conversation…</div></td>
-    </tr>`;
-  }).join('');
-
-  expandedAlerts.forEach(id => loadConversation(id));
+  `).join('');
 }
 
-async function toggleConversation(alertId) {
-  const convoRow   = document.getElementById(`convo-row-${alertId}`);
-  const alertRow   = document.getElementById(`alert-row-${alertId}`);
-  const chevron    = alertRow?.querySelector('td:first-child');
-  const isExpanded = expandedAlerts.has(alertId);
-  if (isExpanded) {
-    expandedAlerts.delete(alertId);
-    convoRow.classList.add('hidden');
-    if (chevron) chevron.textContent = '▸';
-  } else {
-    expandedAlerts.add(alertId);
-    convoRow.classList.remove('hidden');
-    if (chevron) chevron.textContent = '▾';
-    await loadConversation(alertId);
+async function viewSession(alertId, name) {
+  document.getElementById('session-modal-title').textContent = 'Session — ' + name;
+  document.getElementById('session-modal-body').innerHTML = '<p style="color:var(--gray);padding:12px">Loading…</p>';
+  document.getElementById('session-modal').classList.add('open');
+  try {
+    const data = await api('GET', `/admin/lead-alerts/${alertId}/session`);
+    const conv = data.conversation;
+    if (!conv || !conv.length) {
+      document.getElementById('session-modal-body').innerHTML = '<p style="color:var(--gray);padding:12px">No session data.</p>';
+      return;
+    }
+    document.getElementById('session-modal-body').innerHTML = conv.map(t => `
+      <div>
+        <div class="session-role">${t.role}</div>
+        <div class="session-bubble ${t.role}">${esc(t.content)}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('session-modal-body').innerHTML = `<p style="color:var(--red);padding:12px">${e.message}</p>`;
   }
 }
 
-async function loadConversation(alertId) {
-  const el = document.getElementById(`convo-content-${alertId}`);
-  if (!el) return;
+async function deleteAlert(alertId) {
+  if (!confirm('Delete this alert? This cannot be undone.')) return;
   try {
-    const data = await api('GET', `/admin/lead-alerts/${alertId}/session`);
-    if (!data.conversation) {
-      el.className = 'convo-empty';
-      el.textContent = data.reason === 'no_session'
-        ? 'Session capture was not enabled when this alert was created.'
-        : 'Session record not found.';
-      return;
-    }
-    const turns = data.conversation;
-    if (!turns || turns.length === 0) { el.className = 'convo-empty'; el.textContent = 'No conversation turns recorded.'; return; }
-    el.className = 'convo-panel';
-    el.innerHTML = `
-      <div class="convo-meta">Page: <strong>${esc(data.page ?? '—')}</strong> &nbsp;·&nbsp; Started: <strong>${fmtDate(data.started_at)}</strong> &nbsp;·&nbsp; ${turns.length} turn${turns.length===1?'':'s'}</div>
-      <div class="convo-messages">
-        ${turns.map(t => {
-          const isUser = t.role === 'user';
-          return `<div class="convo-msg ${isUser?'user':'ed'}"><div class="convo-role">${isUser?'Prospect':'Ed'}</div>${esc(t.content)}</div>`;
-        }).join('')}
-      </div>`;
-  } catch (e) { el.className = 'convo-empty'; el.textContent = 'Could not load conversation: ' + e.message; }
-}
-
-async function updateAlertStatus(id, status) {
-  try {
-    await api('PATCH', `/admin/lead-alerts/${id}`, { status });
-    const idx = alerts.findIndex(a => a.alert_id === id);
-    if (idx >= 0) alerts[idx].status = status;
-    updateHeaderBadges(); renderAlerts(); toast(`Alert marked ${status.replace(/_/g,' ')}.`);
+    await api('DELETE', `/admin/lead-alerts/${alertId}`);
+    alerts = alerts.filter(a => a.alert_id !== alertId);
+    renderPipeline();
+    toast('Alert deleted.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function deleteAlert(id) {
-  if (!confirm('Delete this alert record? This cannot be undone.')) return;
-  try {
-    await api('DELETE', `/admin/lead-alerts/${id}`);
-    alerts = alerts.filter(a => a.alert_id !== id);
-    expandedAlerts.delete(id);
-    updateHeaderBadges(); renderAlerts(); toast('Alert deleted.');
-  } catch (e) { toast(e.message, 'error'); }
+// ── Q&A ───────────────────────────────────────────────────────────────────
+
+async function loadQa() {
+  try { qaPairs = await api('GET', '/qa'); } catch (e) { toast('Failed to load Q&A: ' + e.message, 'error'); return; }
+  renderQa();
 }
 
-// DEFECTS
-function renderDefects() {
-  const area     = document.getElementById('filter-area').value;
-  const severity = document.getElementById('filter-severity').value;
-  const status   = document.getElementById('filter-status').value;
-  let rows = [...defects];
-  if (area)     rows = rows.filter(d => d.area === area);
-  if (severity) rows = rows.filter(d => d.severity === severity);
-  if (status)   rows = rows.filter(d => d.status === status);
-  const tbody = document.getElementById('defects-tbody');
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>No defects match the current filters.</p></div></td></tr>'; return; }
-  tbody.innerHTML = rows.map(d => `
+function renderQa() {
+  const tbody = document.getElementById('qa-tbody');
+  if (!qaPairs.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No pairs yet</div></td></tr>`; return; }
+  tbody.innerHTML = qaPairs.map(p => `
     <tr>
-      <td><span class="badge badge-${d.area}">${d.area}</span></td>
+      <td style="max-width:220px">${esc(p.question)}</td>
+      <td style="max-width:300px;color:var(--gray)">${esc(p.answer?.slice(0,120))}${p.answer?.length>120?'…':''}</td>
+      <td><span class="badge badge-new">${esc(p.page ?? 'all')}</span></td>
+      <td>
+        <div class="flex-row">
+          <button class="btn btn-ghost btn-xs" onclick="openQaModal('${p.id}')">Edit</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteQaPair('${p.id}')">Del</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openQaModal(id) {
+  const p = id ? qaPairs.find(q => q.id === id) : null;
+  document.getElementById('qa-modal-title').textContent = p ? 'Edit Q&A Pair' : 'Add Q&A Pair';
+  document.getElementById('qa-modal-id').value   = p?.id ?? '';
+  document.getElementById('qa-question').value   = p?.question ?? '';
+  document.getElementById('qa-answer').value     = p?.answer ?? '';
+  document.getElementById('qa-page').value       = p?.page ?? 'all';
+  document.getElementById('qa-modal').classList.add('open');
+}
+
+async function saveQaPair() {
+  const id       = document.getElementById('qa-modal-id').value;
+  const question = document.getElementById('qa-question').value.trim();
+  const answer   = document.getElementById('qa-answer').value.trim();
+  const page     = document.getElementById('qa-page').value;
+  if (!question || !answer) { toast('Question and answer are required.', 'error'); return; }
+  try {
+    if (id) {
+      const updated = await api('PUT', `/qa/${id}`, { question, answer, page });
+      const idx = qaPairs.findIndex(p => p.id === id);
+      if (idx >= 0) qaPairs[idx] = { ...qaPairs[idx], question, answer, page };
+    } else {
+      const created = await api('POST', '/qa', { question, answer, page });
+      const newPair = Array.isArray(created) ? created[0] : created;
+      if (newPair) qaPairs.push(newPair);
+    }
+    closeModal('qa-modal');
+    renderQa();
+    toast('Saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteQaPair(id) {
+  if (!confirm('Delete this Q&A pair?')) return;
+  try {
+    await api('DELETE', `/qa/${id}`);
+    qaPairs = qaPairs.filter(p => p.id !== id);
+    renderQa();
+    toast('Deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── System Prompt ──────────────────────────────────────────────────────────
+
+async function loadPromptForPage() {
+  const page = document.getElementById('prompt-page-select').value;
+  try {
+    const data = await api('GET', `/admin/system-prompt/${page}`);
+    document.getElementById('prompt-content').value = data.content ?? '';
+  } catch (e) { toast('Failed to load prompt: ' + e.message, 'error'); }
+}
+
+async function savePrompt() {
+  const page    = document.getElementById('prompt-page-select').value;
+  const content = document.getElementById('prompt-content').value;
+  try {
+    await api('POST', `/admin/system-prompt/${page}`, { content });
+    toast('Prompt saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Defects ───────────────────────────────────────────────────────────────
+
+async function loadDefects() {
+  try { defects = await api('GET', '/admin/defects'); } catch (e) { toast('Failed to load defects: ' + e.message, 'error'); return; }
+  renderDefects();
+  updateBadges();
+}
+
+function renderDefects() {
+  const tbody = document.getElementById('defects-tbody');
+  if (!defects.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No defects</div></td></tr>`; return; }
+  tbody.innerHTML = defects.map(d => `
+    <tr>
+      <td>${esc(d.area)}</td>
+      <td style="max-width:300px">${esc(d.description?.slice(0,120))}${d.description?.length>120?'…':''}</td>
       <td><span class="badge badge-${d.severity}">${d.severity}</span></td>
-      <td>${esc(d.description)}</td>
+      <td><span class="badge badge-${d.status ?? 'open'}">${d.status ?? 'open'}</span></td>
+      <td class="text-small text-gray">${esc(d.build_version ?? '')}</td>
       <td>
-        <select onchange="updateDefectStatus('${d.id}', this.value)"
-          style="border:none;background:none;cursor:pointer;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;padding:2px 8px">
-          ${['open','in_review','resolved','deferred'].map(s=>`<option value="${s}" ${d.status===s?'selected':''}>${s.replace('_',' ')}</option>`).join('')}
-        </select>
+        ${d.status !== 'resolved' ? `<button class="btn btn-ghost btn-xs" onclick="resolveDefect('${d.id}')">Resolve</button>` : ''}
       </td>
-      <td><span class="badge badge-${d.disposition}">${d.disposition}</span></td>
-      <td class="text-gray text-sm">${fmtDate(d.created_at)}</td>
-      <td>
-        <button class="btn btn-ghost btn-sm" onclick="toggleDisposition('${d.id}','${d.disposition}')">${d.disposition==='retain'?'Mark Delete':'Mark Retain'}</button>
-        <button class="btn btn-ghost btn-sm" onclick="openEditDefect('${d.id}')">Edit</button>
-      </td>
-    </tr>`).join('');
+    </tr>
+  `).join('');
 }
 
-async function logDefect() {
-  const description = document.getElementById('new-description').value.trim();
-  if (!description) { toast('Description is required.', 'error'); return; }
+function openDefectModal() { document.getElementById('defect-modal').classList.add('open'); }
+
+async function saveDefect() {
+  const area     = document.getElementById('defect-area').value.trim();
+  const desc     = document.getElementById('defect-desc').value.trim();
+  const severity = document.getElementById('defect-severity').value;
+  if (!area || !desc) { toast('Area and description are required.', 'error'); return; }
   try {
-    const d = await api('POST', '/admin/defects', { area: document.getElementById('new-area').value, severity: document.getElementById('new-severity').value, disposition: document.getElementById('new-disposition').value, description });
-    defects.unshift(d[0] ?? d);
-    document.getElementById('new-description').value = '';
-    updateHeaderBadges(); renderDefects(); toast('Defect logged.');
+    const created = await api('POST', '/admin/defects', { area, description: desc, severity });
+    const newDef  = Array.isArray(created) ? created[0] : created;
+    if (newDef) defects.unshift(newDef);
+    closeModal('defect-modal');
+    renderDefects();
+    toast('Defect logged.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function updateDefectStatus(id, status) {
+async function resolveDefect(id) {
   try {
-    await api('PATCH', `/admin/defects/${id}`, { status });
+    await api('PATCH', `/admin/defects/${id}`, { status: 'resolved' });
     const idx = defects.findIndex(d => d.id === id);
-    if (idx >= 0) defects[idx].status = status;
-    updateHeaderBadges(); renderDefects(); toast(`Status updated to ${status.replace('_',' ')}.`);
+    if (idx >= 0) defects[idx].status = 'resolved';
+    renderDefects();
+    toast('Resolved.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function toggleDisposition(id, current) {
-  const next = current === 'retain' ? 'delete' : 'retain';
-  try {
-    await api('PATCH', `/admin/defects/${id}`, { disposition: next });
-    const idx = defects.findIndex(d => d.id === id);
-    if (idx >= 0) defects[idx].disposition = next;
-    renderDefects(); toast(`Disposition set to ${next}.`);
-  } catch (e) { toast(e.message, 'error'); }
+// ── Feedback ──────────────────────────────────────────────────────────────
+
+async function loadFeedback() {
+  try { feedback = await api('GET', '/admin/feedback'); } catch (e) { toast('Failed to load feedback: ' + e.message, 'error'); return; }
+  renderFeedback();
+  updateBadges();
 }
 
-function exportDefectsCSV() {
-  const rows = [['ID','Area','Severity','Description','Status','Disposition','Build','Reported']];
-  defects.forEach(d => rows.push([d.id,d.area,d.severity,`"${d.description.replace(/"/g,'""')}"`,d.status,d.disposition,d.build_version,d.created_at]));
-  downloadCSV(rows, 'frontframe-defects.csv');
-}
-
-// FEEDBACK
 function renderFeedback() {
-  const filterVal = document.getElementById('filter-feedback').value;
-  let items = filterVal === 'unpromoted' ? feedback.filter(f => !f.promoted) : [...feedback];
-  document.getElementById('feedback-count-label').textContent = `${items.length} entr${items.length===1?'y':'ies'}`;
-  const list = document.getElementById('feedback-list');
-  if (!items.length) { list.innerHTML = '<div class="empty-state"><p>No feedback entries.</p></div>'; return; }
-  list.innerHTML = items.map(f => `
-    <div class="feedback-card ${f.promoted?'promoted':''}" id="fb-${f.id}">
-      <div class="flex items-center gap-8" style="margin-bottom:10px">
-        <span class="badge ${f.promoted?'badge-promoted':'badge-testing'}">${f.promoted?'Promoted':'Open'}</span>
-        <span class="text-sm text-gray">${fmtDate(f.created_at)}</span>
-      </div>
-      <div class="feedback-q">${esc(f.question)}</div>
-      ${f.ed_response?`<div class="feedback-ed"><strong>Ed's Response</strong>${esc(f.ed_response)}</div>`:''}
-      ${!f.promoted?`
-      <div class="feedback-actions">
-        <div class="feedback-suggest"><input type="text" id="suggest-${f.id}" placeholder="Better answer (optional)..." value="${esc(f.suggested_answer||'')}"></div>
-        <button class="btn btn-primary btn-sm" onclick="promoteFeedback('${f.id}')">Promote to Q&amp;A</button>
-        <button class="btn btn-ghost btn-sm"   onclick="dismissFeedback('${f.id}')">Dismiss</button>
-      </div>`:''}
-    </div>`).join('');
+  const tbody = document.getElementById('feedback-tbody');
+  if (!feedback.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No feedback</div></td></tr>`; return; }
+  tbody.innerHTML = feedback.map(f => `
+    <tr>
+      <td style="max-width:240px">${esc(f.question)}</td>
+      <td style="max-width:260px;color:var(--gray)">${esc(f.suggested_answer?.slice(0,120) ?? '—')}</td>
+      <td>${f.promoted ? '<span class="badge badge-promoted">Promoted</span>' : '<span class="badge badge-open">Open</span>'}</td>
+      <td>
+        <div class="flex-row">
+          ${!f.promoted ? `<button class="btn btn-amber btn-xs" onclick="promoteFeedback('${f.id}')">→ Q&A</button>` : ''}
+          <button class="btn btn-ghost btn-xs" onclick="dismissFeedback('${f.id}')">Dismiss</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openFeedbackModal() { document.getElementById('feedback-modal').classList.add('open'); }
+
+async function saveFeedback() {
+  const question  = document.getElementById('fb-question').value.trim();
+  const suggested = document.getElementById('fb-suggested').value.trim();
+  if (!question) { toast('Question is required.', 'error'); return; }
+  try {
+    const created = await api('POST', '/admin/feedback', { question, suggested_answer: suggested });
+    const newFb   = Array.isArray(created) ? created[0] : created;
+    if (newFb) feedback.unshift(newFb);
+    closeModal('feedback-modal');
+    renderFeedback();
+    toast('Saved.');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 async function promoteFeedback(id) {
-  const suggestEl = document.getElementById(`suggest-${id}`);
-  const suggested = suggestEl ? suggestEl.value.trim() : '';
   try {
-    if (suggested) await api('PATCH', `/admin/feedback/${id}`, { suggested_answer: suggested });
     await api('PATCH', `/admin/feedback/${id}`, { action: 'promote' });
     const idx = feedback.findIndex(f => f.id === id);
     if (idx >= 0) feedback[idx].promoted = true;
-    updateHeaderBadges(); renderFeedback(); toast('Promoted to Q&A.');
+    renderFeedback();
+    toast('Promoted to Q&A.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
 async function dismissFeedback(id) {
   try {
     await api('PATCH', `/admin/feedback/${id}`, { action: 'dismiss' });
-    const idx = feedback.findIndex(f => f.id === id);
-    if (idx >= 0) feedback[idx].suggested_answer = '[dismissed]';
-    renderFeedback(); toast('Dismissed.');
+    feedback = feedback.filter(f => f.id !== id);
+    renderFeedback();
+    toast('Dismissed.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// CHANGELOG
-async function addChangelog() {
-  const summary       = document.getElementById('new-changelog-summary').value.trim();
-  const event_type    = document.getElementById('new-changelog-type').value;
-  const disposition   = document.getElementById('new-changelog-disposition').value;
-  const build_version = document.getElementById('new-changelog-version').value.trim() || (config?.build_version ?? '');
-  if (!summary) { toast('Summary is required.', 'error'); return; }
-  try {
-    const entry = await api('POST', '/admin/changelog', { event_type, summary, disposition, build_version });
-    changelog.unshift(entry[0] ?? entry);
-    document.getElementById('new-changelog-summary').value = '';
-    renderChangelog(); toast('Changelog entry added.');
-  } catch (e) { toast(e.message, 'error'); }
+// ── Changelog ─────────────────────────────────────────────────────────────
+
+async function loadChangelog() {
+  try { changelog = await api('GET', '/admin/changelog'); } catch (e) { toast('Failed to load changelog: ' + e.message, 'error'); return; }
+  renderChangelog();
 }
 
 function renderChangelog() {
-  const filter = document.getElementById('filter-changelog').value;
-  let items = filter ? changelog.filter(e => e.event_type === filter) : [...changelog];
-  const list = document.getElementById('changelog-list');
-  if (!items.length) { list.innerHTML = '<li class="empty-state"><p>No entries yet.</p></li>'; return; }
-  list.innerHTML = items.map(e => `
-    <li class="changelog-item">
-      <div class="changelog-dot"></div>
-      <div class="changelog-body">
-        <div class="changelog-summary"><span class="badge badge-${e.event_type}">${fmtEvent(e.event_type)}</span>&nbsp;${esc(e.summary)}${e.disposition?`<span class="badge badge-${e.disposition}" style="margin-left:6px">${e.disposition}</span>`:''}</div>
-        <div class="changelog-meta">${fmtDate(e.created_at)} · v${esc(e.build_version ?? '—')}</div>
-      </div>
-    </li>`).join('');
-}
-
-function exportChangelogCSV() {
-  const retain = changelog.filter(e => e.disposition !== 'delete');
-  const rows = [['Event','Summary','Build Version','Date']];
-  retain.forEach(e => rows.push([e.event_type, `"${e.summary.replace(/"/g,'""')}"`, e.build_version, e.created_at]));
-  downloadCSV(rows, 'frontframe-changelog-delivery.csv');
-}
-
-// REVIEWERS
-function renderReviewers() {
-  const tbody = document.getElementById('reviewers-tbody');
-  if (!reviewers.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><p>No reviewers yet.</p></div></td></tr>'; return; }
-  tbody.innerHTML = reviewers.map(r => `
+  const tbody = document.getElementById('changelog-tbody');
+  if (!changelog.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No entries</div></td></tr>`; return; }
+  tbody.innerHTML = changelog.map(c => `
     <tr>
-      <td><strong>${esc(r.display_name)}</strong></td>
-      <td>${roleBadge(r.role)}</td>
-      <td class="text-gray text-sm">${fmtDate(r.invited_at)}</td>
-      <td><span class="badge ${r.active?'badge-resolved':'badge-cosmetic'}">${r.active?'Active':'Inactive'}</span></td>
-      <td><button class="btn btn-ghost btn-sm" onclick="resetPassword('${esc(r.email??'')}')">Reset Password</button></td>
-    </tr>`).join('');
+      <td><span class="badge badge-new">${esc(c.event_type)}</span></td>
+      <td style="max-width:360px">${esc(c.summary)}</td>
+      <td class="text-small text-gray">${esc(c.build_version ?? '')}</td>
+      <td class="text-small text-gray">${fmtDate(c.created_at)}</td>
+    </tr>
+  `).join('');
 }
 
-async function inviteReviewer() {
-  const email = document.getElementById('inv-email').value.trim();
-  const name  = document.getElementById('inv-name').value.trim();
-  const role  = document.getElementById('inv-role').value;
-  if (!email || !name) { toast('Email and name are required.', 'error'); return; }
+function openChangelogModal() {
+  document.getElementById('cl-event-type').value = '';
+  document.getElementById('cl-summary').value    = '';
+  document.getElementById('changelog-modal').classList.add('open');
+}
+
+async function saveChangelog() {
+  const event_type = document.getElementById('cl-event-type').value.trim();
+  const summary    = document.getElementById('cl-summary').value.trim();
+  if (!event_type || !summary) { toast('All fields required.', 'error'); return; }
   try {
-    const res = await api('POST', '/admin/reviewers/invite', { email, display_name: name, role });
-    reviewers.push(res.reviewer);
-    document.getElementById('inv-email').value = '';
-    document.getElementById('inv-name').value  = '';
-    renderReviewers(); toast(`Invite sent to ${email}.`);
+    const created = await api('POST', '/admin/changelog', { event_type, summary });
+    const newCl   = Array.isArray(created) ? created[0] : created;
+    if (newCl) changelog.unshift(newCl);
+    closeModal('changelog-modal');
+    renderChangelog();
+    toast('Logged.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// Q&A
-async function loadSystemPrompt() {
-  const page  = document.getElementById('prompt-page-select').value;
-  const panel = document.getElementById('prompt-panel');
-  panel.innerHTML = '<div class="prompt-empty">Loading…</div>';
-  setPromptEditMode(false);
+// ── Solutions ─────────────────────────────────────────────────────────────
+
+async function loadSolutions() {
   try {
-    const data = await api('GET', `/admin/system-prompt/${page}`);
-    currentPromptContent = data.content || '';
-    renderPromptReadView();
-  } catch (e) {
-    currentPromptContent = null;
-    panel.innerHTML = `<div class="prompt-empty">Failed to load: ${esc(e.message)}</div>`;
-  }
-  document.getElementById('filter-qa-page').value = page;
-  renderQA();
-}
-
-let currentPromptContent = null;
-
-function renderPromptReadView() {
-  const panel = document.getElementById('prompt-panel');
-  if (!currentPromptContent) {
-    panel.innerHTML = '<div class="prompt-empty">No system prompt found for this page.</div>';
-  } else {
-    panel.innerHTML = `<pre>${esc(currentPromptContent)}</pre>`;
-  }
-}
-
-function setPromptEditMode(editing) {
-  document.getElementById('prompt-edit-btn').classList.toggle('hidden', editing);
-  document.getElementById('prompt-save-btn').classList.toggle('hidden', !editing);
-  document.getElementById('prompt-cancel-btn').classList.toggle('hidden', !editing);
-  document.getElementById('prompt-page-select').disabled = editing;
-}
-
-function editSystemPrompt() {
-  const panel = document.getElementById('prompt-panel');
-  panel.innerHTML = `<textarea class="prompt-edit-area" id="prompt-edit-textarea">${esc(currentPromptContent || '')}</textarea>`;
-  setPromptEditMode(true);
-  document.getElementById('prompt-edit-textarea').focus();
-}
-
-function cancelEditPrompt() {
-  renderPromptReadView();
-  setPromptEditMode(false);
-}
-
-async function saveSystemPrompt() {
-  const textarea = document.getElementById('prompt-edit-textarea');
-  const content  = textarea ? textarea.value.trim() : '';
-  if (!content) { toast('Prompt cannot be empty.', 'error'); return; }
-  const page = document.getElementById('prompt-page-select').value;
-  try {
-    await api('POST', `/admin/system-prompt/${page}`, { content });
-    currentPromptContent = content;
-    renderPromptReadView();
-    setPromptEditMode(false);
-    toast('System prompt saved.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-function renderQA() {
-  const statusFilter = document.getElementById('filter-qa-status').value;
-  const pageFilter   = document.getElementById('filter-qa-page').value;
-  let rows = [...qaPairs];
-  if (statusFilter) rows = rows.filter(p => p.status === statusFilter);
-  if (pageFilter)   rows = rows.filter(p => p.page === pageFilter);
-
-  const tbody = document.getElementById('qa-tbody');
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><p>No pairs match the current filters.</p></div></td></tr>'; return; }
-
-  tbody.innerHTML = rows.map((p, i) => `
-    <tr id="qa-row-${i}">
-      <td class="text-truncate" title="${esc(p.question)}">${esc(p.question)}</td>
-      <td class="qa-answer">${esc(p.answer)}</td>
-      <td><span class="badge badge-${p.page||'all'}">${p.page||'all'}</span></td>
-      <td>
-        <select onchange="updateQAStatus('${p.id}', this.value)"
-          style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:0.75rem;font-family:'Inter',sans-serif;color:var(--navy);outline:none;background:white">
-          ${['under_review','implemented','redundant'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s.replace('_',' ')}</option>`).join('')}
-        </select>
-      </td>
-      <td><span class="badge badge-${p.source||'seed'}">${p.source||'seed'}</span></td>
-      <td>
-        <button class="btn btn-ghost btn-sm" onclick="openEditQA('${p.id}')">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteQA('${p.id}',${i})">Delete</button>
-      </td>
-    </tr>`).join('');
-}
-
-async function updateQAStatus(id, status) {
-  try {
-    await api('PUT', `/qa/${id}`, { status });
-    const idx = qaPairs.findIndex(p => p.id === id);
-    if (idx >= 0) qaPairs[idx].status = status;
-    renderQA(); toast(`Pair marked ${status.replace('_',' ')}.`);
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function addQA() {
-  const question = document.getElementById('new-q').value.trim();
-  const answer   = document.getElementById('new-a').value.trim();
-  const page     = document.getElementById('new-q-page').value;
-  if (!question || !answer) { toast('Both fields are required.', 'error'); return; }
-  try {
-    const res = await api('POST', '/qa', { question, answer, page });
-    qaPairs.unshift(res[0] ?? res);
-    document.getElementById('new-q').value = '';
-    document.getElementById('new-a').value = '';
-    renderQA(); toast('Q&A pair added.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function deleteQA(id, idx) {
-  if (!confirm('Delete this Q&A pair?')) return;
-  try {
-    await api('DELETE', `/qa/${id}`);
-    qaPairs.splice(idx, 1);
-    renderQA(); toast('Pair deleted.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-function openEditQA(id) {
-  const p = qaPairs.find(x => x.id === id);
-  if (!p) { toast('Pair not found.', 'error'); return; }
-  document.getElementById('edit-qa-id').value       = id;
-  document.getElementById('edit-qa-question').value = p.question || '';
-  document.getElementById('edit-qa-answer').value   = p.answer   || '';
-  document.getElementById('edit-qa-page').value     = p.page     || 'all';
-  document.getElementById('edit-qa-modal').classList.add('open');
-}
-
-async function saveEditQA() {
-  const id       = document.getElementById('edit-qa-id').value;
-  const question = document.getElementById('edit-qa-question').value.trim();
-  const answer   = document.getElementById('edit-qa-answer').value.trim();
-  const page     = document.getElementById('edit-qa-page').value;
-  if (!question || !answer) { toast('Question and answer are required.', 'error'); return; }
-  try {
-    await api('PUT', `/qa/${id}`, { question, answer, page });
-    const idx = qaPairs.findIndex(p => p.id === id);
-    if (idx >= 0) { qaPairs[idx].question = question; qaPairs[idx].answer = answer; qaPairs[idx].page = page; }
-    document.getElementById('edit-qa-modal').classList.remove('open');
-    renderQA(); toast('Pair updated.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-function exportQACSV() {
-  const rows = [['Question','Answer','Page','Status','Source','Created']];
-  qaPairs.forEach(p => rows.push([
-    `"${(p.question||'').replace(/"/g,'""')}"`,
-    `"${(p.answer  ||'').replace(/"/g,'""')}"`,
-    p.page    || 'all',
-    p.status  || 'under_review',
-    p.source  || 'seed',
-    p.created_at || '',
-  ]));
-  downloadCSV(rows, 'frontframe-qa-pairs.csv');
-}
-
-// PODCASTS
-function renderEpisodes() {
-  const tbody = document.getElementById('episodes-tbody');
-  if (!episodes || !episodes.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>No episodes yet.</p></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = episodes.map(ep => `
-    <tr>
-      <td class="text-sm text-gray">${esc(ep.series)}</td>
-      <td><strong>${esc(ep.title)}</strong></td>
-      <td class="text-sm">${ep.audio_path ? `<code style="font-size:0.75rem">${esc(ep.audio_path)}</code>` : '<span class="text-gray">—</span>'}</td>
-      <td><span class="badge ${ep.transcript ? 'badge-resolved' : 'badge-cosmetic'}">${ep.transcript ? 'Yes' : 'No'}</span></td>
-      <td><span class="badge ${ep.visible ? 'badge-visible' : 'badge-hidden'}">${ep.visible ? 'Visible' : 'Hidden'}</span></td>
-      <td class="text-gray text-sm">${ep.published_at ? ep.published_at.slice(0,10) : '—'}</td>
-      <td>
-        <button class="btn btn-ghost btn-sm" onclick="openEditEpisode(${ep.id})">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteEpisode(${ep.id})">Delete</button>
-      </td>
-    </tr>`).join('');
-}
-
-async function addEpisode() {
-  const series     = document.getElementById('new-ep-series').value.trim();
-  const title      = document.getElementById('new-ep-title').value.trim();
-  const audio_path = document.getElementById('new-ep-audio').value.trim() || null;
-  const transcript = document.getElementById('new-ep-transcript').value.trim() || null;
-  const visible    = document.getElementById('new-ep-visible').checked;
-  const published_at = document.getElementById('new-ep-date').value || new Date().toISOString().slice(0,10);
-
-  if (!series || !title) { toast('Series and title are required.', 'error'); return; }
-  try {
-    const res = await api('POST', '/admin/podcast-episodes', { series, title, audio_path, transcript, visible, published_at });
-    episodes.unshift(res[0] ?? res);
-    document.getElementById('new-ep-series').value     = '';
-    document.getElementById('new-ep-title').value      = '';
-    document.getElementById('new-ep-audio').value      = '';
-    document.getElementById('new-ep-transcript').value = '';
-    document.getElementById('new-ep-date').value       = '';
-    document.getElementById('new-ep-visible').checked  = true;
-    renderEpisodes(); toast('Episode added.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-function openEditEpisode(id) {
-  const ep = episodes.find(e => e.id === id);
-  if (!ep) { toast('Episode not found.', 'error'); return; }
-  document.getElementById('edit-ep-id').value         = id;
-  document.getElementById('edit-ep-series').value     = ep.series      || '';
-  document.getElementById('edit-ep-title').value      = ep.title       || '';
-  document.getElementById('edit-ep-audio').value      = ep.audio_path  || '';
-  document.getElementById('edit-ep-transcript').value = ep.transcript  || '';
-  document.getElementById('edit-ep-date').value       = ep.published_at ? ep.published_at.slice(0,10) : '';
-  document.getElementById('edit-ep-visible').checked  = !!ep.visible;
-  document.getElementById('edit-episode-modal').classList.add('open');
-}
-
-async function saveEditEpisode() {
-  const id         = Number(document.getElementById('edit-ep-id').value);
-  const series     = document.getElementById('edit-ep-series').value.trim();
-  const title      = document.getElementById('edit-ep-title').value.trim();
-  const audio_path = document.getElementById('edit-ep-audio').value.trim() || null;
-  const transcript = document.getElementById('edit-ep-transcript').value.trim() || null;
-  const visible    = document.getElementById('edit-ep-visible').checked;
-  const published_at = document.getElementById('edit-ep-date').value || null;
-
-  if (!series || !title) { toast('Series and title are required.', 'error'); return; }
-  try {
-    await api('PATCH', `/admin/podcast-episodes/${id}`, { series, title, audio_path, transcript, visible, published_at });
-    const idx = episodes.findIndex(e => e.id === id);
-    if (idx >= 0) Object.assign(episodes[idx], { series, title, audio_path, transcript, visible, published_at });
-    document.getElementById('edit-episode-modal').classList.remove('open');
-    renderEpisodes(); toast('Episode updated.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function deleteEpisode(id) {
-  if (!confirm('Delete this episode? This cannot be undone.')) return;
-  try {
-    await api('DELETE', `/admin/podcast-episodes/${id}`);
-    episodes = episodes.filter(e => e.id !== id);
-    renderEpisodes(); toast('Episode deleted.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-// ─── SOLUTIONS ────────────────────────────────────────────────────────────────
-
-async function loadSolutionsTab() {
-  try {
-    [problemStatements, solDeliverables] = await Promise.all([
+    [problems, mktLog] = await Promise.all([
       api('GET', '/admin/problem-statements'),
-      api('GET', '/admin/deliverables'),
+      api('GET', '/admin/marketing-log'),
     ]);
-  } catch (e) {
-    toast('Failed to load solutions data: ' + e.message, 'error');
-    problemStatements = []; solDeliverables = [];
-  }
-  renderProblemStatements();
-  renderSolLog();
-  activeProblem    = null;
-  solutionsHistory = [];
-  document.getElementById('sol-chat-card').classList.add('hidden');
+  } catch (e) { toast('Failed to load solutions: ' + e.message, 'error'); return; }
+  renderProblems();
+  renderMktLog();
 }
 
-function renderProblemStatements() {
-  const list = document.getElementById('sol-problem-list');
-  if (!list) return;
-  const active = problemStatements.filter(p => p.status === 'active');
-  const paused = problemStatements.filter(p => p.status === 'paused');
-  const all    = [...active, ...paused];
-  if (!all.length) { list.innerHTML = '<div class="empty-state"><p>No problems defined yet. Add one to begin.</p></div>'; return; }
-  list.innerHTML = all.map(p => {
-    const isActive = activeProblem?.id === p.id;
-    return `
-    <div class="sol-problem-card ${isActive ? 'active' : ''}" id="sol-pc-${p.id}">
-      <div id="sol-view-${p.id}">
-        <div class="sol-problem-title">${esc(p.title)}</div>
-        <div class="sol-problem-outcome">${esc(p.ideal_outcome)}</div>
-        <div class="sol-problem-meta">${p.status}</div>
-        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-          <button class="btn btn-navy btn-sm" onclick="selectProblem('${p.id}')">Work on this</button>
-          <button class="btn btn-ghost btn-sm" onclick="openEditProblem('${p.id}')">Edit</button>
-          <button class="btn btn-ghost btn-sm" onclick="updateProblemStatus('${p.id}','${p.status === 'active' ? 'paused' : 'active'}')">${p.status === 'active' ? 'Pause' : 'Resume'}</button>
-          <button class="btn btn-ghost btn-sm" onclick="updateProblemStatus('${p.id}','resolved')">Resolve</button>
-        </div>
-      </div>
-      <div id="sol-edit-${p.id}" class="hidden">
-        <div style="margin-bottom:6px"><label style="font-size:0.7rem;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray)">Title</label>
-          <input class="sol-problem-edit-area" type="text" id="sol-edit-title-${p.id}" value="${esc(p.title)}"></div>
-        <div style="margin-bottom:6px"><label style="font-size:0.7rem;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray)">Description</label>
-          <textarea class="sol-problem-edit-area" id="sol-edit-desc-${p.id}" rows="3">${esc(p.description)}</textarea></div>
-        <div style="margin-bottom:10px"><label style="font-size:0.7rem;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray)">Ideal Outcome</label>
-          <textarea class="sol-problem-edit-area" id="sol-edit-outcome-${p.id}" rows="2">${esc(p.ideal_outcome)}</textarea></div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost btn-sm" onclick="cancelEditProblem('${p.id}')">Cancel</button>
-          <button class="btn btn-navy btn-sm" onclick="saveProblemEdit('${p.id}')">Save</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function toggleAddProblem() {
-  const form = document.getElementById('sol-add-form');
-  const btn  = document.getElementById('sol-toggle-add-btn');
-  const hidden = form.classList.toggle('hidden');
-  btn.textContent = hidden ? '+ Add Problem' : 'Cancel';
-  if (!hidden) setTimeout(() => document.getElementById('sol-new-title')?.focus(), 50);
-}
-
-async function addProblemStatement() {
-  const title       = document.getElementById('sol-new-title')?.value.trim();
-  const description = document.getElementById('sol-new-description')?.value.trim();
-  const outcome     = document.getElementById('sol-new-outcome')?.value.trim();
-  if (!title || !description || !outcome) { toast('All three fields are required.', 'error'); return; }
-  try {
-    const res = await api('POST', '/admin/problem-statements', { title, description, ideal_outcome: outcome });
-    problemStatements.unshift(res[0] ?? res);
-    document.getElementById('sol-new-title').value       = '';
-    document.getElementById('sol-new-description').value = '';
-    document.getElementById('sol-new-outcome').value     = '';
-    toggleAddProblem();
-    renderProblemStatements();
-    toast('Problem saved.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-function openEditProblem(id) {
-  document.getElementById(`sol-view-${id}`)?.classList.add('hidden');
-  document.getElementById(`sol-edit-${id}`)?.classList.remove('hidden');
-  setTimeout(() => document.getElementById(`sol-edit-title-${id}`)?.focus(), 50);
-}
-
-function cancelEditProblem(id) {
-  document.getElementById(`sol-edit-${id}`)?.classList.add('hidden');
-  document.getElementById(`sol-view-${id}`)?.classList.remove('hidden');
-}
-
-async function saveProblemEdit(id) {
-  const title       = document.getElementById(`sol-edit-title-${id}`)?.value.trim();
-  const description = document.getElementById(`sol-edit-desc-${id}`)?.value.trim();
-  const outcome     = document.getElementById(`sol-edit-outcome-${id}`)?.value.trim();
-  if (!title || !description || !outcome) { toast('All three fields are required.', 'error'); return; }
-  try {
-    await api('PATCH', `/admin/problem-statements/${id}`, { title, description, ideal_outcome: outcome });
-    const idx = problemStatements.findIndex(p => p.id === id);
-    if (idx >= 0) Object.assign(problemStatements[idx], { title, description, ideal_outcome: outcome });
-    renderProblemStatements();
-    toast('Problem updated.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function updateProblemStatus(id, status) {
-  try {
-    await api('PATCH', `/admin/problem-statements/${id}`, { status });
-    const idx = problemStatements.findIndex(p => p.id === id);
-    if (idx >= 0) problemStatements[idx].status = status;
-    if (activeProblem?.id === id) { activeProblem = null; document.getElementById('sol-chat-card').classList.add('hidden'); }
-    renderProblemStatements();
-    toast(`Problem marked ${status}.`);
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function selectProblem(id) {
-  activeProblem    = problemStatements.find(p => p.id === id);
-  solutionsHistory = [];
-  solFirstQuestion = null;
-  solLastUserMsg   = null;
-  renderProblemStatements();
-
-  const chatCard = document.getElementById('sol-chat-card');
-  chatCard.classList.remove('hidden');
-
-  document.getElementById('sol-active-header').innerHTML = `
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <div>
-        <div class="card-title">${esc(activeProblem.title)}</div>
-        <div class="card-subtitle" style="margin-top:3px">Ideal outcome: ${esc(activeProblem.ideal_outcome)}</div>
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="openEditProblem('${id}');document.getElementById('sol-chat-card').classList.add('hidden')">Edit Problem</button>
-    </div>`;
-
-  const msgs = document.getElementById('sol-messages');
-  msgs.innerHTML = '<div class="sol-typing">Claude is thinking…</div>';
-
-  const openingMsg = `I am working on a problem in my business.\n\nTitle: ${activeProblem.title}\n\nDescription: ${activeProblem.description}\n\nMy ideal outcome: ${activeProblem.ideal_outcome}\n\nPlease ask me one focused, open question to help me think through this more clearly or make progress on it today. Build on any prior context we have from previous sessions.`;
-
-  try {
-    const res = await fetch(`${WORKER_URL}/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ page: 'admin', message: openingMsg, history: [] }),
-    });
-    if (!res.ok) throw new Error(`Chat failed: ${res.status}`);
-    const data = await res.json();
-    solFirstQuestion = data.response;
-    solutionsHistory = [
-      { role: 'user',      content: openingMsg    },
-      { role: 'assistant', content: data.response },
-    ];
-    msgs.innerHTML = '';
-    appendSolMessage('claude', data.response);
-    setTimeout(() => document.getElementById('sol-input')?.focus(), 50);
-    chatCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  } catch (e) {
-    msgs.innerHTML = `<div class="empty-state"><p>Could not start session: ${esc(e.message)}</p><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="selectProblem('${id}')">Retry</button></div>`;
-  }
-}
-
-function appendSolMessage(role, content) {
-  const msgs = document.getElementById('sol-messages');
-  if (!msgs) return;
-  const div = document.createElement('div');
-  div.className = `sol-msg ${role === 'user' ? 'user' : 'claude'}`;
-  div.innerHTML = `<div class="sol-msg-role">${role === 'user' ? 'You' : 'Claude'}</div>${esc(content)}`;
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-function solInputKeydown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendSolutionMessage(); }
-}
-
-async function sendSolutionMessage() {
-  if (solSending) return;
-  const input   = document.getElementById('sol-input');
-  const message = input?.value.trim();
-  if (!message) return;
-  input.value = '';
-  input.style.borderColor = 'var(--border)';
-  solLastUserMsg = message;
-  appendSolMessage('user', message);
-  solutionsHistory.push({ role: 'user', content: message });
-  solSending = true;
-  document.getElementById('sol-send-btn').disabled = true;
-  const msgs   = document.getElementById('sol-messages');
-  const typing = document.createElement('div');
-  typing.className = 'sol-typing';
-  typing.textContent = 'Claude is thinking…';
-  msgs.appendChild(typing);
-  msgs.scrollTop = msgs.scrollHeight;
-  try {
-    const res = await fetch(`${WORKER_URL}/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify({ page: 'admin', message, history: solutionsHistory.slice(0, -1) }),
-    });
-    if (!res.ok) throw new Error(`Chat failed: ${res.status}`);
-    const data = await res.json();
-    msgs.removeChild(typing);
-    solutionsHistory.push({ role: 'assistant', content: data.response });
-    appendSolMessage('claude', data.response);
-  } catch (e) {
-    msgs.removeChild(typing);
-    toast('Could not reach Claude: ' + e.message, 'error');
-    solutionsHistory.pop();
-  } finally {
-    solSending = false;
-    document.getElementById('sol-send-btn').disabled = false;
-    setTimeout(() => input?.focus(), 50);
-  }
-}
-
-async function concludeSession() {
-  if (!activeProblem) { toast('Select a problem first.', 'error'); return; }
-  if (solutionsHistory.length < 2) { toast('Have a conversation first before concluding.', 'error'); return; }
-  const action = prompt('What one action are you committing to from this session?');
-  if (!action || !action.trim()) return;
-  try {
-    const entry = await api('POST', '/admin/deliverables', {
-      problem_id:       activeProblem.id,
-      challenge:        solFirstQuestion ?? 'Session',
-      response:         solLastUserMsg   ?? '',
-      action_committed: action.trim(),
-    });
-    solDeliverables.unshift(entry[0] ?? entry);
-    renderSolLog();
-    toast('Session logged.');
-    activeProblem    = null;
-    solutionsHistory = [];
-    solFirstQuestion = null;
-    solLastUserMsg   = null;
-    document.getElementById('sol-chat-card').classList.add('hidden');
-    document.getElementById('sol-messages').innerHTML = '';
-    renderProblemStatements();
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function saveDeliverableObservation(id, value) {
-  try {
-    await api('PATCH', `/admin/deliverables/${id}`, { observation: value });
-    const idx = solDeliverables.findIndex(d => d.id === id);
-    if (idx >= 0) solDeliverables[idx].observation = value;
-  } catch (e) { toast('Save failed: ' + e.message, 'error'); }
-}
-
-function renderSolLog() {
-  const tbody = document.getElementById('sol-log-tbody');
-  if (!tbody) return;
-  const rows = solDeliverables.slice(0, 10);
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><p>No sessions logged yet.</p></div></td></tr>'; return; }
-  tbody.innerHTML = rows.map(d => {
-    const prob = problemStatements.find(p => p.id === d.problem_id);
-    return `
+function renderProblems() {
+  const tbody = document.getElementById('problems-tbody');
+  if (!problems.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No problem statements</div></td></tr>`; return; }
+  tbody.innerHTML = problems.map(p => `
     <tr>
-      <td class="text-gray text-sm" style="white-space:nowrap">${fmtLogDate(d.session_date)}</td>
-      <td style="max-width:160px;font-size:0.875rem;white-space:normal;font-weight:500">${esc(prob?.title ?? '—')}</td>
-      <td style="max-width:200px;font-size:0.875rem;white-space:normal">${esc(d.action_committed ?? '—')}</td>
-      <td>
-        <input class="sol-result-input" type="text" value="${esc(d.observation ?? '')}" placeholder="How did it go…"
-          onblur="saveDeliverableObservation('${d.id}', this.value); this.style.borderColor='var(--border)'"
-          onfocus="this.style.borderColor='var(--navy)'">
-      </td>
-    </tr>`;
-  }).join('');
+      <td><strong>${esc(p.title)}</strong></td>
+      <td class="text-gray" style="max-width:240px">${esc(p.ideal_outcome?.slice(0,100) ?? '')}</td>
+      <td><span class="badge badge-${p.status ?? 'open'}">${p.status ?? 'open'}</span></td>
+      <td><button class="btn btn-ghost btn-xs" onclick="viewDeliverables('${p.id}','${esc(p.title)}')">Deliverables</button></td>
+    </tr>
+  `).join('');
 }
 
-function fmtLogDate(dateStr) {
-  if (!dateStr) return '—';
-  const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-// ─── END SOLUTIONS ────────────────────────────────────────────────────────────
-
-// ─── SUBSCRIPTIONS ────────────────────────────────────────────────────────────
-
-async function loadSubscriptionsTab() {
+async function viewDeliverables(problemId, title) {
+  document.getElementById('deliverables-card').style.display = 'block';
+  document.getElementById('deliverables-title').textContent  = 'Deliverables — ' + title;
   try {
-    subscriptions = await api('GET', '/admin/subscriptions');
-  } catch (e) {
-    toast('Failed to load subscriptions: ' + e.message, 'error');
-    subscriptions = [];
-  }
+    deliverables = await api('GET', `/admin/deliverables?problem_id=${problemId}`);
+  } catch (e) { toast('Failed to load deliverables: ' + e.message, 'error'); return; }
+  const tbody = document.getElementById('deliverables-tbody');
+  if (!deliverables.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No deliverables yet</div></td></tr>`; return; }
+  tbody.innerHTML = deliverables.map(d => `
+    <tr>
+      <td>${esc(d.challenge?.slice(0,100) ?? '')}</td>
+      <td class="text-gray">${esc(d.response?.slice(0,100) ?? '—')}</td>
+      <td class="text-gray">${esc(d.action_committed?.slice(0,80) ?? '—')}</td>
+      <td class="text-small text-gray">${fmtDate(d.created_at)}</td>
+    </tr>
+  `).join('');
+}
+
+function closeDeliverables() { document.getElementById('deliverables-card').style.display = 'none'; }
+
+function openProblemModal() { document.getElementById('problem-modal').classList.add('open'); }
+
+async function saveProblem() {
+  const title       = document.getElementById('ps-title').value.trim();
+  const description = document.getElementById('ps-desc').value.trim();
+  const ideal       = document.getElementById('ps-outcome').value.trim();
+  if (!title || !description || !ideal) { toast('All fields required.', 'error'); return; }
+  try {
+    const created = await api('POST', '/admin/problem-statements', { title, description, ideal_outcome: ideal });
+    const newP    = Array.isArray(created) ? created[0] : created;
+    if (newP) problems.push(newP);
+    closeModal('problem-modal');
+    renderProblems();
+    toast('Problem statement saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderMktLog() {
+  const tbody = document.getElementById('mkt-tbody');
+  if (!mktLog.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No entries</div></td></tr>`; return; }
+  tbody.innerHTML = mktLog.map(m => `
+    <tr>
+      <td><span class="badge badge-new">${esc(m.platform)}</span></td>
+      <td style="max-width:200px">${esc(m.question?.slice(0,80) ?? '')}</td>
+      <td class="text-gray" style="max-width:200px">${esc(m.answer?.slice(0,80) ?? '—')}</td>
+      <td class="text-gray">${esc(m.action_committed?.slice(0,60) ?? '—')}</td>
+      <td class="text-small text-gray">${fmtDate(m.created_at)}</td>
+    </tr>
+  `).join('');
+}
+
+function openMktModal() { document.getElementById('mkt-modal').classList.add('open'); }
+
+async function saveMkt() {
+  const platform = document.getElementById('mkt-platform').value.trim();
+  const question = document.getElementById('mkt-question').value.trim();
+  const answer   = document.getElementById('mkt-answer').value.trim();
+  const action   = document.getElementById('mkt-action').value.trim();
+  if (!platform || !question) { toast('Platform and question required.', 'error'); return; }
+  try {
+    const created = await api('POST', '/admin/marketing-log', { platform, question, answer: answer || null, action_committed: action || null });
+    const newM    = Array.isArray(created) ? created[0] : created;
+    if (newM) mktLog.unshift(newM);
+    closeModal('mkt-modal');
+    renderMktLog();
+    toast('Saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Subscriptions ─────────────────────────────────────────────────────────
+
+async function loadSubscriptions() {
+  try { subscriptions = await api('GET', '/admin/subscriptions'); } catch (e) { toast('Failed to load subscriptions: ' + e.message, 'error'); return; }
   renderSubscriptions();
 }
 
 function renderSubscriptions() {
-  const tbody = document.getElementById('sub-tbody');
-  if (!tbody) return;
-  if (!subscriptions.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>No subscriptions yet.</p></div></td></tr>';
-    return;
-  }
+  const tbody = document.getElementById('subs-tbody');
+  if (!subscriptions.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No platforms</div></td></tr>`; return; }
   tbody.innerHTML = subscriptions.map(s => `
     <tr>
-      <td><span class="badge badge-${s.platform}">${s.platform}</span></td>
-      <td><span class="badge badge-${s.status}">${s.status}</span></td>
-      <td><span class="badge ${s.provisioned_by === 'frontframe' ? 'badge-admin' : 'badge-client'}">${s.provisioned_by}</span></td>
-      <td class="text-sm">${esc(s.account_email ?? '—')}</td>
-      <td class="text-sm">${esc(s.account_identifier ?? '—')}</td>
-      <td class="text-sm text-gray" style="max-width:140px;white-space:normal">${esc(s.notes ?? '—')}</td>
-      <td style="white-space:nowrap">
-        ${s.status === 'pending' || s.status === 'submitted'
-          ? `<button class="btn btn-primary btn-sm" onclick="sendSubscription('${s.id}')">Send to FrontFrame</button> `
-          : ''}
-        <button class="btn btn-ghost btn-sm" onclick="markProvisioned('${s.id}')">Mark Active</button>
+      <td><strong>${esc(s.platform)}</strong></td>
+      <td class="text-gray">${esc(s.provisioned_by ?? '')}</td>
+      <td class="text-small">${esc(s.approved_number ?? '—')}</td>
+      <td><span class="badge badge-${s.status ?? 'new'}">${s.status ?? 'new'}</span></td>
+      <td>
+        ${s.status !== 'submitted' ? `<button class="btn btn-amber btn-xs" onclick="submitSub('${s.id}')">Submit</button>` : ''}
       </td>
-    </tr>`).join('');
+    </tr>
+  `).join('');
 }
 
-async function addSubscription() {
-  const platform        = document.getElementById('sub-new-platform').value;
-  const provisioned_by  = document.getElementById('sub-new-provisioned-by').value;
-  const account_email   = document.getElementById('sub-new-email').value.trim() || null;
-  const account_identifier = document.getElementById('sub-new-identifier').value.trim() || null;
-  const notes           = document.getElementById('sub-new-notes').value.trim() || null;
+function openSubModal() { document.getElementById('sub-modal').classList.add('open'); }
+
+async function saveSubscription() {
+  const platform = document.getElementById('sub-platform').value.trim();
+  if (!platform) { toast('Platform is required.', 'error'); return; }
   try {
-    const res = await api('POST', '/admin/subscriptions', { platform, provisioned_by, account_email, account_identifier, notes });
-    subscriptions.push(res[0] ?? res);
-    document.getElementById('sub-new-email').value      = '';
-    document.getElementById('sub-new-identifier').value = '';
-    document.getElementById('sub-new-notes').value      = '';
+    const created = await api('POST', '/admin/subscriptions', {
+      platform,
+      provisioned_by: document.getElementById('sub-prov-by').value.trim() || 'frontframe',
+      approved_number: document.getElementById('sub-number').value.trim() || null,
+      campaign_type:   document.getElementById('sub-campaign').value.trim() || null,
+      opt_in_method:   document.getElementById('sub-opt-in').value.trim() || null,
+      notes:           document.getElementById('sub-notes').value.trim() || null,
+    });
+    const newS = Array.isArray(created) ? created[0] : created;
+    if (newS) subscriptions.push(newS);
+    closeModal('sub-modal');
     renderSubscriptions();
-    toast('Subscription added.');
+    toast('Saved.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function sendSubscription(id) {
+async function submitSub(id) {
   try {
     await api('POST', `/admin/subscriptions/${id}/send`);
     const idx = subscriptions.findIndex(s => s.id === id);
     if (idx >= 0) subscriptions[idx].status = 'submitted';
     renderSubscriptions();
-    toast('Sent to FrontFrame.');
+    toast('Submitted and SMS sent.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function markProvisioned(id) {
+// ── Reviewers ─────────────────────────────────────────────────────────────
+
+async function loadReviewers() {
+  try { reviewers = await api('GET', '/admin/reviewers'); } catch (e) { toast('Failed to load reviewers: ' + e.message, 'error'); return; }
+  renderReviewers();
+}
+
+function renderReviewers() {
+  const tbody = document.getElementById('reviewers-tbody');
+  if (!reviewers.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No reviewers</div></td></tr>`; return; }
+  tbody.innerHTML = reviewers.map(r => `
+    <tr>
+      <td><strong>${esc(r.display_name)}</strong></td>
+      <td class="text-small text-gray">${esc(r.email)}</td>
+      <td><span class="badge badge-new">${esc(r.role)}</span></td>
+      <td class="text-small text-gray">${fmtDate(r.invited_at)}</td>
+      <td><button class="btn btn-ghost btn-xs" onclick="resetPassword('${r.email}')">Reset PW</button></td>
+    </tr>
+  `).join('');
+}
+
+function openReviewerModal() { document.getElementById('reviewer-modal').classList.add('open'); }
+
+async function saveReviewer() {
+  const email = document.getElementById('rv-email').value.trim();
+  const name  = document.getElementById('rv-name').value.trim();
+  const role  = document.getElementById('rv-role').value;
+  if (!email || !name) { toast('Email and name required.', 'error'); return; }
   try {
-    await api('PATCH', `/admin/subscriptions/${id}`, { status: 'active', provisioned_at: new Date().toISOString() });
-    const idx = subscriptions.findIndex(s => s.id === id);
-    if (idx >= 0) subscriptions[idx].status = 'active';
-    renderSubscriptions();
-    toast('Marked active.');
+    const result = await api('POST', '/admin/reviewers/invite', { email, display_name: name, role });
+    closeModal('reviewer-modal');
+    await loadReviewers();
+    toast('Invite sent to ' + email);
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ─── END SUBSCRIPTIONS ────────────────────────────────────────────────────────
-
-// HELPERS
 async function resetPassword(email) {
-  if (!email) { toast('No email on record for this reviewer.', 'error'); return; }
-  if (!confirm(`Send password reset email to ${email}?`)) return;
-  try { await api('POST', '/admin/reviewers/reset-password', { email }); toast(`Password reset sent to ${email}.`); }
-  catch (e) { toast(e.message, 'error'); }
-}
-
-function togglePw(id, btn) {
-  const inp  = document.getElementById(id);
-  const show = inp.type === 'password';
-  inp.type   = show ? 'text' : 'password';
-  btn.innerHTML = show
-    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
-    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-}
-
-function openEditDefect(id) {
-  const d = defects.find(x => x.id === id);
-  if (!d) { toast('Defect not found.', 'error'); return; }
-  document.getElementById('edit-defect-id').value          = id;
-  document.getElementById('edit-defect-area').value        = d.area;
-  document.getElementById('edit-defect-description').value = d.description;
-  document.getElementById('edit-defect-modal').classList.add('open');
-}
-
-async function saveEditDefect() {
-  const id          = document.getElementById('edit-defect-id').value;
-  const area        = document.getElementById('edit-defect-area').value;
-  const description = document.getElementById('edit-defect-description').value.trim();
-  if (!description) { toast('Description is required.', 'error'); return; }
   try {
-    await api('PATCH', `/admin/defects/${id}`, { area, description });
-    const idx = defects.findIndex(d => d.id === id);
-    if (idx >= 0) { defects[idx].area = area; defects[idx].description = description; }
-    document.getElementById('edit-defect-modal').classList.remove('open');
-    renderDefects(); toast('Defect updated.');
+    await api('POST', '/admin/reviewers/reset-password', { email });
+    toast('Password reset email sent.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
-function esc(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// ── Episodes ──────────────────────────────────────────────────────────────
+
+async function loadEpisodes() {
+  try { episodes = await api('GET', '/admin/podcast-episodes'); } catch (e) { toast('Failed to load episodes: ' + e.message, 'error'); return; }
+  renderEpisodes();
 }
+
+function renderEpisodes() {
+  const tbody = document.getElementById('episodes-tbody');
+  if (!episodes.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No episodes</div></td></tr>`; return; }
+  tbody.innerHTML = episodes.map(e => `
+    <tr>
+      <td class="text-small text-gray">${esc(e.series)}</td>
+      <td><strong>${esc(e.title)}</strong></td>
+      <td class="text-small text-gray">${esc(e.published_at ?? '')}</td>
+      <td>${e.visible ? '✓' : '—'}</td>
+      <td>
+        <div class="flex-row">
+          <button class="btn btn-ghost btn-xs" onclick="openEpisodeModal('${e.id}')">Edit</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteEpisode('${e.id}')">Del</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openEpisodeModal(id) {
+  const ep = id ? episodes.find(e => e.id === id) : null;
+  document.getElementById('ep-modal-title').textContent = ep ? 'Edit Episode' : 'Add Episode';
+  document.getElementById('ep-id').value         = ep?.id ?? '';
+  document.getElementById('ep-series').value     = ep?.series ?? '';
+  document.getElementById('ep-title').value      = ep?.title ?? '';
+  document.getElementById('ep-date').value       = ep?.published_at ?? '';
+  document.getElementById('ep-audio').value      = ep?.audio_path ?? '';
+  document.getElementById('ep-transcript').value = ep?.transcript ?? '';
+  document.getElementById('episode-modal').classList.add('open');
+}
+
+async function saveEpisode() {
+  const id         = document.getElementById('ep-id').value;
+  const series     = document.getElementById('ep-series').value.trim();
+  const title      = document.getElementById('ep-title').value.trim();
+  const published  = document.getElementById('ep-date').value.trim();
+  const audio      = document.getElementById('ep-audio').value.trim();
+  const transcript = document.getElementById('ep-transcript').value.trim();
+  if (!series || !title) { toast('Series and title required.', 'error'); return; }
+  try {
+    if (id) {
+      await api('PATCH', `/admin/podcast-episodes/${id}`, { series, title, published_at: published || null, audio_path: audio || null, transcript: transcript || null });
+      const idx = episodes.findIndex(e => e.id === id);
+      if (idx >= 0) episodes[idx] = { ...episodes[idx], series, title, published_at: published, audio_path: audio, transcript };
+    } else {
+      const created = await api('POST', '/admin/podcast-episodes', { series, title, published_at: published || null, audio_path: audio || null, transcript: transcript || null });
+      const newEp   = Array.isArray(created) ? created[0] : created;
+      if (newEp) episodes.unshift(newEp);
+    }
+    closeModal('episode-modal');
+    renderEpisodes();
+    toast('Saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteEpisode(id) {
+  if (!confirm('Delete this episode?')) return;
+  try {
+    await api('DELETE', `/admin/podcast-episodes/${id}`);
+    episodes = episodes.filter(e => e.id !== id);
+    renderEpisodes();
+    toast('Deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Config ────────────────────────────────────────────────────────────────
+
+async function loadConfig() {
+  let config;
+  try { config = await api('GET', '/admin/config'); } catch (e) { toast('Failed to load config: ' + e.message, 'error'); return; }
+  const body = document.getElementById('config-body');
+  body.innerHTML = `
+    <div class="toggle-row">
+      <div><div class="toggle-label">Mode</div><div class="toggle-sub">live = prod agent; testing = testing layer injected</div></div>
+      <div class="flex-row">
+        <select id="cfg-mode" style="width:auto">
+          <option value="live"    ${config.mode==='live'?'selected':''}>live</option>
+          <option value="testing" ${config.mode==='testing'?'selected':''}>testing</option>
+        </select>
+      </div>
+    </div>
+    <div class="toggle-row">
+      <div><div class="toggle-label">Session Capture</div><div class="toggle-sub">Store full conversation transcripts</div></div>
+      <button class="toggle ${config.capture_enabled?'on':''}" id="cfg-capture" onclick="toggleCapture()"></button>
+    </div>
+    <div class="toggle-row">
+      <div><div class="toggle-label">Build Version</div><div class="toggle-sub">Label for defect tracking</div></div>
+      <input type="text" id="cfg-version" value="${esc(config.build_version??'')}" style="width:160px">
+    </div>
+    <div style="margin-top:20px">
+      <button class="btn btn-primary" onclick="saveConfig()">Save Config</button>
+    </div>
+  `;
+}
+
+function toggleCapture() {
+  const btn = document.getElementById('cfg-capture');
+  btn.classList.toggle('on');
+}
+
+async function saveConfig() {
+  const mode            = document.getElementById('cfg-mode').value;
+  const capture_enabled = document.getElementById('cfg-capture').classList.contains('on');
+  const build_version   = document.getElementById('cfg-version').value.trim();
+  try {
+    await api('POST', '/admin/config', { mode, capture_enabled, build_version });
+    toast('Config saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Badges ────────────────────────────────────────────────────────────────
+
+function updateBadges() {
+  const pipelineCount = alerts.filter(a => a.status === 'active_sales_call').length;
+  const newCount      = alerts.filter(a => a.status === 'new').length;
+  setBadge('badge-pipeline', pipelineCount + newCount);
+
+  const openDefects  = defects.filter(d => !d.status || d.status === 'open').length;
+  setBadge('badge-defects', openDefects);
+
+  const openFeedback = feedback.filter(f => !f.promoted).length;
+  setBadge('badge-feedback', openFeedback);
+}
+
+function setBadge(id, count) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (count > 0) { el.textContent = count; el.classList.remove('hidden'); }
+  else { el.classList.add('hidden'); }
+}
+
+// ── Modal helpers ─────────────────────────────────────────────────────────
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-backdrop').forEach(el => {
+  el.addEventListener('click', (e) => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+
+let toastTimer;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = 'show' + (type === 'error' ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3200);
+}
+
+// ── Formatters ────────────────────────────────────────────────────────────
+
 function fmtDate(iso) {
   if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
-function fmtEvent(type) {
-  return { defect_resolved:'Resolved', defect_deferred:'Deferred', feedback_promoted:'Promoted', version_bump:'Version', go_live:'Go Live' }[type] ?? type;
+function fmtDateShort(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
-function roleBadge(role) {
-  const map   = { frontframe_admin:'badge-admin', frontframe_staff:'badge-staff', contractor:'badge-contractor', client_tester:'badge-client', client_owner:'badge-client_owner' };
-  const label = { frontframe_admin:'Admin', frontframe_staff:'Staff', contractor:'Contractor', client_tester:'Client Tester', client_owner:'Client Owner' };
-  return `<span class="badge ${map[role]||''}">${label[role]||role}</span>`;
-}
-function downloadCSV(rows, filename) {
-  const blob = new Blob([rows.map(r=>r.join(',')).join('\n')], { type: 'text/csv' });
-  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: filename });
-  a.click(); URL.revokeObjectURL(a.href);
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// WIRING
-document.getElementById('edit-defect-cancel').onclick  = () => document.getElementById('edit-defect-modal').classList.remove('open');
-document.getElementById('edit-defect-save').onclick    = saveEditDefect;
-document.getElementById('edit-qa-cancel').onclick      = () => document.getElementById('edit-qa-modal').classList.remove('open');
-document.getElementById('edit-qa-save').onclick        = saveEditQA;
-document.getElementById('edit-ep-cancel').onclick      = () => document.getElementById('edit-episode-modal').classList.remove('open');
-document.getElementById('edit-ep-save').onclick        = saveEditEpisode;
-document.getElementById('prompt-edit-btn').onclick     = editSystemPrompt;
-document.getElementById('prompt-save-btn').onclick     = saveSystemPrompt;
-document.getElementById('prompt-cancel-btn').onclick   = cancelEditPrompt;
-document.getElementById('add-episode-btn').onclick     = addEpisode;
+// ── Init ──────────────────────────────────────────────────────────────────
 
-document.getElementById('golive-confirm').addEventListener('input', function() {
-  document.getElementById('golive-confirm-btn').disabled = this.value.trim() !== 'frontframe.co';
-});
-document.getElementById('golive-cancel').onclick = () => {
-  document.getElementById('golive-modal').classList.remove('open');
-  document.getElementById('golive-confirm').value = '';
-  document.getElementById('golive-confirm-btn').disabled = true;
-};
-document.getElementById('golive-confirm-btn').onclick = async () => {
-  try {
-    await api('POST', '/admin/config', { mode: 'live' });
-    config.mode = 'live';
-    document.getElementById('golive-modal').classList.remove('open');
-    updateHeaderBadges(); renderDashboard(); toast('System is now live.');
-  } catch (e) { toast(e.message, 'error'); }
-};
-document.getElementById('golive-btn').onclick = () => {
-  if (config?.mode === 'live') return;
-  document.getElementById('golive-modal').classList.add('open');
-};
-document.getElementById('save-config-btn').onclick = async () => {
-  try {
-    await api('POST', '/admin/config', { build_version: document.getElementById('cfg-version').value.trim(), stage_gate: document.getElementById('cfg-stage').value });
-    config.build_version = document.getElementById('cfg-version').value.trim();
-    config.stage_gate    = document.getElementById('cfg-stage').value;
-    updateHeaderBadges(); toast('Configuration saved.');
-  } catch (e) { toast(e.message, 'error'); }
-};
+(function init() {
+  // 1. Check for magic link callback in hash
+  if (handleMagicLinkCallback()) { showAdmin(); return; }
 
-document.querySelectorAll('.tab-btn').forEach(btn => { btn.onclick = () => switchTab(btn.dataset.tab); });
+  // 2. Check for existing session
+  const stored = loadSession();
+  if (stored?.access_token) { session = stored; showAdmin(); return; }
 
-document.getElementById('filter-area').onchange         =
-document.getElementById('filter-severity').onchange     =
-document.getElementById('filter-status').onchange       = renderDefects;
-document.getElementById('filter-feedback').onchange     = renderFeedback;
-document.getElementById('filter-changelog').onchange    = renderChangelog;
-document.getElementById('filter-alert-status').onchange = renderAlerts;
-document.getElementById('filter-qa-status').onchange    =
-document.getElementById('filter-qa-page').onchange      = renderQA;
-document.getElementById('prompt-page-select').onchange  = loadSystemPrompt;
-
-document.getElementById('add-changelog-btn').onclick    = addChangelog;
-document.getElementById('log-defect-btn').onclick       = logDefect;
-document.getElementById('invite-btn').onclick           = inviteReviewer;
-document.getElementById('add-qa-btn').onclick           = addQA;
-document.getElementById('export-defects-btn').onclick   = exportDefectsCSV;
-document.getElementById('export-changelog-btn').onclick = exportChangelogCSV;
-document.getElementById('export-qa-btn').onclick        = exportQACSV;
-document.getElementById('signout-btn').onclick          = signOut;
-
-document.getElementById('login-btn').onclick = async () => {
-  const email    = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  const errEl    = document.getElementById('login-error');
-  const btn      = document.getElementById('login-btn');
-  errEl.style.display = 'none';
-  btn.textContent = 'Signing in…'; btn.disabled = true;
-  try {
-    const data = await signIn(email, password);
-    saveSession(data); await showAdmin();
-  } catch (e) {
-    errEl.textContent = e.message; errEl.style.display = 'block';
-    btn.textContent = 'Sign In'; btn.disabled = false;
-  }
-};
-document.getElementById('login-password').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('login-btn').click();
-});
-
-function showLogin() {
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('admin-shell').style.display  = 'none';
-}
-async function showAdmin() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('admin-shell').style.display  = 'flex';
-  document.getElementById('header-user').textContent    = session.user?.email ?? '';
-  await loadAll(); renderDashboard();
-}
-
-const stored = loadSession();
-if (stored?.access_token) { session = stored; showAdmin(); }
-else showLogin();
+  // 3. Show login
+  showLogin();
+})();
 </script>
 </body>
 </html>
