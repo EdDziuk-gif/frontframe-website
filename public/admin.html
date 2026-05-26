@@ -32,7 +32,7 @@
     min-height: 100vh;
   }
 
-  /* ── Login ─────────────────────────────────────────────────────────── */
+  /* Login */
   #login-screen {
     display: flex; align-items: center; justify-content: center;
     min-height: 100vh; background: var(--offwhite);
@@ -47,7 +47,7 @@
   .login-box p strong { color: var(--navy); }
   .login-sent-icon { font-size: 2.5rem; margin-bottom: 16px; }
 
-  /* ── Layout ─────────────────────────────────────────────────────────── */
+  /* Layout */
   #app-shell { display: flex; min-height: 100vh; }
   .sidebar {
     width: var(--sidebar); background: var(--navy); color: white;
@@ -84,7 +84,7 @@
   .page-title  { font-family: 'DM Sans', sans-serif; font-size: 1.5rem; font-weight: 700; }
   .page-sub    { color: var(--gray); font-size: 0.875rem; margin-top: 4px; }
 
-  /* ── Cards ─────────────────────────────────────────────────────────── */
+  /* Cards */
   .card {
     background: white; border-radius: 12px; border: 1px solid var(--border);
     margin-bottom: 24px; overflow: hidden;
@@ -96,7 +96,7 @@
   .card-title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1rem; }
   .card-body  { padding: 20px; }
 
-  /* ── Stats ─────────────────────────────────────────────────────────── */
+  /* Stats */
   .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 16px; margin-bottom: 24px; }
   .stat-card {
     background: white; border-radius: 12px; border: 1px solid var(--border);
@@ -105,7 +105,7 @@
   .stat-label { font-size: 0.75rem; color: var(--gray); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
   .stat-value { font-family: 'DM Sans', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--navy); }
 
-  /* ── Tables ─────────────────────────────────────────────────────────── */
+  /* Tables */
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
   th {
@@ -117,7 +117,7 @@
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #FAFBFC; }
 
-  /* ── Buttons ─────────────────────────────────────────────────────────── */
+  /* Buttons */
   .btn {
     display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
     border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;
@@ -136,10 +136,11 @@
   .btn-full { width: 100%; justify-content: center; padding: 12px 16px; }
   .btn-link { background: none; border: none; color: var(--navy); text-decoration: underline; cursor: pointer; font-size: inherit; padding: 0; font-weight: 500; }
 
-  /* ── Forms ─────────────────────────────────────────────────────────── */
+  /* Forms */
   .form-group { margin-bottom: 16px; }
   label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 0.875rem; }
   input[type=text], input[type=email], input[type=password], input[type=number], input[type=url],
+  input[type=date], input[type=time],
   textarea, select {
     width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px;
     font-family: inherit; font-size: 0.875rem; color: var(--navy); background: white;
@@ -149,7 +150,7 @@
   textarea { resize: vertical; min-height: 100px; }
   .error-msg { color: var(--red); font-size: 0.8rem; margin-top: 8px; min-height: 18px; }
 
-  /* ── Badges / Pills ─────────────────────────────────────────────────── */
+  /* Badges */
   .badge {
     display: inline-block; padding: 2px 8px; border-radius: 12px;
     font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
@@ -170,11 +171,11 @@
   .badge-promoted   { background: #E8F8EE; color: var(--green); }
   .badge-approved   { background: #E8F8EE; color: var(--green); }
 
-  /* ── Tabs ─────────────────────────────────────────────────────────── */
+  /* Tabs */
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
-  /* ── Toggle ─────────────────────────────────────────────────────────── */
+  /* Toggle */
   .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
   .toggle-row:last-child { border-bottom: none; }
   .toggle-label { font-weight: 500; }
@@ -182,7 +183,7 @@
   .toggle {
     position: relative; width: 44px; height: 24px;
     background: var(--midgray); border-radius: 12px; cursor: pointer;
-    transition: background .2s; border: none;
+    transition: background .2s; border: none; flex-shrink: 0;
   }
   .toggle.on { background: var(--green); }
   .toggle::after {
@@ -191,11 +192,11 @@
   }
   .toggle.on::after { transform: translateX(20px); }
 
-  /* ── Filter bar ─────────────────────────────────────────────────────── */
+  /* Filter bar */
   .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; }
   .filter-bar input, .filter-bar select { width: auto; flex: 1; min-width: 160px; }
 
-  /* ── Pipeline cards ─────────────────────────────────────────────────── */
+  /* Pipeline */
   .pipeline-section-title {
     font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.85rem;
     text-transform: uppercase; letter-spacing: .5px; color: var(--gray);
@@ -231,7 +232,7 @@
   .step-meta  { font-size: 0.75rem; color: var(--gray); margin-top: 1px; }
   .step-action { margin-left: auto; flex-shrink: 0; }
 
-  /* ── Modal ─────────────────────────────────────────────────────────── */
+  /* Modal */
   .modal-backdrop {
     display: none; position: fixed; inset: 0;
     background: rgba(30,45,64,.5); z-index: 200; align-items: center; justify-content: center;
@@ -248,7 +249,7 @@
   .modal-close:hover { color: var(--navy); }
   .modal-footer { margin-top: 24px; display: flex; gap: 8px; justify-content: flex-end; }
 
-  /* ── Toast ─────────────────────────────────────────────────────────── */
+  /* Toast */
   #toast {
     position: fixed; bottom: 24px; right: 24px; z-index: 999;
     background: var(--navy); color: white; padding: 12px 20px;
@@ -259,7 +260,7 @@
   #toast.show { opacity: 1; transform: translateY(0); }
   #toast.error { background: var(--red); }
 
-  /* ── Misc ─────────────────────────────────────────────────────────── */
+  /* Misc */
   .hidden { display: none !important; }
   .text-gray  { color: var(--gray); }
   .text-small { font-size: 0.8rem; }
@@ -278,17 +279,20 @@
   .session-bubble.user      { background: var(--offwhite); margin-right: auto; }
   .session-bubble.assistant { background: #EBF5FB; margin-left: auto; }
   .session-role { font-size: 0.72rem; color: var(--gray); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; }
+
+  /* Office Hours two-col grid */
+  .oh-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 900px) { .oh-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 
-<!-- ── Login ──────────────────────────────────────────────────────────── -->
+<!-- Login -->
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">
       <span style="font-family:'DM Sans',sans-serif;font-size:1.3rem;font-weight:700;color:var(--navy)">Front<span style="color:var(--amber)">Frame</span></span>
     </div>
-
     <div id="login-email-view">
       <h1>Admin Portal</h1>
       <p>Enter your email and we'll send you a secure sign-in link.</p>
@@ -299,9 +303,8 @@
       <button class="btn btn-primary btn-full" id="send-link-btn">Send Sign-In Link</button>
       <div class="error-msg" id="login-error"></div>
     </div>
-
     <div id="login-sent-view" class="hidden">
-      <div class="login-sent-icon">✉️</div>
+      <div class="login-sent-icon">&#x2709;&#xFE0F;</div>
       <h1>Check Your Email</h1>
       <p>A sign-in link was sent to <strong id="login-sent-to"></strong>. Click the link in that email to access the admin portal.</p>
       <button class="btn btn-ghost btn-full mt-8" id="login-back-btn" style="margin-top:20px">Use a different email</button>
@@ -309,23 +312,24 @@
   </div>
 </div>
 
-<!-- ── App Shell ───────────────────────────────────────────────────────── -->
+<!-- App Shell -->
 <div id="app-shell" class="hidden">
-
   <nav class="sidebar">
     <div class="sidebar-logo">Front<span>Frame</span> <span style="font-size:.7rem;opacity:.5;font-weight:400">Admin</span></div>
     <div class="sidebar-nav">
-      <button class="nav-item" data-tab="pipeline"       onclick="switchTab('pipeline')">📋 Pipeline <span class="nav-badge hidden" id="badge-pipeline">0</span></button>
-      <button class="nav-item" data-tab="qa"             onclick="switchTab('qa')">💬 Q&amp;A</button>
-      <button class="nav-item" data-tab="system-prompt"  onclick="switchTab('system-prompt')">🧠 System Prompt</button>
-      <button class="nav-item" data-tab="defects"        onclick="switchTab('defects')">🐛 Defects <span class="nav-badge hidden" id="badge-defects">0</span></button>
-      <button class="nav-item" data-tab="feedback"       onclick="switchTab('feedback')">📝 Feedback <span class="nav-badge hidden" id="badge-feedback">0</span></button>
-      <button class="nav-item" data-tab="changelog"      onclick="switchTab('changelog')">📖 Changelog</button>
-      <button class="nav-item" data-tab="solutions"      onclick="switchTab('solutions')">💡 Solutions</button>
-      <button class="nav-item" data-tab="subscriptions"  onclick="switchTab('subscriptions')">📱 Subscriptions</button>
-      <button class="nav-item" data-tab="reviewers"      onclick="switchTab('reviewers')">👥 Reviewers</button>
-      <button class="nav-item" data-tab="episodes"       onclick="switchTab('episodes')">🎙 Episodes</button>
-      <button class="nav-item" data-tab="config"         onclick="switchTab('config')">⚙️ Config</button>
+      <button class="nav-item" data-tab="pipeline"      onclick="switchTab('pipeline')">&#x1F4CB; Pipeline <span class="nav-badge hidden" id="badge-pipeline">0</span></button>
+      <button class="nav-item" data-tab="qa"            onclick="switchTab('qa')">&#x1F4AC; Q&amp;A</button>
+      <button class="nav-item" data-tab="system-prompt" onclick="switchTab('system-prompt')">&#x1F9E0; System Prompt</button>
+      <button class="nav-item" data-tab="defects"       onclick="switchTab('defects')">&#x1F41B; Defects <span class="nav-badge hidden" id="badge-defects">0</span></button>
+      <button class="nav-item" data-tab="feedback"      onclick="switchTab('feedback')">&#x1F4DD; Feedback <span class="nav-badge hidden" id="badge-feedback">0</span></button>
+      <button class="nav-item" data-tab="changelog"     onclick="switchTab('changelog')">&#x1F4D6; Changelog</button>
+      <button class="nav-item" data-tab="solutions"     onclick="switchTab('solutions')">&#x1F4A1; Solutions</button>
+      <button class="nav-item" data-tab="subscriptions" onclick="switchTab('subscriptions')">&#x1F4F1; Subscriptions</button>
+      <button class="nav-item" data-tab="office-hours"  onclick="switchTab('office-hours')">&#x1F550; Office Hours</button>
+      <button class="nav-item" data-tab="rd-log"        onclick="switchTab('rd-log')">&#x1F4CA; R&amp;D Log</button>
+      <button class="nav-item" data-tab="reviewers"     onclick="switchTab('reviewers')">&#x1F465; Reviewers</button>
+      <button class="nav-item" data-tab="episodes"      onclick="switchTab('episodes')">&#x1F399; Episodes</button>
+      <button class="nav-item" data-tab="config"        onclick="switchTab('config')">&#x2699;&#xFE0F; Config</button>
     </div>
     <div class="sidebar-footer">
       <div>ed@frontframe.co</div>
@@ -335,20 +339,18 @@
 
   <main class="main-content">
 
-    <!-- ── Pipeline ───────────────────────────────────────────────────── -->
+    <!-- Pipeline -->
     <div class="tab-panel" id="tab-pipeline">
       <div class="page-header">
         <div class="page-title">Pipeline</div>
         <div class="page-sub">Active sales calls and all visitor alerts</div>
       </div>
-
       <div id="pipeline-active-section"></div>
-
       <div class="card">
         <div class="card-header">
           <div class="card-title">All Alerts</div>
           <div class="filter-bar">
-            <input type="text" id="alert-filter" placeholder="Search alerts…" oninput="renderAlerts()">
+            <input type="text" id="alert-filter" placeholder="Search alerts&#x2026;" oninput="renderAlerts()">
             <select id="alert-status-filter" onchange="renderAlerts()">
               <option value="">All statuses</option>
               <option value="new">New</option>
@@ -359,17 +361,14 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr>
-              <th>Prospect</th><th>Signal</th><th>Page</th>
-              <th>Status</th><th>SMS</th><th>Date</th><th>Actions</th>
-            </tr></thead>
+            <thead><tr><th>Prospect</th><th>Signal</th><th>Page</th><th>Status</th><th>SMS</th><th>Date</th><th>Actions</th></tr></thead>
             <tbody id="alerts-tbody"></tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- ── Q&A ────────────────────────────────────────────────────────── -->
+    <!-- Q&A -->
     <div class="tab-panel" id="tab-qa">
       <div class="page-header">
         <div class="page-title">Q&amp;A Pairs</div>
@@ -389,7 +388,7 @@
       </div>
     </div>
 
-    <!-- ── System Prompt ──────────────────────────────────────────────── -->
+    <!-- System Prompt -->
     <div class="tab-panel" id="tab-system-prompt">
       <div class="page-header">
         <div class="page-title">System Prompt</div>
@@ -408,7 +407,7 @@
           </select>
         </div>
         <div class="card-body">
-          <textarea id="prompt-content" rows="18" placeholder="Enter system prompt content…"></textarea>
+          <textarea id="prompt-content" rows="18" placeholder="Enter system prompt content&#x2026;"></textarea>
           <div style="margin-top:12px;display:flex;gap:8px">
             <button class="btn btn-primary" onclick="savePrompt()">Save Prompt</button>
             <button class="btn btn-ghost"   onclick="loadPromptForPage()">Reset</button>
@@ -417,7 +416,7 @@
       </div>
     </div>
 
-    <!-- ── Defects ─────────────────────────────────────────────────────── -->
+    <!-- Defects -->
     <div class="tab-panel" id="tab-defects">
       <div class="page-header">
         <div class="page-title">Defects</div>
@@ -437,7 +436,7 @@
       </div>
     </div>
 
-    <!-- ── Feedback ────────────────────────────────────────────────────── -->
+    <!-- Feedback -->
     <div class="tab-panel" id="tab-feedback">
       <div class="page-header">
         <div class="page-title">Feedback / Gaps</div>
@@ -457,7 +456,7 @@
       </div>
     </div>
 
-    <!-- ── Changelog ───────────────────────────────────────────────────── -->
+    <!-- Changelog -->
     <div class="tab-panel" id="tab-changelog">
       <div class="page-header">
         <div class="page-title">Changelog</div>
@@ -477,53 +476,51 @@
       </div>
     </div>
 
-    <!-- ── Solutions ───────────────────────────────────────────────────── -->
+    <!-- Solutions -->
     <div class="tab-panel" id="tab-solutions">
       <div class="page-header">
         <div class="page-title">Solutions</div>
         <div class="page-sub">Business problem sessions and daily deliverables</div>
       </div>
-      <div id="solutions-content">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Problem Statements</div>
-            <button class="btn btn-primary btn-sm" onclick="openProblemModal()">+ Add Problem</button>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Title</th><th>Ideal Outcome</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody id="problems-tbody"></tbody>
-            </table>
-          </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Problem Statements</div>
+          <button class="btn btn-primary btn-sm" onclick="openProblemModal()">+ Add Problem</button>
         </div>
-        <div class="card" id="deliverables-card" style="display:none">
-          <div class="card-header">
-            <div class="card-title" id="deliverables-title">Deliverables</div>
-            <button class="btn btn-ghost btn-sm" onclick="closeDeliverables()">← Back</button>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Challenge</th><th>Response</th><th>Action Committed</th><th>Date</th></tr></thead>
-              <tbody id="deliverables-tbody"></tbody>
-            </table>
-          </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Title</th><th>Ideal Outcome</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="problems-tbody"></tbody>
+          </table>
         </div>
-        <div class="card" id="mkt-log-card">
-          <div class="card-header">
-            <div class="card-title">Solutions Log</div>
-            <button class="btn btn-primary btn-sm" onclick="openMktModal()">+ Add Entry</button>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Platform</th><th>Question</th><th>Answer</th><th>Action</th><th>Date</th></tr></thead>
-              <tbody id="mkt-tbody"></tbody>
-            </table>
-          </div>
+      </div>
+      <div class="card" id="deliverables-card" style="display:none">
+        <div class="card-header">
+          <div class="card-title" id="deliverables-title">Deliverables</div>
+          <button class="btn btn-ghost btn-sm" onclick="closeDeliverables()">&larr; Back</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Challenge</th><th>Response</th><th>Action Committed</th><th>Date</th></tr></thead>
+            <tbody id="deliverables-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" id="mkt-log-card">
+        <div class="card-header">
+          <div class="card-title">Solutions Log</div>
+          <button class="btn btn-primary btn-sm" onclick="openMktModal()">+ Add Entry</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Platform</th><th>Question</th><th>Answer</th><th>Action</th><th>Date</th></tr></thead>
+            <tbody id="mkt-tbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
 
-    <!-- ── Subscriptions ───────────────────────────────────────────────── -->
+    <!-- Subscriptions -->
     <div class="tab-panel" id="tab-subscriptions">
       <div class="page-header">
         <div class="page-title">Subscriptions</div>
@@ -543,7 +540,158 @@
       </div>
     </div>
 
-    <!-- ── Reviewers ───────────────────────────────────────────────────── -->
+    <!-- Office Hours -->
+    <div class="tab-panel" id="tab-office-hours">
+      <div class="page-header">
+        <div class="page-title">Office Hours</div>
+        <div class="page-sub">Default weekly schedule and date overrides (Arizona time, no DST)</div>
+      </div>
+      <div class="oh-grid">
+        <!-- Weekly Schedule -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header">
+            <div class="card-title">Weekly Schedule</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Day</th><th>Open</th><th>Close</th><th>Closed</th><th></th></tr></thead>
+              <tbody id="schedule-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Overrides -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header">
+            <div class="card-title">Date Overrides</div>
+            <button class="btn btn-primary btn-sm" onclick="toggleOverrideForm()">+ Add Override</button>
+          </div>
+          <div id="override-form" class="card-body hidden" style="border-bottom:1px solid var(--border);padding-bottom:16px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div class="form-group" style="margin-bottom:0">
+                <label>Date</label>
+                <input type="date" id="ov-date">
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label>Note</label>
+                <input type="text" id="ov-note" placeholder="Holiday, etc.">
+              </div>
+              <div class="form-group" style="margin-bottom:0" id="ov-open-group">
+                <label>Open</label>
+                <input type="time" id="ov-open">
+              </div>
+              <div class="form-group" style="margin-bottom:0" id="ov-close-group">
+                <label>Close</label>
+                <input type="time" id="ov-close">
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:8px;font-weight:500;cursor:pointer">
+                <button class="toggle" id="ov-closed-toggle" onclick="toggleOverrideClosed()"></button>
+                Closed all day
+              </label>
+              <button class="btn btn-primary btn-sm" onclick="saveOverride()">Add Override</button>
+              <button class="btn btn-ghost btn-sm"   onclick="toggleOverrideForm()">Cancel</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Hours</th><th>Note</th><th></th></tr></thead>
+              <tbody id="overrides-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- R&D Log -->
+    <div class="tab-panel" id="tab-rd-log">
+      <div class="page-header">
+        <div class="page-title">R&amp;D Log</div>
+        <div class="page-sub">Session time tracking for qualified R&amp;D documentation</div>
+      </div>
+      <!-- Log Session Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Log Session</div>
+          <button class="btn btn-primary btn-sm" onclick="toggleRdForm()">+ Log Session</button>
+        </div>
+        <div id="rd-form" class="card-body hidden" style="border-top:1px solid var(--border)">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+            <div class="form-group" style="margin-bottom:0">
+              <label>Client</label>
+              <input type="text" id="rd-client" list="rd-clients-list" placeholder="Eleanor's Avian Care">
+              <datalist id="rd-clients-list">
+                <option value="Eleanor's Avian Care">
+                <option value="FrontFrame">
+                <option value="CoxMeadows.org">
+              </datalist>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Date</label>
+              <input type="date" id="rd-date">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Duration (minutes)</label>
+              <input type="number" id="rd-duration" min="1" placeholder="90">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Category</label>
+              <select id="rd-category">
+                <option value="DEV">DEV &#x2014; Development</option>
+                <option value="TST">TST &#x2014; Testing / QA</option>
+                <option value="DOC">DOC &#x2014; Documentation</option>
+                <option value="DES">DES &#x2014; Design</option>
+                <option value="RES">RES &#x2014; Research</option>
+                <option value="INT">INT &#x2014; Integration</option>
+                <option value="MTG">MTG &#x2014; Meeting</option>
+                <option value="MKT">MKT &#x2014; Marketing</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Description</label>
+              <input type="text" id="rd-description" placeholder="Brief description">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Dedup Note</label>
+              <input type="text" id="rd-dedup" placeholder="Optional">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Narrative (paste END SESSION SUMMARY here)</label>
+            <textarea id="rd-narrative" rows="5" placeholder="Paste full session summary&#x2026;"></textarea>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;font-weight:500;cursor:pointer">
+              <button class="toggle" id="rd-qualifies-toggle" onclick="toggleRdQualifies()"></button>
+              Qualifies for R&amp;D
+            </label>
+            <button class="btn btn-primary" onclick="saveRdEntry()">Save Entry</button>
+            <button class="btn btn-ghost"   onclick="toggleRdForm()">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <!-- Entries Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All Entries</div>
+          <div id="rd-totals" style="font-size:0.8rem;color:var(--gray)"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th><th>Client</th><th>Cat</th>
+                <th style="text-align:right">Min</th><th>Description</th>
+                <th>Q?</th><th>Dedup Note</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="rd-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviewers -->
     <div class="tab-panel" id="tab-reviewers">
       <div class="page-header">
         <div class="page-title">Reviewers</div>
@@ -563,7 +711,7 @@
       </div>
     </div>
 
-    <!-- ── Episodes ────────────────────────────────────────────────────── -->
+    <!-- Episodes -->
     <div class="tab-panel" id="tab-episodes">
       <div class="page-header">
         <div class="page-title">Podcast Episodes</div>
@@ -583,7 +731,7 @@
       </div>
     </div>
 
-    <!-- ── Config ─────────────────────────────────────────────────────── -->
+    <!-- Config -->
     <div class="tab-panel" id="tab-config">
       <div class="page-header">
         <div class="page-title">Config</div>
@@ -591,7 +739,7 @@
       </div>
       <div class="card">
         <div class="card-body" id="config-body">
-          <div class="empty-state"><div class="empty-state-icon">⚙️</div>Loading config…</div>
+          <div class="empty-state"><div class="empty-state-icon">&#x2699;&#xFE0F;</div>Loading config&#x2026;</div>
         </div>
       </div>
     </div>
@@ -599,29 +747,19 @@
   </main>
 </div>
 
-<!-- ── Modals ───────────────────────────────────────────────────────────── -->
+<!-- Modals -->
 
-<!-- Link Lead Modal -->
 <div class="modal-backdrop" id="link-lead-modal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">Link Lead to Alert</div>
-      <button class="modal-close" onclick="closeModal('link-lead-modal')">×</button>
+      <button class="modal-close" onclick="closeModal('link-lead-modal')">&#x00D7;</button>
     </div>
     <p class="text-gray mb-16" style="font-size:.875rem">Create a lead record to attach to this alert and start the pipeline.</p>
     <input type="hidden" id="link-lead-alert-id">
-    <div class="form-group">
-      <label>Name</label>
-      <input type="text" id="link-lead-name" placeholder="Prospect name">
-    </div>
-    <div class="form-group">
-      <label>Email *</label>
-      <input type="email" id="link-lead-email" placeholder="prospect@example.com">
-    </div>
-    <div class="form-group">
-      <label>Business Name</label>
-      <input type="text" id="link-lead-business" placeholder="Optional">
-    </div>
+    <div class="form-group"><label>Name</label><input type="text" id="link-lead-name" placeholder="Prospect name"></div>
+    <div class="form-group"><label>Email *</label><input type="email" id="link-lead-email" placeholder="prospect@example.com"></div>
+    <div class="form-group"><label>Business Name</label><input type="text" id="link-lead-business" placeholder="Optional"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('link-lead-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="linkLeadAndStart()">Create Lead &amp; Start Pipeline</button>
@@ -629,33 +767,25 @@
   </div>
 </div>
 
-<!-- Session Viewer Modal -->
 <div class="modal-backdrop" id="session-modal">
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
       <div class="modal-title" id="session-modal-title">Chat Session</div>
-      <button class="modal-close" onclick="closeModal('session-modal')">×</button>
+      <button class="modal-close" onclick="closeModal('session-modal')">&#x00D7;</button>
     </div>
     <div id="session-modal-body" style="max-height:480px;overflow-y:auto;padding:4px 0"></div>
   </div>
 </div>
 
-<!-- Q&A Modal -->
 <div class="modal-backdrop" id="qa-modal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="qa-modal-title">Add Q&amp;A Pair</div>
-      <button class="modal-close" onclick="closeModal('qa-modal')">×</button>
+      <button class="modal-close" onclick="closeModal('qa-modal')">&#x00D7;</button>
     </div>
     <input type="hidden" id="qa-modal-id">
-    <div class="form-group">
-      <label>Question</label>
-      <input type="text" id="qa-question" placeholder="What does FrontFrame do?">
-    </div>
-    <div class="form-group">
-      <label>Answer</label>
-      <textarea id="qa-answer" rows="5" placeholder="FrontFrame builds…"></textarea>
-    </div>
+    <div class="form-group"><label>Question</label><input type="text" id="qa-question" placeholder="What does FrontFrame do?"></div>
+    <div class="form-group"><label>Answer</label><textarea id="qa-answer" rows="5" placeholder="FrontFrame builds&#x2026;"></textarea></div>
     <div class="form-group">
       <label>Page</label>
       <select id="qa-page">
@@ -673,28 +803,17 @@
   </div>
 </div>
 
-<!-- Defect Modal -->
 <div class="modal-backdrop" id="defect-modal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">Log Defect</div>
-      <button class="modal-close" onclick="closeModal('defect-modal')">×</button>
+      <button class="modal-close" onclick="closeModal('defect-modal')">&#x00D7;</button>
     </div>
-    <div class="form-group">
-      <label>Area</label>
-      <input type="text" id="defect-area" placeholder="conversation / ui / data">
-    </div>
-    <div class="form-group">
-      <label>Description</label>
-      <textarea id="defect-desc" rows="4"></textarea>
-    </div>
+    <div class="form-group"><label>Area</label><input type="text" id="defect-area" placeholder="conversation / ui / data"></div>
+    <div class="form-group"><label>Description</label><textarea id="defect-desc" rows="4"></textarea></div>
     <div class="form-group">
       <label>Severity</label>
-      <select id="defect-severity">
-        <option value="low">Low</option>
-        <option value="medium">Medium</option>
-        <option value="high">High</option>
-      </select>
+      <select id="defect-severity"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('defect-modal')">Cancel</button>
@@ -703,21 +822,14 @@
   </div>
 </div>
 
-<!-- Feedback Modal -->
 <div class="modal-backdrop" id="feedback-modal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">Add Feedback Entry</div>
-      <button class="modal-close" onclick="closeModal('feedback-modal')">×</button>
+      <button class="modal-close" onclick="closeModal('feedback-modal')">&#x00D7;</button>
     </div>
-    <div class="form-group">
-      <label>Question</label>
-      <input type="text" id="fb-question" placeholder="Question the agent couldn't answer">
-    </div>
-    <div class="form-group">
-      <label>Suggested Answer</label>
-      <textarea id="fb-suggested" rows="4"></textarea>
-    </div>
+    <div class="form-group"><label>Question</label><input type="text" id="fb-question" placeholder="Question the agent couldn't answer"></div>
+    <div class="form-group"><label>Suggested Answer</label><textarea id="fb-suggested" rows="4"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('feedback-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveFeedback()">Save</button>
@@ -725,21 +837,14 @@
   </div>
 </div>
 
-<!-- Changelog Modal -->
 <div class="modal-backdrop" id="changelog-modal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">Log Event</div>
-      <button class="modal-close" onclick="closeModal('changelog-modal')">×</button>
+      <button class="modal-close" onclick="closeModal('changelog-modal')">&#x00D7;</button>
     </div>
-    <div class="form-group">
-      <label>Event Type</label>
-      <input type="text" id="cl-event-type" placeholder="deployment / decision / fix">
-    </div>
-    <div class="form-group">
-      <label>Summary</label>
-      <textarea id="cl-summary" rows="4"></textarea>
-    </div>
+    <div class="form-group"><label>Event Type</label><input type="text" id="cl-event-type" placeholder="deployment / decision / fix"></div>
+    <div class="form-group"><label>Summary</label><textarea id="cl-summary" rows="4"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('changelog-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveChangelog()">Save</button>
@@ -747,22 +852,15 @@
   </div>
 </div>
 
-<!-- Reviewer Modal -->
 <div class="modal-backdrop" id="reviewer-modal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="rv-modal-title">Add Reviewer</div>
-      <button class="modal-close" onclick="closeModal('reviewer-modal')">×</button>
+      <button class="modal-close" onclick="closeModal('reviewer-modal')">&#x00D7;</button>
     </div>
     <input type="hidden" id="rv-id">
-    <div class="form-group">
-      <label>Display Name</label>
-      <input type="text" id="rv-name">
-    </div>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="rv-email">
-    </div>
+    <div class="form-group"><label>Display Name</label><input type="text" id="rv-name"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="rv-email"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('reviewer-modal')">Cancel</button>
       <button class="btn btn-primary" id="rv-save-btn" onclick="saveReviewer()">Add Reviewer</button>
@@ -770,34 +868,18 @@
   </div>
 </div>
 
-<!-- Episode Modal -->
 <div class="modal-backdrop" id="episode-modal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="ep-modal-title">Add Episode</div>
-      <button class="modal-close" onclick="closeModal('episode-modal')">×</button>
+      <button class="modal-close" onclick="closeModal('episode-modal')">&#x00D7;</button>
     </div>
     <input type="hidden" id="ep-id">
-    <div class="form-group">
-      <label>Series</label>
-      <input type="text" id="ep-series">
-    </div>
-    <div class="form-group">
-      <label>Title</label>
-      <input type="text" id="ep-title">
-    </div>
-    <div class="form-group">
-      <label>Published Date</label>
-      <input type="text" id="ep-date" placeholder="YYYY-MM-DD">
-    </div>
-    <div class="form-group">
-      <label>Audio Path</label>
-      <input type="text" id="ep-audio">
-    </div>
-    <div class="form-group">
-      <label>Transcript</label>
-      <textarea id="ep-transcript" rows="5"></textarea>
-    </div>
+    <div class="form-group"><label>Series</label><input type="text" id="ep-series"></div>
+    <div class="form-group"><label>Title</label><input type="text" id="ep-title"></div>
+    <div class="form-group"><label>Published Date</label><input type="text" id="ep-date" placeholder="YYYY-MM-DD"></div>
+    <div class="form-group"><label>Audio Path</label><input type="text" id="ep-audio"></div>
+    <div class="form-group"><label>Transcript</label><textarea id="ep-transcript" rows="5"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('episode-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveEpisode()">Save</button>
@@ -805,37 +887,18 @@
   </div>
 </div>
 
-<!-- Subscription Modal -->
 <div class="modal-backdrop" id="sub-modal">
   <div class="modal" style="max-width:540px">
     <div class="modal-header">
       <div class="modal-title">Add Platform Subscription</div>
-      <button class="modal-close" onclick="closeModal('sub-modal')">×</button>
+      <button class="modal-close" onclick="closeModal('sub-modal')">&#x00D7;</button>
     </div>
-    <div class="form-group">
-      <label>Platform</label>
-      <input type="text" id="sub-platform" placeholder="Surge">
-    </div>
-    <div class="form-group">
-      <label>Provisioned By</label>
-      <input type="text" id="sub-prov-by" value="frontframe">
-    </div>
-    <div class="form-group">
-      <label>Approved Number</label>
-      <input type="text" id="sub-number" placeholder="(844) 940-0984">
-    </div>
-    <div class="form-group">
-      <label>Campaign Type</label>
-      <input type="text" id="sub-campaign" placeholder="Mixed">
-    </div>
-    <div class="form-group">
-      <label>Opt-In Method</label>
-      <input type="text" id="sub-opt-in" placeholder="Web form">
-    </div>
-    <div class="form-group">
-      <label>Notes</label>
-      <textarea id="sub-notes" rows="3"></textarea>
-    </div>
+    <div class="form-group"><label>Platform</label><input type="text" id="sub-platform" placeholder="Surge"></div>
+    <div class="form-group"><label>Provisioned By</label><input type="text" id="sub-prov-by" value="frontframe"></div>
+    <div class="form-group"><label>Approved Number</label><input type="text" id="sub-number" placeholder="(844) 940-0984"></div>
+    <div class="form-group"><label>Campaign Type</label><input type="text" id="sub-campaign" placeholder="Mixed"></div>
+    <div class="form-group"><label>Opt-In Method</label><input type="text" id="sub-opt-in" placeholder="Web form"></div>
+    <div class="form-group"><label>Notes</label><textarea id="sub-notes" rows="3"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('sub-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveSubscription()">Save</button>
@@ -843,25 +906,15 @@
   </div>
 </div>
 
-<!-- Problem Statement Modal -->
 <div class="modal-backdrop" id="problem-modal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">Add Problem Statement</div>
-      <button class="modal-close" onclick="closeModal('problem-modal')">×</button>
+      <button class="modal-close" onclick="closeModal('problem-modal')">&#x00D7;</button>
     </div>
-    <div class="form-group">
-      <label>Title</label>
-      <input type="text" id="ps-title">
-    </div>
-    <div class="form-group">
-      <label>Description</label>
-      <textarea id="ps-desc" rows="3"></textarea>
-    </div>
-    <div class="form-group">
-      <label>Ideal Outcome</label>
-      <textarea id="ps-outcome" rows="3"></textarea>
-    </div>
+    <div class="form-group"><label>Title</label><input type="text" id="ps-title"></div>
+    <div class="form-group"><label>Description</label><textarea id="ps-desc" rows="3"></textarea></div>
+    <div class="form-group"><label>Ideal Outcome</label><textarea id="ps-outcome" rows="3"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('problem-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveProblem()">Save</button>
@@ -869,29 +922,16 @@
   </div>
 </div>
 
-<!-- Marketing Log Modal -->
 <div class="modal-backdrop" id="mkt-modal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">Add Solutions Log Entry</div>
-      <button class="modal-close" onclick="closeModal('mkt-modal')">×</button>
+      <button class="modal-close" onclick="closeModal('mkt-modal')">&#x00D7;</button>
     </div>
-    <div class="form-group">
-      <label>Platform / Context</label>
-      <input type="text" id="mkt-platform" placeholder="LinkedIn">
-    </div>
-    <div class="form-group">
-      <label>Question / Challenge</label>
-      <input type="text" id="mkt-question">
-    </div>
-    <div class="form-group">
-      <label>Answer / Response</label>
-      <textarea id="mkt-answer" rows="3"></textarea>
-    </div>
-    <div class="form-group">
-      <label>Action Committed</label>
-      <input type="text" id="mkt-action" placeholder="Optional">
-    </div>
+    <div class="form-group"><label>Platform / Context</label><input type="text" id="mkt-platform" placeholder="LinkedIn"></div>
+    <div class="form-group"><label>Question / Challenge</label><input type="text" id="mkt-question"></div>
+    <div class="form-group"><label>Answer / Response</label><textarea id="mkt-answer" rows="3"></textarea></div>
+    <div class="form-group"><label>Action Committed</label><input type="text" id="mkt-action" placeholder="Optional"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('mkt-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveMkt()">Save</button>
@@ -899,28 +939,34 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div id="toast"></div>
 
 <script>
 const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
 
-let session      = null;
-let alerts       = [];
-let agreements   = [];
-let qaPairs      = [];
-let defects      = [];
-let feedback     = [];
-let changelog    = [];
-let reviewers    = [];
-let episodes     = [];
-let subscriptions= [];
-let mktLog       = [];
-let problems     = [];
-let deliverables = [];
-let currentTab   = '';
+let session       = null;
+let alerts        = [];
+let agreements    = [];
+let qaPairs       = [];
+let defects       = [];
+let feedback      = [];
+let changelog     = [];
+let reviewers     = [];
+let episodes      = [];
+let subscriptions = [];
+let mktLog        = [];
+let problems      = [];
+let deliverables  = [];
+let schedule      = [];
+let overrides     = [];
+let rdLog         = [];
+let rdFormOpen    = false;
+let ovFormOpen    = false;
+let currentTab    = '';
 
-// ── Auth ────────────────────────────────────────────────────────────────
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+// Auth
 
 function saveSession(s) {
   session = s;
@@ -937,9 +983,9 @@ function clearSession() {
 function handleMagicLinkCallback() {
   const hash = window.location.hash;
   if (!hash || !hash.includes('access_token')) return false;
-  const params      = new URLSearchParams(hash.substring(1));
-  const accessToken = params.get('access_token');
-  const refreshToken= params.get('refresh_token');
+  const params       = new URLSearchParams(hash.substring(1));
+  const accessToken  = params.get('access_token');
+  const refreshToken = params.get('refresh_token');
   if (!accessToken) return false;
   saveSession({ access_token: accessToken, refresh_token: refreshToken, user: { email: ADMIN_EMAIL_HINT } });
   window.history.replaceState({}, '', window.location.pathname);
@@ -966,7 +1012,7 @@ document.getElementById('send-link-btn').addEventListener('click', async () => {
   errEl.textContent = '';
   if (!email) { errEl.textContent = 'Email is required.'; return; }
   const btn = document.getElementById('send-link-btn');
-  btn.textContent = 'Sending…'; btn.disabled = true;
+  btn.textContent = 'Sending\u2026'; btn.disabled = true;
   try {
     await sendMagicLink(email);
     document.getElementById('login-sent-to').textContent = email;
@@ -988,10 +1034,7 @@ document.getElementById('login-back-btn').addEventListener('click', () => {
   document.getElementById('login-email-view').classList.remove('hidden');
 });
 
-function signOut() {
-  clearSession();
-  location.reload();
-}
+function signOut() { clearSession(); location.reload(); }
 
 function showLogin() {
   document.getElementById('login-screen').classList.remove('hidden');
@@ -1003,7 +1046,7 @@ function showAdmin() {
   switchTab('pipeline');
 }
 
-// ── API ──────────────────────────────────────────────────────────────────
+// API
 
 async function api(method, path, body) {
   const opts = {
@@ -1019,7 +1062,7 @@ async function api(method, path, body) {
   return res.json();
 }
 
-// ── Tab switching ─────────────────────────────────────────────────────────
+// Tab switching
 
 function switchTab(tab) {
   currentTab = tab;
@@ -1039,13 +1082,15 @@ function switchTab(tab) {
     case 'changelog':     loadChangelog(); break;
     case 'solutions':     loadSolutions(); break;
     case 'subscriptions': loadSubscriptions(); break;
+    case 'office-hours':  loadOfficeHours(); break;
+    case 'rd-log':        loadRdLog(); break;
     case 'reviewers':     loadReviewers(); break;
     case 'episodes':      loadEpisodes(); break;
     case 'config':        loadConfig(); break;
   }
 }
 
-// ── Pipeline ──────────────────────────────────────────────────────────────
+// Pipeline
 
 async function loadPipelineTab() {
   try {
@@ -1083,45 +1128,44 @@ function renderPipelineCard(alert, agreement) {
   const paymentReceived  = !!agreement?.payment_received_at;
   const called           = !!agreement?.client_called_at;
 
-  // Step states: 'start' = needs link, 'ready' = action available, 'waiting' = sent pending, 'done', 'locked'
   const s1 = !hasLead ? 'start' : !letterSent ? 'ready' : letterSigned ? 'done' : 'waiting';
   const s2 = !letterSigned ? 'locked' : !paymentRequested ? 'ready' : paymentReceived ? 'done' : 'waiting';
   const s3 = !paymentReceived ? 'locked' : !called ? 'ready' : 'done';
   const s4 = !called ? 'locked' : 'ready';
 
-  const s1meta = s1 === 'waiting' ? 'Sent · Awaiting signature'
+  const s1meta = s1 === 'waiting' ? 'Sent \u00b7 Awaiting signature'
                : s1 === 'done'    ? 'Signed ' + fmtDateShort(agreement?.signed_at)
                : '';
-  const s2meta = s2 === 'waiting' ? 'Sent ' + fmtDateShort(agreement?.payment_request_sent_at) + ' · Awaiting payment'
+  const s2meta = s2 === 'waiting' ? 'Sent ' + fmtDateShort(agreement?.payment_request_sent_at) + ' \u00b7 Awaiting payment'
                : s2 === 'done'    ? 'Received ' + fmtDateShort(agreement?.payment_received_at)
                : '';
   const s3meta = s3 === 'done' ? 'Called ' + fmtDateShort(agreement?.client_called_at) : '';
 
   const step1 = pipelineStep(1, 'Due Diligence Letter', s1, s1meta,
-    s1 === 'start'  ? `openLinkLeadModal('${alert.alert_id}')` :
-    s1 === 'ready'  ? `sendLetter('${alert.alert_id}','${alert.lead_id}')` : null,
-    s1 === 'start'  ? 'Link Lead' : 'Send');
+    s1 === 'start' ? `openLinkLeadModal('${alert.alert_id}')` :
+    s1 === 'ready' ? `sendLetter('${alert.alert_id}','${alert.lead_id}')` : null,
+    s1 === 'start' ? 'Link Lead' : 'Send');
 
   const step2 = pipelineStep(2, 'Payment Request ($500)', s2, s2meta,
-    s2 === 'ready'  ? `sendPaymentRequest('${alert.lead_id}','${agreement?.id ?? ''}')` : null,
+    s2 === 'ready' ? `sendPaymentRequest('${alert.lead_id}','${agreement?.id ?? ''}')` : null,
     'Send');
 
   const step3 = pipelineStep(3, 'Call Client', s3, s3meta,
-    s3 === 'ready'  ? `markCalled('${agreement?.id}')` : null,
+    s3 === 'ready' ? `markCalled('${agreement?.id}')` : null,
     'Mark Called');
 
   const step4 = pipelineStep(4, 'Data Gathering', s4, '',
-    s4 === 'ready'  ? `copyStartLink('${alert.lead_id}')` : null,
+    s4 === 'ready' ? `copyStartLink('${alert.lead_id}')` : null,
     'Copy Link');
 
   return `<div class="pipeline-card">
     <div class="pipeline-card-header">
       <div>
         <div class="pipeline-lead-name">${esc(alert.prospect_name ?? 'Visitor')}</div>
-        <div class="pipeline-lead-meta">${esc(alert.trigger_reason ?? '')}${alert.trigger_reason ? ' · ' : ''}${fmtDate(alert.triggered_at)}</div>
+        <div class="pipeline-lead-meta">${esc(alert.trigger_reason ?? '')}${alert.trigger_reason ? ' \u00b7 ' : ''}${fmtDate(alert.triggered_at)}</div>
       </div>
       <div class="flex-row">
-        ${agreement?.document_url ? `<a href="${agreement.document_url}" target="_blank" class="btn btn-ghost btn-sm">📄 PDF</a>` : ''}
+        ${agreement?.document_url ? `<a href="${agreement.document_url}" target="_blank" class="btn btn-ghost btn-sm">&#x1F4C4; PDF</a>` : ''}
         <button class="btn btn-ghost btn-sm" onclick="moveAlertStatus('${alert.alert_id}','closed')">Close</button>
       </div>
     </div>
@@ -1134,7 +1178,7 @@ function pipelineStep(num, label, state, meta, actionFn, actionLabel) {
   const isLocked  = state === 'locked';
   const isWaiting = state === 'waiting';
   const cls = isDone ? 'step-done' : isLocked ? 'step-locked' : '';
-  const numContent = isDone ? '✓' : num;
+  const numContent = isDone ? '\u2713' : num;
   let actionEl = '';
   if (actionFn && !isDone && !isLocked && !isWaiting) {
     actionEl = `<div class="step-action"><button class="btn btn-amber btn-sm" onclick="${actionFn}">${actionLabel}</button></div>`;
@@ -1175,7 +1219,7 @@ async function markCalled(agreementId) {
 
 function copyStartLink(leadId) {
   const url = `https://frontframe.co/start?lead=${leadId}`;
-  navigator.clipboard.writeText(url).then(() => toast('Start link copied.')).catch(() => toast('Copy failed — ' + url, 'error'));
+  navigator.clipboard.writeText(url).then(() => toast('Start link copied.')).catch(() => toast('Copy failed \u2014 ' + url, 'error'));
 }
 
 async function moveAlertStatus(alertId, status) {
@@ -1188,7 +1232,7 @@ async function moveAlertStatus(alertId, status) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Link Lead Modal ────────────────────────────────────────────────────────
+// Link Lead Modal
 
 function openLinkLeadModal(alertId) {
   const alert = alerts.find(a => a.alert_id === alertId);
@@ -1215,7 +1259,7 @@ async function linkLeadAndStart() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Alerts table ─────────────────────────────────────────────────────────
+// Alerts table
 
 function renderAlerts() {
   const filter     = (document.getElementById('alert-filter')?.value ?? '').toLowerCase();
@@ -1237,7 +1281,7 @@ function renderAlerts() {
   tbody.innerHTML = filtered.map(a => `
     <tr>
       <td><strong>${esc(a.prospect_name ?? 'Visitor')}</strong></td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(a.trigger_reason ?? '')}">${esc(a.trigger_reason ?? '—')}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(a.trigger_reason ?? '')}">${esc(a.trigger_reason ?? '\u2014')}</td>
       <td class="text-small text-gray">${esc(a.page ?? '')}</td>
       <td><span class="badge badge-${a.status ?? 'new'}">${a.status ?? 'new'}</span></td>
       <td><span class="${a.sms_sent ? 'badge badge-approved' : 'badge badge-closed'}">${a.sms_sent ? 'Sent' : 'No'}</span></td>
@@ -1245,7 +1289,7 @@ function renderAlerts() {
       <td>
         <div class="flex-row">
           ${a.session_id ? `<button class="btn btn-ghost btn-xs" onclick="viewSession('${a.alert_id}','${esc(a.prospect_name ?? 'Visitor')}')">Session</button>` : ''}
-          ${a.status !== 'active_sales_call' ? `<button class="btn btn-ghost btn-xs" onclick="moveAlertStatus('${a.alert_id}','active_sales_call')">→ Pipeline</button>` : ''}
+          ${a.status !== 'active_sales_call' ? `<button class="btn btn-ghost btn-xs" onclick="moveAlertStatus('${a.alert_id}','active_sales_call')">\u2192 Pipeline</button>` : ''}
           ${a.status !== 'closed' ? `<button class="btn btn-ghost btn-xs" onclick="moveAlertStatus('${a.alert_id}','closed')">Close</button>` : ''}
           <button class="btn btn-danger btn-xs" onclick="deleteAlert('${a.alert_id}')">Del</button>
         </div>
@@ -1255,8 +1299,8 @@ function renderAlerts() {
 }
 
 async function viewSession(alertId, name) {
-  document.getElementById('session-modal-title').textContent = 'Session — ' + name;
-  document.getElementById('session-modal-body').innerHTML = '<p style="color:var(--gray);padding:12px">Loading…</p>';
+  document.getElementById('session-modal-title').textContent = 'Session \u2014 ' + name;
+  document.getElementById('session-modal-body').innerHTML = '<p style="color:var(--gray);padding:12px">Loading\u2026</p>';
   document.getElementById('session-modal').classList.add('open');
   try {
     const data = await api('GET', `/admin/lead-alerts/${alertId}/session`);
@@ -1286,7 +1330,7 @@ async function deleteAlert(alertId) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Q&A ───────────────────────────────────────────────────────────────────
+// Q&A
 
 async function loadQa() {
   try { qaPairs = await api('GET', '/qa'); } catch (e) { toast('Failed to load Q&A: ' + e.message, 'error'); return; }
@@ -1299,7 +1343,7 @@ function renderQa() {
   tbody.innerHTML = qaPairs.map(p => `
     <tr>
       <td style="max-width:220px">${esc(p.question)}</td>
-      <td style="max-width:300px;color:var(--gray)">${esc(p.answer?.slice(0,120))}${p.answer?.length>120?'…':''}</td>
+      <td style="max-width:300px;color:var(--gray)">${esc(p.answer?.slice(0,120))}${p.answer?.length>120?'\u2026':''}</td>
       <td><span class="badge badge-new">${esc(p.page ?? 'all')}</span></td>
       <td>
         <div class="flex-row">
@@ -1329,7 +1373,7 @@ async function saveQaPair() {
   if (!question || !answer) { toast('Question and answer are required.', 'error'); return; }
   try {
     if (id) {
-      const updated = await api('PUT', `/qa/${id}`, { question, answer, page });
+      await api('PUT', `/qa/${id}`, { question, answer, page });
       const idx = qaPairs.findIndex(p => p.id === id);
       if (idx >= 0) qaPairs[idx] = { ...qaPairs[idx], question, answer, page };
     } else {
@@ -1353,7 +1397,7 @@ async function deleteQaPair(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── System Prompt ──────────────────────────────────────────────────────────
+// System Prompt
 
 async function loadPromptForPage() {
   const page = document.getElementById('prompt-page-select').value;
@@ -1372,7 +1416,7 @@ async function savePrompt() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Defects ───────────────────────────────────────────────────────────────
+// Defects
 
 async function loadDefects() {
   try { defects = await api('GET', '/admin/defects'); } catch (e) { toast('Failed to load defects: ' + e.message, 'error'); return; }
@@ -1386,13 +1430,11 @@ function renderDefects() {
   tbody.innerHTML = defects.map(d => `
     <tr>
       <td>${esc(d.area)}</td>
-      <td style="max-width:300px">${esc(d.description?.slice(0,120))}${d.description?.length>120?'…':''}</td>
+      <td style="max-width:300px">${esc(d.description?.slice(0,120))}${d.description?.length>120?'\u2026':''}</td>
       <td><span class="badge badge-${d.severity}">${d.severity}</span></td>
       <td><span class="badge badge-${d.status ?? 'open'}">${d.status ?? 'open'}</span></td>
       <td class="text-small text-gray">${esc(d.build_version ?? '')}</td>
-      <td>
-        ${d.status !== 'resolved' ? `<button class="btn btn-ghost btn-xs" onclick="resolveDefect('${d.id}')">Resolve</button>` : ''}
-      </td>
+      <td>${d.status !== 'resolved' ? `<button class="btn btn-ghost btn-xs" onclick="resolveDefect('${d.id}')">Resolve</button>` : ''}</td>
     </tr>
   `).join('');
 }
@@ -1424,7 +1466,7 @@ async function resolveDefect(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Feedback ──────────────────────────────────────────────────────────────
+// Feedback
 
 async function loadFeedback() {
   try { feedback = await api('GET', '/admin/feedback'); } catch (e) { toast('Failed to load feedback: ' + e.message, 'error'); return; }
@@ -1438,11 +1480,11 @@ function renderFeedback() {
   tbody.innerHTML = feedback.map(f => `
     <tr>
       <td style="max-width:240px">${esc(f.question)}</td>
-      <td style="max-width:260px;color:var(--gray)">${esc(f.suggested_answer?.slice(0,120) ?? '—')}</td>
+      <td style="max-width:260px;color:var(--gray)">${esc(f.suggested_answer?.slice(0,120) ?? '\u2014')}</td>
       <td>${f.promoted ? '<span class="badge badge-promoted">Promoted</span>' : '<span class="badge badge-open">Open</span>'}</td>
       <td>
         <div class="flex-row">
-          ${!f.promoted ? `<button class="btn btn-amber btn-xs" onclick="promoteFeedback('${f.id}')">→ Q&A</button>` : ''}
+          ${!f.promoted ? `<button class="btn btn-amber btn-xs" onclick="promoteFeedback('${f.id}')">\u2192 Q&A</button>` : ''}
           <button class="btn btn-ghost btn-xs" onclick="dismissFeedback('${f.id}')">Dismiss</button>
         </div>
       </td>
@@ -1485,7 +1527,7 @@ async function dismissFeedback(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Changelog ─────────────────────────────────────────────────────────────
+// Changelog
 
 async function loadChangelog() {
   try { changelog = await api('GET', '/admin/changelog'); } catch (e) { toast('Failed to load changelog: ' + e.message, 'error'); return; }
@@ -1525,7 +1567,7 @@ async function saveChangelog() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Solutions ─────────────────────────────────────────────────────────────
+// Solutions
 
 async function loadSolutions() {
   try {
@@ -1553,7 +1595,7 @@ function renderProblems() {
 
 async function viewDeliverables(problemId, title) {
   document.getElementById('deliverables-card').style.display = 'block';
-  document.getElementById('deliverables-title').textContent  = 'Deliverables — ' + title;
+  document.getElementById('deliverables-title').textContent  = 'Deliverables \u2014 ' + title;
   try {
     deliverables = await api('GET', `/admin/deliverables?problem_id=${problemId}`);
   } catch (e) { toast('Failed to load deliverables: ' + e.message, 'error'); return; }
@@ -1562,8 +1604,8 @@ async function viewDeliverables(problemId, title) {
   tbody.innerHTML = deliverables.map(d => `
     <tr>
       <td>${esc(d.challenge?.slice(0,100) ?? '')}</td>
-      <td class="text-gray">${esc(d.response?.slice(0,100) ?? '—')}</td>
-      <td class="text-gray">${esc(d.action_committed?.slice(0,80) ?? '—')}</td>
+      <td class="text-gray">${esc(d.response?.slice(0,100) ?? '\u2014')}</td>
+      <td class="text-gray">${esc(d.action_committed?.slice(0,80) ?? '\u2014')}</td>
       <td class="text-small text-gray">${fmtDate(d.created_at)}</td>
     </tr>
   `).join('');
@@ -1595,8 +1637,8 @@ function renderMktLog() {
     <tr>
       <td><span class="badge badge-new">${esc(m.platform)}</span></td>
       <td style="max-width:200px">${esc(m.question?.slice(0,80) ?? '')}</td>
-      <td class="text-gray" style="max-width:200px">${esc(m.answer?.slice(0,80) ?? '—')}</td>
-      <td class="text-gray">${esc(m.action_committed?.slice(0,60) ?? '—')}</td>
+      <td class="text-gray" style="max-width:200px">${esc(m.answer?.slice(0,80) ?? '\u2014')}</td>
+      <td class="text-gray">${esc(m.action_committed?.slice(0,60) ?? '\u2014')}</td>
       <td class="text-small text-gray">${fmtDate(m.created_at)}</td>
     </tr>
   `).join('');
@@ -1620,7 +1662,7 @@ async function saveMkt() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Subscriptions ─────────────────────────────────────────────────────────
+// Subscriptions
 
 async function loadSubscriptions() {
   try { subscriptions = await api('GET', '/admin/subscriptions'); } catch (e) { toast('Failed to load subscriptions: ' + e.message, 'error'); return; }
@@ -1634,11 +1676,9 @@ function renderSubscriptions() {
     <tr>
       <td><strong>${esc(s.platform)}</strong></td>
       <td class="text-gray">${esc(s.provisioned_by ?? '')}</td>
-      <td class="text-small">${esc(s.approved_number ?? '—')}</td>
+      <td class="text-small">${esc(s.approved_number ?? '\u2014')}</td>
       <td><span class="badge badge-${s.status ?? 'new'}">${s.status ?? 'new'}</span></td>
-      <td>
-        ${s.status !== 'submitted' ? `<button class="btn btn-amber btn-xs" onclick="submitSub('${s.id}')">Submit</button>` : ''}
-      </td>
+      <td>${s.status !== 'submitted' ? `<button class="btn btn-amber btn-xs" onclick="submitSub('${s.id}')">Submit</button>` : ''}</td>
     </tr>
   `).join('');
 }
@@ -1651,11 +1691,11 @@ async function saveSubscription() {
   try {
     const created = await api('POST', '/admin/subscriptions', {
       platform,
-      provisioned_by: document.getElementById('sub-prov-by').value.trim() || 'frontframe',
-      approved_number: document.getElementById('sub-number').value.trim() || null,
+      provisioned_by:  document.getElementById('sub-prov-by').value.trim() || 'frontframe',
+      approved_number: document.getElementById('sub-number').value.trim()   || null,
       campaign_type:   document.getElementById('sub-campaign').value.trim() || null,
-      opt_in_method:   document.getElementById('sub-opt-in').value.trim() || null,
-      notes:           document.getElementById('sub-notes').value.trim() || null,
+      opt_in_method:   document.getElementById('sub-opt-in').value.trim()   || null,
+      notes:           document.getElementById('sub-notes').value.trim()    || null,
     });
     const newS = Array.isArray(created) ? created[0] : created;
     if (newS) subscriptions.push(newS);
@@ -1675,7 +1715,252 @@ async function submitSub(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Reviewers ─────────────────────────────────────────────────────────────
+// Office Hours
+
+async function loadOfficeHours() {
+  try {
+    [schedule, overrides] = await Promise.all([
+      api('GET', '/api/office-hours/schedule'),
+      api('GET', '/api/office-hours/overrides'),
+    ]);
+  } catch (e) { toast('Failed to load office hours: ' + e.message, 'error'); return; }
+  renderSchedule();
+  renderOverrides();
+}
+
+function renderSchedule() {
+  const tbody = document.getElementById('schedule-tbody');
+  if (!schedule.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No schedule data</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = schedule.map(row => {
+    const day      = row.day_of_week;
+    const isClosed = row.is_closed;
+    const openVal  = row.open_time  ? row.open_time.slice(0,5)  : '';
+    const closeVal = row.close_time ? row.close_time.slice(0,5) : '';
+    return `<tr>
+      <td><strong>${DAY_NAMES[day]}</strong></td>
+      <td><input type="time" id="sched-open-${day}"  value="${openVal}"  ${isClosed?'disabled':''} style="width:110px"></td>
+      <td><input type="time" id="sched-close-${day}" value="${closeVal}" ${isClosed?'disabled':''} style="width:110px"></td>
+      <td><button class="toggle ${isClosed?'on':''}" id="sched-closed-${day}" onclick="toggleScheduleClosed(${day})"></button></td>
+      <td><button class="btn btn-amber btn-xs" onclick="saveScheduleDay(${day})">Save</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleScheduleClosed(day) {
+  const toggle = document.getElementById(`sched-closed-${day}`);
+  toggle.classList.toggle('on');
+  const isClosed = toggle.classList.contains('on');
+  document.getElementById(`sched-open-${day}`).disabled  = isClosed;
+  document.getElementById(`sched-close-${day}`).disabled = isClosed;
+}
+
+async function saveScheduleDay(day) {
+  const isClosed  = document.getElementById(`sched-closed-${day}`).classList.contains('on');
+  const openTime  = document.getElementById(`sched-open-${day}`).value  || null;
+  const closeTime = document.getElementById(`sched-close-${day}`).value || null;
+  try {
+    await api('PATCH', `/api/office-hours/schedule/${day}`, {
+      is_closed:  isClosed,
+      open_time:  isClosed ? null : openTime,
+      close_time: isClosed ? null : closeTime,
+    });
+    const idx = schedule.findIndex(s => s.day_of_week === day);
+    if (idx >= 0) { schedule[idx].is_closed = isClosed; schedule[idx].open_time = openTime; schedule[idx].close_time = closeTime; }
+    toast(DAY_NAMES[day] + ' saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function fmt12(timeStr) {
+  if (!timeStr) return '\u2014';
+  const t = timeStr.slice(0, 5);
+  const [h, m] = t.split(':').map(Number);
+  const p = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${String(m).padStart(2,'0')} ${p}`;
+}
+
+function renderOverrides() {
+  const tbody = document.getElementById('overrides-tbody');
+  if (!overrides.length) {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No upcoming overrides</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = overrides.map(o => {
+    const hoursStr = o.is_closed
+      ? '<span class="badge badge-closed">Closed</span>'
+      : `${fmt12(o.open_time)} \u2013 ${fmt12(o.close_time)}`;
+    return `<tr>
+      <td><strong>${esc(o.override_date)}</strong></td>
+      <td>${hoursStr}</td>
+      <td class="text-small text-gray">${esc(o.note ?? '')}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="deleteOverride('${o.override_date}')">Del</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleOverrideForm() {
+  ovFormOpen = !ovFormOpen;
+  document.getElementById('override-form').classList.toggle('hidden', !ovFormOpen);
+  if (ovFormOpen) {
+    document.getElementById('ov-closed-toggle').classList.remove('on');
+    document.getElementById('ov-open-group').style.display  = '';
+    document.getElementById('ov-close-group').style.display = '';
+    document.getElementById('ov-date').value  = '';
+    document.getElementById('ov-note').value  = '';
+    document.getElementById('ov-open').value  = '';
+    document.getElementById('ov-close').value = '';
+  }
+}
+
+function toggleOverrideClosed() {
+  const toggle = document.getElementById('ov-closed-toggle');
+  toggle.classList.toggle('on');
+  const isClosed = toggle.classList.contains('on');
+  document.getElementById('ov-open-group').style.display  = isClosed ? 'none' : '';
+  document.getElementById('ov-close-group').style.display = isClosed ? 'none' : '';
+}
+
+async function saveOverride() {
+  const date      = document.getElementById('ov-date').value;
+  const note      = document.getElementById('ov-note').value.trim();
+  const isClosed  = document.getElementById('ov-closed-toggle').classList.contains('on');
+  const openTime  = document.getElementById('ov-open').value  || null;
+  const closeTime = document.getElementById('ov-close').value || null;
+  if (!date) { toast('Date is required.', 'error'); return; }
+  if (!isClosed && (!openTime || !closeTime)) { toast('Open and close times required, or mark as Closed.', 'error'); return; }
+  try {
+    const created = await api('POST', '/api/office-hours/overrides', {
+      override_date: date, is_closed: isClosed,
+      open_time:  isClosed ? null : openTime,
+      close_time: isClosed ? null : closeTime,
+      note:       note || null,
+    });
+    const newOv = Array.isArray(created) ? created[0] : created;
+    if (newOv) overrides.push(newOv);
+    overrides.sort((a,b) => a.override_date.localeCompare(b.override_date));
+    toggleOverrideForm();
+    renderOverrides();
+    toast('Override added.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteOverride(date) {
+  if (!confirm(`Remove override for ${date}?`)) return;
+  try {
+    await api('DELETE', `/api/office-hours/overrides/${date}`);
+    overrides = overrides.filter(o => o.override_date !== date);
+    renderOverrides();
+    toast('Override removed.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// R&D Log
+
+async function loadRdLog() {
+  try { rdLog = await api('GET', '/api/rd-log'); } catch (e) { toast('Failed to load R&D log: ' + e.message, 'error'); return; }
+  renderRdLog();
+}
+
+function toggleRdForm() {
+  rdFormOpen = !rdFormOpen;
+  document.getElementById('rd-form').classList.toggle('hidden', !rdFormOpen);
+  if (rdFormOpen) {
+    document.getElementById('rd-date').value      = new Date().toISOString().slice(0,10);
+    document.getElementById('rd-client').value    = '';
+    document.getElementById('rd-duration').value  = '';
+    document.getElementById('rd-description').value = '';
+    document.getElementById('rd-dedup').value     = '';
+    document.getElementById('rd-narrative').value = '';
+    document.getElementById('rd-qualifies-toggle').classList.remove('on');
+  }
+}
+
+function toggleRdQualifies() {
+  document.getElementById('rd-qualifies-toggle').classList.toggle('on');
+}
+
+function renderRdLog() {
+  const tbody = document.getElementById('rd-tbody');
+  if (!rdLog.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">No entries yet</div></td></tr>`;
+    renderRdTotals();
+    return;
+  }
+  tbody.innerHTML = rdLog.map(e => `
+    <tr>
+      <td class="text-small">${esc(e.session_date)}</td>
+      <td style="white-space:nowrap">${esc(e.client)}</td>
+      <td><span class="badge badge-new">${esc(e.category)}</span></td>
+      <td style="text-align:right">${e.duration_minutes}m</td>
+      <td style="max-width:180px" title="${esc(e.description??'')}">${esc((e.description??'').slice(0,60))}${(e.description?.length??0)>60?'\u2026':''}</td>
+      <td style="text-align:center">${e.qualifies ? '<span style="color:var(--green);font-weight:700">\u2713</span>' : '<span class="text-gray">\u2014</span>'}</td>
+      <td class="text-small text-gray" style="max-width:120px">${esc((e.dedup_note??'').slice(0,40))}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="deleteRdEntry('${e.id}')">Del</button></td>
+    </tr>
+  `).join('');
+  renderRdTotals();
+}
+
+function renderRdTotals() {
+  const el = document.getElementById('rd-totals');
+  if (!el) return;
+  const qualified = rdLog.filter(e => e.qualifies);
+  if (!qualified.length) { el.innerHTML = ''; return; }
+  const byClient = {}, byCategory = {};
+  let total = 0;
+  qualified.forEach(e => {
+    byClient[e.client]     = (byClient[e.client]     || 0) + e.duration_minutes;
+    byCategory[e.category] = (byCategory[e.category] || 0) + e.duration_minutes;
+    total += e.duration_minutes;
+  });
+  const hrs = m => `${Math.floor(m/60)}h ${m%60}m`;
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <strong>Qualified: ${hrs(total)}</strong>
+    ${Object.entries(byClient).map(([c,m]) => `<span class="text-gray">${esc(c)}: ${hrs(m)}</span>`).join('')}
+    <span style="border-left:1px solid var(--border);padding-left:12px">
+      ${Object.entries(byCategory).map(([c,m]) => `<span class="badge badge-new" style="margin-right:2px">${c}</span> ${hrs(m)}`).join(' &nbsp;')}
+    </span>
+  </div>`;
+}
+
+async function saveRdEntry() {
+  const client    = document.getElementById('rd-client').value.trim();
+  const date      = document.getElementById('rd-date').value;
+  const duration  = document.getElementById('rd-duration').value;
+  const category  = document.getElementById('rd-category').value;
+  const desc      = document.getElementById('rd-description').value.trim();
+  const dedup     = document.getElementById('rd-dedup').value.trim();
+  const narrative = document.getElementById('rd-narrative').value.trim();
+  const qualifies = document.getElementById('rd-qualifies-toggle').classList.contains('on');
+  if (!client || !date || !duration || !category) { toast('Client, date, duration, and category are required.', 'error'); return; }
+  try {
+    const created = await api('POST', '/api/rd-log', {
+      client, session_date: date, duration_minutes: parseInt(duration,10),
+      category, description: desc||null, dedup_note: dedup||null,
+      narrative: narrative||null, qualifies,
+    });
+    const newEntry = Array.isArray(created) ? created[0] : created;
+    if (newEntry) rdLog.unshift(newEntry);
+    toggleRdForm();
+    renderRdLog();
+    toast('Entry saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteRdEntry(id) {
+  if (!confirm('Delete this R&D log entry?')) return;
+  try {
+    await api('DELETE', `/api/rd-log/${id}`);
+    rdLog = rdLog.filter(e => e.id !== id);
+    renderRdLog();
+    toast('Deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// Reviewers
 
 async function loadReviewers() {
   try { reviewers = await api('GET', '/admin/reviewers'); } catch (e) { toast('Failed to load reviewers: ' + e.message, 'error'); return; }
@@ -1751,9 +2036,7 @@ async function deleteReviewer(id, name) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-
-
-// ── Episodes ──────────────────────────────────────────────────────────────
+// Episodes
 
 async function loadEpisodes() {
   try { episodes = await api('GET', '/admin/podcast-episodes'); } catch (e) { toast('Failed to load episodes: ' + e.message, 'error'); return; }
@@ -1768,7 +2051,7 @@ function renderEpisodes() {
       <td class="text-small text-gray">${esc(e.series)}</td>
       <td><strong>${esc(e.title)}</strong></td>
       <td class="text-small text-gray">${esc(e.published_at ?? '')}</td>
-      <td>${e.visible ? '✓' : '—'}</td>
+      <td>${e.visible ? '\u2713' : '\u2014'}</td>
       <td>
         <div class="flex-row">
           <button class="btn btn-ghost btn-xs" onclick="openEpisodeModal('${e.id}')">Edit</button>
@@ -1801,11 +2084,11 @@ async function saveEpisode() {
   if (!series || !title) { toast('Series and title required.', 'error'); return; }
   try {
     if (id) {
-      await api('PATCH', `/admin/podcast-episodes/${id}`, { series, title, published_at: published || null, audio_path: audio || null, transcript: transcript || null });
+      await api('PATCH', `/admin/podcast-episodes/${id}`, { series, title, published_at: published||null, audio_path: audio||null, transcript: transcript||null });
       const idx = episodes.findIndex(e => e.id === id);
       if (idx >= 0) episodes[idx] = { ...episodes[idx], series, title, published_at: published, audio_path: audio, transcript };
     } else {
-      const created = await api('POST', '/admin/podcast-episodes', { series, title, published_at: published || null, audio_path: audio || null, transcript: transcript || null });
+      const created = await api('POST', '/admin/podcast-episodes', { series, title, published_at: published||null, audio_path: audio||null, transcript: transcript||null });
       const newEp   = Array.isArray(created) ? created[0] : created;
       if (newEp) episodes.unshift(newEp);
     }
@@ -1825,7 +2108,7 @@ async function deleteEpisode(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Config ────────────────────────────────────────────────────────────────
+// Config
 
 async function loadConfig() {
   let config;
@@ -1834,12 +2117,10 @@ async function loadConfig() {
   body.innerHTML = `
     <div class="toggle-row">
       <div><div class="toggle-label">Mode</div><div class="toggle-sub">live = prod agent; testing = testing layer injected</div></div>
-      <div class="flex-row">
-        <select id="cfg-mode" style="width:auto">
-          <option value="live"    ${config.mode==='live'?'selected':''}>live</option>
-          <option value="testing" ${config.mode==='testing'?'selected':''}>testing</option>
-        </select>
-      </div>
+      <select id="cfg-mode" style="width:auto">
+        <option value="live"    ${config.mode==='live'?'selected':''}>live</option>
+        <option value="testing" ${config.mode==='testing'?'selected':''}>testing</option>
+      </select>
     </div>
     <div class="toggle-row">
       <div><div class="toggle-label">Session Capture</div><div class="toggle-sub">Store full conversation transcripts</div></div>
@@ -1855,10 +2136,7 @@ async function loadConfig() {
   `;
 }
 
-function toggleCapture() {
-  const btn = document.getElementById('cfg-capture');
-  btn.classList.toggle('on');
-}
+function toggleCapture() { document.getElementById('cfg-capture').classList.toggle('on'); }
 
 async function saveConfig() {
   const mode            = document.getElementById('cfg-mode').value;
@@ -1870,16 +2148,14 @@ async function saveConfig() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Badges ────────────────────────────────────────────────────────────────
+// Badges
 
 function updateBadges() {
   const pipelineCount = alerts.filter(a => a.status === 'active_sales_call').length;
   const newCount      = alerts.filter(a => a.status === 'new').length;
   setBadge('badge-pipeline', pipelineCount + newCount);
-
   const openDefects  = defects.filter(d => !d.status || d.status === 'open').length;
   setBadge('badge-defects', openDefects);
-
   const openFeedback = feedback.filter(f => !f.promoted).length;
   setBadge('badge-feedback', openFeedback);
 }
@@ -1891,7 +2167,7 @@ function setBadge(id, count) {
   else { el.classList.add('hidden'); }
 }
 
-// ── Modal helpers ─────────────────────────────────────────────────────────
+// Modal helpers
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
@@ -1899,7 +2175,7 @@ document.querySelectorAll('.modal-backdrop').forEach(el => {
   el.addEventListener('click', (e) => { if (e.target === el) el.classList.remove('open'); });
 });
 
-// ── Toast ─────────────────────────────────────────────────────────────────
+// Toast
 
 let toastTimer;
 function toast(msg, type) {
@@ -1910,10 +2186,10 @@ function toast(msg, type) {
   toastTimer = setTimeout(() => { el.className = ''; }, 3200);
 }
 
-// ── Formatters ────────────────────────────────────────────────────────────
+// Formatters
 
 function fmtDate(iso) {
-  if (!iso) return '—';
+  if (!iso) return '\u2014';
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 function fmtDateShort(iso) {
@@ -1924,17 +2200,12 @@ function esc(str) {
   return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────
+// Init
 
 (function init() {
-  // 1. Check for magic link callback in hash
   if (handleMagicLinkCallback()) { showAdmin(); return; }
-
-  // 2. Check for existing session
   const stored = loadSession();
   if (stored?.access_token) { session = stored; showAdmin(); return; }
-
-  // 3. Show login
   showLogin();
 })();
 </script>
