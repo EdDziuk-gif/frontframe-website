@@ -295,19 +295,25 @@
     </div>
     <div id="login-email-view">
       <h1>Admin Portal</h1>
-      <p>Enter your email and we'll send you a secure sign-in link.</p>
+      <p>Enter your email to receive a sign-in code.</p>
       <div class="form-group">
         <label for="login-email">Email</label>
         <input type="email" id="login-email" placeholder="ed@frontframe.co" autocomplete="email">
       </div>
-      <button class="btn btn-primary btn-full" id="send-link-btn">Send Sign-In Link</button>
+      <button class="btn btn-primary btn-full" id="send-code-btn">Send Code</button>
       <div class="error-msg" id="login-error"></div>
     </div>
-    <div id="login-sent-view" class="hidden">
-      <div class="login-sent-icon">&#x2709;&#xFE0F;</div>
-      <h1>Check Your Email</h1>
-      <p>A sign-in link was sent to <strong id="login-sent-to"></strong>. Click the link in that email to access the admin portal.</p>
-      <button class="btn btn-ghost btn-full mt-8" id="login-back-btn" style="margin-top:20px">Use a different email</button>
+    <div id="login-code-view" class="hidden">
+      <div class="login-sent-icon">&#x1F510;</div>
+      <h1>Enter Your Code</h1>
+      <p>A sign-in code was sent to <strong id="login-sent-to"></strong>.</p>
+      <div class="form-group" style="margin-top:20px">
+        <label for="login-code">Sign-In Code</label>
+        <input type="text" id="login-code" placeholder="000000" autocomplete="one-time-code" inputmode="numeric" style="letter-spacing:.2em;font-size:1.25rem;text-align:center">
+      </div>
+      <button class="btn btn-primary btn-full" id="verify-code-btn">Verify Code</button>
+      <div class="error-msg" id="login-code-error"></div>
+      <button class="btn btn-ghost btn-full" id="login-back-btn" style="margin-top:12px">Use a different email</button>
     </div>
   </div>
 </div>
@@ -968,6 +974,8 @@ const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','
 
 // Auth
 
+let pendingEmail = '';
+
 function saveSession(s) {
   session = s;
   try { sessionStorage.setItem('ff_session', JSON.stringify(s)); } catch {}
@@ -980,58 +988,84 @@ function clearSession() {
   try { sessionStorage.removeItem('ff_session'); } catch {}
 }
 
-function handleMagicLinkCallback() {
-  const hash = window.location.hash;
-  if (!hash || !hash.includes('access_token')) return false;
-  const params       = new URLSearchParams(hash.substring(1));
-  const accessToken  = params.get('access_token');
-  const refreshToken = params.get('refresh_token');
-  if (!accessToken) return false;
-  saveSession({ access_token: accessToken, refresh_token: refreshToken, user: { email: ADMIN_EMAIL_HINT } });
-  window.history.replaceState({}, '', window.location.pathname);
-  return true;
-}
-
-const ADMIN_EMAIL_HINT = 'ed@frontframe.co';
-
-async function sendMagicLink(email) {
-  const res = await fetch(`${WORKER_URL}/auth/magic-link`, {
+async function sendOtp(email) {
+  const res = await fetch(`${WORKER_URL}/auth/otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, redirect_to: 'https://frontframe.co/admin' }),
+    body: JSON.stringify({ email }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Failed to send sign-in link.');
+    throw new Error(err.error || 'Failed to send code.');
   }
 }
 
-document.getElementById('send-link-btn').addEventListener('click', async () => {
+async function verifyOtp(email, token) {
+  const res = await fetch(`${WORKER_URL}/auth/otp/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, token }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Invalid or expired code.');
+  }
+  return res.json();
+}
+
+document.getElementById('send-code-btn').addEventListener('click', async () => {
   const email = document.getElementById('login-email').value.trim();
   const errEl = document.getElementById('login-error');
   errEl.textContent = '';
   if (!email) { errEl.textContent = 'Email is required.'; return; }
-  const btn = document.getElementById('send-link-btn');
+  const btn = document.getElementById('send-code-btn');
   btn.textContent = 'Sending\u2026'; btn.disabled = true;
   try {
-    await sendMagicLink(email);
+    await sendOtp(email);
+    pendingEmail = email;
     document.getElementById('login-sent-to').textContent = email;
     document.getElementById('login-email-view').classList.add('hidden');
-    document.getElementById('login-sent-view').classList.remove('hidden');
+    document.getElementById('login-code-view').classList.remove('hidden');
+    document.getElementById('login-code').focus();
   } catch (e) {
     errEl.textContent = e.message;
   } finally {
-    btn.textContent = 'Send Sign-In Link'; btn.disabled = false;
+    btn.textContent = 'Send Code'; btn.disabled = false;
   }
 });
 
 document.getElementById('login-email').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') document.getElementById('send-link-btn').click();
+  if (e.key === 'Enter') document.getElementById('send-code-btn').click();
+});
+
+document.getElementById('verify-code-btn').addEventListener('click', async () => {
+  const code  = document.getElementById('login-code').value.trim();
+  const errEl = document.getElementById('login-code-error');
+  errEl.textContent = '';
+  if (!code) { errEl.textContent = 'Code is required.'; return; }
+  const btn = document.getElementById('verify-code-btn');
+  btn.textContent = 'Verifying\u2026'; btn.disabled = true;
+  try {
+    const data = await verifyOtp(pendingEmail, code);
+    saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, user: { email: pendingEmail } });
+    showAdmin();
+  } catch (e) {
+    errEl.textContent = e.message;
+  } finally {
+    btn.textContent = 'Verify Code'; btn.disabled = false;
+  }
+});
+
+document.getElementById('login-code').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('verify-code-btn').click();
 });
 
 document.getElementById('login-back-btn').addEventListener('click', () => {
-  document.getElementById('login-sent-view').classList.add('hidden');
+  document.getElementById('login-code-view').classList.add('hidden');
   document.getElementById('login-email-view').classList.remove('hidden');
+  document.getElementById('login-code').value = '';
+  document.getElementById('login-code-error').textContent = '';
+  pendingEmail = '';
 });
 
 function signOut() { clearSession(); location.reload(); }
@@ -2203,7 +2237,6 @@ function esc(str) {
 // Init
 
 (function init() {
-  if (handleMagicLinkCallback()) { showAdmin(); return; }
   const stored = loadSession();
   if (stored?.access_token) { session = stored; showAdmin(); return; }
   showLogin();
