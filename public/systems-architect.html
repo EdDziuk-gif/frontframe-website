@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How I Became a Systems Architect in 10,000 Easy Steps — FrontFrame</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@700;800&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --navy:     #1E2D40;
+      --amber:    #F5A623;
+      --offwhite: #F8F6F1;
+      --gray:     #8A9BAE;
+      --ink:      #2A3040;
+      --rule:     #DDD8CF;
+
+      --reading-width: 640px;
+      --page-pad: clamp(1.5rem, 5vw, 3rem);
+    }
+
+    html {
+      font-size: 18px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--offwhite);
+      color: var(--ink);
+      font-family: 'Lora', Georgia, serif;
+      font-weight: 400;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Site header ── */
+    .site-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.4rem var(--page-pad);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .site-logo {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--navy);
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
+    .site-logo span {
+      color: var(--amber);
+    }
+
+    .site-nav a {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--gray);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .site-nav a:hover { color: var(--navy); }
+
+    /* ── Hero ── */
+    .hero {
+      padding: clamp(4rem, 10vw, 8rem) var(--page-pad) clamp(3rem, 8vw, 6rem);
+      max-width: calc(var(--reading-width) + 2 * var(--page-pad));
+      margin: 0 auto;
+    }
+
+    .hero-eyebrow {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 1.6rem;
+    }
+
+    .hero-title {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2rem, 5.5vw, 3.2rem);
+      line-height: 1.12;
+      color: var(--navy);
+      letter-spacing: -0.02em;
+      margin-bottom: 1.6rem;
+      max-width: 620px;
+    }
+
+    .hero-sub {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 1.05rem;
+      color: var(--gray);
+      line-height: 1.6;
+      max-width: 480px;
+    }
+
+    /* ── Intro framing block ── */
+    .intro-frame {
+      border-top: 1px solid var(--rule);
+      padding: clamp(2.5rem, 6vw, 4rem) var(--page-pad);
+      max-width: calc(var(--reading-width) + 2 * var(--page-pad));
+      margin: 0 auto;
+    }
+
+    .intro-frame p {
+      font-family: 'Lora', serif;
+      font-size: 1.05rem;
+      color: var(--gray);
+      line-height: 1.85;
+      max-width: var(--reading-width);
+    }
+
+    /* ── Narrative ── */
+    .narrative {
+      padding: clamp(3rem, 7vw, 5rem) var(--page-pad);
+      max-width: calc(var(--reading-width) + 2 * var(--page-pad));
+      margin: 0 auto;
+    }
+
+    .narrative p {
+      font-size: 1rem;
+      line-height: 1.9;
+      color: var(--ink);
+      margin-bottom: 1.5rem;
+      max-width: var(--reading-width);
+    }
+
+    .narrative p.solo {
+      font-style: italic;
+      color: var(--navy);
+      font-size: 1.05rem;
+      margin-top: 0.25rem;
+      margin-bottom: 1.75rem;
+    }
+
+    /* Chapter markers */
+    .chapter-marker {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      max-width: var(--reading-width);
+      margin: 3.5rem 0 2.5rem;
+    }
+
+    .chapter-marker::before {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 2px;
+      background: var(--amber);
+      flex-shrink: 0;
+    }
+
+    .chapter-marker span {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+
+    /* ── Transition ── */
+    .transition-block {
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      padding: clamp(3rem, 7vw, 5rem) var(--page-pad);
+      margin: clamp(2rem, 5vw, 4rem) 0 0;
+    }
+
+    .transition-block__inner {
+      max-width: var(--reading-width);
+      margin: 0 auto;
+    }
+
+    .transition-block p {
+      font-size: 1.05rem;
+      line-height: 1.85;
+      color: var(--ink);
+      margin-bottom: 1.4rem;
+    }
+
+    .transition-block p:last-child { margin-bottom: 0; }
+
+    .transition-block strong {
+      font-weight: 500;
+      color: var(--navy);
+    }
+
+    /* ── Closing ── */
+    .closing {
+      padding: clamp(4rem, 9vw, 7rem) var(--page-pad);
+      max-width: calc(var(--reading-width) + 2 * var(--page-pad));
+      margin: 0 auto;
+    }
+
+    .closing__inner {
+      max-width: var(--reading-width);
+    }
+
+    .closing p {
+      font-size: 1.05rem;
+      line-height: 1.85;
+      color: var(--ink);
+      margin-bottom: 2rem;
+    }
+
+    .closing-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin-top: 2.5rem;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      background: var(--navy);
+      color: var(--offwhite);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.85rem 1.75rem;
+      border: 2px solid var(--navy);
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: transparent;
+      color: var(--navy);
+    }
+
+    .btn-secondary {
+      display: inline-block;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--gray);
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0.1rem;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .btn-secondary:hover {
+      color: var(--navy);
+      border-color: var(--navy);
+    }
+
+    /* ── Footer ── */
+    .site-footer {
+      padding: 2rem var(--page-pad);
+      border-top: 1px solid var(--rule);
+    }
+
+    .site-footer__inner {
+      max-width: calc(var(--reading-width) + 2 * var(--page-pad));
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .site-footer p {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      color: var(--gray);
+    }
+
+    /* ── Fade-in on load ── */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 0.7s ease forwards;
+    }
+
+    .fade-in:nth-child(2) { animation-delay: 0.1s; }
+    .fade-in:nth-child(3) { animation-delay: 0.2s; }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      html { font-size: 17px; }
+
+      .site-nav { display: none; }
+
+      .closing-actions {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <a class="site-logo" href="https://frontframe.co">Front<span>Frame</span></a>
+    <nav class="site-nav">
+      <a href="https://frontframe.co">frontframe.co</a>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <p class="hero-eyebrow fade-in">FrontFrame — Ed Dziuk</p>
+    <h1 class="hero-title fade-in">How I Became a Systems Architect in 10,000 Easy Steps</h1>
+    <p class="hero-sub fade-in">A career spent solving problems that systems should have solved first.</p>
+  </section>
+
+  <!-- Intro Framing -->
+  <section class="intro-frame">
+    <p>FrontFrame did not emerge from a sudden business idea. It emerged from decades of encountering the same operational fragility in different forms — businesses that worked, until they didn't, because too much lived inside people instead of systems. This is the story of how I came to understand that.</p>
+  </section>
+
+  <!-- Narrative -->
+  <main class="narrative">
+
+    <div class="chapter-marker"><span>Nebraska, 1980</span></div>
+
+    <p>I passed all four sections of the CPA exam in my junior year at the University of Nebraska and received my Nebraska CPA certificate in 1981.</p>
+
+    <p>In 1980, I competed in a Union Pacific Railroad audit simulation. Our team took first place. I realized quickly that the large-firm environment wasn't a good fit for me, but I loved the work itself. I joined the audit department at Union Pacific instead.</p>
+
+    <div class="chapter-marker"><span>Union Pacific</span></div>
+
+    <p>At Union Pacific, I was the only auditor carrying my own computer on extended audits in St. Louis, Fort Worth, and Long Beach. Audits often lasted three months at a time with biweekly returns to Omaha. I built Lotus 1-2-3 spreadsheets to automate staff expense reporting, optimize meal reimbursements, and perform regression analyses. Even then, I was less interested in procedure than in improving the system around the work.</p>
+
+    <div class="chapter-marker"><span>Canada, 1991</span></div>
+
+    <p>After a short period at Union Pacific Resources, I moved to Canada in 1991 to marry Eleanor. Canada had just introduced the GST and the economy deteriorated quickly. We returned to the United States with our young family, and in 1993 I accepted a position as Audit Director for the Phoenix transit system.</p>
+
+    <p>While there, I designed a media tracking and management system and argued against the use of part-time driver programs. Once the structural problems were solved, I was ready to move on.</p>
+
+    <div class="chapter-marker"><span>A Different Kind of Lesson</span></div>
+
+    <p>For a few years, I attempted to build a business through Nikken Technologies. I lacked both sales skills and interpersonal maturity at the time.</p>
+
+    <p class="solo">Systems alone are not enough.</p>
+
+    <p>Eventually I obtained an Arizona CPA license and returned to accounting.</p>
+
+    <div class="chapter-marker"><span>Public Practice</span></div>
+
+    <p>Public accounting fit me far better than I expected. I could prepare a tax return in about an hour, but the paper systems of the day often required three or four additional hours just to process and deliver the work. That kind of inefficiency bothered me constantly.</p>
+
+    <p>Per diem CPA work suited me, though the workflow was seasonal and inconsistent. Eventually I joined Finger Kaplan Matson PC and encountered the luckiest break of my professional life.</p>
+
+    <p>John Matson was a perfectionist and the ideal mentor for me. He never removed work from my desk, but he would never accept delivery of anything less than camera-ready perfection. I routinely worked more hours than I billed. Under his discipline, I transitioned from industry accounting into public practice and found that I thrived in small firms where everyone was too busy doing the work to spend their lives managing each other.</p>
+
+    <p>I remained in that environment for the next eighteen years until I was released by a larger regional firm because of age limitations.</p>
+
+    <div class="chapter-marker"><span>Alongside, Always</span></div>
+
+    <p>Alongside my accounting career, I continued building systems.</p>
+
+    <p>In 2002 and 2003, I subscribed to the AAII financial database and built my own database containing five years of trailing financial data for every publicly listed U.S. company. I paired it with an Excel model that could retrieve company data and generate a Plimsoll-style financial analysis in about a minute, based on Don Turkington's work.</p>
+
+    <p>I lacked the business instincts to monetize it, but the project deepened my understanding of the difference between financial strength and market performance. I identified several companies I believed were strong short-sale candidates, but eventually realized the risks and distractions were beginning to interfere with my professional work. I stepped back.</p>
+
+    <div class="chapter-marker"><span>Eleanor's Honey Business</span></div>
+
+    <p>The next chapter began with Eleanor's honey business.</p>
+
+    <p>I convinced her that the business could never reach its full value operating from our garage. After a difficult search, she found a small location in a business park. Within five years, she had transformed it into a thriving retail operation that more than covered the rent. Her instincts for retail space had been shaped over twenty-four years working in her family's jewelry store.</p>
+
+    <p>Eventually we sold the business with the help of an excellent broker.</p>
+
+    <p>Only afterward did we fully understand how much value had been left unrealized.</p>
+
+    <p>There was no clear picture of who the customers were. No reliable way to contact them individually. No SOPs. Recipes existed largely in memory. The operation depended on a highly capable general manager. The business was successful, but much of its value still lived inside people instead of systems.</p>
+
+    <p>That realization stayed with us.</p>
+
+    <div class="chapter-marker"><span>Beginning with the End in Mind</span></div>
+
+    <p>The next venture would begin with the end in mind.</p>
+
+    <p>That became the foundation for Elie's Bird Sitting. This time, the business was designed from the beginning to operate as a system rather than as a personality. Eleanor only needs a small number of nearby clients to stay as busy as she wants doing work she genuinely enjoys. The system handles scheduling, communication, and routine customer questions even when she is unavailable.</p>
+
+    <div class="chapter-marker"><span>The Pattern</span></div>
+
+    <p>Looking back, the pattern is obvious now.</p>
+
+    <p>Throughout my career, I was rarely drawn to titles, institutions, or hierarchy. I was drawn to systems that were inefficient, fragile, undocumented, or overly dependent on individuals. Again and again, I found myself trying to make them clearer, more resilient, and easier for other people to operate.</p>
+
+    <p>It took me a long time to realize that this was not simply part of the work.</p>
+
+    <p class="solo">It was the work.</p>
+
+  </main>
+
+  <!-- Transition -->
+  <div class="transition-block">
+    <div class="transition-block__inner">
+      <p>Most of the businesses I encountered throughout that career worked. They generated revenue, served customers, and kept their owners occupied. What they rarely did was operate independently of the people who built them.</p>
+      <p>The knowledge was real. The capability was real. But it lived in memory, in habit, in the presence of specific individuals — and nowhere else.</p>
+      <p><strong>FrontFrame is the practical expression of that observation.</strong> Not a solution looking for a problem. A response to the same problem, encountered again and again, across four decades.</p>
+    </div>
+  </div>
+
+  <!-- Closing -->
+  <section class="closing">
+    <div class="closing__inner">
+      <p>If your business depends heavily on memory, improvisation, or constant owner involvement — if it could not operate, even briefly, without you — we should probably talk.</p>
+      <div class="closing-actions">
+        <a class="btn-primary" href="mailto:ed@frontframe.co">Get in touch</a>
+        <a class="btn-secondary" href="https://frontframe.co/yours">Or start here →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <p>© 2025 FrontFrame LLC — frontframe.co</p>
+      <p>ed@frontframe.co</p>
+    </div>
+  </footer>
+
+</body>
+</html>
