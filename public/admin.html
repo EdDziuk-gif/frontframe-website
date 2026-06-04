@@ -755,6 +755,13 @@
                 </div>
               </div>
             </div>
+            <div class="sub-field">
+              <label>Vault Encryption Key (VAULT_ENCRYPTION_KEY)</label>
+              <div class="sub-card-wrap">
+                <input type="password" id="supabase_vault_key" placeholder="base64 32-byte key from openssl rand -base64 32" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('supabase')">
+                <button class="sub-card-toggle" onclick="vaultTogglePassword('supabase_vault_key', this)">SHOW</button>
+              </div>
+            </div>
           </div>
         </div>
         <div style="display:flex;gap:1rem;margin-top:0.25rem;">
@@ -1488,7 +1495,7 @@ let currentTab    = '';
 // Vault
 const VAULT_FIELDS = {
   surge:      ['email','password','account_id','api_key','from_number','alert_phone','biz_name','legal_name','org_type','ein','industry','website','contact_name','contact_email','campaign_desc','notes'],
-  supabase:   ['email','password','project_id','project_url','publishable_key','secret_key'],
+  supabase:   ['email','password','project_id','project_url','publishable_key','secret_key','vault_key'],
   cloudflare: ['email','password','account_id','zone_id','notes'],
   resend:     ['email','password','api_key','from','notes'],
   docuseal:   ['email','password','api_key','template_id','certificate','notes'],
