@@ -317,6 +317,48 @@
   .payment-field   { display: flex; flex-direction: column; gap: 3px; }
   .payment-label   { font-size: 0.72rem; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: .4px; }
   .payment-value   { font-size: 0.95rem; font-weight: 500; color: var(--navy); font-family: 'SF Mono','Fira Mono',monospace; }
+
+  /* Subscriptions vendor panels */
+  .sub-dropdown-wrap { margin-bottom: 24px; }
+  .sub-dropdown-label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6px; }
+  .sub-dropdown { padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.875rem; color: var(--navy); background: white; min-width: 240px; }
+  .sub-panel { display: none; }
+  .sub-panel.active { display: block; }
+  .sub-section { background: white; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px; overflow: hidden; }
+  .sub-section-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--offwhite); }
+  .sub-section-title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.9rem; }
+  .sub-section-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .sub-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .sub-field-row.thirds { grid-template-columns: 1fr 1fr 1fr; }
+  .sub-field { display: flex; flex-direction: column; gap: 5px; }
+  .sub-field label { font-size: 0.72rem; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: .4px; }
+  .sub-field input[type=text], .sub-field input[type=email], .sub-field input[type=password],
+  .sub-field select, .sub-field textarea {
+    padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: 0.875rem; color: var(--navy); background: white;
+    transition: border-color .15s; outline: none; width: 100%;
+  }
+  .sub-field input:focus, .sub-field textarea:focus, .sub-field select:focus { border-color: var(--navy); }
+  .sub-field textarea { resize: vertical; min-height: 80px; }
+  .sub-card-wrap { position: relative; }
+  .sub-card-toggle {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; font-size: 0.68rem;
+    font-weight: 700; color: var(--gray); letter-spacing: .04em; padding: 0;
+  }
+  .sub-card-toggle:hover { color: var(--navy); }
+  .sub-save-btn {
+    display: inline-flex; align-items: center; padding: 9px 20px;
+    background: var(--navy); color: white; border: none; border-radius: 8px;
+    font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background .15s;
+  }
+  .sub-save-btn:hover { background: #2a3f5a; }
+  .sub-link-btn {
+    font-size: 0.75rem; font-weight: 600; color: var(--navy); text-decoration: none;
+    border: 1.5px solid var(--border); border-radius: 6px; padding: 4px 10px;
+    transition: background .15s;
+  }
+  .sub-link-btn:hover { background: var(--offwhite); }
 </style>
 </head>
 <body>
@@ -564,66 +606,459 @@
     <div class="tab-panel" id="tab-subscriptions">
       <div class="page-header">
         <div class="page-title">Subscriptions</div>
-        <div class="page-sub">SMS platform provisioning, compliance records, and payment methods on file</div>
+        <div class="page-sub">Platform credentials, compliance records, and payment methods — all encrypted at rest</div>
       </div>
 
-      <!-- Payment Methods on File -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
-
-        <!-- Card 1 -->
-        <div class="vault-card" style="margin-bottom:0">
-          <div class="vault-card-header">
-            <div class="vault-card-title">&#x1F4B3; Card 1</div>
-            <div style="display:flex;align-items:center;gap:12px">
-              <span class="vault-save-status" id="vaultSaveStatus"></span>
-              <button class="btn btn-ghost btn-sm" onclick="openPaymentModal('card_1')">Edit</button>
-            </div>
-          </div>
-          <div class="vault-card-body">
-            <div class="payment-display">
-              <div class="payment-field"><div class="payment-label">Cardholder</div><div class="payment-value" id="pm-card_1-cardholder">&mdash;</div></div>
-              <div class="payment-field"><div class="payment-label">Card Number</div><div class="payment-value" id="pm-card_1-number">&mdash;</div></div>
-              <div class="payment-field"><div class="payment-label">Expiry</div><div class="payment-value" id="pm-card_1-expiry">&mdash;</div></div>
-              <div class="payment-field"><div class="payment-label">Billing ZIP</div><div class="payment-value" id="pm-card_1-zip">&mdash;</div></div>
-              <div class="payment-field"><div class="payment-label">Used For</div><div class="payment-value" id="pm-card_1-use">&mdash;</div></div>
-            </div>
-          </div>
+      <div class="sub-dropdown-wrap" style="display:flex;align-items:center;gap:1rem;">
+        <div>
+          <label class="sub-dropdown-label">Vendor</label>
+          <select class="sub-dropdown" id="subSelect" onchange="switchSubscription()">
+            <optgroup label="Subscriptions">
+              <option value="surge">Surge &mdash; SMS Alerts</option>
+            </optgroup>
+            <optgroup label="Platform">
+              <option value="supabase">Supabase</option>
+              <option value="cloudflare">Cloudflare</option>
+              <option value="resend">Resend</option>
+              <option value="docuseal">DocuSeal</option>
+              <option value="stripe">Stripe</option>
+              <option value="anthropic">Anthropic</option>
+              <option value="google">Google</option>
+            </optgroup>
+            <optgroup label="Payment Methods">
+              <option value="card_1">Card 1</option>
+              <option value="card_2">Card 2</option>
+            </optgroup>
+          </select>
         </div>
-
-        <!-- Card 2 -->
-        <div class="vault-card" style="margin-bottom:0">
-          <div class="vault-card-header">
-            <div class="vault-card-title">&#x1F4B3; Card 2</div>
-            <div style="display:flex;align-items:center;gap:12px">
-              <button class="btn btn-ghost btn-sm" onclick="openPaymentModal('card_2')">Edit</button>
-            </div>
-          </div>
-          <div class="vault-card-body">
-            <div class="payment-display">
-              <div class="payment-field"><div class="payment-label">Cardholder</div><div class="payment-value" id="pm-card_2-cardholder">&mdash;</div></div>
-              <div class="payment-field"><div class="payment-label">Card Number</div><div class="payment-value" id="pm-card_2-number">&mdash;</div></div>
-              <div class="payment-field"><div class="payment-label">Expiry</div><div class="payment-value" id="pm-card_2-expiry">&mdash;</div></div>
-              <div class="payment-field"><div class="payment-label">Billing ZIP</div><div class="payment-value" id="pm-card_2-zip">&mdash;</div></div>
-              <div class="payment-field"><div class="payment-label">Used For</div><div class="payment-value" id="pm-card_2-use">&mdash;</div></div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Platforms -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Platforms</div>
-          <button class="btn btn-primary btn-sm" onclick="openSubModal()">+ Add Platform</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Platform</th><th>Provisioned By</th><th>Number</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="subs-tbody"></tbody>
-          </table>
+        <div style="margin-top:1.1rem;">
+          <span id="vaultSaveStatus" style="font-family:'SF Mono','Fira Mono',monospace;font-size:0.72rem;color:var(--gray);"></span>
         </div>
       </div>
+
+      <!-- ══ SURGE ══ -->
+      <div class="sub-panel active" id="subPanel-surge">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">🔐 Account Credentials</div>
+            <a href="https://hq.surge.app" target="_blank" class="sub-link-btn">Open Surge ↗</a>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Login Email</label>
+                <input type="email" id="surge_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('surge')"></div>
+              <div class="sub-field"><label>Password</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="surge_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('surge')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('surge_password', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Account ID</label>
+                <input type="text" id="surge_account_id" placeholder="acct_01…" oninput="vaultMarkDirty('surge')"></div>
+              <div class="sub-field"><label>API Key</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="surge_api_key" placeholder="••••••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('surge')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('surge_api_key', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>From Number</label>
+                <input type="text" id="surge_from_number" placeholder="(844) 940-0984" oninput="vaultMarkDirty('surge')"></div>
+              <div class="sub-field"><label>Alert Phone (Ed)</label>
+                <input type="text" id="surge_alert_phone" placeholder="+14803600069" oninput="vaultMarkDirty('surge')"></div>
+            </div>
+          </div>
+        </div>
+        <div class="sub-section">
+          <div class="sub-section-header"><div class="sub-section-title">📋 Application Reference</div></div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Business Display Name</label>
+                <input type="text" id="surge_biz_name" placeholder="FrontFrame" oninput="vaultMarkDirty('surge')"></div>
+              <div class="sub-field"><label>Legal Name</label>
+                <input type="text" id="surge_legal_name" placeholder="FrontFrame LLC" oninput="vaultMarkDirty('surge')"></div>
+            </div>
+            <div class="sub-field-row thirds">
+              <div class="sub-field"><label>Org Type</label>
+                <select id="surge_org_type" onchange="vaultMarkDirty('surge')">
+                  <option value="">— select —</option>
+                  <option value="llc">LLC</option>
+                  <option value="sole_proprietor">Sole Proprietor</option>
+                  <option value="corporation">Corporation</option>
+                  <option value="partnership">Partnership</option>
+                </select>
+              </div>
+              <div class="sub-field"><label>EIN</label>
+                <input type="text" id="surge_ein" placeholder="12-3456789" oninput="vaultMarkDirty('surge')"></div>
+              <div class="sub-field"><label>Industry</label>
+                <input type="text" id="surge_industry" placeholder="Professional Services" oninput="vaultMarkDirty('surge')"></div>
+            </div>
+            <div class="sub-field"><label>Website</label>
+              <input type="text" id="surge_website" placeholder="https://frontframe.co" oninput="vaultMarkDirty('surge')"></div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Contact Name</label>
+                <input type="text" id="surge_contact_name" placeholder="Ed Dziuk" oninput="vaultMarkDirty('surge')"></div>
+              <div class="sub-field"><label>Contact Email</label>
+                <input type="email" id="surge_contact_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('surge')"></div>
+            </div>
+            <div class="sub-field"><label>Campaign Description</label>
+              <textarea id="surge_campaign_desc" rows="3" placeholder="FrontFrame sends transactional alert notifications to the operator when a prospect signals readiness via the website chat widget. Internal operational alerts only." oninput="vaultMarkDirty('surge')"></textarea>
+            </div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="surge_notes" rows="5" oninput="vaultMarkDirty('surge')"></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('surge')">Save Surge</button>
+        </div>
+      </div><!-- /surge -->
+
+      <!-- ══ SUPABASE ══ -->
+      <div class="sub-panel" id="subPanel-supabase">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">🔐 Account Credentials</div>
+            <a href="https://supabase.com/dashboard" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Login Email</label>
+                <input type="email" id="supabase_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('supabase')"></div>
+              <div class="sub-field"><label>Password</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="supabase_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('supabase')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('supabase_password', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Project ID</label>
+                <input type="text" id="supabase_project_id" placeholder="ifjsepyzdnpmwyuytppr" oninput="vaultMarkDirty('supabase')"></div>
+              <div class="sub-field"><label>Project URL</label>
+                <input type="text" id="supabase_project_url" placeholder="https://ifjsepyzdnpmwyuytppr.supabase.co" oninput="vaultMarkDirty('supabase')"></div>
+            </div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Publishable Key</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="supabase_publishable_key" placeholder="sb_publishable_…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('supabase')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('supabase_publishable_key', this)">SHOW</button>
+                </div>
+              </div>
+              <div class="sub-field"><label>Secret Key</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="supabase_secret_key" placeholder="sb_secret_…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('supabase')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('supabase_secret_key', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('supabase')">Save Supabase</button>
+        </div>
+      </div><!-- /supabase -->
+
+      <!-- ══ CLOUDFLARE ══ -->
+      <div class="sub-panel" id="subPanel-cloudflare">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">🔐 Account Credentials</div>
+            <a href="https://dash.cloudflare.com" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Login Email</label>
+                <input type="email" id="cloudflare_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('cloudflare')"></div>
+              <div class="sub-field"><label>Password</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="cloudflare_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('cloudflare')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('cloudflare_password', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Account ID</label>
+                <input type="text" id="cloudflare_account_id" placeholder="e5c0c71b…" oninput="vaultMarkDirty('cloudflare')"></div>
+              <div class="sub-field"><label>Zone ID (this domain)</label>
+                <input type="text" id="cloudflare_zone_id" placeholder="xxxxxxxx…" oninput="vaultMarkDirty('cloudflare')"></div>
+            </div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="cloudflare_notes" rows="4" oninput="vaultMarkDirty('cloudflare')"></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('cloudflare')">Save Cloudflare</button>
+        </div>
+      </div><!-- /cloudflare -->
+
+      <!-- ══ RESEND ══ -->
+      <div class="sub-panel" id="subPanel-resend">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">🔐 Account Credentials</div>
+            <a href="https://resend.com" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Login Email</label>
+                <input type="email" id="resend_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('resend')"></div>
+              <div class="sub-field"><label>Password</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="resend_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('resend')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('resend_password', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field"><label>API Key</label>
+              <div class="sub-card-wrap">
+                <input type="password" id="resend_api_key" placeholder="re_…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('resend')">
+                <button class="sub-card-toggle" onclick="vaultTogglePassword('resend_api_key', this)">SHOW</button>
+              </div>
+            </div>
+            <div class="sub-field"><label>From Address</label>
+              <input type="text" id="resend_from" placeholder="noreply@frontframe.co" oninput="vaultMarkDirty('resend')"></div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="resend_notes" rows="4" oninput="vaultMarkDirty('resend')"></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('resend')">Save Resend</button>
+        </div>
+      </div><!-- /resend -->
+
+      <!-- ══ DOCUSEAL ══ -->
+      <div class="sub-panel" id="subPanel-docuseal">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">🔐 Account Credentials</div>
+            <a href="https://docuseal.com" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Login Email</label>
+                <input type="email" id="docuseal_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('docuseal')"></div>
+              <div class="sub-field"><label>Password</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="docuseal_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('docuseal')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('docuseal_password', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>API Key</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="docuseal_api_key" placeholder="••••••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('docuseal')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('docuseal_api_key', this)">SHOW</button>
+                </div>
+              </div>
+              <div class="sub-field"><label>Template ID</label>
+                <input type="text" id="docuseal_template_id" placeholder="3600228" oninput="vaultMarkDirty('docuseal')"></div>
+            </div>
+            <div class="sub-field"><label>API Certificate</label>
+              <textarea id="docuseal_certificate" rows="5" placeholder="-----BEGIN CERTIFICATE-----…" autocomplete="off" oninput="vaultMarkDirty('docuseal')"></textarea>
+            </div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="docuseal_notes" rows="4" oninput="vaultMarkDirty('docuseal')"></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('docuseal')">Save DocuSeal</button>
+        </div>
+      </div><!-- /docuseal -->
+
+      <!-- ══ STRIPE ══ -->
+      <div class="sub-panel" id="subPanel-stripe">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">🔐 Account Credentials</div>
+            <a href="https://dashboard.stripe.com" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Login Email</label>
+                <input type="email" id="stripe_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('stripe')"></div>
+              <div class="sub-field"><label>Password</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="stripe_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('stripe')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('stripe_password', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Publishable Key</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="stripe_pub_key" placeholder="pk_live_…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('stripe')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('stripe_pub_key', this)">SHOW</button>
+                </div>
+              </div>
+              <div class="sub-field"><label>Secret Key</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="stripe_secret_key" placeholder="sk_live_…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('stripe')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('stripe_secret_key', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field"><label>Account ID</label>
+              <input type="text" id="stripe_account_id" placeholder="acct_…" oninput="vaultMarkDirty('stripe')"></div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="stripe_notes" rows="4" oninput="vaultMarkDirty('stripe')"></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('stripe')">Save Stripe</button>
+        </div>
+      </div><!-- /stripe -->
+
+      <!-- ══ ANTHROPIC ══ -->
+      <div class="sub-panel" id="subPanel-anthropic">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">🔐 Account Credentials</div>
+            <a href="https://console.anthropic.com" target="_blank" class="sub-link-btn">Console ↗</a>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Login Email</label>
+                <input type="email" id="anthropic_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('anthropic')"></div>
+              <div class="sub-field"><label>Password</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="anthropic_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('anthropic')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('anthropic_password', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field"><label>API Key</label>
+              <div class="sub-card-wrap">
+                <input type="password" id="anthropic_api_key" placeholder="sk-ant-…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('anthropic')">
+                <button class="sub-card-toggle" onclick="vaultTogglePassword('anthropic_api_key', this)">SHOW</button>
+              </div>
+            </div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="anthropic_notes" rows="4" oninput="vaultMarkDirty('anthropic')"></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('anthropic')">Save Anthropic</button>
+        </div>
+      </div><!-- /anthropic -->
+
+      <!-- ══ GOOGLE ══ -->
+      <div class="sub-panel" id="subPanel-google">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">🔐 Account Credentials</div>
+            <a href="https://console.cloud.google.com" target="_blank" class="sub-link-btn">Console ↗</a>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Login Email</label>
+                <input type="email" id="google_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('google')"></div>
+              <div class="sub-field"><label>Password</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="google_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('google')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('google_password', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field"><label>Maps API Key</label>
+              <div class="sub-card-wrap">
+                <input type="password" id="google_maps_key" placeholder="AIza…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('google')">
+                <button class="sub-card-toggle" onclick="vaultTogglePassword('google_maps_key', this)">SHOW</button>
+              </div>
+            </div>
+            <div class="sub-field"><label>Business Profile URL</label>
+              <input type="text" id="google_gbp_url" placeholder="https://maps.app.goo.gl/…" oninput="vaultMarkDirty('google')"></div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="google_notes" rows="4" oninput="vaultMarkDirty('google')"></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('google')">Save Google</button>
+        </div>
+      </div><!-- /google -->
+
+      <!-- ══ CARD 1 ══ -->
+      <div class="sub-panel" id="subPanel-card_1">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">💳 Payment Card 1</div>
+            <span style="font-family:'SF Mono','Fira Mono',monospace;font-size:0.62rem;color:var(--gray);">Encrypted at rest</span>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Cardholder Name</label>
+                <input type="text" id="card_1_name" placeholder="Ed Dziuk" oninput="vaultMarkDirty('card_1')"></div>
+              <div class="sub-field"><label>Card Number</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="card_1_number" placeholder="•••• •••• •••• ••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('card_1')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('card_1_number', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field-row thirds">
+              <div class="sub-field"><label>Expiry</label>
+                <input type="text" id="card_1_expiry" placeholder="MM/YY" maxlength="5" oninput="vaultMarkDirty('card_1')"></div>
+              <div class="sub-field"><label>Billing ZIP</label>
+                <input type="text" id="card_1_zip" placeholder="85021" oninput="vaultMarkDirty('card_1')"></div>
+              <div class="sub-field"><label>Used For</label>
+                <input type="text" id="card_1_use" placeholder="e.g. Surge, Cloudflare" oninput="vaultMarkDirty('card_1')"></div>
+            </div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="card_1_notes" rows="4" oninput="vaultMarkDirty('card_1')"></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('card_1')">Save Card 1</button>
+        </div>
+      </div><!-- /card_1 -->
+
+      <!-- ══ CARD 2 ══ -->
+      <div class="sub-panel" id="subPanel-card_2">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">💳 Payment Card 2</div>
+            <span style="font-family:'SF Mono','Fira Mono',monospace;font-size:0.62rem;color:var(--gray);">Encrypted at rest</span>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Cardholder Name</label>
+                <input type="text" id="card_2_name" placeholder="Ed Dziuk" oninput="vaultMarkDirty('card_2')"></div>
+              <div class="sub-field"><label>Card Number</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="card_2_number" placeholder="•••• •••• •••• ••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('card_2')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('card_2_number', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field-row thirds">
+              <div class="sub-field"><label>Expiry</label>
+                <input type="text" id="card_2_expiry" placeholder="MM/YY" maxlength="5" oninput="vaultMarkDirty('card_2')"></div>
+              <div class="sub-field"><label>Billing ZIP</label>
+                <input type="text" id="card_2_zip" placeholder="85021" oninput="vaultMarkDirty('card_2')"></div>
+              <div class="sub-field"><label>Used For</label>
+                <input type="text" id="card_2_use" placeholder="e.g. DocuSeal, Stripe" oninput="vaultMarkDirty('card_2')"></div>
+            </div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="card_2_notes" rows="4" oninput="vaultMarkDirty('card_2')"></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('card_2')">Save Card 2</button>
+        </div>
+      </div><!-- /card_2 -->
+
     </div>
 
     <!-- Office Hours -->
@@ -973,40 +1408,6 @@
   </div>
 </div>
 
-<div class="modal-backdrop" id="payment-modal">
-  <div class="modal" style="max-width:580px">
-    <div class="modal-header">
-      <div class="modal-title" id="pm-modal-title">&#x1F4B3; Card 1</div>
-      <button class="modal-close" onclick="closeModal('payment-modal')">&#x00D7;</button>
-    </div>
-    <input type="hidden" id="pm-active-vendor" value="card_1">
-    <div class="vault-field-row">
-      <div class="vault-field"><label>Cardholder Name</label>
-        <input type="text" id="pm-input-name" placeholder="Ed Dziuk"></div>
-      <div class="vault-field"><label>Card Number</label>
-        <div class="vault-wrap">
-          <input type="password" id="pm-input-number" placeholder="&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull;" autocomplete="off" style="padding-right:3.5rem;">
-          <button class="vault-toggle" onclick="vaultTogglePassword('pm-input-number', this)">SHOW</button>
-        </div>
-      </div>
-    </div>
-    <div class="vault-field-row">
-      <div class="vault-field"><label>Expiry (MM/YY)</label>
-        <input type="text" id="pm-input-expiry" placeholder="MM/YY" maxlength="5"></div>
-      <div class="vault-field"><label>Billing ZIP</label>
-        <input type="text" id="pm-input-zip" placeholder="85021"></div>
-    </div>
-    <div class="vault-field"><label>Used For</label>
-      <input type="text" id="pm-input-use" placeholder="e.g. Surge, Cloudflare"></div>
-    <div class="vault-field" style="margin-top:16px"><label>Notes</label>
-      <textarea id="pm-input-notes" rows="3"></textarea></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('payment-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="savePaymentMethod()">Save</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-backdrop" id="sub-modal">
   <div class="modal" style="max-width:540px">
     <div class="modal-header">
@@ -1086,10 +1487,23 @@ let currentTab    = '';
 
 // Vault
 const VAULT_FIELDS = {
-  card_1: ['name', 'number', 'expiry', 'zip', 'use', 'notes'],
-  card_2: ['name', 'number', 'expiry', 'zip', 'use', 'notes'],
+  surge:      ['email','password','account_id','api_key','from_number','alert_phone','biz_name','legal_name','org_type','ein','industry','website','contact_name','contact_email','campaign_desc','notes'],
+  supabase:   ['email','password','project_id','project_url','publishable_key','secret_key'],
+  cloudflare: ['email','password','account_id','zone_id','notes'],
+  resend:     ['email','password','api_key','from','notes'],
+  docuseal:   ['email','password','api_key','template_id','certificate','notes'],
+  stripe:     ['email','password','pub_key','secret_key','account_id','notes'],
+  anthropic:  ['email','password','api_key','notes'],
+  google:     ['email','password','maps_key','gbp_url','notes'],
+  card_1:     ['name','number','expiry','zip','use','notes'],
+  card_2:     ['name','number','expiry','zip','use','notes'],
 };
-const VAULT_CATEGORIES = { card_1: 'payment', card_2: 'payment' };
+const VAULT_CATEGORIES = {
+  surge: 'subscription', supabase: 'platform', cloudflare: 'platform',
+  resend: 'platform', docuseal: 'platform', stripe: 'platform',
+  anthropic: 'platform', google: 'platform',
+  card_1: 'payment', card_2: 'payment',
+};
 const vaultDirty = new Set();
 let vaultLoaded  = false;
 const vaultCache = {};
@@ -1885,43 +2299,41 @@ function vaultTogglePassword(inputId, btn) {
 
 function vaultMarkDirty(vendor) { vaultDirty.add(vendor); }
 
-function vaultCollect() {
-  return {
-    name:      document.getElementById('pm-input-name').value      || '',
-    number:    document.getElementById('pm-input-number').value    || '',
-    expiry:    document.getElementById('pm-input-expiry').value    || '',
-    zip:       document.getElementById('pm-input-zip').value       || '',
-    use:       document.getElementById('pm-input-use').value       || '',
-    notes:     document.getElementById('pm-input-notes').value     || '',
-  };
+function vaultCollect(vendor) {
+  const fields = VAULT_FIELDS[vendor] || [];
+  const data = {};
+  fields.forEach(f => {
+    const el = document.getElementById(`${vendor}_${f}`);
+    if (el) data[f] = el.tagName === 'SELECT' ? el.value : (el.value || '');
+  });
+  return data;
 }
 
 function vaultPopulate(vendor, data) {
   if (!data) return;
   vaultCache[vendor] = data;
-  const masked = data.number
-    ? '\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 ' + data.number.slice(-4)
-    : '\u2014';
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '\u2014'; };
-  set(`pm-${vendor}-cardholder`, data.name);
-  set(`pm-${vendor}-number`,     masked);
-  set(`pm-${vendor}-expiry`,     data.expiry);
-  set(`pm-${vendor}-zip`,        data.zip);
-  set(`pm-${vendor}-use`,        data.use);
+  const fields = VAULT_FIELDS[vendor] || [];
+  fields.forEach(f => {
+    const el = document.getElementById(`${vendor}_${f}`);
+    if (!el) return;
+    if (el.tagName === 'SELECT') el.value = data[f] || '';
+    else el.value = data[f] || '';
+  });
 }
 
 async function vaultLoad() {
   if (vaultLoaded) return;
   try {
     const entries = await api('GET', '/admin/vault');
-    if (entries.card_1?.data) vaultPopulate('card_1', entries.card_1.data);
-    if (entries.card_2?.data) vaultPopulate('card_2', entries.card_2.data);
+    Object.keys(VAULT_FIELDS).forEach(vendor => {
+      if (entries[vendor]?.data) vaultPopulate(vendor, entries[vendor].data);
+    });
     vaultLoaded = true;
   } catch (e) { console.error('Vault load error:', e); }
 }
 
 async function vaultSave(vendor) {
-  const data     = vaultCollect();
+  const data     = vaultCollect(vendor);
   const category = VAULT_CATEGORIES[vendor] || 'payment';
   const statusEl = document.getElementById('vaultSaveStatus');
   if (statusEl) { statusEl.style.color = 'var(--gray)'; statusEl.textContent = 'Saving\u2026'; }
@@ -1939,24 +2351,11 @@ async function vaultSave(vendor) {
 
 // Payment Method
 
-function openPaymentModal(vendor) {
-  const v = vendor || 'card_1';
-  document.getElementById('pm-active-vendor').value     = v;
-  document.getElementById('pm-modal-title').textContent = (v === 'card_1' ? '\uD83D\uDCB3 Card 1' : '\uD83D\uDCB3 Card 2');
-  const data = vaultCache[v] || {};
-  document.getElementById('pm-input-name').value      = data.name      || '';
-  document.getElementById('pm-input-number').value    = data.number    || '';
-  document.getElementById('pm-input-expiry').value    = data.expiry    || '';
-  document.getElementById('pm-input-zip').value       = data.zip       || '';
-  document.getElementById('pm-input-use').value       = data.use       || '';
-  document.getElementById('pm-input-notes').value     = data.notes     || '';
-  document.getElementById('payment-modal').classList.add('open');
-}
-
-async function savePaymentMethod() {
-  const vendor = document.getElementById('pm-active-vendor').value || 'card_1';
-  await vaultSave(vendor);
-  closeModal('payment-modal');
+function switchSubscription() {
+  const val = document.getElementById('subSelect').value;
+  document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('subPanel-' + val);
+  if (panel) panel.classList.add('active');
 }
 
 // Office Hours
