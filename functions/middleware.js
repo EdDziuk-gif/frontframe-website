@@ -8,7 +8,8 @@ const COOKIE_NAME = "ff_session";
 // Public paths — no authentication required.
 // / and /resources are public for search indexing and general visitors.
 // /yours is the QR code destination on business cards (contact only, no gated content).
-const PUBLIC_PATHS = ["/login", "/api/login", "/yours", "/", "/resources"];
+// /discovery and /about are public-facing content pages.
+const PUBLIC_PATHS = ["/login", "/api/login", "/yours", "/", "/resources", "/discovery", "/about"];
 
 async function hashPassword(password) {
   const encoder = new TextEncoder();
