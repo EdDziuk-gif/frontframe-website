@@ -583,7 +583,6 @@
             <div class="payment-display">
               <div class="payment-field"><div class="payment-label">Cardholder</div><div class="payment-value" id="pm-card_1-cardholder">&mdash;</div></div>
               <div class="payment-field"><div class="payment-label">Card Number</div><div class="payment-value" id="pm-card_1-number">&mdash;</div></div>
-              <div class="payment-field"><div class="payment-label">Last Four</div><div class="payment-value" id="pm-card_1-last-four">&mdash;</div></div>
               <div class="payment-field"><div class="payment-label">Expiry</div><div class="payment-value" id="pm-card_1-expiry">&mdash;</div></div>
               <div class="payment-field"><div class="payment-label">Billing ZIP</div><div class="payment-value" id="pm-card_1-zip">&mdash;</div></div>
               <div class="payment-field"><div class="payment-label">Used For</div><div class="payment-value" id="pm-card_1-use">&mdash;</div></div>
@@ -603,7 +602,6 @@
             <div class="payment-display">
               <div class="payment-field"><div class="payment-label">Cardholder</div><div class="payment-value" id="pm-card_2-cardholder">&mdash;</div></div>
               <div class="payment-field"><div class="payment-label">Card Number</div><div class="payment-value" id="pm-card_2-number">&mdash;</div></div>
-              <div class="payment-field"><div class="payment-label">Last Four</div><div class="payment-value" id="pm-card_2-last-four">&mdash;</div></div>
               <div class="payment-field"><div class="payment-label">Expiry</div><div class="payment-value" id="pm-card_2-expiry">&mdash;</div></div>
               <div class="payment-field"><div class="payment-label">Billing ZIP</div><div class="payment-value" id="pm-card_2-zip">&mdash;</div></div>
               <div class="payment-field"><div class="payment-label">Used For</div><div class="payment-value" id="pm-card_2-use">&mdash;</div></div>
@@ -992,11 +990,9 @@
         </div>
       </div>
     </div>
-    <div class="vault-field-row thirds">
+    <div class="vault-field-row">
       <div class="vault-field"><label>Expiry (MM/YY)</label>
         <input type="text" id="pm-input-expiry" placeholder="MM/YY" maxlength="5"></div>
-      <div class="vault-field"><label>Last Four</label>
-        <input type="text" id="pm-input-last-four" placeholder="1234" maxlength="4"></div>
       <div class="vault-field"><label>Billing ZIP</label>
         <input type="text" id="pm-input-zip" placeholder="85021"></div>
     </div>
@@ -1090,8 +1086,8 @@ let currentTab    = '';
 
 // Vault
 const VAULT_FIELDS = {
-  card_1: ['name', 'number', 'last_four', 'expiry', 'zip', 'use', 'notes'],
-  card_2: ['name', 'number', 'last_four', 'expiry', 'zip', 'use', 'notes'],
+  card_1: ['name', 'number', 'expiry', 'zip', 'use', 'notes'],
+  card_2: ['name', 'number', 'expiry', 'zip', 'use', 'notes'],
 };
 const VAULT_CATEGORIES = { card_1: 'payment', card_2: 'payment' };
 const vaultDirty = new Set();
@@ -1893,7 +1889,6 @@ function vaultCollect() {
   return {
     name:      document.getElementById('pm-input-name').value      || '',
     number:    document.getElementById('pm-input-number').value    || '',
-    last_four: document.getElementById('pm-input-last-four').value || '',
     expiry:    document.getElementById('pm-input-expiry').value    || '',
     zip:       document.getElementById('pm-input-zip').value       || '',
     use:       document.getElementById('pm-input-use').value       || '',
@@ -1905,12 +1900,11 @@ function vaultPopulate(vendor, data) {
   if (!data) return;
   vaultCache[vendor] = data;
   const masked = data.number
-    ? '\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 ' + (data.last_four || data.number.slice(-4))
+    ? '\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 ' + data.number.slice(-4)
     : '\u2014';
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '\u2014'; };
   set(`pm-${vendor}-cardholder`, data.name);
   set(`pm-${vendor}-number`,     masked);
-  set(`pm-${vendor}-last-four`,  data.last_four);
   set(`pm-${vendor}-expiry`,     data.expiry);
   set(`pm-${vendor}-zip`,        data.zip);
   set(`pm-${vendor}-use`,        data.use);
@@ -1952,7 +1946,6 @@ function openPaymentModal(vendor) {
   const data = vaultCache[v] || {};
   document.getElementById('pm-input-name').value      = data.name      || '';
   document.getElementById('pm-input-number').value    = data.number    || '';
-  document.getElementById('pm-input-last-four').value = data.last_four || '';
   document.getElementById('pm-input-expiry').value    = data.expiry    || '';
   document.getElementById('pm-input-zip').value       = data.zip       || '';
   document.getElementById('pm-input-use').value       = data.use       || '';
