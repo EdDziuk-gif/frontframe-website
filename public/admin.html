@@ -762,6 +762,9 @@
                 <button class="sub-card-toggle" onclick="vaultTogglePassword('supabase_vault_key', this)">SHOW</button>
               </div>
             </div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="supabase_notes" rows="4" placeholder="e.g. Key recovery notes, RoboForm entry names, migration history…" oninput="vaultMarkDirty('supabase')"></textarea>
+            </div>
           </div>
         </div>
         <div style="display:flex;gap:1rem;margin-top:0.25rem;">
@@ -1495,7 +1498,7 @@ let currentTab    = '';
 // Vault
 const VAULT_FIELDS = {
   surge:      ['email','password','account_id','api_key','from_number','alert_phone','biz_name','legal_name','org_type','ein','industry','website','contact_name','contact_email','campaign_desc','notes'],
-  supabase:   ['email','password','project_id','project_url','publishable_key','secret_key','vault_key'],
+  supabase:   ['email','password','project_id','project_url','publishable_key','secret_key','vault_key','notes'],
   cloudflare: ['email','password','account_id','zone_id','notes'],
   resend:     ['email','password','api_key','from','notes'],
   docuseal:   ['email','password','api_key','template_id','certificate','notes'],
