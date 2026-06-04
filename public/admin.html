@@ -283,6 +283,40 @@
   /* Office Hours two-col grid */
   .oh-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
   @media (max-width: 900px) { .oh-grid { grid-template-columns: 1fr; } }
+
+  /* Vault / Payment Method */
+  .vault-card { background: white; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 24px; overflow: hidden; }
+  .vault-card-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .vault-card-title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1rem; }
+  .vault-card-body  { padding: 20px; }
+  .vault-field-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .vault-field-row.thirds { grid-template-columns: 1fr 1fr 1fr; }
+  .vault-field      { display: flex; flex-direction: column; gap: 6px; }
+  .vault-field label { font-size: 0.75rem; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: .4px; }
+  .vault-field input, .vault-field textarea, .vault-field select {
+    padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: 0.875rem; color: var(--navy); background: white;
+    transition: border-color .15s; outline: none;
+  }
+  .vault-field input:focus, .vault-field textarea:focus { border-color: var(--navy); }
+  .vault-wrap   { position: relative; }
+  .vault-toggle {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; font-size: 0.68rem;
+    font-weight: 700; color: var(--gray); letter-spacing: .04em; padding: 0;
+  }
+  .vault-toggle:hover { color: var(--navy); }
+  .vault-save-btn {
+    display: inline-flex; align-items: center; padding: 9px 20px;
+    background: var(--navy); color: white; border: none; border-radius: 8px;
+    font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background .15s; margin-top: 4px;
+  }
+  .vault-save-btn:hover { background: #2a3f5a; }
+  .vault-save-status { font-size: 0.72rem; color: var(--gray); margin-left: 12px; }
+  .payment-display { display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
+  .payment-field   { display: flex; flex-direction: column; gap: 3px; }
+  .payment-label   { font-size: 0.72rem; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: .4px; }
+  .payment-value   { font-size: 0.95rem; font-weight: 500; color: var(--navy); font-family: 'SF Mono','Fira Mono',monospace; }
 </style>
 </head>
 <body>
@@ -530,8 +564,49 @@
     <div class="tab-panel" id="tab-subscriptions">
       <div class="page-header">
         <div class="page-title">Subscriptions</div>
-        <div class="page-sub">SMS platform provisioning and compliance records</div>
+        <div class="page-sub">SMS platform provisioning, compliance records, and payment method on file</div>
       </div>
+
+      <!-- Payment Method on File -->
+      <div class="vault-card">
+        <div class="vault-card-header">
+          <div class="vault-card-title">&#x1F4B3; Payment Method on File</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span class="vault-save-status" id="vaultSaveStatus"></span>
+            <button class="btn btn-ghost btn-sm" onclick="openPaymentModal()">Edit</button>
+          </div>
+        </div>
+        <div class="vault-card-body">
+          <div class="payment-display" id="payment-display">
+            <div class="payment-field">
+              <div class="payment-label">Cardholder</div>
+              <div class="payment-value" id="pm-cardholder">&mdash;</div>
+            </div>
+            <div class="payment-field">
+              <div class="payment-label">Card Number</div>
+              <div class="payment-value" id="pm-number">&mdash;</div>
+            </div>
+            <div class="payment-field">
+              <div class="payment-label">Last Four</div>
+              <div class="payment-value" id="pm-last-four">&mdash;</div>
+            </div>
+            <div class="payment-field">
+              <div class="payment-label">Expiry</div>
+              <div class="payment-value" id="pm-expiry">&mdash;</div>
+            </div>
+            <div class="payment-field">
+              <div class="payment-label">Billing ZIP</div>
+              <div class="payment-value" id="pm-zip">&mdash;</div>
+            </div>
+            <div class="payment-field">
+              <div class="payment-label">Used For</div>
+              <div class="payment-value" id="pm-use">&mdash;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Platforms -->
       <div class="card">
         <div class="card-header">
           <div class="card-title">Platforms</div>
@@ -893,6 +968,41 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="payment-modal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <div class="modal-title">&#x1F4B3; Payment Method on File</div>
+      <button class="modal-close" onclick="closeModal('payment-modal')">&#x00D7;</button>
+    </div>
+    <div class="vault-field-row">
+      <div class="vault-field"><label>Cardholder Name</label>
+        <input type="text" id="pm-input-name" placeholder="Ed Dziuk" oninput="vaultMarkDirty('card_1')"></div>
+      <div class="vault-field"><label>Card Number</label>
+        <div class="vault-wrap">
+          <input type="password" id="pm-input-number" placeholder="&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull;" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('card_1')">
+          <button class="vault-toggle" onclick="vaultTogglePassword('pm-input-number', this)">SHOW</button>
+        </div>
+      </div>
+    </div>
+    <div class="vault-field-row thirds">
+      <div class="vault-field"><label>Expiry (MM/YY)</label>
+        <input type="text" id="pm-input-expiry" placeholder="MM/YY" maxlength="5" oninput="vaultMarkDirty('card_1')"></div>
+      <div class="vault-field"><label>Last Four</label>
+        <input type="text" id="pm-input-last-four" placeholder="1234" maxlength="4" oninput="vaultMarkDirty('card_1')"></div>
+      <div class="vault-field"><label>Billing ZIP</label>
+        <input type="text" id="pm-input-zip" placeholder="85021" oninput="vaultMarkDirty('card_1')"></div>
+    </div>
+    <div class="vault-field"><label>Used For</label>
+      <input type="text" id="pm-input-use" placeholder="Surge, Cloudflare, etc." oninput="vaultMarkDirty('card_1')"></div>
+    <div class="vault-field" style="margin-top:16px"><label>Notes</label>
+      <textarea id="pm-input-notes" rows="3" oninput="vaultMarkDirty('card_1')"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('payment-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePaymentMethod()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="sub-modal">
   <div class="modal" style="max-width:540px">
     <div class="modal-header">
@@ -969,6 +1079,14 @@ let rdLog         = [];
 let rdFormOpen    = false;
 let ovFormOpen    = false;
 let currentTab    = '';
+
+// Vault
+const VAULT_FIELDS = {
+  card_1: ['name', 'number', 'last_four', 'expiry', 'zip', 'use', 'notes'],
+};
+const VAULT_CATEGORIES = { card_1: 'payment' };
+const vaultDirty = new Set();
+let vaultLoaded  = false;
 
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
@@ -1701,6 +1819,7 @@ async function saveMkt() {
 async function loadSubscriptions() {
   try { subscriptions = await api('GET', '/admin/subscriptions'); } catch (e) { toast('Failed to load subscriptions: ' + e.message, 'error'); return; }
   renderSubscriptions();
+  vaultLoad();
 }
 
 function renderSubscriptions() {
@@ -1747,6 +1866,86 @@ async function submitSub(id) {
     renderSubscriptions();
     toast('Submitted and SMS sent.');
   } catch (e) { toast(e.message, 'error'); }
+}
+
+// Vault
+
+function vaultTogglePassword(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'HIDE'; }
+  else { inp.type = 'password'; btn.textContent = 'SHOW'; }
+}
+
+function vaultMarkDirty(vendor) { vaultDirty.add(vendor); }
+
+function vaultCollect(vendor) {
+  const data = {};
+  (VAULT_FIELDS[vendor] || []).forEach(f => {
+    const el = document.getElementById(`pm-input-${f}`);
+    if (el) data[f] = el.value || '';
+  });
+  return data;
+}
+
+function vaultPopulate(vendor, data) {
+  if (!data) return;
+  // Populate display fields
+  document.getElementById('pm-cardholder').textContent = data.name  || '—';
+  document.getElementById('pm-number').textContent     = data.number
+    ? '•••• •••• •••• ' + (data.last_four || data.number.slice(-4))
+    : '—';
+  document.getElementById('pm-last-four').textContent = data.last_four || '—';
+  document.getElementById('pm-expiry').textContent    = data.expiry   || '—';
+  document.getElementById('pm-zip').textContent       = data.zip      || '—';
+  document.getElementById('pm-use').textContent       = data.use      || '—';
+  // Populate modal inputs
+  document.getElementById('pm-input-name').value      = data.name      || '';
+  document.getElementById('pm-input-number').value    = data.number    || '';
+  document.getElementById('pm-input-last-four').value = data.last_four || '';
+  document.getElementById('pm-input-expiry').value    = data.expiry    || '';
+  document.getElementById('pm-input-zip').value       = data.zip       || '';
+  document.getElementById('pm-input-use').value       = data.use       || '';
+  document.getElementById('pm-input-notes').value     = data.notes     || '';
+}
+
+async function vaultLoad() {
+  if (vaultLoaded) return;
+  try {
+    const entries = await api('GET', '/admin/vault');
+    if (entries.card_1?.data) vaultPopulate('card_1', entries.card_1.data);
+    vaultLoaded = true;
+  } catch (e) { console.error('Vault load error:', e); }
+}
+
+async function vaultSave(vendor) {
+  const data     = vaultCollect(vendor);
+  const category = VAULT_CATEGORIES[vendor] || 'payment';
+  const statusEl = document.getElementById('vaultSaveStatus');
+  statusEl.style.color = 'var(--gray)';
+  statusEl.textContent = 'Saving…';
+  try {
+    await api('POST', '/admin/vault', { vendor, category, data });
+    vaultDirty.delete(vendor);
+    vaultPopulate(vendor, data);
+    statusEl.style.color = '#2e7d32';
+    statusEl.textContent = 'Saved ✓';
+    setTimeout(() => { statusEl.textContent = ''; }, 3000);
+  } catch (e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = e.message || 'Save failed.';
+  }
+}
+
+// Payment Method
+
+function openPaymentModal() {
+  document.getElementById('payment-modal').classList.add('open');
+}
+
+async function savePaymentMethod() {
+  await vaultSave('card_1');
+  closeModal('payment-modal');
 }
 
 // Office Hours
