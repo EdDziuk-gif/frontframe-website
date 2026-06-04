@@ -619,7 +619,7 @@
             <optgroup label="Platform">
               <option value="supabase">Supabase</option>
               <option value="cloudflare">Cloudflare</option>
-              <option value="resend">Resend</option>
+              <option value="buttondown">Buttondown</option>
               <option value="docuseal">DocuSeal</option>
               <option value="stripe">Stripe</option>
               <option value="anthropic">Anthropic</option>
@@ -806,41 +806,39 @@
         </div>
       </div><!-- /cloudflare -->
 
-      <!-- ══ RESEND ══ -->
-      <div class="sub-panel" id="subPanel-resend">
+      <!-- ══ BUTTONDOWN ══ -->
+      <div class="sub-panel" id="subPanel-buttondown">
         <div class="sub-section">
           <div class="sub-section-header">
             <div class="sub-section-title">🔐 Account Credentials</div>
-            <a href="https://resend.com" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+            <a href="https://buttondown.com/login" target="_blank" class="sub-link-btn">Dashboard ↗</a>
           </div>
           <div class="sub-section-body">
             <div class="sub-field-row">
               <div class="sub-field"><label>Login Email</label>
-                <input type="email" id="resend_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('resend')"></div>
+                <input type="email" id="buttondown_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('buttondown')"></div>
               <div class="sub-field"><label>Password</label>
                 <div class="sub-card-wrap">
-                  <input type="password" id="resend_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('resend')">
-                  <button class="sub-card-toggle" onclick="vaultTogglePassword('resend_password', this)">SHOW</button>
+                  <input type="password" id="buttondown_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('buttondown')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('buttondown_password', this)">SHOW</button>
                 </div>
               </div>
             </div>
             <div class="sub-field"><label>API Key</label>
               <div class="sub-card-wrap">
-                <input type="password" id="resend_api_key" placeholder="re_…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('resend')">
-                <button class="sub-card-toggle" onclick="vaultTogglePassword('resend_api_key', this)">SHOW</button>
+                <input type="password" id="buttondown_api_key" placeholder="Token …" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('buttondown')">
+                <button class="sub-card-toggle" onclick="vaultTogglePassword('buttondown_api_key', this)">SHOW</button>
               </div>
             </div>
-            <div class="sub-field"><label>From Address</label>
-              <input type="text" id="resend_from" placeholder="noreply@frontframe.co" oninput="vaultMarkDirty('resend')"></div>
             <div class="sub-field"><label>Notes</label>
-              <textarea id="resend_notes" rows="4" oninput="vaultMarkDirty('resend')"></textarea>
+              <textarea id="buttondown_notes" rows="4" oninput="vaultMarkDirty('buttondown')"></textarea>
             </div>
           </div>
         </div>
         <div style="display:flex;gap:1rem;margin-top:0.25rem;">
-          <button class="sub-save-btn" onclick="vaultSave('resend')">Save Resend</button>
+          <button class="sub-save-btn" onclick="vaultSave('buttondown')">Save Buttondown</button>
         </div>
-      </div><!-- /resend -->
+      </div><!-- /buttondown -->
 
       <!-- ══ DOCUSEAL ══ -->
       <div class="sub-panel" id="subPanel-docuseal">
@@ -1068,6 +1066,20 @@
           <button class="sub-save-btn" onclick="vaultSave('card_2')">Save Card 2</button>
         </div>
       </div><!-- /card_2 -->
+
+      <!-- Compliance Records -->
+      <div class="card" style="margin-top:24px">
+        <div class="card-header">
+          <div class="card-title">Compliance Records</div>
+          <button class="btn btn-primary btn-sm" onclick="openSubModal()">+ Add Record</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Platform</th><th>Provisioned By</th><th>Number</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="subs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
 
     </div>
 
@@ -1500,7 +1512,7 @@ const VAULT_FIELDS = {
   surge:      ['email','password','account_id','api_key','from_number','alert_phone','biz_name','legal_name','org_type','ein','industry','website','contact_name','contact_email','campaign_desc','notes'],
   supabase:   ['email','password','project_id','project_url','publishable_key','secret_key','vault_key','notes'],
   cloudflare: ['email','password','account_id','zone_id','notes'],
-  resend:     ['email','password','api_key','from','notes'],
+  buttondown: ['email','password','api_key','notes'],
   docuseal:   ['email','password','api_key','template_id','certificate','notes'],
   stripe:     ['email','password','pub_key','secret_key','account_id','notes'],
   anthropic:  ['email','password','api_key','notes'],
@@ -1510,7 +1522,7 @@ const VAULT_FIELDS = {
 };
 const VAULT_CATEGORIES = {
   surge: 'subscription', supabase: 'platform', cloudflare: 'platform',
-  resend: 'platform', docuseal: 'platform', stripe: 'platform',
+  buttondown: 'platform', docuseal: 'platform', stripe: 'platform',
   anthropic: 'platform', google: 'platform',
   card_1: 'payment', card_2: 'payment',
 };
@@ -2254,6 +2266,7 @@ async function loadSubscriptions() {
 
 function renderSubscriptions() {
   const tbody = document.getElementById('subs-tbody');
+  if (!tbody) return;
   if (!subscriptions.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No platforms</div></td></tr>`; return; }
   tbody.innerHTML = subscriptions.map(s => `
     <tr>
