@@ -3,10 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tell Us More — FrontFrame</title>
+
+  <!-- Primary -->
+  <title>FrontFrame Discovery — Find the Real Constraint</title>
+  <meta name="description" content="Most owner-operated businesses don't have a website problem. They have a systems problem. FrontFrame Discovery is a structured evaluation designed to identify the real constraint before anything gets built." />
+  <link rel="canonical" href="https://frontframe.co/discovery" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="FrontFrame" />
+  <meta property="og:title" content="FrontFrame Discovery — Find the Real Constraint" />
+  <meta property="og:description" content="Most owner-operated businesses don't have a website problem. They have a systems problem. FrontFrame Discovery identifies the real constraint before anything gets built." />
+  <meta property="og:url" content="https://frontframe.co/discovery" />
+  <meta property="og:image" content="https://frontframe.co/social-preview.png" />
+  <meta property="og:image:alt" content="FrontFrame Discovery" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter / X Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="FrontFrame Discovery — Find the Real Constraint" />
+  <meta name="twitter:description" content="Most owner-operated businesses don't have a website problem. They have a systems problem." />
+  <meta name="twitter:image" content="https://frontframe.co/social-preview.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="images/Logo_FF.png">
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,700;1,9..40,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -18,188 +45,481 @@
       --white:    #FFFFFF;
     }
 
-    body { font-family: 'Inter', system-ui, sans-serif; background: var(--offwhite); color: var(--navy); min-height: 100vh; }
+    html { scroll-behavior: smooth; }
 
-    h1, h2, h3, label { font-family: 'DM Sans', system-ui, sans-serif; font-weight: 700; }
-    a { text-decoration: none; color: inherit; }
-    img { display: block; max-width: 100%; }
-
-    nav { background: var(--navy); padding: 0 48px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
-    .nav-wordmark { font-family: 'DM Sans', system-ui, sans-serif; font-weight: 700; font-size: 1.5rem; color: var(--white); letter-spacing: -0.01em; }
-    .nav-back { font-size: 0.85rem; color: var(--gray); transition: color 0.2s; }
-    .nav-back:hover { color: var(--white); }
-
-    .page-header { background: var(--navy); padding: 60px 32px; text-align: center; }
-    .page-eyebrow { font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin-bottom: 16px; }
-    .page-header h1 { font-size: clamp(1.8rem, 3vw, 2.4rem); color: var(--white); margin-bottom: 14px; line-height: 1.2; }
-    .page-header p { font-size: 1rem; color: var(--gray); max-width: 520px; margin: 0 auto; line-height: 1.7; }
-
-    .form-container { max-width: 680px; margin: 0 auto; padding: 60px 32px 80px; }
-    .form-group { margin-bottom: 28px; }
-
-    label { display: block; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--navy); margin-bottom: 8px; }
-    label .required { color: var(--amber); margin-left: 2px; }
-    label .hint { font-family: 'Inter', sans-serif; font-weight: 400; font-size: 0.8rem; text-transform: none; letter-spacing: 0; color: var(--gray); margin-left: 6px; }
-
-    input[type="text"], input[type="email"], textarea, select {
-      width: 100%; padding: 12px 16px; border: 1.5px solid #D8DFE6; border-radius: 8px;
-      font-family: 'Inter', sans-serif; font-size: 0.95rem; color: var(--navy);
-      background: var(--white); outline: none; transition: border-color 0.2s; appearance: none;
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--offwhite);
+      color: var(--navy);
+      overflow-x: hidden;
     }
 
-    input:focus, textarea:focus, select:focus { border-color: var(--navy); }
-    textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+    h1, h2, h3, h4 {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 700;
+    }
 
-    .select-wrap { position: relative; }
-    .select-wrap::after { content: '▾'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--gray); pointer-events: none; }
+    img { display: block; max-width: 100%; }
+    a { text-decoration: none; color: inherit; }
 
-    .tier-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 48px;
+    }
 
-    .tier-option { border: 2px solid #D8DFE6; border-radius: 12px; padding: 20px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; }
-    .tier-option:hover { border-color: var(--navy); }
-    .tier-option.selected { border-color: var(--amber); background: #FFFBF3; }
-    .tier-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(30, 45, 64, 0.97);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
 
-    .tier-label { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; }
-    .tier-price { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.6rem; color: var(--navy); margin-bottom: 6px; }
-    .tier-option.selected .tier-price { color: var(--amber); }
-    .tier-desc { font-size: 0.8rem; color: var(--gray); line-height: 1.5; }
+    .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 48px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-    .section-divider { border: none; border-top: 1px solid #D8DFE6; margin: 40px 0; }
-    .section-title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 24px; padding-bottom: 10px; border-bottom: 2px solid var(--amber); display: inline-block; }
+    .wordmark {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--white);
+      letter-spacing: -0.01em;
+    }
 
-    .submit-btn { width: 100%; padding: 15px; background: var(--amber); color: var(--navy); border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
-    .submit-btn:hover { opacity: 0.88; }
-    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .nav-cta {
+      background: var(--amber);
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 10px 22px;
+      border-radius: 6px;
+      transition: opacity 0.2s;
+    }
 
-    .form-note { font-size: 0.78rem; color: var(--gray); text-align: center; margin-top: 16px; line-height: 1.5; }
+    .nav-cta:hover { opacity: 0.88; }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--navy);
+      padding: 140px 0 100px;
+    }
+
+    .hero-inner {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 48px;
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.4rem, 4vw, 3.6rem);
+      line-height: 1.1;
+      color: var(--white);
+      margin-bottom: 28px;
+    }
+
+    .hero-sub {
+      font-size: 1.15rem;
+      line-height: 1.75;
+      color: rgba(255,255,255,0.7);
+      max-width: 620px;
+      margin-bottom: 44px;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      background: var(--amber);
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      padding: 16px 36px;
+      border-radius: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .hero-deposit-note {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ── CONTENT SECTIONS ── */
+    .content-section {
+      padding: 80px 0;
+      border-bottom: 1px solid rgba(30,45,64,0.08);
+    }
+
+    .content-section:last-of-type { border-bottom: none; }
+
+    .content-section h2 {
+      font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+      color: var(--navy);
+      line-height: 1.2;
+      margin-bottom: 28px;
+    }
+
+    .content-section p {
+      font-size: 1rem;
+      color: var(--gray);
+      line-height: 1.8;
+      margin-bottom: 18px;
+      max-width: 680px;
+    }
+
+    .content-section p:last-child { margin-bottom: 0; }
+
+    .section-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 16px;
+    }
+
+    /* ── DEPOSIT CALLOUT ── */
+    .deposit-callout {
+      background: var(--navy);
+      padding: 80px 0;
+    }
+
+    .deposit-callout h2 {
+      font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 28px;
+    }
+
+    .deposit-callout p {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.8;
+      margin-bottom: 18px;
+      max-width: 680px;
+    }
+
+    .deposit-callout p:last-child { margin-bottom: 0; }
+
+    .deposit-callout .section-label { color: var(--amber); }
+
+    /* ── FINAL CTA ── */
+    .final-cta {
+      background: var(--offwhite);
+      padding: 100px 0;
+      text-align: center;
+    }
+
+    .final-cta h2 {
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      color: var(--navy);
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+
+    .final-cta p {
+      font-size: 1.05rem;
+      color: var(--gray);
+      max-width: 520px;
+      margin: 0 auto 44px;
+      line-height: 1.75;
+    }
+
+    .final-cta .chat-note {
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-top: 24px;
+      font-style: italic;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy);
+      padding: 40px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .footer-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-wordmark {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: -0.01em;
+    }
+
+    .footer-right { font-size: 0.8rem; color: var(--gray); }
 
     /* ── CHAT WIDGET ── */
-    .chat-widget { position: fixed; bottom: 24px; right: 24px; z-index: 1000; font-family: 'Inter', sans-serif; }
-    .chat-toggle { width: 56px; height: 56px; background: var(--amber); border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(245,166,35,0.4); transition: transform 0.2s; }
-    .chat-toggle:hover { transform: scale(1.05); }
+    .chat-widget {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .chat-toggle {
+      width: 56px; height: 56px;
+      background: var(--amber);
+      border-radius: 50%; border: none;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(245,166,35,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-left: auto;
+    }
+
+    .chat-toggle:hover { transform: scale(1.05); box-shadow: 0 6px 24px rgba(245,166,35,0.5); }
     .chat-toggle svg { width: 24px; height: 24px; }
-    .chat-panel { position: absolute; bottom: 68px; right: 0; width: 360px; height: 480px; background: var(--white); border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.18); display: flex; flex-direction: column; overflow: hidden; opacity: 0; transform: translateY(12px) scale(0.97); pointer-events: none; transition: opacity 0.25s, transform 0.25s; }
-    .chat-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
-    .chat-header { background: var(--navy); padding: 16px 20px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-    .chat-avatar { width: 36px; height: 36px; background: var(--amber); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--navy); flex-shrink: 0; }
+
+    .chat-panel {
+      position: absolute;
+      bottom: 68px; right: 0;
+      width: 360px; height: 480px;
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(12px) scale(0.97);
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+
+    .chat-panel.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: all;
+    }
+
+    .chat-header {
+      background: var(--navy);
+      padding: 16px 20px;
+      display: flex; align-items: center; gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .chat-avatar {
+      width: 36px; height: 36px;
+      background: var(--amber); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Sans', sans-serif; font-weight: 700;
+      font-size: 0.9rem; color: var(--navy); flex-shrink: 0;
+    }
+
     .chat-header-info { flex: 1; }
-    .chat-header-name { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--white); }
+
+    .chat-header-name {
+      font-family: 'DM Sans', sans-serif; font-weight: 700;
+      font-size: 0.95rem; color: var(--white);
+    }
+
     .chat-header-status { font-size: 0.75rem; color: var(--gray); }
-    .chat-close { background: none; border: none; cursor: pointer; color: var(--gray); padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex-shrink: 0; transition: color 0.2s; }
+
+    .chat-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--gray); padding: 8px;
+      display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; flex-shrink: 0;
+      transition: color 0.2s;
+    }
+
     .chat-close:hover { color: var(--white); }
-    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: var(--offwhite); }
-    .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.875rem; line-height: 1.55; }
-    .msg.agent { background: var(--white); color: var(--navy); align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-    .msg.user { background: var(--navy); color: var(--white); align-self: flex-end; border-bottom-right-radius: 4px; }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 20px;
+      display: flex; flex-direction: column; gap: 12px;
+      background: var(--offwhite);
+    }
+
+    .msg {
+      max-width: 85%; padding: 10px 14px;
+      border-radius: 12px; font-size: 0.875rem; line-height: 1.55;
+    }
+
+    .msg.agent {
+      background: var(--white); color: var(--navy);
+      align-self: flex-start; border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .msg.user {
+      background: var(--navy); color: var(--white);
+      align-self: flex-end; border-bottom-right-radius: 4px;
+    }
+
     .msg.typing { background: var(--white); align-self: flex-start; color: var(--gray); }
-    .msg.confirmed { background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3); color: var(--navy); align-self: flex-start; border-bottom-left-radius: 4px; max-width: 92%; }
-    .chat-input-row { display: flex; gap: 8px; padding: 12px 16px; background: var(--white); border-top: 1px solid #EAEAEA; flex-shrink: 0; }
-    .chat-input { flex: 1; border: 1.5px solid #E0E0E0; border-radius: 8px; padding: 9px 12px; font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--navy); outline: none; transition: border-color 0.2s; }
+
+    .msg.confirmed {
+      background: rgba(245,166,35,0.1);
+      border: 1px solid rgba(245,166,35,0.3);
+      color: var(--navy); align-self: flex-start;
+      border-bottom-left-radius: 4px; max-width: 92%;
+    }
+
+    .chat-input-row {
+      display: flex; gap: 8px; padding: 12px 16px;
+      background: var(--white);
+      border-top: 1px solid #EAEAEA; flex-shrink: 0;
+    }
+
+    .chat-input {
+      flex: 1; border: 1.5px solid #E0E0E0; border-radius: 8px;
+      padding: 9px 12px;
+      font-family: 'Inter', sans-serif; font-size: 0.875rem;
+      color: var(--navy); outline: none; transition: border-color 0.2s;
+    }
+
     .chat-input:focus { border-color: var(--navy); }
-    .chat-send { background: var(--amber); border: none; border-radius: 8px; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.2s; }
+
+    .chat-send {
+      background: var(--amber); border: none; border-radius: 8px;
+      width: 38px; height: 38px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: opacity 0.2s;
+    }
+
     .chat-send:hover { opacity: 0.85; }
     .chat-send svg { width: 16px; height: 16px; }
 
-    @media (max-width: 600px) {
-      .tier-grid { grid-template-columns: 1fr; }
-      .form-container { padding: 40px 20px 60px; }
-      nav { padding: 0 24px; }
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .container { padding: 0 24px; }
+      .hero-inner { padding: 0 24px; }
+      .nav-inner { padding: 0 24px; }
+      .footer-inner { padding: 0 24px; }
+      .chat-panel { width: 320px; }
+      .content-section { padding: 60px 0; }
     }
   </style>
 </head>
 <body>
 
+  <!-- NAV -->
   <nav>
-    <a class="nav-logo" href="/"><span class="nav-wordmark">FrontFrame</span></a>
-    <a class="nav-back" href="intake-confirmation.html">← Back</a>
+    <div class="nav-inner">
+      <a class="wordmark" href="/">FrontFrame</a>
+      <a class="nav-cta" href="/added-intake">Start Discovery</a>
+    </div>
   </nav>
 
-  <div class="page-header">
-    <p class="page-eyebrow">Step 2 of 2 — Optional</p>
-    <h1>A few more questions.</h1>
-    <p>This helps us come to our first conversation prepared. The more you share, the faster we can move.</p>
-  </div>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <span class="hero-eyebrow">Discovery</span>
+      <h1>Discovery identifies<br>the real constraint.</h1>
+      <p class="hero-sub">Most businesses that contact FrontFrame think they need a website. Sometimes they do. More often, the website is simply where the symptoms show up.</p>
+      <a class="btn-primary" href="/added-intake">Start Discovery — $500 deposit</a>
+      <p class="hero-deposit-note">Credited toward the project if we move forward. Refunded if FrontFrame isn't the right fit.</p>
+    </div>
+  </section>
 
-  <div class="form-container">
-    <form id="discoveryForm">
+  <!-- WHAT DISCOVERY IS -->
+  <section class="content-section">
+    <div class="container">
+      <p class="section-label">The Problem</p>
+      <h2>The friction usually isn't where it looks.</h2>
+      <p>The owner is answering questions that should answer themselves. Scheduling depends on one person being available. Follow-up exists because someone remembers to do it. Administrative work keeps pulling expertise into tasks a system should be handling.</p>
+      <p>Discovery exists to identify where the friction is actually coming from. Before anything gets designed, installed, or automated, the goal is to understand how work moves through the business — where decisions depend on specific people, and what is limiting growth, responsiveness, or consistency.</p>
+      <p>Sometimes the answer is a website. Sometimes it's a workflow. Sometimes it's automation. Occasionally the right answer is no FrontFrame project at all.</p>
+      <p>The objective is not to sell a build. The objective is to understand the system before changing it.</p>
+    </div>
+  </section>
 
-      <!-- TIER SELECTION -->
-      <div class="form-group">
-        <p class="section-title">Which tier feels right?</p>
-        <div class="tier-grid">
-          <div class="tier-option" id="tierStandard" onclick="selectTier('standard')">
-            <input type="radio" name="tier" value="standard" id="radioStandard">
-            <div class="tier-label">Standard</div>
-            <div class="tier-price">$3,000</div>
-            <div class="tier-desc">Professional site, booking, and AI assistant. Everything you need to launch.</div>
-          </div>
-          <div class="tier-option" id="tierProfessional" onclick="selectTier('professional')">
-            <input type="radio" name="tier" value="professional" id="radioProfessional">
-            <div class="tier-label">Professional</div>
-            <div class="tier-price">$5,000</div>
-            <div class="tier-desc">Advanced client management, multi-service booking, and priority support.</div>
-          </div>
-        </div>
-      </div>
+  <!-- WE SOMETIMES SAY NO -->
+  <section class="content-section" style="background: var(--white);">
+    <div class="container">
+      <p class="section-label">Fit</p>
+      <h2>We sometimes say no.</h2>
+      <p>Not every business should hire FrontFrame. Some situations require specialized legal, accounting, valuation, or industry-specific expertise. If that's the real gap, it should be addressed directly — not papered over with better software.</p>
+      <p>Some businesses simply aren't at a stage where FrontFrame can deliver meaningful value. Part of Discovery is making that determination before anyone spends money in the wrong place. A recommendation not to proceed is a successful outcome if it's the accurate one.</p>
+    </div>
+  </section>
 
-      <hr class="section-divider">
+  <!-- DEPOSIT -->
+  <section class="deposit-callout">
+    <div class="container">
+      <p class="section-label">The Deposit</p>
+      <h2>The $500 Discovery deposit.</h2>
+      <p>Discovery requires a $500 deposit. If we move forward together, that amount is credited toward the project down payment. If I conclude that FrontFrame isn't the right fit — that the situation requires something I can't genuinely deliver — the deposit is refunded.</p>
+      <p>That decision belongs to FrontFrame, not to the client. Once Discovery proceeds and a written report is delivered, the deposit has been earned. A client who receives findings and decides not to act on them has still received the work.</p>
+      <p>Discovery is real work. The report is a deliverable. The deposit exists to ensure both sides take the evaluation seriously — and to keep the engagement honest on both ends.</p>
+    </div>
+  </section>
 
-      <!-- ABOUT YOUR BUSINESS -->
-      <p class="section-title">About your business</p>
+  <!-- WHERE FRONTFRAME FITS -->
+  <section class="content-section">
+    <div class="container">
+      <p class="section-label">Who It's For</p>
+      <h2>Where FrontFrame fits.</h2>
+      <p>FrontFrame works primarily with owner-operated service businesses outside the medical field. The common pattern isn't a shortage of expertise — most owners know their craft extremely well.</p>
+      <p>The problem is that expertise gets consumed by the wrong things: scheduling, intake, follow-up, administrative overhead, customer communication that should have been systematized long before it became a time sink.</p>
+      <p>The objective isn't to replace expertise. It's to stop wasting it.</p>
+    </div>
+  </section>
 
-      <div class="form-group">
-        <label for="services">What services do you offer? <span class="required">*</span></label>
-        <textarea id="services" name="services" placeholder="e.g. Bird sitting, in-home care for exotic birds, emergency avian care" required></textarea>
-      </div>
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <div class="container">
+      <h2>Start Discovery.</h2>
+      <p>If something in the business isn't working — and you can feel it even if you can't name it — that's what Discovery was designed to find.</p>
+      <a class="btn-primary" href="/added-intake">Start Discovery — $500 deposit</a>
+      <p class="chat-note">The assistant on this page handles questions about the process, helps you determine whether you're a fit, and collects contact information when a conversation makes more sense than a form.</p>
+    </div>
+  </section>
 
-      <div class="form-group">
-        <label for="clients">Who are your typical clients? <span class="required">*</span></label>
-        <textarea id="clients" name="clients" placeholder="e.g. Bird owners in Phoenix who travel frequently and need trusted in-home care" required></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="goal">What's your main goal with a new website?</label>
-        <textarea id="goal" name="goal" placeholder="e.g. Look more professional, start booking clients online, stop relying on word of mouth"></textarea>
-      </div>
-
-      <hr class="section-divider">
-
-      <!-- TIMELINE -->
-      <p class="section-title">Timeline</p>
-
-      <div class="form-group">
-        <label for="timeline">When do you want to be live?</label>
-        <div class="select-wrap">
-          <select id="timeline" name="timeline">
-            <option value="" disabled selected>Select a timeframe</option>
-            <option value="asap">As soon as possible</option>
-            <option value="2_weeks">Within 2 weeks</option>
-            <option value="1_month">Within a month</option>
-            <option value="flexible">I'm flexible</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="anything_else">Anything else we should know? <span class="hint">Optional</span></label>
-        <textarea id="anything_else" name="anything_else" placeholder="Existing site URL, specific requirements, questions for us — anything helps."></textarea>
-      </div>
-
-      <button type="submit" class="submit-btn" id="submitBtn">Submit →</button>
-      <p class="form-note">We'll reach out within one business day with next steps.</p>
-
-    </form>
-  </div>
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-wordmark">FrontFrame</span>
+      <p class="footer-right">© 2026 FrontFrame · frontframe.co</p>
+    </div>
+  </footer>
 
   <!-- CHAT WIDGET -->
   <div class="chat-widget" id="chatWidget">
     <div class="chat-panel" id="chatPanel">
       <div class="chat-header">
-        <div class="chat-avatar">FF</div>
+        <div class="chat-avatar">Ed</div>
         <div class="chat-header-info">
-          <div class="chat-header-name">FrontFrame</div>
-          <div class="chat-header-status">Ed will follow up personally</div>
+          <div class="chat-header-name">Ed · FrontFrame</div>
+          <div class="chat-header-status">Questions about Discovery?</div>
         </div>
         <button class="chat-close" id="chatClose" aria-label="Close chat">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -209,15 +529,15 @@
       </div>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="chat-input-row">
-        <input class="chat-input" id="chatInput" type="text" placeholder="Questions about the tiers?" autocomplete="off">
-        <button class="chat-send" id="chatSend">
+        <input class="chat-input" id="chatInput" type="text" placeholder="Ask about Discovery…" autocomplete="off">
+        <button class="chat-send" id="chatSend" aria-label="Send">
           <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
             <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
         </button>
       </div>
     </div>
-    <button class="chat-toggle" id="chatToggle">
+    <button class="chat-toggle" id="chatToggle" aria-label="Open chat with Ed">
       <svg viewBox="0 0 24 24" fill="none" stroke="#1E2D40" stroke-width="2">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
@@ -228,58 +548,6 @@
     const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
     const PAGE       = 'discovery';
 
-    const params = new URLSearchParams(window.location.search);
-
-    // ── Tier Selection ────────────────────────────────────────────────────────
-    let selectedTier = null;
-
-    function selectTier(tier) {
-      selectedTier = tier;
-      document.getElementById('tierStandard').classList.toggle('selected', tier === 'standard');
-      document.getElementById('tierProfessional').classList.toggle('selected', tier === 'professional');
-      document.getElementById(`radio${tier.charAt(0).toUpperCase() + tier.slice(1)}`).checked = true;
-    }
-
-    // ── Form Submission ───────────────────────────────────────────────────────
-    document.getElementById('discoveryForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const btn = document.getElementById('submitBtn');
-      btn.textContent = 'Submitting…';
-      btn.disabled = true;
-
-      const payload = {
-        email:         params.get('email') || '',
-        tier_selected: selectedTier || 'unknown',
-        services:      document.getElementById('services').value.trim(),
-        clients:       document.getElementById('clients').value.trim(),
-        goal:          document.getElementById('goal').value.trim(),
-        timeline:      document.getElementById('timeline').value,
-        anything_else: document.getElementById('anything_else').value.trim(),
-      };
-
-      try {
-        await fetch(`${WORKER_URL}/discovery`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      } catch { /* navigate regardless */ }
-
-      document.getElementById('discoveryForm').innerHTML = `
-        <div style="text-align:center; padding: 40px 0;">
-          <div style="width:56px;height:56px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#F5A623" stroke-width="2.5" width="24" height="24">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          </div>
-          <h2 style="font-family:'DM Sans',sans-serif;font-size:1.6rem;color:var(--navy);margin-bottom:12px;">All done.</h2>
-          <p style="color:var(--gray);line-height:1.7;max-width:400px;margin:0 auto 32px;">We have everything we need. Expect to hear from us within one business day.</p>
-          <a href="/" style="display:inline-block;background:var(--amber);color:var(--navy);font-family:'DM Sans',sans-serif;font-weight:700;padding:13px 28px;border-radius:8px;text-decoration:none;">Back to home</a>
-        </div>
-      `;
-    });
-
-    // ── Chat Widget ───────────────────────────────────────────────────────────
     const panel    = document.getElementById('chatPanel');
     const toggle   = document.getElementById('chatToggle');
     const closeBtn = document.getElementById('chatClose');
@@ -302,13 +570,12 @@
     function closeChat() {
       panel.classList.remove('open');
       toggle.style.display = 'flex';
-      sessionStorage.setItem('chatDismissed', 'true');
+      sessionStorage.setItem('chatDismissed_discovery', 'true');
     }
 
     toggle.addEventListener('click', openChat);
     closeBtn.addEventListener('click', closeChat);
 
-    // ── Message rendering ─────────────────────────────────────────────────────
     function addMsg(text, role) {
       const div = document.createElement('div');
       div.className = `msg ${role === 'user' ? 'user' : role === 'confirmed' ? 'confirmed' : 'agent'}`;
@@ -320,18 +587,17 @@
     function addTyping() {
       const div = document.createElement('div');
       div.className = 'msg typing';
-      div.textContent = '···';
-      div.id = 'typing';
+      div.textContent = 'Ed is typing…';
+      div.id = 'typing-indicator';
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
     }
 
     function removeTyping() {
-      const el = document.getElementById('typing');
+      const el = document.getElementById('typing-indicator');
       if (el) el.remove();
     }
 
-    // ── Parse [COLLECTED:{...}] signal ────────────────────────────────────────
     function parseCollected(reply) {
       const match = reply.match(/\[COLLECTED:([\s\S]*?)\]/);
       if (!match) return null;
@@ -339,7 +605,6 @@
       catch { return null; }
     }
 
-    // ── Notify Ed ─────────────────────────────────────────────────────────────
     async function notifyEd(contactData) {
       if (handoffDone) return;
       handoffDone = true;
@@ -364,7 +629,6 @@
       } catch { /* silent */ }
     }
 
-    // ── Main send handler ─────────────────────────────────────────────────────
     async function send(text) {
       if (!text.trim()) return;
       addMsg(text, 'user');
@@ -400,7 +664,7 @@
         history.push({ role: 'assistant', content: reply });
       } catch {
         removeTyping();
-        addMsg('Having trouble connecting. Please try again.', 'agent');
+        addMsg('Having trouble connecting right now. Please try again.', 'agent');
       } finally {
         if (!handoffDone) sendBtn.disabled = false;
         input.focus();
@@ -408,9 +672,9 @@
     }
 
     function greet() {
-      const greeting = 'Questions about the tiers or what happens next? Happy to help.';
-      addMsg(greeting, 'agent');
-      history.push({ role: 'assistant', content: greeting });
+      const msg = "Questions about how Discovery works, what the $500 covers, or whether FrontFrame is the right fit? I can help with any of that.";
+      addMsg(msg, 'agent');
+      history.push({ role: 'assistant', content: msg });
     }
 
     sendBtn.addEventListener('click', () => send(input.value));
