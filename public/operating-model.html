@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="A private FrontFrame reference page showing how an owner-operated business can be externalized into structured operating infrastructure.">
+  <title>The Operating Model — FrontFrame</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Lora:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+	*, *::before, *::after {
+	  box-sizing: border-box;
+	  margin: 0;
+	  padding: 0;
+	}
+
+	:root {
+	  --navy: #1E2D40;
+	  --amber: #F5A623;
+	  --offwhite: #F8F6F1;
+	  --midgray: #8A9BAE;
+	  --text: #1E2D40;
+	  --muted: #5a6a7a;
+	  --border: #d8d4cc;
+	  --surface: #ffffff;
+	  --focus: #9a620b;
+	}
+
+	html {
+	  font-size: 16px;
+	  scroll-behavior: smooth;
+	}
+
+	body {
+	  background: var(--offwhite);
+	  color: var(--text);
+	  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	  font-weight: 400;
+	  line-height: 1.7;
+	  min-height: 100vh;
+	  text-rendering: optimizeLegibility;
+	  -webkit-font-smoothing: antialiased;
+	}
+
+	a {
+	  color: inherit;
+	}
+
+	a:focus-visible,
+	button:focus-visible {
+	  outline: 3px solid color-mix(in srgb, var(--focus), transparent 35%);
+	  outline-offset: 4px;
+	  border-radius: 4px;
+	}
+
+	.skip-link {
+	  position: absolute;
+	  left: 1rem;
+	  top: 1rem;
+	  z-index: 10;
+	  transform: translateY(-150%);
+	  background: var(--navy);
+	  color: #fff;
+	  padding: 0.625rem 0.875rem;
+	  border-radius: 6px;
+	  text-decoration: none;
+	  font-size: 0.875rem;
+	  transition: transform 0.15s ease;
+	}
+
+	.skip-link:focus {
+	  transform: translateY(0);
+	}
+
+	header {
+	  border-bottom: 1px solid var(--border);
+	  padding: 1.25rem clamp(1.25rem, 4vw, 2.5rem);
+	  display: flex;
+	  align-items: center;
+	  justify-content: space-between;
+	}
+
+	.logo {
+	  font-family: 'DM Sans', system-ui, sans-serif;
+	  font-weight: 700;
+	  font-size: 1.15rem;
+	  color: var(--navy);
+	  letter-spacing: -0.02em;
+	  text-decoration: none;
+	}
+
+	.logo span {
+	  color: var(--amber);
+	}
+
+	main {
+	  max-width: 860px;
+	  margin: 0 auto;
+	  padding: clamp(3rem, 8vw, 4.5rem) clamp(1.25rem, 4vw, 2rem) clamp(4rem, 10vw, 6rem);
+	}
+
+	.eyebrow {
+	  font-family: 'Inter', system-ui, sans-serif;
+	  font-size: 0.75rem;
+	  font-weight: 500;
+	  letter-spacing: 0.12em;
+	  text-transform: uppercase;
+	  color: var(--midgray);
+	  margin-bottom: 1.25rem;
+	}
+
+	h1 {
+	  font-family: 'DM Sans', system-ui, sans-serif;
+	  font-weight: 700;
+	  font-size: clamp(2rem, 5vw, 2.5rem);
+	  line-height: 1.15;
+	  letter-spacing: -0.035em;
+	  color: var(--navy);
+	  margin-bottom: 1.5rem;
+	  max-width: 680px;
+	}
+
+	.intro {
+	  max-width: 650px;
+	  margin-bottom: 3rem;
+	}
+
+	.intro p {
+	  font-family: 'Lora', Georgia, serif;
+	  font-size: clamp(1rem, 2vw, 1.0625rem);
+	  line-height: 1.8;
+	  color: var(--muted);
+	}
+
+	.intro p + p {
+	  margin-top: 1.1rem;
+	}
+
+	.diagram-card {
+	  background: var(--surface);
+	  border: 1px solid var(--border);
+	  border-radius: 12px;
+	  padding: clamp(1rem, 3vw, 2rem) clamp(0.75rem, 3vw, 1.5rem);
+	  margin-bottom: 2.5rem;
+	  overflow-x: auto;
+	  box-shadow: 0 14px 40px rgba(30, 45, 64, 0.045);
+	}
+
+	.diagram-frame {
+	  min-width: 640px;
+	}
+
+	.diagram-caption {
+	  font-family: 'Inter', system-ui, sans-serif;
+	  font-size: 0.8125rem;
+	  color: var(--midgray);
+	  text-align: center;
+	  margin-top: 1.25rem;
+	  letter-spacing: 0.02em;
+	}
+
+	.closing {
+	  font-family: 'Lora', Georgia, serif;
+	  font-size: 1rem;
+	  line-height: 1.8;
+	  color: var(--muted);
+	  max-width: 610px;
+	}
+
+	footer {
+	  border-top: 1px solid var(--border);
+	  padding: 1.25rem clamp(1.25rem, 4vw, 2.5rem);
+	  font-size: 0.8125rem;
+	  color: var(--midgray);
+	  text-align: center;
+	}
+
+	svg {
+	  display: block;
+	  width: 100%;
+	  height: auto;
+	}
+
+	svg text {
+	  font-family: 'Inter', system-ui, sans-serif;
+	}
+
+	.zone rect {
+	  stroke-width: 0.5;
+	}
+
+	.z-purple rect { fill: #f0effe; stroke: #7b6fd6; }
+	.z-purple text { fill: #3d3492; }
+	.z-purple .zh { font-weight: 600; }
+
+	.z-teal rect { fill: #e2f5ee; stroke: #1a9a70; }
+	.z-teal text { fill: #0a5c42; }
+	.z-teal .zh { font-weight: 600; }
+
+	.z-coral rect { fill: #faece7; stroke: #c9512a; }
+	.z-coral text { fill: #7a2e12; }
+	.z-coral .zh { font-weight: 600; }
+
+	.z-blue rect { fill: #e5f1fc; stroke: #2475b8; }
+	.z-blue text { fill: #0c3f72; }
+	.z-blue .zh { font-weight: 600; }
+
+	.z-amber rect { fill: #fdf0d8; stroke: #c4820e; }
+	.z-amber text { fill: #6b440a; }
+	.z-amber .zh { font-weight: 600; }
+
+	.z-green rect { fill: #eaf4de; stroke: #4a8018; }
+	.z-green text { fill: #254808; }
+	.z-green .zh { font-weight: 600; }
+
+	.z-gray rect { fill: #f1efe9; stroke: #9a9890; }
+	.z-gray text { fill: #3a3a38; }
+	.z-gray .zh { font-weight: 600; }
+
+	svg .note {
+	  fill: var(--midgray);
+	  font-size: 11px;
+	  font-style: italic;
+	}
+
+	@media (max-width: 720px) {
+	  main {
+		padding-inline: 1rem;
+	  }
+
+	  .diagram-card {
+		margin-inline: -0.25rem;
+	  }
+
+	  .diagram-caption {
+		text-align: left;
+	  }
+	}
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header>
+	<a class="logo" href="/" aria-label="FrontFrame home">Front<span>Frame</span></a>
+  </header>
+
+  <main id="main">
+	<p class="eyebrow">The Operating Model</p>
+
+	<h1>When the Business Delivers What the Owner Knows</h1>
+
+	<div class="intro">
+	  <p>Every experienced owner has developed something that took years to build. The way a client gets handled when something goes wrong. The standard that gets applied without being written down. The follow-up that happens because the owner knows it matters. None of it is accidental. Most of it has never been written down.</p>
+
+	  <p>The gap is not between what the owner knows and what the business needs. The gap is between what the owner knows and what the business can deliver when the owner is not the one delivering it. This diagram maps what changes when that knowledge has somewhere to live — when the judgment, the standards, the client history, and the operational memory become part of how the business runs, not just part of how the owner runs it.</p>
+	</div>
+
+	<section class="diagram-card" aria-labelledby="diagram-heading">
+	  <div class="diagram-frame">
+		<svg viewBox="0 0 680 480" role="img" aria-labelledby="diagram-heading diagram-description">
+		  <title id="diagram-heading">FrontFrame client delivery operating model by functional zone</title>
+		  <desc id="diagram-description">Thirty-seven database tables grouped into seven functional zones: AI agent, sales pipeline, client operations, scheduling, marketing and research and development, platform management, and build process.</desc>
+
+		  <g class="zone z-purple">
+			<rect x="20" y="20" width="196" height="148" rx="10"/>
+			<text x="118" y="46" text-anchor="middle" class="zh" font-size="13">AI agent</text>
+			<text x="118" y="67" text-anchor="middle" font-size="11.5">system_prompt</text>
+			<text x="118" y="84" text-anchor="middle" font-size="11.5">qa_pairs</text>
+			<text x="118" y="101" text-anchor="middle" font-size="11.5">chat_sessions</text>
+			<text x="118" y="118" text-anchor="middle" font-size="11.5">lead_alerts</text>
+			<text x="118" y="135" text-anchor="middle" font-size="11.5">review_queue *</text>
+		  </g>
+
+		  <g class="zone z-teal">
+			<rect x="234" y="20" width="210" height="166" rx="10"/>
+			<text x="339" y="46" text-anchor="middle" class="zh" font-size="13">Sales pipeline</text>
+			<text x="339" y="67" text-anchor="middle" font-size="11.5">leads</text>
+			<text x="339" y="84" text-anchor="middle" font-size="11.5">intake_submissions</text>
+			<text x="339" y="101" text-anchor="middle" font-size="11.5">discovery_submissions</text>
+			<text x="339" y="118" text-anchor="middle" font-size="11.5">orders · agreements</text>
+			<text x="339" y="135" text-anchor="middle" font-size="11.5">referrals · referrers</text>
+			<text x="339" y="152" text-anchor="middle" font-size="11.5">email_events</text>
+		  </g>
+
+		  <g class="zone z-coral">
+			<rect x="462" y="20" width="200" height="184" rx="10"/>
+			<text x="562" y="46" text-anchor="middle" class="zh" font-size="13">Client operations</text>
+			<text x="562" y="67" text-anchor="middle" font-size="11.5">clients · subjects</text>
+			<text x="562" y="84" text-anchor="middle" font-size="11.5">engagements</text>
+			<text x="562" y="101" text-anchor="middle" font-size="11.5">engagement_subjects</text>
+			<text x="562" y="118" text-anchor="middle" font-size="11.5">service_events</text>
+			<text x="562" y="135" text-anchor="middle" font-size="11.5">edit_log · territories</text>
+			<text x="562" y="152" text-anchor="middle" font-size="11.5">documentation</text>
+			<text x="562" y="169" text-anchor="middle" font-size="11.5">maintenance_requests</text>
+			<text x="562" y="186" text-anchor="middle" font-size="11.5">revenue_summaries</text>
+		  </g>
+
+		  <g class="zone z-blue">
+			<rect x="20" y="190" width="196" height="100" rx="10"/>
+			<text x="118" y="214" text-anchor="middle" class="zh" font-size="13">Scheduling</text>
+			<text x="118" y="234" text-anchor="middle" font-size="11.5">office_hours_schedule</text>
+			<text x="118" y="251" text-anchor="middle" font-size="11.5">office_hours_overrides</text>
+			<text x="118" y="268" text-anchor="middle" font-size="11.5">blackout_periods</text>
+		  </g>
+
+		  <g class="zone z-amber">
+			<rect x="234" y="208" width="210" height="100" rx="10"/>
+			<text x="339" y="232" text-anchor="middle" class="zh" font-size="13">Marketing · R&amp;D †</text>
+			<text x="339" y="252" text-anchor="middle" font-size="11.5">marketing_log</text>
+			<text x="339" y="269" text-anchor="middle" font-size="11.5">problem_statements</text>
+			<text x="339" y="286" text-anchor="middle" font-size="11.5">deliverables · rd_log</text>
+		  </g>
+
+		  <g class="zone z-green">
+			<rect x="462" y="226" width="200" height="100" rx="10"/>
+			<text x="562" y="250" text-anchor="middle" class="zh" font-size="13">Platform management</text>
+			<text x="562" y="270" text-anchor="middle" font-size="11.5">subscriptions</text>
+			<text x="562" y="287" text-anchor="middle" font-size="11.5">subscription_payments</text>
+			<text x="562" y="304" text-anchor="middle" font-size="11.5">vault_entries · config</text>
+		  </g>
+
+		  <g class="zone z-gray">
+			<rect x="20" y="325" width="642" height="90" rx="10"/>
+			<text x="341" y="350" text-anchor="middle" class="zh" font-size="13">Build process — active during construction, tapers after delivery</text>
+			<text x="341" y="371" text-anchor="middle" font-size="11.5">defects · feedback · changelog · reviewers · review_queue</text>
+			<text x="341" y="388" text-anchor="middle" font-size="11.5">(review_queue persists as the AI agent is tuned to the owner's voice)</text>
+		  </g>
+
+		  <text x="20" y="438" class="note">* review_queue spans AI agent and build process — conversation stabilization continues well past delivery</text>
+		  <text x="20" y="454" class="note">† problem_statements, deliverables, and rd_log are Professional tier features</text>
+		</svg>
+	  </div>
+	  <p class="diagram-caption">FrontFrame client delivery — 37 tables, 7 functional zones</p>
+	</section>
+
+	<p class="closing">Most owners recognize the gap long before they know what to do about it.</p>
+  </main>
+
+  <footer>
+	frontframe.co &nbsp;·&nbsp; Not indexed
+  </footer>
+</body>
+</html>
