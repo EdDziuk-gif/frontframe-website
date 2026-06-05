@@ -225,7 +225,20 @@
 	  font-style: italic;
 	}
 
-	@media (max-width: 720px) {
+	.return-link {
+	  display: inline-block;
+	  font-family: 'Inter', system-ui, sans-serif;
+	  font-size: 0.8125rem;
+	  color: var(--midgray);
+	  text-decoration: none;
+	  margin-top: 2.5rem;
+	  letter-spacing: 0.01em;
+	  transition: color 0.15s;
+	}
+
+	.return-link:hover {
+	  color: var(--navy);
+	}
 	  main {
 		padding-inline: 1rem;
 	  }
@@ -337,6 +350,8 @@
 	</section>
 
 	<p class="closing">Most owners recognize the gap long before they know what to do about it.</p>
+
+	<a href="javascript:history.back()" class="return-link">← Return to the conversation</a>
   </main>
 
   <footer>
