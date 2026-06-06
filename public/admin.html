@@ -1353,7 +1353,18 @@
       <button class="modal-close" onclick="closeModal('defect-modal')">&#x00D7;</button>
     </div>
     <input type="hidden" id="defect-editing-id">
-    <div class="form-group"><label>Area</label><input type="text" id="defect-area" placeholder="conversation / ui / data"></div>
+    <div class="form-group">
+      <label>Area</label>
+      <select id="defect-area">
+        <option value="bot">Bot</option>
+        <option value="ui">UI</option>
+        <option value="content">Content</option>
+        <option value="form">Form</option>
+        <option value="payment">Payment</option>
+        <option value="contract">Contract</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
     <div class="form-group"><label>Description</label><textarea id="defect-desc" rows="4"></textarea></div>
     <div class="form-group">
       <label>Severity</label>
