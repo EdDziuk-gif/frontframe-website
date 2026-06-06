@@ -1349,9 +1349,10 @@
 <div class="modal-backdrop" id="defect-modal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">Log Defect</div>
+      <div class="modal-title" id="defect-modal-title">Log Defect</div>
       <button class="modal-close" onclick="closeModal('defect-modal')">&#x00D7;</button>
     </div>
+    <input type="hidden" id="defect-editing-id">
     <div class="form-group"><label>Area</label><input type="text" id="defect-area" placeholder="conversation / ui / data"></div>
     <div class="form-group"><label>Description</label><textarea id="defect-desc" rows="4"></textarea></div>
     <div class="form-group">
@@ -2028,25 +2029,62 @@ function renderDefects() {
       <td><span class="badge badge-${d.severity}">${d.severity}</span></td>
       <td><span class="badge badge-${d.status ?? 'open'}">${d.status ?? 'open'}</span></td>
       <td class="text-small text-gray">${esc(d.build_version ?? '')}</td>
-      <td>${d.status !== 'resolved' ? `<button class="btn btn-ghost btn-xs" onclick="resolveDefect('${d.id}')">Resolve</button>` : ''}</td>
+      <td>
+        <button class="btn btn-ghost btn-xs" onclick="openDefectModal(${d.id})">Edit</button>
+        ${d.status !== 'resolved' ? `<button class="btn btn-ghost btn-xs" onclick="resolveDefect('${d.id}')">Resolve</button>` : ''}
+      </td>
     </tr>
   `).join('');
 }
 
-function openDefectModal() { document.getElementById('defect-modal').classList.add('open'); }
+function openDefectModal(editId) {
+  const titleEl = document.getElementById('defect-modal-title');
+  const idEl    = document.getElementById('defect-editing-id');
+  if (editId !== undefined) {
+    // Edit mode: pre-populate from existing defect
+    const d = defects.find(x => x.id == editId);
+    if (!d) { toast('Defect not found.', 'error'); return; }
+    titleEl.textContent = 'Edit Defect';
+    idEl.value = d.id;
+    document.getElementById('defect-area').value     = d.area ?? '';
+    document.getElementById('defect-desc').value     = d.description ?? '';
+    document.getElementById('defect-severity').value = d.severity ?? 'low';
+  } else {
+    // Create mode: clear all fields
+    titleEl.textContent = 'Log Defect';
+    idEl.value = '';
+    document.getElementById('defect-area').value     = '';
+    document.getElementById('defect-desc').value     = '';
+    document.getElementById('defect-severity').value = 'low';
+  }
+  document.getElementById('defect-modal').classList.add('open');
+}
 
 async function saveDefect() {
   const area     = document.getElementById('defect-area').value.trim();
   const desc     = document.getElementById('defect-desc').value.trim();
   const severity = document.getElementById('defect-severity').value;
+  const editId   = document.getElementById('defect-editing-id').value;
   if (!area || !desc) { toast('Area and description are required.', 'error'); return; }
   try {
-    const created = await api('POST', '/admin/defects', { area, description: desc, severity });
-    const newDef  = Array.isArray(created) ? created[0] : created;
-    if (newDef) defects.unshift(newDef);
-    closeModal('defect-modal');
-    renderDefects();
-    toast('Defect logged.');
+    if (editId) {
+      // Edit mode: PATCH existing defect
+      const updated = await api('PATCH', `/admin/defects/${editId}`, { area, description: desc, severity });
+      const updatedDef = Array.isArray(updated) ? updated[0] : updated;
+      const idx = defects.findIndex(d => d.id == editId);
+      if (idx >= 0 && updatedDef) defects[idx] = updatedDef;
+      closeModal('defect-modal');
+      renderDefects();
+      toast('Defect updated.');
+    } else {
+      // Create mode: POST new defect
+      const created = await api('POST', '/admin/defects', { area, description: desc, severity });
+      const newDef  = Array.isArray(created) ? created[0] : created;
+      if (newDef) defects.unshift(newDef);
+      closeModal('defect-modal');
+      renderDefects();
+      toast('Defect logged.');
+    }
   } catch (e) { toast(e.message, 'error'); }
 }
 
