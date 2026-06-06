@@ -1368,7 +1368,12 @@
     <div class="form-group"><label>Description</label><textarea id="defect-desc" rows="4"></textarea></div>
     <div class="form-group">
       <label>Severity</label>
-      <select id="defect-severity"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+      <select id="defect-severity">
+        <option value="blocking">Blocking</option>
+        <option value="major">Major</option>
+        <option value="minor">Minor</option>
+        <option value="cosmetic">Cosmetic</option>
+      </select>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('defect-modal')">Cancel</button>
