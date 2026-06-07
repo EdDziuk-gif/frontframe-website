@@ -4,16 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Resources — FrontFrame</title>
-  <meta name="description" content="The book, articles, and conversations from FrontFrame — for owners building a business worth keeping.">
+  <meta name="description" content="Tools and resources for small business owners preparing to scale, sell, or systematize — and the advisors who work with them.">
   <link rel="canonical" href="https://frontframe.co/resources">
+  <meta name="robots" content="index, follow">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://frontframe.co/resources">
   <meta property="og:title" content="Resources — FrontFrame">
-  <meta property="og:description" content="The book, articles, and conversations from FrontFrame — for owners building a business worth keeping.">
+  <meta property="og:description" content="Tools and resources for small business owners preparing to scale, sell, or systematize — and the advisors who work with them.">
   <meta property="og:image" content="https://frontframe.co/images/FrontFrame-Hero.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Resources — FrontFrame">
-  <meta name="twitter:description" content="The book, articles, and conversations from FrontFrame — for owners building a business worth keeping.">
+  <meta name="twitter:description" content="Tools and resources for small business owners preparing to scale, sell, or systematize — and the advisors who work with them.">
   <link rel="icon" type="image/png" href="images/Logo_FF.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -575,6 +576,24 @@
     .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .reveal.visible { opacity: 1; transform: translateY(0); }
 
+    /* ADVISOR INTEL */
+    .advisor-intel-section { background: var(--offwhite); padding: 80px 0 100px; }
+
+    .advisor-intel-intro {
+      max-width: 680px;
+      margin-bottom: 40px;
+    }
+
+    .advisor-intel-desc {
+      font-size: 1.05rem;
+      color: var(--gray);
+      line-height: 1.85;
+    }
+
+    .advisor-intel-frame { margin-bottom: 36px; }
+
+    .advisor-intel-return { padding-top: 8px; }
+
     /* RESPONSIVE */
     @media (max-width: 1280px) {
       .container { max-width: 1160px; padding: 0 40px; }
@@ -595,17 +614,6 @@
 </head>
 <body>
 
-  <!-- TEMPORARY: repurpose notice — remove this block when resources page is redesigned -->
-  <div style="position: fixed; inset: 0; z-index: 9999; background: var(--offwhite); display: flex; align-items: center; justify-content: center; padding: 2rem;">
-    <div style="max-width: 560px; text-align: center;">
-      <p style="font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); margin-bottom: 1rem;">Resources</p>
-      <h1 style="font-family: 'DM Sans', sans-serif; color: var(--navy); margin-bottom: 1.25rem;">This page is being rebuilt for FrontFrame site owners.</h1>
-      <p style="color: var(--gray); margin-bottom: 2rem;">We're redesigning this space with tools and information exclusively for the businesses we work with. In the meantime, you can learn more about what we do on our home page.</p>
-      <a href="/#hero" class="btn-primary">Go to Home Page</a>
-    </div>
-  </div>
-  <!-- TEMPORARY: repurpose notice — remove this block when resources page is redesigned -->
-
   <!-- NAV -->
   <nav>
     <div class="nav-inner">
@@ -624,6 +632,30 @@
       </div>
     </div>
   </section>
+
+  <!-- ADVISOR INTEL -->
+  <section class="advisor-intel-section">
+    <div class="container">
+      <div class="advisor-intel-intro reveal">
+        <p class="section-label">Advisor Intel</p>
+        <p class="advisor-intel-desc">This feed is built for advisors who work with small business owners. Every article is pulled live, scored for relevance to exit planning, valuation, M&amp;A, and operational strategy, and filtered so the signal-to-noise ratio actually works. Use the feed manager to add your own sources. Bookmarked articles are saved to your browser — they'll be here when you come back.</p>
+      </div>
+      <div class="advisor-intel-frame reveal">
+        <iframe
+          src="advisor-intel.html"
+          style="width: 100%; height: 760px; border: 1px solid #e4e0d9; border-radius: 10px; background: #f5f3ef;"
+          title="Advisor Intel — Small Business Strategy Feed"
+          loading="lazy"
+        ></iframe>
+      </div>
+      <div class="advisor-intel-return reveal">
+        <a class="btn-ghost-dark" href="/">← Back to Home</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAGED SECTIONS: held in <template> (inert/not rendered). Move each section out of the template when ready to deploy. -->
+  <template id="staged-sections">
 
   <!-- BOOK -->
   <section class="book-section">
@@ -721,6 +753,9 @@
       </div>
     </div>
   </section>
+
+  </template>
+  <!-- END STAGED SECTIONS -->
 
   <!-- FOOTER -->
   <footer>
@@ -911,7 +946,7 @@
 
     // Chat Widget
     const WORKER = 'https://frontframe-worker.ed-e5c.workers.dev';
-    const PAGE   = 'home';
+    const PAGE   = 'ADVISOR';
 
     const panel    = document.getElementById('chatPanel');
     const toggle   = document.getElementById('chatToggle');
@@ -949,7 +984,7 @@
     }
 
     function greet() {
-      const msg = "Hi, I'm Ed. Happy to answer questions about the book or anything else on this page.";
+      const msg = "Hi, I'm Ed. The Advisor Intel feed pulls live content from across the small business strategy landscape and scores it for signal — exit planning, valuation, M&A, and operations. Ask me how to get the most out of it, or anything about what you're seeing.";
       addMsg(msg, 'agent');
       history.push({ role: 'assistant', content: msg });
     }

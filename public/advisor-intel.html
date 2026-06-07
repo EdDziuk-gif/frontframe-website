@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Advisor Intel — Small Business Strategy Feed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.55;background:#f5f3ef;color:#1e1b14}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#d4cfc8;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#b8b3aa}
+::selection{background:rgba(1,105,111,0.15)}
+h1,h2,h3,h4{font-family:'Cabinet Grotesk','DM Sans',sans-serif;line-height:1.2}
+button{cursor:pointer;border:none;background:none;font:inherit;color:inherit}
+input,select{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+
+/* ── Layout ─────────────────────────────────────────────────────── */
+#app{display:grid;grid-template-columns:220px 1fr;grid-template-rows:auto 1fr;height:100dvh}
+#sidebar{grid-row:1/-1;background:#faf9f6;border-right:1px solid #e4e0d9;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column}
+#topbar{grid-column:2;background:#f5f3ef;border-bottom:1px solid #e4e0d9;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+#main{grid-column:2;overflow-y:auto;overscroll-behavior:contain}
+
+/* ── Sidebar ─────────────────────────────────────────────────────── */
+.sb-logo{padding:14px 16px;border-bottom:1px solid #e4e0d9;display:flex;align-items:center;gap:10px}
+.sb-logo-text .name{font-family:'Cabinet Grotesk',sans-serif;font-size:13px;font-weight:700;color:#1e1b14;line-height:1}
+.sb-logo-text .sub{font-size:11px;color:#8a8479;margin-top:2px}
+.sb-nav{padding:10px 10px 4px}
+.sb-nav a{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:5px;font-size:13px;color:#6b6660;transition:background .15s,color .15s;text-decoration:none}
+.sb-nav a:hover{background:#eeece8;color:#1e1b14}
+.sb-nav a.active{background:rgba(1,105,111,0.08);color:#015e63;font-weight:600}
+.sb-stats{padding:8px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-tile{background:#f0ede8;border:1px solid #e4e0d9;border-radius:5px;padding:9px 10px}
+.stat-tile .val{font-family:'Cabinet Grotesk',sans-serif;font-size:18px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.stat-tile .lbl{font-size:11px;color:#8a8479;margin-top:2px}
+.sb-section-title{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#9a9590;padding:10px 14px 6px}
+.cat-bar-row{padding:0 14px 6px;display:flex;flex-direction:column;gap:6px}
+.cat-bar-item{}
+.cat-bar-header{display:flex;justify-content:space-between;font-size:11px;color:#8a8479;margin-bottom:2px}
+.cat-bar-track{height:4px;border-radius:2px;background:#e4e0d9}
+.cat-bar-fill{height:4px;border-radius:2px;transition:width .3s}
+.sb-footer{margin-top:auto;padding:10px 14px;border-top:1px solid #e4e0d9;font-size:11px;color:#9a9590;display:flex;align-items:center;gap:5px}
+
+/* ── Top bar controls ────────────────────────────────────────────── */
+.topbar-left .page-title{font-family:'Cabinet Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1e1b14}
+.topbar-left .page-sub{font-size:11px;color:#8a8479}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+select.filter-select{height:28px;padding:0 8px;border:1px solid #dedad3;border-radius:5px;background:#f0ede8;font-size:12px;color:#3d3a34;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8479' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;padding-right:22px;cursor:pointer}
+select.filter-select:focus{outline:2px solid rgba(1,105,111,0.4);outline-offset:1px}
+.toggle-row{display:flex;align-items:center;gap:5px;font-size:12px;color:#6b6660}
+.toggle-wrap{position:relative;width:30px;height:17px;flex-shrink:0}
+.toggle-wrap input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;border-radius:17px;background:#d4cfc8;cursor:pointer;transition:background .2s}
+.toggle-slider::before{content:'';position:absolute;width:13px;height:13px;left:2px;top:2px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle-wrap input:checked + .toggle-slider{background:#01696f}
+.toggle-wrap input:checked + .toggle-slider::before{transform:translateX(13px)}
+.btn{height:28px;padding:0 12px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s,color .15s,border-color .15s;display:inline-flex;align-items:center;gap:5px;border:1px solid transparent}
+.btn-outline{background:#f0ede8;border-color:#dedad3;color:#3d3a34}
+.btn-outline:hover{background:#e8e4de;border-color:#cdc9c2}
+.btn-outline.active{background:rgba(1,105,111,0.08);border-color:rgba(1,105,111,0.3);color:#015e63}
+.btn-primary{background:#01696f;color:#fff;border-color:#01696f}
+.btn-primary:hover{background:#015057}
+.btn-primary:disabled{background:#a0c8ca;border-color:#a0c8ca;cursor:not-allowed}
+
+/* ── Feed page ────────────────────────────────────────────────────── */
+#feeds-page{display:none;padding:24px;max-width:680px}
+#feeds-page.visible{display:block}
+#dashboard-page{display:block}
+#dashboard-page.hidden{display:none}
+.feeds-form{background:#faf9f6;border:1px solid #e4e0d9;border-radius:6px;padding:16px;margin-bottom:20px}
+.feeds-form h2{font-family:'Cabinet Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1e1b14;margin-bottom:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-field label{display:block;font-size:11px;color:#8a8479;margin-bottom:4px}
+.form-field input,.form-field select{width:100%;height:30px;padding:0 9px;border:1px solid #dedad3;border-radius:5px;background:#f5f3ef;font-size:13px;color:#1e1b14}
+.form-field input:focus,.form-field select:focus{outline:2px solid rgba(1,105,111,0.35);outline-offset:1px}
+.form-field-full{margin-bottom:10px}
+.form-field-full label{display:block;font-size:11px;color:#8a8479;margin-bottom:4px}
+.form-field-full input{width:100%;height:30px;padding:0 9px;border:1px solid #dedad3;border-radius:5px;background:#f5f3ef;font-size:13px;color:#1e1b14}
+.feed-list{display:flex;flex-direction:column;gap:8px}
+.feed-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#faf9f6;border:1px solid #e4e0d9;border-radius:6px}
+.feed-row.inactive{opacity:.55}
+.feed-info{flex:1;min-width:0}
+.feed-name-row{display:flex;align-items:center;gap:6px}
+.feed-name{font-size:13px;font-weight:500;color:#1e1b14}
+.feed-type-badge{font-size:10px;padding:1px 6px;border-radius:3px;border:1px solid}
+.badge-rss{background:#e8f4f4;color:#015e63;border-color:#b0d9da}
+.badge-substack{background:#f0eaf8;color:#5c2e8a;border-color:#c9b0e0}
+.badge-newsletter{background:#fef3e2;color:#7a4800;border-color:#f0cfa0}
+.feed-url{font-size:11px;color:#9a9590;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;margin-top:1px}
+.feed-meta{font-size:11px;color:#b0aba4;margin-left:6px}
+.feed-del-btn{padding:4px 6px;color:#b0aba4;border-radius:4px;transition:color .15s}
+.feed-del-btn:hover{color:#c0392b}
+.feeds-tip{font-size:11px;color:#9a9590;margin-top:14px}
+.feeds-tip code{background:#eeece8;padding:1px 5px;border-radius:3px;font-family:'DM Mono',monospace;font-size:11px;color:#015e63}
+
+/* ── Article grid ────────────────────────────────────────────────── */
+.articles-grid{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.article-card{background:#faf9f6;border:1px solid #e4e0d9;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:7px;transition:box-shadow .18s,border-color .18s}
+.article-card:hover{box-shadow:0 2px 10px rgba(30,27,20,.07);border-color:#b8d8da}
+.article-card.is-read{background:#f5f3ef;opacity:.65}
+.article-meta{display:flex;align-items:center;gap:5px;font-size:11px;color:#8a8479}
+.article-source{font-weight:500;color:#5a5650}
+.article-dot{color:#c4bfb8}
+.signal-badge{margin-left:auto;font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;border:1px solid}
+.sig-high{background:#edf7ed;color:#276a27;border-color:#9ed49e}
+.sig-medium{background:#fdf4e3;color:#7a4800;border-color:#f0cfa0}
+.sig-low{background:#f0f0f4;color:#555566;border-color:#c8c8d8}
+.sig-noise{background:#f2f0ec;color:#8a8479;border-color:#d4cfc8}
+.score-bar{height:2px;border-radius:2px;background:#e4e0d9;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:2px;transition:width .4s}
+.article-title{font-family:'Cabinet Grotesk',sans-serif;font-size:13px;font-weight:600;color:#1e1b14;line-height:1.35;cursor:pointer}
+.article-title:hover{color:#01696f;text-decoration:underline;text-decoration-color:rgba(1,105,111,0.4)}
+.article-summary{font-size:12px;color:#6b6660;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.article-footer{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px}
+.cat-badge{font-size:11px;padding:2px 7px;border-radius:4px;border:1px solid}
+.cat-def{background:#e8f4f4;color:#015e63;border-color:#b0d9da}
+.cat-exec{background:#f0eaf8;color:#5c2e8a;border-color:#c9b0e0}
+.cat-comp{background:#fef0e8;color:#7a3200;border-color:#f0c8a0}
+.cat-fw{background:#e8f7f0;color:#1a6040;border-color:#a0d9b8}
+.cat-case{background:#fce8f0;color:#7a1840;border-color:#e8a8c0}
+.cat-noise{background:#f2f0ec;color:#8a8479;border-color:#d4cfc8}
+.cat-gen{background:#f2f0ec;color:#8a8479;border-color:#d4cfc8}
+.fw-badge{font-size:11px;padding:2px 6px;border-radius:4px;border:1px solid;background:#e8f4f4;color:#015e63;border-color:#b0d9da}
+.article-actions{margin-left:auto;display:flex;align-items:center;gap:1px}
+.action-btn{padding:4px 5px;border-radius:4px;color:#b0aba4;transition:color .15s}
+.action-btn:hover{color:#1e1b14}
+.action-btn.active{color:#01696f}
+.action-btn.noise-active{color:#c0392b}
+
+/* ── Empty / loading ─────────────────────────────────────────────── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:280px;gap:10px;color:#8a8479;text-align:center;padding:20px}
+.empty-state svg{opacity:.35}
+.empty-state p{font-size:13px}
+.empty-state span{font-size:12px;color:#a8a49e}
+.skeleton{background:#eeece8;border-radius:6px;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.scan-progress{font-size:12px;color:#6b6660;padding:8px 20px;display:none}
+.scan-progress.visible{display:block}
+.toast{position:fixed;bottom:20px;right:20px;background:#1e1b14;color:#f5f3ef;padding:10px 16px;border-radius:6px;font-size:13px;z-index:100;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────── -->
+  <aside id="sidebar">
+	<div class="sb-logo">
+	  <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+		<circle cx="13" cy="13" r="12" stroke="#01696f" stroke-width="1.5"/>
+		<circle cx="13" cy="13" r="7" stroke="#01696f" stroke-width="1" stroke-dasharray="3 2" opacity=".4"/>
+		<circle cx="13" cy="13" r="2.5" fill="#01696f"/>
+		<line x1="13" y1="1" x2="13" y2="5.5" stroke="#01696f" stroke-width="1.5"/>
+		<line x1="25" y1="13" x2="20.5" y2="13" stroke="#01696f" stroke-width="1.5"/>
+		<circle cx="19" cy="7.5" r="1.5" fill="#da7100"/>
+		<circle cx="8" cy="18.5" r="1.5" fill="#437a22"/>
+	  </svg>
+	  <div class="sb-logo-text">
+		<div class="name">Advisor Intel</div>
+		<div class="sub">Small Business Strategy Feed</div>
+	  </div>
+	</div>
+
+	<nav class="sb-nav">
+	  <a href="#" id="nav-dashboard" class="active" onclick="showPage('dashboard');return false">
+		<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+		Dashboard
+	  </a>
+	  <a href="#" id="nav-feeds" onclick="showPage('feeds');return false">
+		<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="3" cy="13" r="1.5" fill="currentColor" stroke="none"/><path d="M1.5 8.5a6 6 0 0 1 6 6"/><path d="M1.5 4.5a10 10 0 0 1 10 10"/></svg>
+		Manage Feeds
+	  </a>
+	</nav>
+
+	<div class="sb-stats">
+	  <div class="stat-tile"><div class="val" id="stat-total">—</div><div class="lbl">Articles</div></div>
+	  <div class="stat-tile"><div class="val" style="color:#276a27" id="stat-high">—</div><div class="lbl">High Signal</div></div>
+	  <div class="stat-tile"><div class="val" style="color:#01696f" id="stat-saved">—</div><div class="lbl">Saved</div></div>
+	  <div class="stat-tile"><div class="val" style="color:#9a9590" id="stat-noise">—</div><div class="lbl">Noise Out</div></div>
+	</div>
+
+	<div class="sb-section-title">By Category</div>
+	<div class="cat-bar-row" id="cat-bars"></div>
+
+	<div class="sb-footer">
+	  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><polyline points="8 4.5 8 8 10.5 10"/></svg>
+	  <span id="last-scan-label">No scan yet</span>
+	</div>
+  </aside>
+
+  <!-- ── Top bar ──────────────────────────────────────────────── -->
+  <header id="topbar">
+	<div class="topbar-left">
+	  <div class="page-title">Advisor Feed</div>
+	  <div class="page-sub" id="feed-subtitle">0 articles · 0 high-signal</div>
+	</div>
+	<div class="topbar-right">
+	  <select class="filter-select" id="filter-cat" onchange="renderArticles()">
+		<option value="all">All Categories</option>
+		<option value="strategy-definition">Business Strategy</option>
+		<option value="strategy-execution">Execution & Growth</option>
+		<option value="competitive-intelligence">Market Intelligence</option>
+		<option value="frameworks">Frameworks & Tools</option>
+		<option value="case-study">Case Studies</option>
+		<option value="noise">Noise</option>
+	  </select>
+	  <select class="filter-select" id="filter-fw" onchange="renderArticles()">
+		<option value="">All Topics</option>
+		<option>Exit Planning</option>
+		<option>Business Valuation</option>
+		<option>Growth Strategy</option>
+		<option>Cash Flow</option>
+		<option>M&A</option>
+		<option>Customer Acquisition</option>
+		<option>Operations</option>
+		<option>Owner Strategy</option>
+	  </select>
+	  <select class="filter-select" id="filter-score" onchange="renderArticles()">
+		<option value="0">All scores</option>
+		<option value="45">Medium+ (45+)</option>
+		<option value="65">High signal (65+)</option>
+		<option value="75">Top tier (75+)</option>
+	  </select>
+	  <label class="toggle-row">
+		<div class="toggle-wrap">
+		  <input type="checkbox" id="toggle-noise" checked onchange="renderArticles()" />
+		  <span class="toggle-slider"></span>
+		</div>
+		Hide noise
+	  </label>
+	  <button class="btn btn-outline" id="btn-saved" onclick="toggleSaved()">
+		<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 2h10a1 1 0 0 1 1 1v11l-6-3-6 3V3a1 1 0 0 1 1-1z"/></svg>
+		Saved
+	  </button>
+	  <button class="btn btn-primary" id="btn-scan" onclick="runScan()">
+		<svg id="scan-icon" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 8A6 6 0 1 1 8 2"/><polyline points="14 2 14 6 10 6"/></svg>
+		Scan Now
+	  </button>
+	</div>
+  </header>
+
+  <!-- ── Main: Dashboard ──────────────────────────────────────── -->
+  <main id="main">
+	<div id="dashboard-page">
+	  <div class="scan-progress" id="scan-progress">Scanning feeds… this takes 15–30 seconds</div>
+	  <div id="articles-container"></div>
+	</div>
+
+	<!-- ── Feeds page ──────────────────────────────────────────── -->
+	<div id="feeds-page">
+	  <h1 style="font-family:'Cabinet Grotesk',sans-serif;font-size:18px;font-weight:700;color:#1e1b14;margin-bottom:4px">Manage Feeds</h1>
+	  <p style="font-size:13px;color:#6b6660;margin-bottom:20px">Add RSS feeds, newsletters, and industry sources relevant to your advisory clients. Active feeds are scanned when you click "Scan Now".</p>
+
+	  <div class="feeds-form">
+		<h2>Add New Source</h2>
+		<div class="form-row">
+		  <div class="form-field">
+			<label>Source name</label>
+			<input type="text" id="new-feed-name" placeholder="HBR Strategy" />
+		  </div>
+		  <div class="form-field">
+			<label>Type</label>
+			<select id="new-feed-type">
+			  <option value="rss">RSS</option>
+			  <option value="substack">Substack</option>
+			  <option value="newsletter">Newsletter</option>
+			</select>
+		  </div>
+		</div>
+		<div class="form-field-full">
+		  <label>Feed URL</label>
+		  <input type="url" id="new-feed-url" placeholder="https://example.com/feed.xml" />
+		</div>
+		<button class="btn btn-primary" style="width:100%;justify-content:center;height:32px" onclick="addFeed()">+ Add Feed</button>
+	  </div>
+
+	  <div class="feed-list" id="feed-list"></div>
+	  <p class="feeds-tip">Add any RSS feed — trade publications, business journals, or newsletters your clients read: <code>https://authorname.substack.com/feed</code></p>
+	</div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let articles = [];
+let showSaved = false;
+let scanning = false;
+let lastScanTime = null;
+
+let feeds = [
+  { id:1,  name:'HBR Small Business',     url:'https://hbr.org/topic/subject/entrepreneurship/rss', type:'rss',       active:true, lastFetched:null },
+  { id:2,  name:'MIT Sloan Management',   url:'https://sloanreview.mit.edu/feed/',                   type:'rss',       active:true, lastFetched:null },
+  { id:3,  name:'McKinsey Insights',      url:'https://www.mckinsey.com/rss/insights.xml',           type:'rss',       active:true, lastFetched:null },
+  { id:4,  name:'Bain Insights',          url:'https://www.bain.com/insights/rss/',                  type:'rss',       active:true, lastFetched:null },
+  { id:5,  name:'BCG Perspectives',       url:'https://www.bcg.com/rss/insights',                   type:'rss',       active:true, lastFetched:null },
+  { id:6,  name:'Inc. Magazine',          url:'https://www.inc.com/rss/',                            type:'rss',       active:true, lastFetched:null },
+  { id:7,  name:'Entrepreneur',           url:'https://www.entrepreneur.com/latest.rss',             type:'rss',       active:true, lastFetched:null },
+  { id:8,  name:'SCORE Blog',             url:'https://www.score.org/blog/rss.xml',                  type:'rss',       active:true, lastFetched:null },
+  { id:9,  name:'SBA News',               url:'https://www.sba.gov/rss/everything.xml',              type:'rss',       active:true, lastFetched:null },
+  { id:10, name:'BizBuySell Insights',    url:'https://www.bizbuysell.com/news/rss/',                type:'rss',       active:true, lastFetched:null },
+];
+let nextFeedId = 11;
+let nextArticleId = 1;
+
+// ═══════════════════════════════════════════════════════════════
+// LOCALSTORAGE PERSISTENCE
+// ═══════════════════════════════════════════════════════════════
+const LS_FEEDS     = 'advisorintel_feeds';
+const LS_BOOKMARKS = 'advisorintel_bookmarks'; // stored as array of {url, title, feedName, summary, signalScore, category, frameworks, publishedAt}
+
+function saveFeeds(){
+  try { localStorage.setItem(LS_FEEDS, JSON.stringify(feeds)); } catch(e){}
+}
+
+function loadFeeds(){
+  try {
+	const raw = localStorage.getItem(LS_FEEDS);
+	if(!raw) return;
+	const stored = JSON.parse(raw);
+	if(!Array.isArray(stored) || stored.length === 0) return;
+	feeds = stored;
+	nextFeedId = Math.max(...feeds.map(f=>f.id)) + 1;
+  } catch(e){}
+}
+
+function saveBookmarks(){
+  try {
+	const bookmarked = articles
+	  .filter(a => a.isBookmarked)
+	  .map(a => ({
+		url:         a.url,
+		title:       a.title,
+		feedName:    a.feedName,
+		summary:     a.summary,
+		signalScore: a.signalScore,
+		category:    a.category,
+		frameworks:  a.frameworks,
+		publishedAt: a.publishedAt,
+	  }));
+	localStorage.setItem(LS_BOOKMARKS, JSON.stringify(bookmarked));
+  } catch(e){}
+}
+
+function loadBookmarks(){
+  try {
+	const raw = localStorage.getItem(LS_BOOKMARKS);
+	if(!raw) return;
+	const stored = JSON.parse(raw);
+	if(!Array.isArray(stored) || stored.length === 0) return;
+	// Rehydrate bookmarked articles into the articles array so they appear on load
+	for(const b of stored){
+	  if(!articles.some(a => a.url === b.url)){
+		articles.push({
+		  id:           nextArticleId++,
+		  feedId:       null,
+		  feedName:     b.feedName,
+		  title:        b.title,
+		  url:          b.url,
+		  summary:      b.summary || null,
+		  publishedAt:  b.publishedAt,
+		  fetchedAt:    b.publishedAt,
+		  signalScore:  b.signalScore,
+		  category:     b.category,
+		  frameworks:   b.frameworks || [],
+		  isNoise:      false,
+		  isBookmarked: true,
+		  isRead:       false,
+		});
+	  }
+	}
+  } catch(e){}
+}
+
+// Apply stored bookmark state to freshly scanned articles by URL match
+function mergeBookmarks(){
+  try {
+	const raw = localStorage.getItem(LS_BOOKMARKS);
+	if(!raw) return;
+	const stored = JSON.parse(raw);
+	if(!Array.isArray(stored)) return;
+	const byUrl = new Map(stored.map(b => [b.url, b]));
+	for(const a of articles){
+	  if(byUrl.has(a.url)) a.isBookmarked = true;
+	}
+  } catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCORING ENGINE
+// ═══════════════════════════════════════════════════════════════
+const FRAMEWORK_SIGNALS = {
+  "Exit Planning":        ["exit planning","exit strategy","succession","business transition","owner exit","sellability","exit readiness"],
+  "Business Valuation":   ["valuation","ebitda","multiple","seller discretionary","sde","business worth","fair market value","deal structure"],
+  "Growth Strategy":      ["growth strategy","scaling","scale a business","revenue growth","growth plan","organic growth","acquisition strategy"],
+  "Cash Flow":            ["cash flow","working capital","liquidity","cash management","burn rate","runway","profitability"],
+  "M&A":                  ["mergers and acquisitions","m&a","deal flow","due diligence","letter of intent","loi","acquisition","business sale"],
+  "Customer Acquisition": ["customer acquisition","lead generation","sales funnel","conversion","cac","churn","retention","go-to-market"],
+  "Operations":           ["operations","systems","process improvement","sop","standard operating","efficiency","workflow","automation"],
+  "Owner Strategy":       ["owner-operator","founder","entrepreneur","small business owner","lifestyle business","micro business","main street"],
+};
+
+const CATEGORY_SIGNALS = {
+  "strategy-definition":     ["strategy","business strategy","planning","vision","positioning","competitive advantage","value proposition","business model","advisory","consulting","advise","advisor"],
+  "strategy-execution":      ["growth","execution","scaling","implementation","kpi","metrics","operations","process","systems","profitability","cash flow","revenue"],
+  "competitive-intelligence":["market trend","industry","small business","main street","owner-operator","economy","interest rates","lending","deal activity","transaction"],
+  "case-study":              ["case study","how they did","lessons from","playbook","story","sold their business","exit story","turnaround","what worked","breakdown"],
+  "frameworks":              ["framework","model","template","checklist","guide","how to","approach","tool for","method","applying"],
+};
+
+const NOISE_SIGNALS = ["sponsored","advertisement","press release","new hire","job opening","hiring for","webinar registration","free trial","sign up now","limited time offer","discount","podcast episode","watch our","join us live","register now","award winner"];
+const HIGH_SIGNAL   = ["exit multiple","seller financing","sba loan","owner operator","succession plan","business valuation","ebitda multiple","deal structure","referral relationship","cpa advisor","financial advisor","estate planning","wealth transfer","due diligence","letter of intent","sellability","recurring revenue","transferable value"];
+
+function normalize(t){ return t.toLowerCase().replace(/[^a-z0-9 ]/g,' '); }
+function countMatches(text, terms){ return terms.filter(t => text.includes(t)).length; }
+
+function scoreArticle(title, summary=''){
+  const combined = normalize(title+' '+summary);
+  const noiseCount = countMatches(combined, NOISE_SIGNALS);
+  if(noiseCount >= 2) return { signalScore:5, category:'noise', frameworks:[], isNoise:true };
+
+  const matchedFw = [];
+  let fwScore = 0;
+  for(const [fw, kws] of Object.entries(FRAMEWORK_SIGNALS)){
+	const m = countMatches(combined, kws);
+	if(m > 0){ matchedFw.push(fw); fwScore += Math.min(m*15, 30); }
+  }
+
+  let topCat = 'uncategorized', topScore = 0;
+  for(const [cat, kws] of Object.entries(CATEGORY_SIGNALS)){
+	const m = countMatches(combined, kws);
+	const s = m * 8;
+	if(s > topScore){ topScore = s; topCat = cat; }
+  }
+
+  const highBoost  = countMatches(combined, HIGH_SIGNAL) * 10;
+  const base       = Math.min(topScore, 40);
+  const catBonus   = topScore > 0 ? 20 : 0;
+  let   final      = base + catBonus + fwScore + highBoost;
+  if(noiseCount === 1) final = Math.max(final - 10, 0);
+  final = Math.min(Math.round(final), 100);
+  const isNoise = final < 15 && matchedFw.length === 0 && topScore < 4;
+  if(isNoise) return { signalScore:final, category:'noise', frameworks:[], isNoise:true };
+  return { signalScore:final, category:topCat, frameworks:matchedFw, isNoise:false };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RSS FETCHING via allorigins CORS proxy
+// ═══════════════════════════════════════════════════════════════
+async function fetchFeed(feed){
+  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(feed.url)}`;
+  try {
+	const res  = await fetch(proxy, { signal: AbortSignal.timeout(12000) });
+	const data = await res.json();
+	const xml  = data.contents;
+	if(!xml) return [];
+	const doc   = new DOMParser().parseFromString(xml, 'text/xml');
+	const items = [...doc.querySelectorAll('item,entry')].slice(0, 25);
+	const parsed = [];
+	for(const item of items){
+	  const title     = item.querySelector('title')?.textContent?.trim() || '';
+	  const link      = item.querySelector('link')?.textContent?.trim()
+					 || item.querySelector('link')?.getAttribute('href') || '';
+	  const desc      = (item.querySelector('description,summary,content')?.textContent || '').replace(/<[^>]*>/g,'').trim().slice(0,500);
+	  const pubDate   = item.querySelector('pubDate,published,updated')?.textContent?.trim() || new Date().toISOString();
+	  if(!title || !link) continue;
+	  const scoring   = scoreArticle(title, desc);
+	  parsed.push({
+		id:           nextArticleId++,
+		feedId:       feed.id,
+		feedName:     feed.name,
+		title,
+		url:          link,
+		summary:      desc || null,
+		publishedAt:  new Date(pubDate).toISOString(),
+		fetchedAt:    new Date().toISOString(),
+		...scoring,
+		isBookmarked: false,
+		isRead:       false,
+	  });
+	}
+	return parsed;
+  } catch(e) {
+	console.warn(`Failed: ${feed.name}`, e.message);
+	return [];
+  }
+}
+
+async function runScan(){
+  if(scanning) return;
+  scanning = true;
+  const btn = document.getElementById('btn-scan');
+  const icon = document.getElementById('scan-icon');
+  const prog = document.getElementById('scan-progress');
+  btn.disabled = true;
+  btn.innerHTML = `<svg id="scan-icon" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="animation:spin .8s linear infinite"><path d="M14 8A6 6 0 1 1 8 2"/><polyline points="14 2 14 6 10 6"/></svg> Scanning…`;
+  prog.classList.add('visible');
+
+  const style = document.createElement('style');
+  style.textContent = '@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
+  document.head.appendChild(style);
+
+  const activeFeeds = feeds.filter(f => f.active);
+  const existingUrls = new Set(articles.map(a => a.url));
+  let added = 0;
+
+  for(const feed of activeFeeds){
+	const items = await fetchFeed(feed);
+	for(const item of items){
+	  if(!existingUrls.has(item.url)){
+		articles.unshift(item);
+		existingUrls.add(item.url);
+		added++;
+	  }
+	}
+	feed.lastFetched = new Date().toISOString();
+	renderFeedList();
+  }
+
+  lastScanTime = new Date();
+  mergeBookmarks();
+  scanning = false;
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 8A6 6 0 1 1 8 2"/><polyline points="14 2 14 6 10 6"/></svg> Scan Now`;
+  prog.classList.remove('visible');
+  renderArticles();
+  updateStats();
+  updateLastScan();
+  showToast(added > 0 ? `${added} new articles found` : 'No new articles found');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════════════════════
+const CAT_LABEL = {
+  'strategy-definition':'Advisory','strategy-execution':'Growth & Ops',
+  'competitive-intelligence':'Market Intel','frameworks':'Frameworks',
+  'case-study':'Case Study','noise':'Noise','uncategorized':'General',
+};
+const CAT_CLASS = {
+  'strategy-definition':'cat-def','strategy-execution':'cat-exec',
+  'competitive-intelligence':'cat-comp','frameworks':'cat-fw',
+  'case-study':'cat-case','noise':'cat-noise','uncategorized':'cat-gen',
+};
+const CAT_COLORS = {
+  'strategy-definition':'#01696f','strategy-execution':'#5c2e8a',
+  'competitive-intelligence':'#7a3200','frameworks':'#1a6040',
+  'case-study':'#7a1840','noise':'#9a9590','uncategorized':'#9a9590',
+};
+
+function sigClass(s){ return s>=75?'sig-high':s>=45?'sig-medium':s>=15?'sig-low':'sig-noise'; }
+function sigLabel(s){ return s>=75?'High Signal':s>=45?'Medium':s>=15?'Low':'Noise'; }
+function barColor(s){ return s>=75?'#437a22':s>=45?'#da7100':s>=15?'#7a7a9a':'#c4bfb8'; }
+function timeAgo(d){
+  const diff = Math.floor((Date.now()-new Date(d).getTime())/1000);
+  if(diff<60) return `${diff}s ago`;
+  if(diff<3600) return `${Math.floor(diff/60)}m ago`;
+  if(diff<86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+function renderArticles(){
+  const cat    = document.getElementById('filter-cat').value;
+  const fw     = document.getElementById('filter-fw').value;
+  const minScr = parseInt(document.getElementById('filter-score').value)||0;
+  const hideN  = document.getElementById('toggle-noise').checked;
+
+  let list = [...articles];
+  if(cat !== 'all')   list = list.filter(a => a.category === cat);
+  if(fw)              list = list.filter(a => a.frameworks.includes(fw));
+  if(minScr > 0)      list = list.filter(a => a.signalScore >= minScr);
+  if(hideN)           list = list.filter(a => !a.isNoise);
+  if(showSaved)       list = list.filter(a => a.isBookmarked);
+
+  list.sort((a,b) => b.signalScore - a.signalScore || new Date(b.publishedAt) - new Date(a.publishedAt));
+
+  const subtitle = document.getElementById('feed-subtitle');
+  const highCount = list.filter(a=>a.signalScore>=75).length;
+  subtitle.textContent = `${list.length} articles · ${highCount} high-signal`;
+
+  const container = document.getElementById('articles-container');
+  if(list.length === 0){
+	container.innerHTML = `<div class="empty-state">
+	  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+	  <p>${articles.length === 0 ? 'No articles yet' : 'No articles match your filters'}</p>
+	  <span>${articles.length === 0 ? 'Click "Scan Now" to fetch content from your feeds.' : 'Try adjusting the filters above.'}</span>
+	</div>`;
+	return;
+  }
+
+  container.innerHTML = `<div class="articles-grid">${list.map(a => articleCard(a)).join('')}</div>`;
+}
+
+function articleCard(a){
+  const fwBadges = a.frameworks.slice(0,2).map(f=>`<span class="fw-badge">${f}</span>`).join('');
+  const moreFw   = a.frameworks.length > 2 ? `<span style="font-size:11px;color:#9a9590">+${a.frameworks.length-2}</span>` : '';
+  return `<div class="article-card${a.isRead?' is-read':''}" id="card-${a.id}">
+	<div class="article-meta">
+	  <span class="article-source">${escHtml(a.feedName)}</span>
+	  <span class="article-dot">·</span>
+	  <span>${timeAgo(a.publishedAt)}</span>
+	  <span class="signal-badge ${sigClass(a.signalScore)}">${sigLabel(a.signalScore)} · ${Math.round(a.signalScore)}</span>
+	</div>
+	<div class="score-bar"><div class="score-bar-fill" style="width:${a.signalScore}%;background:${barColor(a.signalScore)}"></div></div>
+	<div class="article-title" onclick="openArticle(${a.id})">${escHtml(a.title)}</div>
+	${a.summary ? `<div class="article-summary">${escHtml(a.summary)}</div>` : ''}
+	<div class="article-footer">
+	  <span class="cat-badge ${CAT_CLASS[a.category]||'cat-gen'}">${CAT_LABEL[a.category]||'General'}</span>
+	  ${fwBadges}${moreFw}
+	  <div class="article-actions">
+		<button class="action-btn${a.isBookmarked?' active':''}" title="Save" onclick="toggleBookmark(${a.id})">
+		  <svg width="12" height="12" viewBox="0 0 16 16" fill="${a.isBookmarked?'currentColor':'none'}" stroke="currentColor" stroke-width="1.8"><path d="M3 2h10a1 1 0 0 1 1 1v11l-6-3-6 3V3a1 1 0 0 1 1-1z"/></svg>
+		</button>
+		<button class="action-btn${a.isRead?' noise-active':''}" title="${a.isRead?'Mark unread':'Mark read'}" onclick="toggleRead(${a.id})">
+		  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
+		</button>
+		<button class="action-btn" title="Flag as noise" onclick="flagNoise(${a.id})">
+		  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="1" y1="1" x2="15" y2="15"/><path d="M1 8s3-5 7-5c1.5 0 2.9.5 4 1.3M11.7 11.7C10.6 12.5 9.3 13 8 13c-4 0-7-5-7-5s.9-1.4 2.3-2.7"/></svg>
+		</button>
+	  </div>
+	</div>
+  </div>`;
+}
+
+function openArticle(id){
+  const a = articles.find(x=>x.id===id);
+  if(!a) return;
+  if(!a.isRead){ a.isRead = true; renderArticles(); updateStats(); }
+  window.open(a.url,'_blank','noopener');
+}
+function toggleBookmark(id){
+  const a = articles.find(x=>x.id===id);
+  if(!a) return;
+  a.isBookmarked = !a.isBookmarked;
+  saveBookmarks();
+  renderArticles(); updateStats();
+}
+function toggleRead(id){
+  const a = articles.find(x=>x.id===id);
+  if(!a) return;
+  a.isRead = !a.isRead;
+  renderArticles(); updateStats();
+}
+function flagNoise(id){
+  const a = articles.find(x=>x.id===id);
+  if(!a) return;
+  a.isNoise = !a.isNoise;
+  renderArticles(); updateStats();
+  showToast(a.isNoise ? 'Flagged as noise' : 'Restored');
+}
+function toggleSaved(){
+  showSaved = !showSaved;
+  document.getElementById('btn-saved').classList.toggle('active', showSaved);
+  renderArticles();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════════════
+function updateStats(){
+  const total   = articles.length;
+  const high    = articles.filter(a=>a.signalScore>=75).length;
+  const saved   = articles.filter(a=>a.isBookmarked).length;
+  const noise   = articles.filter(a=>a.isNoise).length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-high').textContent  = high;
+  document.getElementById('stat-saved').textContent = saved;
+  document.getElementById('stat-noise').textContent = noise;
+
+  // Category bars
+  const byCat = {};
+  for(const a of articles) byCat[a.category] = (byCat[a.category]||0)+1;
+  const sorted = Object.entries(byCat).sort(([,a],[,b])=>b-a).slice(0,6);
+  const catBars = document.getElementById('cat-bars');
+  catBars.innerHTML = sorted.map(([cat,count])=>{
+	const pct = total > 0 ? (count/total)*100 : 0;
+	return `<div class="cat-bar-item">
+	  <div class="cat-bar-header"><span>${CAT_LABEL[cat]||cat}</span><span>${count}</span></div>
+	  <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;background:${CAT_COLORS[cat]||'#9a9590'}"></div></div>
+	</div>`;
+  }).join('');
+}
+
+function updateLastScan(){
+  const el = document.getElementById('last-scan-label');
+  if(!lastScanTime){ el.textContent = 'No scan yet'; return; }
+  el.textContent = `Last scan ${timeAgo(lastScanTime.toISOString())} · ${feeds.filter(f=>f.active).length} feeds`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FEED MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+function renderFeedList(){
+  const list = document.getElementById('feed-list');
+  if(!list) return;
+  list.innerHTML = feeds.map(feed=>`
+	<div class="feed-row${feed.active?'':' inactive'}" id="feed-row-${feed.id}">
+	  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#9a9590" stroke-width="1.8" style="flex-shrink:0"><circle cx="3" cy="13" r="1.5" fill="#9a9590" stroke="none"/><path d="M1.5 8.5a6 6 0 0 1 6 6"/><path d="M1.5 4.5a10 10 0 0 1 10 10"/></svg>
+	  <div class="feed-info">
+		<div class="feed-name-row">
+		  <span class="feed-name">${escHtml(feed.name)}</span>
+		  <span class="feed-type-badge ${feed.type==='substack'?'badge-substack':feed.type==='newsletter'?'badge-newsletter':'badge-rss'}">${feed.type.toUpperCase()}</span>
+		  ${feed.lastFetched ? `<span class="feed-meta">· ${timeAgo(feed.lastFetched)}</span>` : '<span class="feed-meta">· Never</span>'}
+		</div>
+		<div class="feed-url">${escHtml(feed.url)}</div>
+	  </div>
+	  <label class="toggle-wrap" style="flex-shrink:0" title="${feed.active?'Disable':'Enable'}">
+		<input type="checkbox" ${feed.active?'checked':''} onchange="toggleFeedActive(${feed.id},this.checked)" />
+		<span class="toggle-slider"></span>
+	  </label>
+	  <button class="feed-del-btn" onclick="deleteFeed(${feed.id})" title="Remove">
+		<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2 4 14 4"/><path d="M5 4V2h6v2"/><path d="M6 7v5M10 7v5"/><path d="M3 4l1 9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-9"/></svg>
+	  </button>
+	</div>
+  `).join('');
+}
+
+function addFeed(){
+  const name = document.getElementById('new-feed-name').value.trim();
+  const url  = document.getElementById('new-feed-url').value.trim();
+  const type = document.getElementById('new-feed-type').value;
+  if(!name || !url){ showToast('Name and URL required'); return; }
+  if(feeds.some(f=>f.url===url)){ showToast('Feed already exists'); return; }
+  feeds.push({ id:nextFeedId++, name, url, type, active:true, lastFetched:null });
+  document.getElementById('new-feed-name').value = '';
+  document.getElementById('new-feed-url').value  = '';
+  saveFeeds();
+  renderFeedList();
+  showToast('Feed added');
+}
+function toggleFeedActive(id, active){
+  const f = feeds.find(x=>x.id===id);
+  if(f){ f.active = active; saveFeeds(); }
+}
+function deleteFeed(id){
+  feeds = feeds.filter(x=>x.id!==id);
+  saveFeeds();
+  renderFeedList();
+  showToast('Feed removed');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PAGE NAV
+// ═══════════════════════════════════════════════════════════════
+function showPage(page){
+  const db    = document.getElementById('dashboard-page');
+  const fp    = document.getElementById('feeds-page');
+  const topbar = document.getElementById('topbar');
+  document.getElementById('nav-dashboard').classList.toggle('active', page==='dashboard');
+  document.getElementById('nav-feeds').classList.toggle('active',     page==='feeds');
+  if(page === 'dashboard'){
+	db.style.display = 'block'; fp.style.display = 'none';
+	topbar.style.display = '';
+  } else {
+	db.style.display = 'none'; fp.style.display = 'block';
+	topbar.style.display = 'none';
+	renderFeedList();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════
+function escHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+loadFeeds();
+loadBookmarks();
+updateStats();
+renderArticles();
+</script>
+</body>
+</html>
