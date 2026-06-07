@@ -71,9 +71,16 @@ select.filter-select:focus{outline:2px solid rgba(1,105,111,0.4);outline-offset:
 
 /* ── Feed page ────────────────────────────────────────────────────── */
 #feeds-page{display:none;padding:24px;max-width:680px}
-#feeds-page.visible{display:block}
+#keywords-page{display:none;padding:24px;max-width:680px}
 #dashboard-page{display:block}
 #dashboard-page.hidden{display:none}
+.kw-section{background:#faf9f6;border:1px solid #e4e0d9;border-radius:6px;padding:16px;margin-bottom:16px}
+.kw-section h2{font-family:'Cabinet Grotesk',sans-serif;font-size:13px;font-weight:700;color:#1e1b14;margin-bottom:3px}
+.kw-section .kw-desc{font-size:11px;color:#8a8479;margin-bottom:10px}
+.kw-section textarea{width:100%;min-height:120px;padding:9px;border:1px solid #dedad3;border-radius:5px;background:#f5f3ef;font-family:'DM Mono',monospace;font-size:11px;color:#1e1b14;resize:vertical;line-height:1.6}
+.kw-section textarea:focus{outline:2px solid rgba(1,105,111,0.35);outline-offset:1px}
+.kw-actions{display:flex;gap:8px;margin-top:16px}
+.kw-error{font-size:11px;color:#c0392b;margin-top:6px;display:none}
 .feeds-form{background:#faf9f6;border:1px solid #e4e0d9;border-radius:6px;padding:16px;margin-bottom:20px}
 .feeds-form h2{font-family:'Cabinet Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1e1b14;margin-bottom:12px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
@@ -176,6 +183,10 @@ select.filter-select:focus{outline:2px solid rgba(1,105,111,0.4);outline-offset:
 	  <a href="#" id="nav-feeds" onclick="showPage('feeds');return false">
 		<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="3" cy="13" r="1.5" fill="currentColor" stroke="none"/><path d="M1.5 8.5a6 6 0 0 1 6 6"/><path d="M1.5 4.5a10 10 0 0 1 10 10"/></svg>
 		Manage Feeds
+	  </a>
+	  <a href="#" id="nav-keywords" onclick="showPage('keywords');return false">
+		<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4h12M2 8h8M2 12h5"/><circle cx="13" cy="11" r="2.5"/><path d="M15 13.5l1.5 1.5"/></svg>
+		Signal Keywords
 	  </a>
 	</nav>
 
@@ -288,6 +299,38 @@ select.filter-select:focus{outline:2px solid rgba(1,105,111,0.4);outline-offset:
 	  <div class="feed-list" id="feed-list"></div>
 	  <p class="feeds-tip">Add any RSS feed — trade publications, business journals, or newsletters your clients read: <code>https://authorname.substack.com/feed</code></p>
 	</div>
+
+	<!-- ── Keywords page ───────────────────────────────────────────── -->
+	<div id="keywords-page">
+	  <h1 style="font-family:'Cabinet Grotesk',sans-serif;font-size:18px;font-weight:700;color:#1e1b14;margin-bottom:4px">Signal Keywords</h1>
+	  <p style="font-size:13px;color:#6b6660;margin-bottom:20px">Edit the keyword arrays that drive scoring. Changes apply on the next scan. Copy these to Perplexity for suggestions, then paste improved versions back and save.</p>
+
+	  <div class="kw-section">
+		<h2>Framework Signals</h2>
+		<p class="kw-desc">JSON object — keys are framework names, values are arrays of trigger phrases. Each match adds score and tags the article with that framework.</p>
+		<textarea id="kw-framework" spellcheck="false"></textarea>
+	  </div>
+	  <div class="kw-section">
+		<h2>Category Signals</h2>
+		<p class="kw-desc">JSON object — keys are category IDs, values are arrays of trigger phrases. Determines how articles are categorised.</p>
+		<textarea id="kw-category" spellcheck="false"></textarea>
+	  </div>
+	  <div class="kw-section">
+		<h2>Noise Signals</h2>
+		<p class="kw-desc">JSON array — two or more matches marks an article as noise and drops it from the feed.</p>
+		<textarea id="kw-noise" spellcheck="false"></textarea>
+	  </div>
+	  <div class="kw-section">
+		<h2>High-Signal Boosts</h2>
+		<p class="kw-desc">JSON array — each match adds +10 to the score. Use for high-value exact phrases specific to exit planning and M&amp;A advisory.</p>
+		<textarea id="kw-high" spellcheck="false"></textarea>
+	  </div>
+	  <div id="kw-error" class="kw-error"></div>
+	  <div class="kw-actions">
+		<button class="btn btn-primary" onclick="saveKeywords()">Save Keywords</button>
+		<button class="btn btn-outline" onclick="resetKeywords()">Reset to Defaults</button>
+	  </div>
+	</div>
   </main>
 </div>
 
@@ -303,20 +346,12 @@ let scanning = false;
 let lastScanTime = null;
 
 let feeds = [
-  { id:1,  name:'HBR Small Business',        url:'https://hbr.org/topic/subject/entrepreneurship/rss',            type:'rss', active:true, lastFetched:null },
-  { id:2,  name:'MIT Sloan Management',       url:'https://sloanreview.mit.edu/feed/',                             type:'rss', active:true, lastFetched:null },
-  { id:3,  name:'HBR (main)',                 url:'https://hbr.org/rss/all',                                       type:'rss', active:true, lastFetched:null },
-  { id:4,  name:'Forbes Small Business',      url:'https://www.forbes.com/small-business/feed/',                   type:'rss', active:true, lastFetched:null },
-  { id:5,  name:'Kiplinger Business',         url:'https://www.kiplinger.com/rss/channel/business',                type:'rss', active:true, lastFetched:null },
-  { id:6,  name:'NFIB Research',              url:'https://www.nfib.com/feed/',                                    type:'rss', active:true, lastFetched:null },
-  { id:7,  name:'MarketWatch Small Business', url:'https://feeds.content.dowjones.io/public/rss/mw_smallbusiness', type:'rss', active:true, lastFetched:null },
-  { id:8,  name:'Axios',                      url:'https://www.axios.com/feeds/feed.rss',                          type:'rss', active:true, lastFetched:null },
-  { id:9,  name:'Inc. Magazine',              url:'https://www.inc.com/rss/',                                      type:'rss', active:true, lastFetched:null },
-  { id:10, name:'Entrepreneur',               url:'https://www.entrepreneur.com/latest.rss',                       type:'rss', active:true, lastFetched:null },
-  { id:11, name:'SCORE Blog',                 url:'https://www.score.org/blog/rss.xml',                            type:'rss', active:true, lastFetched:null },
-  { id:12, name:'SBA News',                   url:'https://www.sba.gov/rss/everything.xml',                        type:'rss', active:true, lastFetched:null },
+  { id:1, name:'MIT Sloan Management', url:'https://sloanreview.mit.edu/feed/',           type:'rss', active:true, lastFetched:null },
+  { id:2, name:'NFIB Research',        url:'https://www.nfib.com/feed/',                  type:'rss', active:true, lastFetched:null },
+  { id:3, name:'Inc. Magazine',        url:'https://www.inc.com/rss/',                    type:'rss', active:true, lastFetched:null },
+  { id:4, name:'Entrepreneur',         url:'https://www.entrepreneur.com/latest.rss',     type:'rss', active:true, lastFetched:null },
 ];
-let nextFeedId = 13;
+let nextFeedId = 5;
 let nextArticleId = 1;
 
 // ═══════════════════════════════════════════════════════════════
@@ -403,29 +438,87 @@ function mergeBookmarks(){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SCORING ENGINE
+// SCORING ENGINE — keyword arrays backed by localStorage
 // ═══════════════════════════════════════════════════════════════
-const FRAMEWORK_SIGNALS = {
-  "Exit Planning":        ["exit planning","exit strategy","succession","business transition","owner exit","sellability","exit readiness"],
-  "Business Valuation":   ["valuation","ebitda","multiple","seller discretionary","sde","business worth","fair market value","deal structure"],
-  "Growth Strategy":      ["growth strategy","scaling","scale a business","revenue growth","growth plan","organic growth","acquisition strategy"],
-  "Cash Flow":            ["cash flow","working capital","liquidity","cash management","burn rate","runway","profitability"],
-  "M&A":                  ["mergers and acquisitions","m&a","deal flow","due diligence","letter of intent","loi","acquisition","business sale"],
-  "Customer Acquisition": ["customer acquisition","lead generation","sales funnel","conversion","cac","churn","retention","go-to-market"],
-  "Operations":           ["operations","systems","process improvement","sop","standard operating","efficiency","workflow","automation"],
-  "Owner Strategy":       ["owner-operator","founder","entrepreneur","small business owner","lifestyle business","micro business","main street"],
+const LS_KEYWORDS = 'advisorintel_keywords';
+
+const DEFAULT_SIGNALS = {
+  framework: {
+    "Exit Planning":        ["exit planning","exit strategy","succession","business transition","owner exit","sellability","exit readiness","business exit","exit plan","sell their business","selling a business","business succession"],
+    "Business Valuation":   ["valuation","ebitda","multiple","seller discretionary","sde","business worth","fair market value","deal structure","business value","asking price","purchase price","valuation multiple","business appraisal"],
+    "Growth Strategy":      ["growth strategy","scaling","scale a business","revenue growth","growth plan","organic growth","acquisition strategy","grow a business","business growth"],
+    "Cash Flow":            ["cash flow","working capital","liquidity","cash management","burn rate","runway","profitability","cash position"],
+    "M&A":                  ["mergers and acquisitions","m&a","deal flow","due diligence","letter of intent","loi","acquisition","business sale","business buyer","business buyers","buying a business","first-time buyer","deal terms","acquisition target"],
+    "Customer Acquisition": ["customer acquisition","lead generation","sales funnel","conversion","cac","churn","retention","go-to-market"],
+    "Operations":           ["operations","systems","process improvement","sop","standard operating","efficiency","workflow","automation"],
+    "Owner Strategy":       ["owner-operator","founder","entrepreneur","small business owner","lifestyle business","micro business","main street","owner operator","business owner","self-employed"],
+  },
+  category: {
+    "strategy-definition":     ["strategy","business strategy","planning","vision","positioning","competitive advantage","value proposition","business model","advisory","consulting","advise","advisor"],
+    "strategy-execution":      ["growth","execution","scaling","implementation","kpi","metrics","operations","process","systems","profitability","cash flow","revenue"],
+    "competitive-intelligence":["market trend","industry","small business","main street","owner-operator","economy","interest rates","lending","deal activity","transaction","business owners"],
+    "case-study":              ["case study","how they did","lessons from","playbook","story","sold their business","exit story","turnaround","what worked","breakdown","how i","what i learned"],
+    "frameworks":              ["framework","model","template","checklist","guide","how to","approach","tool for","method","applying"],
+  },
+  noise: ["sponsored","advertisement","press release","new hire","job opening","hiring for","webinar registration","free trial","sign up now","limited time offer","discount","podcast episode","watch our","join us live","register now","award winner"],
+  high:  ["exit multiple","seller financing","sba loan","owner operator","succession plan","business valuation","ebitda multiple","deal structure","referral relationship","cpa advisor","financial advisor","estate planning","wealth transfer","due diligence","letter of intent","sellability","recurring revenue","transferable value","business buyers","buying a business","exit planning","sell a business","business acquisition","owner-operated"],
 };
 
-const CATEGORY_SIGNALS = {
-  "strategy-definition":     ["strategy","business strategy","planning","vision","positioning","competitive advantage","value proposition","business model","advisory","consulting","advise","advisor"],
-  "strategy-execution":      ["growth","execution","scaling","implementation","kpi","metrics","operations","process","systems","profitability","cash flow","revenue"],
-  "competitive-intelligence":["market trend","industry","small business","main street","owner-operator","economy","interest rates","lending","deal activity","transaction"],
-  "case-study":              ["case study","how they did","lessons from","playbook","story","sold their business","exit story","turnaround","what worked","breakdown"],
-  "frameworks":              ["framework","model","template","checklist","guide","how to","approach","tool for","method","applying"],
-};
+let FRAMEWORK_SIGNALS = DEFAULT_SIGNALS.framework;
+let CATEGORY_SIGNALS  = DEFAULT_SIGNALS.category;
+let NOISE_SIGNALS     = DEFAULT_SIGNALS.noise;
+let HIGH_SIGNAL       = DEFAULT_SIGNALS.high;
 
-const NOISE_SIGNALS = ["sponsored","advertisement","press release","new hire","job opening","hiring for","webinar registration","free trial","sign up now","limited time offer","discount","podcast episode","watch our","join us live","register now","award winner"];
-const HIGH_SIGNAL   = ["exit multiple","seller financing","sba loan","owner operator","succession plan","business valuation","ebitda multiple","deal structure","referral relationship","cpa advisor","financial advisor","estate planning","wealth transfer","due diligence","letter of intent","sellability","recurring revenue","transferable value"];
+function loadKeywords(){
+  try {
+    const raw = localStorage.getItem(LS_KEYWORDS);
+    if(!raw) return;
+    const kw = JSON.parse(raw);
+    if(kw.framework) FRAMEWORK_SIGNALS = kw.framework;
+    if(kw.category)  CATEGORY_SIGNALS  = kw.category;
+    if(kw.noise)     NOISE_SIGNALS     = kw.noise;
+    if(kw.high)      HIGH_SIGNAL       = kw.high;
+  } catch(e){}
+}
+
+function saveKeywords(){
+  const errEl = document.getElementById('kw-error');
+  errEl.style.display = 'none';
+  const fields = [
+    { id:'kw-framework', key:'framework', label:'Framework Signals' },
+    { id:'kw-category',  key:'category',  label:'Category Signals' },
+    { id:'kw-noise',     key:'noise',     label:'Noise Signals' },
+    { id:'kw-high',      key:'high',      label:'High-Signal Boosts' },
+  ];
+  const kw = {};
+  for(const f of fields){
+    try { kw[f.key] = JSON.parse(document.getElementById(f.id).value); }
+    catch(e){ errEl.textContent = `JSON error in ${f.label}: ${e.message}`; errEl.style.display='block'; return; }
+  }
+  FRAMEWORK_SIGNALS = kw.framework;
+  CATEGORY_SIGNALS  = kw.category;
+  NOISE_SIGNALS     = kw.noise;
+  HIGH_SIGNAL       = kw.high;
+  try { localStorage.setItem(LS_KEYWORDS, JSON.stringify(kw)); } catch(e){}
+  showToast('Keywords saved — re-scan to apply');
+}
+
+function resetKeywords(){
+  FRAMEWORK_SIGNALS = DEFAULT_SIGNALS.framework;
+  CATEGORY_SIGNALS  = DEFAULT_SIGNALS.category;
+  NOISE_SIGNALS     = DEFAULT_SIGNALS.noise;
+  HIGH_SIGNAL       = DEFAULT_SIGNALS.high;
+  try { localStorage.removeItem(LS_KEYWORDS); } catch(e){}
+  populateKeywordEditors();
+  showToast('Reset to defaults');
+}
+
+function populateKeywordEditors(){
+  document.getElementById('kw-framework').value = JSON.stringify(FRAMEWORK_SIGNALS, null, 2);
+  document.getElementById('kw-category').value  = JSON.stringify(CATEGORY_SIGNALS,  null, 2);
+  document.getElementById('kw-noise').value      = JSON.stringify(NOISE_SIGNALS,     null, 2);
+  document.getElementById('kw-high').value       = JSON.stringify(HIGH_SIGNAL,       null, 2);
+}
 
 function normalize(t){ return t.toLowerCase().replace(/[^a-z0-9 ]/g,' '); }
 function countMatches(text, terms){ return terms.filter(t => text.includes(t)).length; }
@@ -852,19 +945,19 @@ function deleteFeed(id){
 // PAGE NAV
 // ═══════════════════════════════════════════════════════════════
 function showPage(page){
-  const db    = document.getElementById('dashboard-page');
-  const fp    = document.getElementById('feeds-page');
+  const db  = document.getElementById('dashboard-page');
+  const fp  = document.getElementById('feeds-page');
+  const kp  = document.getElementById('keywords-page');
   const topbar = document.getElementById('topbar');
   document.getElementById('nav-dashboard').classList.toggle('active', page==='dashboard');
   document.getElementById('nav-feeds').classList.toggle('active',     page==='feeds');
-  if(page === 'dashboard'){
-	db.style.display = 'block'; fp.style.display = 'none';
-	topbar.style.display = '';
-  } else {
-	db.style.display = 'none'; fp.style.display = 'block';
-	topbar.style.display = 'none';
-	renderFeedList();
-  }
+  document.getElementById('nav-keywords').classList.toggle('active',  page==='keywords');
+  db.style.display  = page==='dashboard' ? 'block' : 'none';
+  fp.style.display  = page==='feeds'     ? 'block' : 'none';
+  kp.style.display  = page==='keywords'  ? 'block' : 'none';
+  topbar.style.display = page==='dashboard' ? '' : 'none';
+  if(page==='feeds')    renderFeedList();
+  if(page==='keywords') populateKeywordEditors();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -883,6 +976,7 @@ function showToast(msg){
 // ═══════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════
+loadKeywords();
 loadFeeds();
 loadBookmarks();
 updateStats();
