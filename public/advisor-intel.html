@@ -239,6 +239,10 @@ select.filter-select:focus{outline:2px solid rgba(1,105,111,0.4);outline-offset:
 		<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 2h10a1 1 0 0 1 1 1v11l-6-3-6 3V3a1 1 0 0 1 1-1z"/></svg>
 		Saved
 	  </button>
+	  <button class="btn btn-outline" id="btn-log" onclick="downloadScanLog()" title="Download scan log">
+		<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2v9M4 8l4 4 4-4"/><path d="M2 13h12"/></svg>
+		Log
+	  </button>
 	  <button class="btn btn-primary" id="btn-scan" onclick="runScan()">
 		<svg id="scan-icon" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 8A6 6 0 1 1 8 2"/><polyline points="14 2 14 6 10 6"/></svg>
 		Scan Now
@@ -457,11 +461,33 @@ function scoreArticle(title, summary=''){
 }
 
 // ═══════════════════════════════════════════════════════════════
+// SCAN LOG — persisted to localStorage after every scan
+// ═══════════════════════════════════════════════════════════════
+const LS_SCANLOG = 'advisorintel_scanlog';
+let currentScanLog = null;
+
+function saveScanLog(log){
+  try { localStorage.setItem(LS_SCANLOG, JSON.stringify(log)); } catch(e){}
+}
+function downloadScanLog(){
+  const raw = localStorage.getItem(LS_SCANLOG);
+  if(!raw){ showToast('No scan log saved yet'); return; }
+  const blob = new Blob([JSON.stringify(JSON.parse(raw), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `advisor-intel-scan-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ═══════════════════════════════════════════════════════════════
 // RSS FETCHING — sequential proxy fallback chain
 // Worker proxy first (reliable); public proxies as fallback.
 // ═══════════════════════════════════════════════════════════════
 const WORKER_RSS = 'https://frontframe-worker.ed-e5c.workers.dev/rss-proxy';
-async function fetchFeed(feed){
+const PROXY_NAMES = ['Worker', 'corsproxy.io', 'allorigins', 'codetabs'];
+
+async function fetchFeed(feed, feedLog){
   const enc = encodeURIComponent(feed.url);
   const proxies = [
 	{
@@ -483,32 +509,58 @@ async function fetchFeed(feed){
   ];
 
   let xml = null;
-  for(const proxy of proxies){
+  let proxyUsed = null;
+  for(let i = 0; i < proxies.length; i++){
+	const proxy = proxies[i];
+	const attempt = { proxy: PROXY_NAMES[i], status: null, error: null };
 	try {
 	  const res = await proxy.get();
-	  if(!res.ok) continue;
+	  attempt.status = res.status;
+	  if(!res.ok){ feedLog.proxyAttempts.push(attempt); continue; }
 	  const content = await proxy.xml(res);
-	  if(content && content.trim().length > 0){ xml = content; break; }
-	} catch(e){ /* try next proxy */ }
+	  if(content && content.trim().length > 0){
+		xml = content;
+		proxyUsed = PROXY_NAMES[i];
+		attempt.result = 'success';
+		feedLog.proxyAttempts.push(attempt);
+		break;
+	  }
+	  attempt.result = 'empty_body';
+	} catch(e){
+	  attempt.error = e.message;
+	  attempt.result = 'exception';
+	}
+	feedLog.proxyAttempts.push(attempt);
   }
+
+  feedLog.proxyUsed = proxyUsed;
 
   if(!xml){
 	console.warn(`All proxies failed — skipping: ${feed.name} (${feed.url})`);
+	feedLog.outcome = 'all_proxies_failed';
 	return [];
   }
 
   try {
 	const doc   = new DOMParser().parseFromString(xml, 'text/xml');
+	const parseErr = doc.querySelector('parsererror');
+	if(parseErr){ feedLog.outcome = 'xml_parse_error'; feedLog.parseError = parseErr.textContent.trim().slice(0,200); return []; }
 	const items = [...doc.querySelectorAll('item,entry')].slice(0, 25);
+	feedLog.itemsFound = items.length;
 	const parsed = [];
+	const scoreBreakdown = { high:0, medium:0, low:0, noise:0 };
 	for(const item of items){
 	  const title     = item.querySelector('title')?.textContent?.trim() || '';
 	  const link      = item.querySelector('link')?.textContent?.trim()
 					 || item.querySelector('link')?.getAttribute('href') || '';
 	  const desc      = (item.querySelector('description,summary,content')?.textContent || '').replace(/<[^>]*>/g,'').trim().slice(0,500);
 	  const pubDate   = item.querySelector('pubDate,published,updated')?.textContent?.trim() || new Date().toISOString();
-	  if(!title || !link) continue;
+	  if(!title || !link){ feedLog.skippedNoTitleOrLink = (feedLog.skippedNoTitleOrLink||0)+1; continue; }
 	  const scoring   = scoreArticle(title, desc);
+	  const tier = scoring.signalScore>=75?'high':scoring.signalScore>=45?'medium':scoring.signalScore>=15?'low':'noise';
+	  scoreBreakdown[tier]++;
+	  feedLog.sampleTitles = feedLog.sampleTitles || [];
+	  if(feedLog.sampleTitles.length < 5) feedLog.sampleTitles.push({ title, score: scoring.signalScore, category: scoring.category, frameworks: scoring.frameworks });
 	  parsed.push({
 		id:           nextArticleId++,
 		feedId:       feed.id,
@@ -523,9 +575,14 @@ async function fetchFeed(feed){
 		isRead:       false,
 	  });
 	}
+	feedLog.scoreBreakdown = scoreBreakdown;
+	feedLog.articlesParsed = parsed.length;
+	feedLog.outcome = 'success';
 	return parsed;
   } catch(e){
 	console.warn(`RSS parse error — ${feed.name}:`, e.message);
+	feedLog.outcome = 'exception';
+	feedLog.parseError = e.message;
 	return [];
   }
 }
@@ -548,8 +605,12 @@ async function runScan(){
   const existingUrls = new Set(articles.map(a => a.url));
   let added = 0;
 
+  currentScanLog = { startedAt: new Date().toISOString(), feeds: [] };
+
   for(const feed of activeFeeds){
-	const items = await fetchFeed(feed);
+	const feedLog = { feed: feed.name, url: feed.url, proxyAttempts: [] };
+	const items = await fetchFeed(feed, feedLog);
+	currentScanLog.feeds.push(feedLog);
 	for(const item of items){
 	  if(!existingUrls.has(item.url)){
 		articles.unshift(item);
@@ -560,6 +621,10 @@ async function runScan(){
 	feed.lastFetched = new Date().toISOString();
 	renderFeedList();
   }
+
+  currentScanLog.completedAt = new Date().toISOString();
+  currentScanLog.totalAdded  = added;
+  saveScanLog(currentScanLog);
 
   lastScanTime = new Date();
   mergeBookmarks();
