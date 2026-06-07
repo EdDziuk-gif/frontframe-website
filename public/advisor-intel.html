@@ -458,11 +458,16 @@ function scoreArticle(title, summary=''){
 
 // ═══════════════════════════════════════════════════════════════
 // RSS FETCHING — sequential proxy fallback chain
-// Tries each proxy in order; skips feed silently if all three fail.
+// Worker proxy first (reliable); public proxies as fallback.
 // ═══════════════════════════════════════════════════════════════
+const WORKER_RSS = 'https://frontframe-worker.ed-e5c.workers.dev/rss-proxy';
 async function fetchFeed(feed){
   const enc = encodeURIComponent(feed.url);
   const proxies = [
+	{
+	  get: () => fetch(`${WORKER_RSS}?url=${enc}`, { signal: AbortSignal.timeout(10000) }),
+	  xml: async r => r.text(),
+	},
 	{
 	  get: () => fetch(`https://corsproxy.io/?${enc}`, { signal: AbortSignal.timeout(10000) }),
 	  xml: async r => r.text(),
