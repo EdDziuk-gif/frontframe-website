@@ -404,18 +404,15 @@
       <button class="nav-item" data-tab="system-prompt" onclick="switchTab('system-prompt')">&#x1F9E0; System Prompt</button>
       <button class="nav-item" data-tab="defects"       onclick="switchTab('defects')">&#x1F41B; Defects <span class="nav-badge hidden" id="badge-defects">0</span></button>
       <button class="nav-item" data-tab="feedback"      onclick="switchTab('feedback')">&#x1F4DD; Feedback <span class="nav-badge hidden" id="badge-feedback">0</span></button>
-      <button class="nav-item" data-tab="changelog"     onclick="switchTab('changelog')">&#x1F4D6; Changelog</button>
       <button class="nav-item" data-tab="solutions"     onclick="switchTab('solutions')">&#x1F4A1; Solutions</button>
       <button class="nav-item" data-tab="subscriptions" onclick="switchTab('subscriptions')">&#x1F4F1; Subscriptions</button>
       <button class="nav-item" data-tab="office-hours"  onclick="switchTab('office-hours')">&#x1F550; Office Hours</button>
-      <button class="nav-item" data-tab="rd-log"        onclick="switchTab('rd-log')">&#x1F4CA; R&amp;D Log</button>
-      <button class="nav-item" data-tab="reviewers"     onclick="switchTab('reviewers')">&#x1F465; Reviewers</button>
-      <button class="nav-item" data-tab="episodes"      onclick="switchTab('episodes')">&#x1F399; Episodes</button>
       <button class="nav-item" data-tab="config"        onclick="switchTab('config')">&#x2699;&#xFE0F; Config</button>
     </div>
     <div class="sidebar-footer">
       <div>ed@frontframe.co</div>
       <div style="margin-top:4px"><a href="#" onclick="signOut()">Sign out</a></div>
+      <div style="margin-top:8px;display:none" id="dev-tools-link"><a href="/dev-admin.html">Dev Tools &#x2197;</a></div>
     </div>
   </nav>
 
@@ -533,26 +530,6 @@
           <table>
             <thead><tr><th>Question</th><th>Suggested Answer</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="feedback-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Changelog -->
-    <div class="tab-panel" id="tab-changelog">
-      <div class="page-header">
-        <div class="page-title">Changelog</div>
-        <div class="page-sub">Build events and decisions</div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Entries</div>
-          <button class="btn btn-primary btn-sm" onclick="openChangelogModal()">+ Log Event</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Event</th><th>Summary</th><th>Build</th><th>Date</th></tr></thead>
-            <tbody id="changelog-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1146,133 +1123,6 @@
       </div>
     </div>
 
-    <!-- R&D Log -->
-    <div class="tab-panel" id="tab-rd-log">
-      <div class="page-header">
-        <div class="page-title">R&amp;D Log</div>
-        <div class="page-sub">Session time tracking for qualified R&amp;D documentation</div>
-      </div>
-      <!-- Log Session Card -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Log Session</div>
-          <button class="btn btn-primary btn-sm" onclick="toggleRdForm()">+ Log Session</button>
-        </div>
-        <div id="rd-form" class="card-body hidden" style="border-top:1px solid var(--border)">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
-            <div class="form-group" style="margin-bottom:0">
-              <label>Client</label>
-              <input type="text" id="rd-client" list="rd-clients-list" placeholder="Eleanor's Avian Care">
-              <datalist id="rd-clients-list">
-                <option value="Eleanor's Avian Care">
-                <option value="FrontFrame">
-                <option value="CoxMeadows.org">
-              </datalist>
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>Date</label>
-              <input type="date" id="rd-date">
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>Duration (minutes)</label>
-              <input type="number" id="rd-duration" min="1" placeholder="90">
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>Category</label>
-              <select id="rd-category">
-                <option value="FE">FE &#x2014; Front-End</option>
-                <option value="DB">DB &#x2014; Database</option>
-                <option value="API">API &#x2014; API / Back-End</option>
-                <option value="AI">AI &#x2014; AI / ML</option>
-                <option value="TEST">TEST &#x2014; Testing / QA</option>
-                <option value="INT">INT &#x2014; Integration</option>
-                <option value="DES">DES &#x2014; Design</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>Description</label>
-              <input type="text" id="rd-description" placeholder="Brief description">
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>Dedup Note</label>
-              <input type="text" id="rd-dedup" placeholder="Optional">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Narrative (paste END SESSION SUMMARY here)</label>
-            <textarea id="rd-narrative" rows="5" placeholder="Paste full session summary&#x2026;"></textarea>
-          </div>
-          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-            <label style="display:flex;align-items:center;gap:8px;font-weight:500;cursor:pointer">
-              <button class="toggle" id="rd-qualifies-toggle" onclick="toggleRdQualifies()"></button>
-              Qualifies for R&amp;D
-            </label>
-            <button class="btn btn-primary" onclick="saveRdEntry()">Save Entry</button>
-            <button class="btn btn-ghost"   onclick="toggleRdForm()">Cancel</button>
-          </div>
-        </div>
-      </div>
-      <!-- Entries Card -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">All Entries</div>
-          <div id="rd-totals" style="font-size:0.8rem;color:var(--gray)"></div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th><th>Client</th><th>Cat</th>
-                <th style="text-align:right">Min</th><th>Description</th>
-                <th>Q?</th><th>Dedup Note</th><th></th>
-              </tr>
-            </thead>
-            <tbody id="rd-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Reviewers -->
-    <div class="tab-panel" id="tab-reviewers">
-      <div class="page-header">
-        <div class="page-title">Reviewers</div>
-        <div class="page-sub">Portal access for testers and clients</div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">All Reviewers</div>
-          <button class="btn btn-primary btn-sm" onclick="openReviewerModal()">+ Invite Reviewer</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Actions</th></tr></thead>
-            <tbody id="reviewers-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Episodes -->
-    <div class="tab-panel" id="tab-episodes">
-      <div class="page-header">
-        <div class="page-title">Podcast Episodes</div>
-        <div class="page-sub">Published episodes shown on the podcast page</div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">All Episodes</div>
-          <button class="btn btn-primary btn-sm" onclick="openEpisodeModal()">+ Add Episode</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Series</th><th>Title</th><th>Published</th><th>Visible</th><th>Actions</th></tr></thead>
-            <tbody id="episodes-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
     <!-- Config -->
     <div class="tab-panel" id="tab-config">
       <div class="page-header">
@@ -1397,56 +1247,6 @@
   </div>
 </div>
 
-<div class="modal-backdrop" id="changelog-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">Log Event</div>
-      <button class="modal-close" onclick="closeModal('changelog-modal')">&#x00D7;</button>
-    </div>
-    <div class="form-group"><label>Event Type</label><input type="text" id="cl-event-type" placeholder="deployment / decision / fix"></div>
-    <div class="form-group"><label>Summary</label><textarea id="cl-summary" rows="4"></textarea></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('changelog-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveChangelog()">Save</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" id="reviewer-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="rv-modal-title">Add Reviewer</div>
-      <button class="modal-close" onclick="closeModal('reviewer-modal')">&#x00D7;</button>
-    </div>
-    <input type="hidden" id="rv-id">
-    <div class="form-group"><label>Display Name</label><input type="text" id="rv-name"></div>
-    <div class="form-group"><label>Email</label><input type="email" id="rv-email"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('reviewer-modal')">Cancel</button>
-      <button class="btn btn-primary" id="rv-save-btn" onclick="saveReviewer()">Add Reviewer</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" id="episode-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="ep-modal-title">Add Episode</div>
-      <button class="modal-close" onclick="closeModal('episode-modal')">&#x00D7;</button>
-    </div>
-    <input type="hidden" id="ep-id">
-    <div class="form-group"><label>Series</label><input type="text" id="ep-series"></div>
-    <div class="form-group"><label>Title</label><input type="text" id="ep-title"></div>
-    <div class="form-group"><label>Published Date</label><input type="text" id="ep-date" placeholder="YYYY-MM-DD"></div>
-    <div class="form-group"><label>Audio Path</label><input type="text" id="ep-audio"></div>
-    <div class="form-group"><label>Transcript</label><textarea id="ep-transcript" rows="5"></textarea></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('episode-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveEpisode()">Save</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-backdrop" id="sub-modal">
   <div class="modal" style="max-width:540px">
     <div class="modal-header">
@@ -1510,17 +1310,12 @@ let agreements    = [];
 let qaPairs       = [];
 let defects       = [];
 let feedback      = [];
-let changelog     = [];
-let reviewers     = [];
-let episodes      = [];
 let subscriptions = [];
 let mktLog        = [];
 let problems      = [];
 let deliverables  = [];
 let schedule      = [];
 let overrides     = [];
-let rdLog         = [];
-let rdFormOpen    = false;
 let ovFormOpen    = false;
 let currentTab    = '';
 
@@ -1651,9 +1446,17 @@ function showLogin() {
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('app-shell').classList.add('hidden');
 }
-function showAdmin() {
+async function showAdmin() {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-shell').classList.remove('hidden');
+  // Check dev_access for sidebar link
+  try {
+    const reviewerList = await api('GET', '/admin/reviewers');
+    const userEmail = session?.user?.email ?? '';
+    const me = reviewerList.find(r => r.email === userEmail);
+    const devLink = document.getElementById('dev-tools-link');
+    if (devLink) devLink.style.display = (me?.dev_access === true) ? '' : 'none';
+  } catch { /* non-fatal */ }
   switchTab('pipeline');
 }
 
@@ -1685,19 +1488,15 @@ function switchTab(tab) {
   if (btn) btn.classList.add('active');
 
   switch (tab) {
-    case 'pipeline':      loadPipelineTab(); break;
-    case 'qa':            loadQa(); break;
-    case 'system-prompt': loadPromptForPage(); break;
-    case 'defects':       loadDefects(); break;
-    case 'feedback':      loadFeedback(); break;
-    case 'changelog':     loadChangelog(); break;
-    case 'solutions':     loadSolutions(); break;
-    case 'subscriptions': loadSubscriptions(); break;
-    case 'office-hours':  loadOfficeHours(); break;
-    case 'rd-log':        loadRdLog(); break;
-    case 'reviewers':     loadReviewers(); break;
-    case 'episodes':      loadEpisodes(); break;
-    case 'config':        loadConfig(); break;
+    case 'pipeline':      loadPipelineTab().catch(e => toast('Pipeline: ' + e.message, 'error')); break;
+    case 'qa':            loadQa().catch(e => toast('Q&A: ' + e.message, 'error')); break;
+    case 'system-prompt': loadPromptForPage().catch(e => toast('Prompt: ' + e.message, 'error')); break;
+    case 'defects':       loadDefects().catch(e => toast('Defects: ' + e.message, 'error')); break;
+    case 'feedback':      loadFeedback().catch(e => toast('Feedback: ' + e.message, 'error')); break;
+    case 'solutions':     loadSolutions().catch(e => toast('Solutions: ' + e.message, 'error')); break;
+    case 'subscriptions': loadSubscriptions().catch(e => toast('Subscriptions: ' + e.message, 'error')); break;
+    case 'office-hours':  loadOfficeHours().catch(e => toast('Office Hours: ' + e.message, 'error')); break;
+    case 'config':        loadConfig().catch(e => toast('Config: ' + e.message, 'error')); break;
   }
 }
 
@@ -2175,46 +1974,6 @@ async function dismissFeedback(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// Changelog
-
-async function loadChangelog() {
-  try { changelog = await api('GET', '/admin/changelog'); } catch (e) { toast('Failed to load changelog: ' + e.message, 'error'); return; }
-  renderChangelog();
-}
-
-function renderChangelog() {
-  const tbody = document.getElementById('changelog-tbody');
-  if (!changelog.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No entries</div></td></tr>`; return; }
-  tbody.innerHTML = changelog.map(c => `
-    <tr>
-      <td><span class="badge badge-new">${esc(c.event_type)}</span></td>
-      <td style="max-width:360px">${esc(c.summary)}</td>
-      <td class="text-small text-gray">${esc(c.build_version ?? '')}</td>
-      <td class="text-small text-gray">${fmtDate(c.created_at)}</td>
-    </tr>
-  `).join('');
-}
-
-function openChangelogModal() {
-  document.getElementById('cl-event-type').value = '';
-  document.getElementById('cl-summary').value    = '';
-  document.getElementById('changelog-modal').classList.add('open');
-}
-
-async function saveChangelog() {
-  const event_type = document.getElementById('cl-event-type').value.trim();
-  const summary    = document.getElementById('cl-summary').value.trim();
-  if (!event_type || !summary) { toast('All fields required.', 'error'); return; }
-  try {
-    const created = await api('POST', '/admin/changelog', { event_type, summary });
-    const newCl   = Array.isArray(created) ? created[0] : created;
-    if (newCl) changelog.unshift(newCl);
-    closeModal('changelog-modal');
-    renderChangelog();
-    toast('Logged.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
 // Solutions
 
 async function loadSolutions() {
@@ -2574,257 +2333,6 @@ async function deleteOverride(date) {
     overrides = overrides.filter(o => o.override_date !== date);
     renderOverrides();
     toast('Override removed.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-// R&D Log
-
-async function loadRdLog() {
-  try { rdLog = await api('GET', '/api/rd-log'); } catch (e) { toast('Failed to load R&D log: ' + e.message, 'error'); return; }
-  renderRdLog();
-}
-
-function toggleRdForm() {
-  rdFormOpen = !rdFormOpen;
-  document.getElementById('rd-form').classList.toggle('hidden', !rdFormOpen);
-  if (rdFormOpen) {
-    document.getElementById('rd-date').value      = new Date().toISOString().slice(0,10);
-    document.getElementById('rd-client').value    = '';
-    document.getElementById('rd-duration').value  = '';
-    document.getElementById('rd-description').value = '';
-    document.getElementById('rd-dedup').value     = '';
-    document.getElementById('rd-narrative').value = '';
-    document.getElementById('rd-qualifies-toggle').classList.remove('on');
-  }
-}
-
-function toggleRdQualifies() {
-  document.getElementById('rd-qualifies-toggle').classList.toggle('on');
-}
-
-function renderRdLog() {
-  const tbody = document.getElementById('rd-tbody');
-  if (!rdLog.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">No entries yet</div></td></tr>`;
-    renderRdTotals();
-    return;
-  }
-  tbody.innerHTML = rdLog.map(e => `
-    <tr>
-      <td class="text-small">${esc(e.session_date)}</td>
-      <td style="white-space:nowrap">${esc(e.client)}</td>
-      <td><span class="badge badge-new">${esc(e.category)}</span></td>
-      <td style="text-align:right">${e.duration_minutes}m</td>
-      <td style="max-width:180px" title="${esc(e.description??'')}">${esc((e.description??'').slice(0,60))}${(e.description?.length??0)>60?'\u2026':''}</td>
-      <td style="text-align:center">${e.qualifies ? '<span style="color:var(--green);font-weight:700">\u2713</span>' : '<span class="text-gray">\u2014</span>'}</td>
-      <td class="text-small text-gray" style="max-width:120px">${esc((e.dedup_note??'').slice(0,40))}</td>
-      <td><button class="btn btn-danger btn-xs" onclick="deleteRdEntry('${e.id}')">Del</button></td>
-    </tr>
-  `).join('');
-  renderRdTotals();
-}
-
-function renderRdTotals() {
-  const el = document.getElementById('rd-totals');
-  if (!el) return;
-  const qualified = rdLog.filter(e => e.qualifies);
-  if (!qualified.length) { el.innerHTML = ''; return; }
-  const byClient = {}, byCategory = {};
-  let total = 0;
-  qualified.forEach(e => {
-    byClient[e.client]     = (byClient[e.client]     || 0) + e.duration_minutes;
-    byCategory[e.category] = (byCategory[e.category] || 0) + e.duration_minutes;
-    total += e.duration_minutes;
-  });
-  const hrs = m => `${Math.floor(m/60)}h ${m%60}m`;
-  el.innerHTML = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <strong>Qualified: ${hrs(total)}</strong>
-    ${Object.entries(byClient).map(([c,m]) => `<span class="text-gray">${esc(c)}: ${hrs(m)}</span>`).join('')}
-    <span style="border-left:1px solid var(--border);padding-left:12px">
-      ${Object.entries(byCategory).map(([c,m]) => `<span class="badge badge-new" style="margin-right:2px">${c}</span> ${hrs(m)}`).join(' &nbsp;')}
-    </span>
-  </div>`;
-}
-
-async function saveRdEntry() {
-  const client    = document.getElementById('rd-client').value.trim();
-  const date      = document.getElementById('rd-date').value;
-  const duration  = document.getElementById('rd-duration').value;
-  const category  = document.getElementById('rd-category').value;
-  const desc      = document.getElementById('rd-description').value.trim();
-  const dedup     = document.getElementById('rd-dedup').value.trim();
-  const narrative = document.getElementById('rd-narrative').value.trim();
-  const qualifies = document.getElementById('rd-qualifies-toggle').classList.contains('on');
-  if (!client || !date || !duration || !category) { toast('Client, date, duration, and category are required.', 'error'); return; }
-  try {
-    const created = await api('POST', '/api/rd-log', {
-      client, session_date: date, duration_minutes: parseInt(duration,10),
-      category, description: desc||null, dedup_note: dedup||null,
-      narrative: narrative||null, qualifies,
-    });
-    const newEntry = Array.isArray(created) ? created[0] : created;
-    if (newEntry) rdLog.unshift(newEntry);
-    toggleRdForm();
-    renderRdLog();
-    toast('Entry saved.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function deleteRdEntry(id) {
-  if (!confirm('Delete this R&D log entry?')) return;
-  try {
-    await api('DELETE', `/api/rd-log/${id}`);
-    rdLog = rdLog.filter(e => e.id !== id);
-    renderRdLog();
-    toast('Deleted.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-// Reviewers
-
-async function loadReviewers() {
-  try { reviewers = await api('GET', '/admin/reviewers'); } catch (e) { toast('Failed to load reviewers: ' + e.message, 'error'); return; }
-  renderReviewers();
-}
-
-function renderReviewers() {
-  const tbody = document.getElementById('reviewers-tbody');
-  if (!reviewers.length) { tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">No reviewers</div></td></tr>`; return; }
-  tbody.innerHTML = reviewers.map(r => `
-    <tr>
-      <td><strong>${esc(r.display_name)}</strong></td>
-      <td class="text-small text-gray">${esc(r.email)}</td>
-      <td>
-        <div class="flex-row">
-          <button class="btn btn-ghost btn-xs" onclick="openEditReviewerModal('${r.id}')">Edit</button>
-          <button class="btn btn-danger btn-xs" onclick="deleteReviewer('${r.id}','${esc(r.display_name)}')">Del</button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function openReviewerModal() {
-  document.getElementById('rv-modal-title').textContent = 'Add Reviewer';
-  document.getElementById('rv-save-btn').textContent    = 'Add Reviewer';
-  document.getElementById('rv-id').value    = '';
-  document.getElementById('rv-name').value  = '';
-  document.getElementById('rv-email').value = '';
-  document.getElementById('reviewer-modal').classList.add('open');
-}
-
-function openEditReviewerModal(id) {
-  const r = reviewers.find(r => r.id === id);
-  if (!r) return;
-  document.getElementById('rv-modal-title').textContent = 'Edit Reviewer';
-  document.getElementById('rv-save-btn').textContent    = 'Save Changes';
-  document.getElementById('rv-id').value    = r.id;
-  document.getElementById('rv-name').value  = r.display_name;
-  document.getElementById('rv-email').value = r.email;
-  document.getElementById('reviewer-modal').classList.add('open');
-}
-
-async function saveReviewer() {
-  const id    = document.getElementById('rv-id').value;
-  const email = document.getElementById('rv-email').value.trim();
-  const name  = document.getElementById('rv-name').value.trim();
-  if (!email || !name) { toast('Name and email are required.', 'error'); return; }
-  try {
-    if (id) {
-      await api('PATCH', `/admin/reviewers/${id}`, { display_name: name, email });
-      const idx = reviewers.findIndex(r => r.id === id);
-      if (idx >= 0) { reviewers[idx].display_name = name; reviewers[idx].email = email; }
-      closeModal('reviewer-modal');
-      renderReviewers();
-      toast('Updated.');
-    } else {
-      await api('POST', '/admin/reviewers/invite', { email, display_name: name, role: 'client_tester' });
-      closeModal('reviewer-modal');
-      await loadReviewers();
-      toast('Added ' + name + '.');
-    }
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function deleteReviewer(id, name) {
-  if (!confirm(`Remove ${name} from reviewers?`)) return;
-  try {
-    await api('DELETE', `/admin/reviewers/${id}`);
-    reviewers = reviewers.filter(r => r.id !== id);
-    renderReviewers();
-    toast(name + ' removed.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-// Episodes
-
-async function loadEpisodes() {
-  try { episodes = await api('GET', '/admin/podcast-episodes'); } catch (e) { toast('Failed to load episodes: ' + e.message, 'error'); return; }
-  renderEpisodes();
-}
-
-function renderEpisodes() {
-  const tbody = document.getElementById('episodes-tbody');
-  if (!episodes.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No episodes</div></td></tr>`; return; }
-  tbody.innerHTML = episodes.map(e => `
-    <tr>
-      <td class="text-small text-gray">${esc(e.series)}</td>
-      <td><strong>${esc(e.title)}</strong></td>
-      <td class="text-small text-gray">${esc(e.published_at ?? '')}</td>
-      <td>${e.visible ? '\u2713' : '\u2014'}</td>
-      <td>
-        <div class="flex-row">
-          <button class="btn btn-ghost btn-xs" onclick="openEpisodeModal('${e.id}')">Edit</button>
-          <button class="btn btn-danger btn-xs" onclick="deleteEpisode('${e.id}')">Del</button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function openEpisodeModal(id) {
-  const ep = id ? episodes.find(e => e.id === id) : null;
-  document.getElementById('ep-modal-title').textContent = ep ? 'Edit Episode' : 'Add Episode';
-  document.getElementById('ep-id').value         = ep?.id ?? '';
-  document.getElementById('ep-series').value     = ep?.series ?? '';
-  document.getElementById('ep-title').value      = ep?.title ?? '';
-  document.getElementById('ep-date').value       = ep?.published_at ?? '';
-  document.getElementById('ep-audio').value      = ep?.audio_path ?? '';
-  document.getElementById('ep-transcript').value = ep?.transcript ?? '';
-  document.getElementById('episode-modal').classList.add('open');
-}
-
-async function saveEpisode() {
-  const id         = document.getElementById('ep-id').value;
-  const series     = document.getElementById('ep-series').value.trim();
-  const title      = document.getElementById('ep-title').value.trim();
-  const published  = document.getElementById('ep-date').value.trim();
-  const audio      = document.getElementById('ep-audio').value.trim();
-  const transcript = document.getElementById('ep-transcript').value.trim();
-  if (!series || !title) { toast('Series and title required.', 'error'); return; }
-  try {
-    if (id) {
-      await api('PATCH', `/admin/podcast-episodes/${id}`, { series, title, published_at: published||null, audio_path: audio||null, transcript: transcript||null });
-      const idx = episodes.findIndex(e => e.id === id);
-      if (idx >= 0) episodes[idx] = { ...episodes[idx], series, title, published_at: published, audio_path: audio, transcript };
-    } else {
-      const created = await api('POST', '/admin/podcast-episodes', { series, title, published_at: published||null, audio_path: audio||null, transcript: transcript||null });
-      const newEp   = Array.isArray(created) ? created[0] : created;
-      if (newEp) episodes.unshift(newEp);
-    }
-    closeModal('episode-modal');
-    renderEpisodes();
-    toast('Saved.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function deleteEpisode(id) {
-  if (!confirm('Delete this episode?')) return;
-  try {
-    await api('DELETE', `/admin/podcast-episodes/${id}`);
-    episodes = episodes.filter(e => e.id !== id);
-    renderEpisodes();
-    toast('Deleted.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
