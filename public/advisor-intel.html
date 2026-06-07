@@ -299,18 +299,20 @@ let scanning = false;
 let lastScanTime = null;
 
 let feeds = [
-  { id:1,  name:'HBR Small Business',     url:'https://hbr.org/topic/subject/entrepreneurship/rss', type:'rss',       active:true, lastFetched:null },
-  { id:2,  name:'MIT Sloan Management',   url:'https://sloanreview.mit.edu/feed/',                   type:'rss',       active:true, lastFetched:null },
-  { id:3,  name:'McKinsey Insights',      url:'https://www.mckinsey.com/rss/insights.xml',           type:'rss',       active:true, lastFetched:null },
-  { id:4,  name:'Bain Insights',          url:'https://www.bain.com/insights/rss/',                  type:'rss',       active:true, lastFetched:null },
-  { id:5,  name:'BCG Perspectives',       url:'https://www.bcg.com/rss/insights',                   type:'rss',       active:true, lastFetched:null },
-  { id:6,  name:'Inc. Magazine',          url:'https://www.inc.com/rss/',                            type:'rss',       active:true, lastFetched:null },
-  { id:7,  name:'Entrepreneur',           url:'https://www.entrepreneur.com/latest.rss',             type:'rss',       active:true, lastFetched:null },
-  { id:8,  name:'SCORE Blog',             url:'https://www.score.org/blog/rss.xml',                  type:'rss',       active:true, lastFetched:null },
-  { id:9,  name:'SBA News',               url:'https://www.sba.gov/rss/everything.xml',              type:'rss',       active:true, lastFetched:null },
-  { id:10, name:'BizBuySell Insights',    url:'https://www.bizbuysell.com/news/rss/',                type:'rss',       active:true, lastFetched:null },
+  { id:1,  name:'HBR Small Business',        url:'https://hbr.org/topic/subject/entrepreneurship/rss',            type:'rss', active:true, lastFetched:null },
+  { id:2,  name:'MIT Sloan Management',       url:'https://sloanreview.mit.edu/feed/',                             type:'rss', active:true, lastFetched:null },
+  { id:3,  name:'HBR (main)',                 url:'https://hbr.org/rss/all',                                       type:'rss', active:true, lastFetched:null },
+  { id:4,  name:'Forbes Small Business',      url:'https://www.forbes.com/small-business/feed/',                   type:'rss', active:true, lastFetched:null },
+  { id:5,  name:'Kiplinger Business',         url:'https://www.kiplinger.com/rss/channel/business',                type:'rss', active:true, lastFetched:null },
+  { id:6,  name:'NFIB Research',              url:'https://www.nfib.com/feed/',                                    type:'rss', active:true, lastFetched:null },
+  { id:7,  name:'MarketWatch Small Business', url:'https://feeds.content.dowjones.io/public/rss/mw_smallbusiness', type:'rss', active:true, lastFetched:null },
+  { id:8,  name:'Axios',                      url:'https://www.axios.com/feeds/feed.rss',                          type:'rss', active:true, lastFetched:null },
+  { id:9,  name:'Inc. Magazine',              url:'https://www.inc.com/rss/',                                      type:'rss', active:true, lastFetched:null },
+  { id:10, name:'Entrepreneur',               url:'https://www.entrepreneur.com/latest.rss',                       type:'rss', active:true, lastFetched:null },
+  { id:11, name:'SCORE Blog',                 url:'https://www.score.org/blog/rss.xml',                            type:'rss', active:true, lastFetched:null },
+  { id:12, name:'SBA News',                   url:'https://www.sba.gov/rss/everything.xml',                        type:'rss', active:true, lastFetched:null },
 ];
-let nextFeedId = 11;
+let nextFeedId = 13;
 let nextArticleId = 1;
 
 // ═══════════════════════════════════════════════════════════════
@@ -455,15 +457,42 @@ function scoreArticle(title, summary=''){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// RSS FETCHING via allorigins CORS proxy
+// RSS FETCHING — sequential proxy fallback chain
+// Tries each proxy in order; skips feed silently if all three fail.
 // ═══════════════════════════════════════════════════════════════
 async function fetchFeed(feed){
-  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(feed.url)}`;
+  const enc = encodeURIComponent(feed.url);
+  const proxies = [
+	{
+	  get: () => fetch(`https://corsproxy.io/?${enc}`, { signal: AbortSignal.timeout(10000) }),
+	  xml: async r => r.text(),
+	},
+	{
+	  get: () => fetch(`https://api.allorigins.win/get?url=${enc}`, { signal: AbortSignal.timeout(10000) }),
+	  xml: async r => { const d = await r.json(); return d.contents || ''; },
+	},
+	{
+	  get: () => fetch(`https://api.codetabs.com/v1/proxy?quest=${enc}`, { signal: AbortSignal.timeout(10000) }),
+	  xml: async r => r.text(),
+	},
+  ];
+
+  let xml = null;
+  for(const proxy of proxies){
+	try {
+	  const res = await proxy.get();
+	  if(!res.ok) continue;
+	  const content = await proxy.xml(res);
+	  if(content && content.trim().length > 0){ xml = content; break; }
+	} catch(e){ /* try next proxy */ }
+  }
+
+  if(!xml){
+	console.warn(`All proxies failed — skipping: ${feed.name} (${feed.url})`);
+	return [];
+  }
+
   try {
-	const res  = await fetch(proxy, { signal: AbortSignal.timeout(12000) });
-	const data = await res.json();
-	const xml  = data.contents;
-	if(!xml) return [];
 	const doc   = new DOMParser().parseFromString(xml, 'text/xml');
 	const items = [...doc.querySelectorAll('item,entry')].slice(0, 25);
 	const parsed = [];
@@ -490,8 +519,8 @@ async function fetchFeed(feed){
 	  });
 	}
 	return parsed;
-  } catch(e) {
-	console.warn(`Failed: ${feed.name}`, e.message);
+  } catch(e){
+	console.warn(`RSS parse error — ${feed.name}:`, e.message);
 	return [];
   }
 }
