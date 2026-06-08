@@ -3,643 +3,312 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Local Service Business Owner &amp; Advisor Resources | FrontFrame</title>
-  <meta name="description" content="Most local service businesses are invisible to the people who would buy them, advise them, or send them clients. This page gives owners and their advisors practical tools to change that.">
+  <title>Resources — The Owner's Desk | FrontFrame</title>
+  <meta name="description" content="A place to think. Thoughts, signals, conversations, and tools to help you see your business more clearly.">
   <link rel="canonical" href="https://frontframe.co/resources">
   <meta name="robots" content="index, follow">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://frontframe.co/resources">
-  <meta property="og:title" content="Local Service Business Owner &amp; Advisor Resources | FrontFrame">
-  <meta property="og:description" content="Most local service businesses are invisible to the people who would buy them, advise them, or send them clients. This page gives owners and their advisors practical tools to change that.">
-  <meta property="og:image" content="https://frontframe.co/images/FrontFrame-Hero.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Local Service Business Owner &amp; Advisor Resources | FrontFrame">
-  <meta name="twitter:description" content="Most local service businesses are invisible to the people who would buy them, advise them, or send them clients. This page gives owners and their advisors practical tools to change that.">
   <link rel="icon" type="image/png" href="images/Logo_FF.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,700;1,9..40,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --navy:     #1E2D40;
-      --amber:    #F5A623;
-      --offwhite: #F8F6F1;
-      --gray:     #8A9BAE;
-      --white:    #FFFFFF;
+      --navy:         #1E2D40;
+      --amber:        #C8861A;
+      --amber-bright: #F5A623;
+      --surface:      #E8E3D8;
+      --surface-mid:  #DDD7CB;
+      --parchment:    #F2EDE3;
+      --paper:        #FAF8F3;
+      --paper-warm:   #F5F1E8;
+      --ink:          #2A3542;
+      --ink-mid:      #4A5568;
+      --ink-light:    #7A8A9A;
+      --rule:         rgba(42,53,66,0.10);
+      --rule-strong:  rgba(42,53,66,0.18);
+      --obj-shadow:   0 2px 8px rgba(42,53,66,0.09), 0 1px 2px rgba(42,53,66,0.07);
+      --obj-hover:    0 8px 28px rgba(42,53,66,0.14), 0 2px 6px rgba(42,53,66,0.09);
+      --drawer-bg:    #D6CFC3;
+      --drawer-face:  #CCC4B7;
+      --drawer-pull:  #A89E90;
     }
 
     html { scroll-behavior: smooth; }
-
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--offwhite);
-      color: var(--navy);
-      overflow-x: hidden;
-    }
-
-    h1, h2, h3, h4 {
-      font-family: 'DM Sans', system-ui, sans-serif;
-      font-weight: 700;
-    }
-
-    img { display: block; max-width: 100%; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--surface); color: var(--ink); overflow-x: hidden; }
+    h1, h2, h3, .serif { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; }
     a { text-decoration: none; color: inherit; }
-
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 48px;
-    }
+    img { display: block; max-width: 100%; }
+    button { font-family: inherit; }
 
     /* NAV */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      background: rgba(30, 45, 64, 0.97);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 300; background: rgba(30,45,64,0.97); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 48px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+    .wordmark { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.3rem; color: #fff; letter-spacing: -0.01em; }
+    .nav-back { font-size: 0.8rem; color: rgba(255,255,255,0.45); display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: rgba(255,255,255,0.75); }
 
-    .nav-inner {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 48px;
-      height: 68px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+    /* DESK SURFACE */
+    .desk-surface { padding: 80px 0 0; background: var(--surface); position: relative; min-height: calc(100vh - 60px); }
+    .desk-surface::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E"); }
 
-    .wordmark {
-      font-family: 'DM Sans', system-ui, sans-serif;
-      font-weight: 700;
-      font-size: 1.5rem;
-      color: #FFFFFF;
-      letter-spacing: -0.01em;
-    }
+    .desk-content { max-width: 1400px; margin: 0 auto; padding: 0 48px; position: relative; }
 
-    .nav-cta {
-      background: var(--amber);
-      color: var(--navy);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 0.9rem;
-      padding: 10px 22px;
-      border-radius: 6px;
-      transition: opacity 0.2s;
-    }
-
-    .nav-cta:hover { opacity: 0.88; }
-
-    /* SHARED */
-    .section-label {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--amber);
-      margin-bottom: 16px;
-    }
-
-    .btn-primary {
-      display: inline-block;
-      background: var(--amber);
-      color: var(--navy);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 1.05rem;
-      padding: 16px 32px;
-      border-radius: 8px;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-
-    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
-
-    .btn-ghost-dark {
-      display: inline-block;
-      color: var(--gray);
-      font-size: 0.95rem;
-      font-weight: 500;
-      padding: 16px 4px;
-      border-bottom: 1px solid transparent;
-      transition: color 0.2s, border-color 0.2s;
-    }
-
-    .btn-ghost-dark:hover { color: var(--navy); border-color: rgba(30,45,64,0.4); }
-
-    /* PAGE HEADER */
-    .page-header {
-      background: var(--navy);
-      padding: 160px 0 100px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .page-header::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        radial-gradient(circle at 80% 40%, rgba(245,166,35,0.07) 0%, transparent 60%),
-        radial-gradient(circle at 10% 85%, rgba(138,155,174,0.08) 0%, transparent 50%);
-      pointer-events: none;
-    }
-
-    .page-header-inner { max-width: 760px; position: relative; }
-
-    .page-eyebrow {
-      display: inline-block;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--amber);
-      margin-bottom: 24px;
-    }
-
-    .page-header h1 {
-      font-size: clamp(2.4rem, 4vw, 3.8rem);
-      line-height: 1.1;
-      color: var(--white);
-      margin-bottom: 24px;
-    }
-
-    .page-header-sub {
-      font-size: 1.1rem;
-      color: rgba(255,255,255,0.6);
-      line-height: 1.75;
-    }
-
-    .page-header-sub + .page-header-sub {
-      margin-top: 8px;
-    }
-
-    /* BOOK */
-    .book-section { background: var(--offwhite); padding: 120px 0; }
-
-    .book-inner {
+    /* DESK GRID */
+    .desk-grid {
       display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 100px;
-      align-items: center;
+      grid-template-columns: 220px 1fr 300px;
+      grid-template-rows: auto auto;
+      grid-template-areas:
+        "header  notebook  intel"
+        "folder  recorder  note";
+      gap: 22px;
+      padding-bottom: 36px;
+      align-items: start;
     }
 
-    .book-cover { flex-shrink: 0; }
+    /* HEADER CARD */
+    .desk-header { grid-area: header; }
+    .desk-eyebrow { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--amber); margin-bottom: 11px; display: block; }
+    .desk-headline { font-size: 1.85rem; line-height: 1.15; color: var(--ink); margin-bottom: 12px; }
+    .desk-sub { font-size: 0.8rem; color: var(--ink-mid); line-height: 1.7; }
+    .desk-rule-amber { width: 24px; height: 1.5px; background: var(--amber); margin: 14px 0; }
+    .desk-host-note { font-size: 0.75rem; color: var(--ink-light); line-height: 1.65; font-style: italic; }
 
-    .book-cover img {
-      width: 320px;
-      border-radius: 6px;
-      box-shadow:
-        0 40px 80px rgba(30,45,64,0.22),
-        0 12px 28px rgba(30,45,64,0.14),
-        4px 0 12px rgba(0,0,0,0.08);
-    }
+    /* OBJECT BASE */
+    .desk-obj { background: var(--paper-warm); border: 1px solid var(--rule-strong); border-radius: 3px; box-shadow: var(--obj-shadow); cursor: pointer; transition: box-shadow 0.25s, transform 0.25s; position: relative; overflow: hidden; user-select: none; }
+    .desk-obj:hover { box-shadow: var(--obj-hover); transform: translateY(-2px); }
+    .desk-obj.active { box-shadow: var(--obj-hover), 0 0 0 1.5px var(--amber); transform: translateY(-2px); }
 
-    .book-copy h2 {
-      font-size: clamp(1.9rem, 2.8vw, 2.7rem);
-      color: var(--navy);
-      line-height: 1.15;
-      margin-bottom: 10px;
-    }
+    .obj-label { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--amber); margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+    .obj-label-dot { width: 5px; height: 5px; border-radius: 50%; background: #5A9E6A; flex-shrink: 0; animation: blink 2.4s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    .book-subtitle {
-      font-size: 1rem; color: var(--gray);
-      line-height: 1.5; margin-bottom: 10px; font-style: italic;
-    }
+    /* NOTEBOOK */
+    .obj-notebook { grid-area: notebook; padding: 30px 34px 26px; background: var(--paper); border-left: 3px solid var(--navy); }
+    .obj-notebook::after { content: ''; position: absolute; top: 0; left: 16px; width: 9px; height: 28px; background: var(--navy); clip-path: polygon(0 0, 100% 0, 100% 84%, 50% 100%, 0 84%); }
 
-    .book-author {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.8rem; font-weight: 700;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      color: var(--amber); margin-bottom: 36px;
-    }
+    .notebook-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 0 36px; border-top: 1px solid var(--rule); padding-top: 18px; }
+    .notebook-col + .notebook-col { border-left: 1px solid var(--rule); padding-left: 36px; }
+    .notebook-heading { font-size: 1.3rem; line-height: 1.2; color: var(--ink); margin-bottom: 18px; }
+    .notebook-entry { margin-bottom: 13px; padding-bottom: 13px; border-bottom: 1px solid var(--rule); }
+    .notebook-entry:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .entry-title { font-size: 0.825rem; font-weight: 600; color: var(--ink); line-height: 1.35; margin-bottom: 3px; }
+    .entry-desc { font-size: 0.74rem; color: var(--ink-mid); line-height: 1.6; }
+    .notebook-more { display: inline-flex; align-items: center; gap: 5px; font-size: 0.74rem; font-weight: 600; color: var(--amber); margin-top: 14px; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
+    .notebook-more:hover { border-color: var(--amber); }
 
-    .book-desc {
-      font-size: 1.05rem; color: var(--gray);
-      line-height: 1.85; max-width: 560px; margin-bottom: 48px;
-    }
+    /* INTEL TRAY */
+    .obj-intel { grid-area: intel; padding: 24px 26px; }
+    .intel-clip { position: absolute; top: -2px; right: 28px; width: 12px; height: 30px; border: 2px solid #C0B8A8; border-bottom: none; border-radius: 8px 8px 0 0; pointer-events: none; }
+    .intel-cards { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+    .intel-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 10px 14px; display: flex; align-items: flex-start; justify-content: space-between; gap: 9px; transition: background 0.2s; }
+    .intel-card:hover { background: #fff; }
+    .intel-card-title { font-size: 0.8rem; font-weight: 600; color: var(--ink); line-height: 1.3; margin-bottom: 2px; }
+    .intel-card-desc { font-size: 0.7rem; color: var(--ink-light); line-height: 1.5; }
+    .intel-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--amber); flex-shrink: 0; margin-top: 5px; }
 
-    .book-cta-row { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+    /* FOLDER */
+    .obj-folder { grid-area: folder; padding: 26px 24px 22px; background: var(--surface-mid); border-top: 4px solid var(--ink-mid); display: flex; flex-direction: column; }
+    .folder-tab { position: absolute; right: 14px; top: -1px; writing-mode: vertical-lr; font-size: 0.55rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-light); padding: 7px 4px; border: 1px solid var(--rule-strong); border-top: none; background: var(--drawer-face); border-radius: 0 0 2px 2px; }
+    .folder-heading { font-size: 1.15rem; line-height: 1.25; color: var(--ink); margin-bottom: 8px; }
+    .folder-rule { width: 20px; height: 1px; background: var(--amber); margin: 8px 0 12px; }
+    .folder-items { list-style: none; display: flex; flex-direction: column; gap: 5px; margin-top: auto; }
+    .folder-items li { font-size: 0.74rem; color: var(--ink-mid); line-height: 1.4; }
 
-    /* ARTICLES */
-    .articles-section { background: var(--navy); padding: 120px 0; }
+    /* RECORDER */
+    .obj-recorder { grid-area: recorder; padding: 26px 30px; display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center; }
+    .recorder-heading { font-size: 1.3rem; line-height: 1.2; color: var(--ink); margin-bottom: 12px; }
+    .recorder-entry-title { font-size: 0.82rem; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+    .recorder-entry-meta { font-size: 0.7rem; color: var(--ink-light); }
+    .recorder-grille { width: 88px; height: 74px; background: #D8D2C6; border-radius: 5px; border: 1px solid var(--rule-strong); display: grid; grid-template-columns: repeat(7,1fr); grid-template-rows: repeat(6,1fr); gap: 3px; padding: 7px; flex-shrink: 0; }
+    .grille-dot { border-radius: 50%; background: var(--surface-mid); }
+    .recorder-controls { display: flex; align-items: center; gap: 7px; margin-top: 10px; }
+    .rec-btn { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--rule-strong); background: var(--paper); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; }
+    .rec-btn:hover { background: #fff; }
+    .rec-btn svg { width: 10px; height: 10px; }
 
-    .articles-header { max-width: 640px; margin-bottom: 56px; }
+    /* NOTE SLIP */
+    .obj-note { grid-area: note; padding: 26px 26px 22px; background: var(--paper); border: 1px solid var(--rule); box-shadow: var(--obj-shadow), 2px 2px 0 rgba(42,53,66,0.04); cursor: default; }
+    .obj-note:hover { transform: none; box-shadow: var(--obj-shadow), 2px 2px 0 rgba(42,53,66,0.04); }
+    .note-quote { font-family: 'DM Serif Display', Georgia, serif; font-style: italic; font-size: 1.05rem; line-height: 1.5; color: var(--ink); margin-bottom: 16px; }
+    .note-rule { width: 18px; height: 1px; background: var(--amber); margin-bottom: 8px; }
+    .note-attribution { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); }
 
-    .articles-header h2 {
-      font-size: clamp(1.8rem, 2.8vw, 2.6rem);
-      color: var(--white); line-height: 1.2; margin-bottom: 16px;
-    }
+    /* SURFACE PANELS */
+    .surface-panel { display: none; background: var(--parchment); border-top: 1px solid var(--rule-strong); padding: 48px 0; animation: panelIn 0.3s ease; }
+    .surface-panel.active { display: block; }
+    @keyframes panelIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .panel-inner { max-width: 1400px; margin: 0 auto; padding: 0 48px; }
+    .panel-close-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+    .panel-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--amber); }
+    .panel-close-btn { background: none; border: 1px solid var(--rule-strong); border-radius: 3px; padding: 5px 12px; font-size: 0.72rem; color: var(--ink-light); cursor: pointer; transition: color 0.2s, border-color 0.2s; display: flex; align-items: center; gap: 5px; }
+    .panel-close-btn:hover { color: var(--ink); border-color: var(--ink-mid); }
 
-    .articles-sub { font-size: 1rem; color: rgba(255,255,255,0.6); line-height: 1.75; }
+    /* NOTEBOOK PANEL */
+    .book-layout { display: grid; grid-template-columns: 200px 1fr; gap: 56px; align-items: start; }
+    .book-cover img { width: 200px; border-radius: 3px; box-shadow: 0 20px 48px rgba(30,45,64,0.20), 0 5px 14px rgba(30,45,64,0.12), 3px 0 7px rgba(0,0,0,0.06); }
+    .book-copy h2 { font-size: 1.6rem; color: var(--ink); line-height: 1.15; margin-bottom: 5px; }
+    .book-sub { font-size: 0.85rem; color: var(--ink-light); font-style: italic; margin-bottom: 5px; }
+    .book-author { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); margin-bottom: 18px; }
+    .book-desc { font-size: 0.875rem; color: var(--ink-mid); line-height: 1.85; max-width: 460px; margin-bottom: 24px; }
+    .book-ctas { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 44px; }
+    .btn-primary { display: inline-block; background: var(--navy); color: #fff; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.82rem; padding: 10px 20px; border-radius: 3px; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-outline { display: inline-block; border: 1px solid var(--rule-strong); color: var(--ink); font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.82rem; padding: 10px 20px; border-radius: 3px; transition: border-color 0.2s, background 0.2s; }
+    .btn-outline:hover { border-color: var(--ink); background: rgba(42,53,66,0.04); }
+    .btn-text { font-size: 0.82rem; color: var(--ink-light); border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
+    .btn-text:hover { color: var(--ink); border-color: rgba(42,53,66,0.3); }
 
-    .articles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .articles-section { margin-top: 0; }
+    .articles-heading { font-size: 1.05rem; color: var(--ink); margin-bottom: 3px; }
+    .articles-sub { font-size: 0.8rem; color: var(--ink-light); margin-bottom: 16px; }
+    .articles-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+    .article-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 18px 20px; display: flex; flex-direction: column; gap: 7px; }
+    .article-topic { font-size: 0.82rem; font-weight: 600; color: var(--ink); line-height: 1.4; }
+    .article-blurb { font-size: 0.74rem; color: var(--ink-light); line-height: 1.65; flex: 1; }
+    .status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); }
+    .status-badge::before { content:''; width:4px; height:4px; border-radius:50%; background:currentColor; animation:blink 2.4s ease-in-out infinite; }
+    .articles-substack { padding-top: 18px; border-top: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+    .articles-substack p { font-size: 0.8rem; color: var(--ink-light); line-height: 1.65; max-width: 440px; }
 
-    .article-card {
-      padding: 36px 40px;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      background: rgba(255,255,255,0.03);
-      transition: background 0.2s;
-      display: flex; flex-direction: column; gap: 14px;
-    }
+    /* INTEL PANEL */
+    .intel-panel-desc { font-size: 0.875rem; color: var(--ink-mid); line-height: 1.8; max-width: 580px; margin-bottom: 24px; }
+    .intel-frame iframe { width: 100%; height: 620px; border: 1px solid var(--rule-strong); border-radius: 3px; background: var(--paper-warm); }
 
-    .article-card:hover { background: rgba(255,255,255,0.055); }
+    /* CONVERSATIONS PANEL */
+    .episodes-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
+    .episode-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 26px 30px; }
+    .episode-series { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin-bottom: 7px; }
+    .episode-title { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.2rem; color: var(--ink); line-height: 1.25; margin-bottom: 18px; }
+    .episode-audio { width:100%; height:36px; margin-bottom:14px; accent-color:var(--amber); }
+    .episode-actions { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .episode-btn { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--rule-strong); border-radius:2px; padding:6px 11px; font-family:'DM Sans',sans-serif; font-weight:700; font-size:0.74rem; color:var(--ink); background:none; cursor:pointer; transition:border-color 0.2s, background 0.2s; text-decoration:none; }
+    .episode-btn:hover { border-color:var(--ink); background:rgba(42,53,66,0.04); }
+    .episode-btn svg { width:11px; height:11px; flex-shrink:0; }
+    .episode-btn .chevron { transition:transform 0.25s; }
+    .episode-btn.open .chevron { transform:rotate(180deg); }
+    .episode-actions-divider { width:1px; height:13px; background:var(--rule); flex-shrink:0; }
+    .transcript-body { display:none; margin-top:20px; padding-top:20px; border-top:1px solid var(--rule); }
+    .transcript-body.visible { display:block; }
+    .transcript-text { font-size:0.85rem; color:var(--ink); line-height:1.95; white-space:pre-line; max-width:620px; margin-bottom:12px; }
+    .transcript-copyright { font-size:0.68rem; color:var(--ink-light); font-style:italic; }
+    .episodes-loading { font-size:0.8rem; color:var(--ink-light); padding:8px 0; }
 
-    .article-topic {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700; font-size: 1.1rem;
-      color: var(--white); line-height: 1.35;
-    }
+    .coming-split { display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center; padding-top:22px; border-top:1px solid var(--rule); }
+    .coming-split-copy h3 { font-size:1.1rem; color:var(--ink); margin-bottom:9px; }
+    .coming-split-copy p { font-size:0.8rem; color:var(--ink-light); line-height:1.75; }
+    .coming-card { background:var(--navy); border-radius:3px; padding:30px 26px; display:flex; flex-direction:column; gap:14px; position:relative; overflow:hidden; }
+    .coming-card::before { content:''; position:absolute; top:-30px; right:-30px; width:100px; height:100px; background:radial-gradient(circle,rgba(245,166,35,0.07) 0%,transparent 70%); }
+    .coming-eyebrow { display:inline-flex; align-items:center; gap:5px; font-size:0.58rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber-bright); }
+    .coming-eyebrow::before { content:''; width:4px; height:4px; border-radius:50%; background:currentColor; animation:blink 2.4s ease-in-out infinite; }
+    .coming-hosts { font-weight:700; font-size:0.95rem; color:#fff; line-height:1.3; }
+    .coming-hosts span { display:block; font-size:0.7rem; font-weight:400; color:rgba(255,255,255,0.4); margin-top:2px; }
+    .coming-divider { width:18px; height:1px; background:rgba(255,255,255,0.1); }
+    .coming-desc { font-size:0.78rem; color:rgba(255,255,255,0.42); line-height:1.7; }
 
-    .article-desc {
-      font-size: 0.875rem; color: rgba(255,255,255,0.52);
-      line-height: 1.75; flex: 1;
-    }
+    /* VALUATION PANEL */
+    .valuation-placeholder { max-width: 440px; background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 30px 34px; }
+    .vp-eyebrow { font-size:0.6rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); margin-bottom:11px; display:block; }
+    .valuation-placeholder h3 { font-size:1.15rem; color:var(--ink); margin-bottom:9px; }
+    .valuation-placeholder p { font-size:0.82rem; color:var(--ink-mid); line-height:1.75; }
 
-    .status-badge {
-      display: inline-flex; align-items: center; gap: 7px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.7rem; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--amber); margin-top: 8px;
-    }
+    /* DRAWER BELT */
+    .drawer-belt { background: var(--drawer-bg); border-top: 2px solid var(--rule-strong); }
+    .drawer-belt-inner { max-width: 1400px; margin: 0 auto; padding: 0 48px; display: grid; grid-template-columns: repeat(4, 1fr); }
+    .drawer { border-right: 1px solid var(--rule-strong); cursor: pointer; transition: background 0.2s; position: relative; }
+    .drawer:last-child { border-right: none; }
+    .drawer:hover { background: rgba(42,53,66,0.05); }
+    .drawer.open { background: rgba(42,53,66,0.07); }
+    .drawer-face { padding: 18px 26px 16px; display: flex; align-items: center; gap: 11px; }
+    .drawer-icon { width: 16px; height: 16px; flex-shrink: 0; color: var(--ink-light); }
+    .drawer-label { font-size: 0.75rem; font-weight: 600; color: var(--ink-mid); letter-spacing: 0.02em; }
+    .drawer-pull-bar { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 28px; height: 4px; background: var(--drawer-pull); border-radius: 2px 2px 0 0; }
+    .drawer-content { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 250; background: var(--paper); border-top: 2px solid var(--rule-strong); box-shadow: 0 -6px 36px rgba(42,53,66,0.13); padding: 30px 48px 34px; max-height: 55vh; overflow-y: auto; animation: drawerUp 0.28s ease; }
+    .drawer-content.open { display: block; }
+    @keyframes drawerUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .drawer-content-inner { max-width: 1304px; margin: 0 auto; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+    .drawer-close { background: none; border: none; cursor: pointer; color: var(--ink-light); padding: 4px; transition: color 0.2s; flex-shrink: 0; }
+    .drawer-close:hover { color: var(--ink); }
+    .drawer-content-heading { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); margin-bottom: 12px; }
+    .drawer-content p { font-size: 0.85rem; color: var(--ink-mid); line-height: 1.75; }
 
-    .status-badge::before {
-      content: '';
-      width: 6px; height: 6px;
-      background: var(--amber); border-radius: 50%; flex-shrink: 0;
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    /* CONVERSATIONS */
-    .conversations-section { background: var(--offwhite); padding: 120px 0; }
-
-    .conversations-header { max-width: 680px; margin-bottom: 64px; }
-
-    .conversations-header h2 {
-      font-size: clamp(1.8rem, 2.8vw, 2.6rem);
-      color: var(--navy); line-height: 1.2; margin-bottom: 16px;
-    }
-
-    .conversations-sub { font-size: 1rem; color: var(--gray); line-height: 1.75; }
-
-    /* EPISODE CARDS */
-    .episodes-list { display: flex; flex-direction: column; gap: 32px; margin-bottom: 64px; }
-
-    .episode-card {
-      background: var(--white);
-      border-radius: 16px;
-      padding: 48px 52px;
-      box-shadow: 0 2px 20px rgba(30,45,64,0.07);
-      transition: box-shadow 0.2s;
-    }
-
-    .episode-card:hover { box-shadow: 0 6px 32px rgba(30,45,64,0.11); }
-
-    .episode-series {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.72rem; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--amber); margin-bottom: 12px;
-    }
-
-    .episode-title {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: clamp(1.3rem, 2vw, 1.75rem);
-      color: var(--navy); line-height: 1.25; margin-bottom: 32px;
-    }
-
-    .episode-audio {
-      width: 100%; height: 44px;
-      margin-bottom: 24px;
-      accent-color: var(--amber);
-    }
-
-    /* EPISODE ACTION BUTTONS */
-    .episode-actions {
-      display: flex; align-items: center;
-      gap: 10px; flex-wrap: wrap;
-    }
-
-    .episode-btn {
-      display: inline-flex; align-items: center; gap: 7px;
-      border: 1.5px solid rgba(30,45,64,0.18);
-      border-radius: 7px; padding: 9px 16px;
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700; font-size: 0.84rem;
-      color: var(--navy); background: none; cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      text-decoration: none;
-    }
-
-    .episode-btn:hover {
-      border-color: var(--navy);
-      background: rgba(30,45,64,0.04);
-    }
-
-    .episode-btn svg {
-      width: 14px; height: 14px; flex-shrink: 0;
-    }
-
-    .episode-btn .chevron { transition: transform 0.25s; }
-    .episode-btn.open .chevron { transform: rotate(180deg); }
-
-    .episode-actions-divider {
-      width: 1px; height: 18px;
-      background: rgba(30,45,64,0.12); flex-shrink: 0;
-    }
-
-    /* TRANSCRIPT */
-    .transcript-body {
-      display: none;
-      margin-top: 32px; padding-top: 32px;
-      border-top: 1px solid rgba(30,45,64,0.09);
-    }
-
-    .transcript-body.visible { display: block; }
-
-    .transcript-text {
-      font-size: 0.975rem; color: var(--navy);
-      line-height: 2; white-space: pre-line;
-      max-width: 720px; margin-bottom: 20px;
-    }
-
-    .transcript-copyright {
-      font-size: 0.78rem; color: var(--gray); font-style: italic;
-    }
-
-    .episodes-loading { font-size: 0.9rem; color: var(--gray); padding: 8px 0 32px; }
-
-    /* COMING ROW */
-    .coming-row {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 100px; align-items: center;
-      padding-top: 32px;
-      border-top: 1px solid rgba(30,45,64,0.08);
-    }
-
-    .coming-row-copy h3 {
-      font-size: clamp(1.4rem, 2vw, 1.9rem);
-      color: var(--navy); line-height: 1.25; margin-bottom: 16px;
-    }
-
-    .coming-row-desc { font-size: 1rem; color: var(--gray); line-height: 1.8; }
-
-    .coming-card {
-      background: var(--navy); border-radius: 16px;
-      padding: 52px 44px; display: flex; flex-direction: column;
-      gap: 24px; position: relative; overflow: hidden;
-    }
-
-    .coming-card::before {
-      content: '';
-      position: absolute; top: -60px; right: -60px;
-      width: 180px; height: 180px;
-      background: radial-gradient(circle, rgba(245,166,35,0.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .coming-eyebrow {
-      display: inline-flex; align-items: center; gap: 7px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.7rem; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--amber);
-    }
-
-    .coming-eyebrow::before {
-      content: '';
-      width: 6px; height: 6px;
-      background: var(--amber); border-radius: 50%; flex-shrink: 0;
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    .coming-hosts {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700; font-size: 1.3rem;
-      color: var(--white); line-height: 1.3;
-    }
-
-    .coming-hosts span {
-      display: block; font-size: 0.8rem; font-weight: 400;
-      font-family: 'Inter', sans-serif; color: var(--gray); margin-top: 4px;
-    }
-
-    .coming-divider { width: 36px; height: 2px; background: rgba(255,255,255,0.1); }
-
-    .coming-desc { font-size: 0.9rem; color: rgba(255,255,255,0.55); line-height: 1.75; }
-
-    /* FINAL CTA */
-    .final-cta {
-      background: var(--navy); padding: 120px 0;
-      text-align: center; position: relative; overflow: hidden;
-    }
-
-    .final-cta::before {
-      content: '';
-      position: absolute; inset: 0;
-      background-image: radial-gradient(circle at 50% 60%, rgba(245,166,35,0.06) 0%, transparent 60%);
-      pointer-events: none;
-    }
-
-    .final-cta h2 {
-      font-size: clamp(2rem, 3.5vw, 3.2rem);
-      color: var(--white); margin-bottom: 20px; line-height: 1.2; position: relative;
-    }
-
-    .final-cta p {
-      font-size: 1.05rem; color: rgba(255,255,255,0.6);
-      max-width: 480px; margin: 0 auto 44px;
-      line-height: 1.75; position: relative;
-    }
+    /* ADVISOR */
+    .advisor-section { background: var(--paper-warm); border-top: 1px solid var(--rule-strong); padding: 60px 0; }
+    .advisor-inner { max-width: 1400px; margin: 0 auto; padding: 0 48px; }
+    .advisor-copy { max-width: 560px; }
+    .advisor-copy h2 { font-size: 1.35rem; color: var(--ink); margin-bottom: 14px; }
+    .advisor-copy p { font-size: 0.85rem; color: var(--ink-mid); line-height: 1.85; }
 
     /* FOOTER */
-    footer { background: var(--navy); padding: 40px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+    footer { background: var(--navy); padding: 30px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+    .footer-inner { max-width: 1400px; margin: 0 auto; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .footer-wordmark { font-family:'DM Sans',sans-serif; font-weight:700; font-size:1.05rem; color:rgba(255,255,255,0.5); }
+    .footer-right { font-size:0.72rem; color:rgba(255,255,255,0.28); }
 
-    .footer-inner {
-      display: flex; align-items: center;
-      justify-content: space-between; flex-wrap: wrap; gap: 16px;
-    }
+    /* NOTEPAD — desk-native host */
+    .obj-notepad { grid-area: note; background: #FDFBF6; border: 1px solid var(--rule-strong); border-radius: 2px; box-shadow: var(--obj-shadow), 3px 3px 0 #EDE7D9, 5px 5px 0 #E4DDD0; cursor: pointer; padding: 22px 22px 18px; position: relative; transition: box-shadow 0.22s, transform 0.22s; user-select: none; overflow: hidden; }
+    .obj-notepad:hover { box-shadow: var(--obj-hover), 3px 3px 0 #EDE7D9, 5px 5px 0 #E4DDD0; transform: translateY(-2px); }
+    .obj-notepad.open { box-shadow: var(--obj-hover), 0 0 0 1.5px var(--amber); transform: translateY(-2px); }
+    .notepad-lines { position: absolute; inset: 46px 16px 12px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .notepad-line { height: 1px; background: rgba(100,130,160,0.11); }
+    .notepad-prompt { font-family: 'DM Serif Display', Georgia, serif; font-style: italic; font-size: 0.88rem; line-height: 1.45; color: var(--ink-mid); position: relative; z-index: 1; margin-bottom: 5px; }
+    .notepad-cue { font-size: 0.6rem; color: var(--ink-light); letter-spacing: 0.05em; position: relative; z-index: 1; }
 
-    .footer-wordmark {
-      font-family: 'DM Sans', system-ui, sans-serif;
-      font-weight: 700; font-size: 1.2rem;
-      color: rgba(255,255,255,0.7); letter-spacing: -0.01em;
-    }
+    /* NOTEPAD SIDE PANEL */
+    .notepad-panel { position: fixed; top: 60px; right: 0; bottom: 0; width: 370px; background: #FDFBF6; border-left: 1px solid var(--rule-strong); box-shadow: -5px 0 28px rgba(42,53,66,0.09); display: flex; flex-direction: column; z-index: 350; transform: translateX(100%); transition: transform 0.28s ease; }
+    .notepad-panel.open { transform: translateX(0); }
+    .notepad-panel::before { content: ''; position: absolute; top: 0; left: 26px; bottom: 0; width: 1px; background: rgba(200,134,26,0.10); pointer-events: none; }
+    .notepad-panel-head { padding: 18px 20px 14px 38px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .notepad-panel-label { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-light); }
+    .notepad-dismiss { background: none; border: none; cursor: pointer; color: var(--ink-light); padding: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
+    .notepad-dismiss:hover { color: var(--ink); }
+    .notepad-sort { padding: 22px 20px 0 38px; flex-shrink: 0; }
+    .notepad-sort-q { font-family: 'DM Serif Display', Georgia, serif; font-size: 0.975rem; line-height: 1.4; color: var(--ink); margin-bottom: 14px; }
+    .notepad-choices { display: flex; flex-direction: column; gap: 5px; }
+    .notepad-choice { background: none; border: 1px solid var(--rule-strong); border-radius: 2px; padding: 8px 13px; font-size: 0.78rem; color: var(--ink-mid); cursor: pointer; text-align: left; transition: background 0.15s, border-color 0.15s, color 0.15s; }
+    .notepad-choice:hover { background: var(--paper-warm); border-color: var(--ink-mid); color: var(--ink); }
+    .notepad-messages { flex: 1; overflow-y: auto; padding: 18px 20px 10px 38px; display: flex; flex-direction: column; gap: 13px; }
+    .notepad-msg { font-size: 0.81rem; line-height: 1.65; white-space: pre-line; }
+    .notepad-msg.host { color: var(--ink); padding-left: 11px; border-left: 2px solid var(--rule-strong); }
+    .notepad-msg.visitor { color: var(--ink-mid); font-style: italic; }
+    .notepad-msg.thinking { color: var(--ink-light); font-size: 0.75rem; }
+    .notepad-input-row { padding: 11px 18px 18px 38px; border-top: 1px solid var(--rule); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+    .notepad-input { flex: 1; border: none; border-bottom: 1px solid var(--rule-strong); background: transparent; padding: 5px 0; font-family: 'DM Sans', sans-serif; font-size: 0.81rem; color: var(--ink); outline: none; transition: border-color 0.2s; resize: none; overflow: hidden; min-height: 28px; max-height: 84px; line-height: 1.5; display: block; }
+    .notepad-input:focus { border-color: var(--ink-mid); }
+    .notepad-input::placeholder { color: var(--ink-light); font-style: italic; }
+    .notepad-send { background: none; border: none; cursor: pointer; color: var(--ink-light); padding: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; flex-shrink: 0; }
+    .notepad-send:hover { color: var(--ink); }
+    .notepad-send svg { width: 14px; height: 14px; }
+    .notepad-scrim { display: none; position: fixed; inset: 60px 370px 0 0; background: rgba(42,53,66,0.05); z-index: 340; }
+    .notepad-scrim.visible { display: block; }
 
-    .footer-right { font-size: 0.8rem; color: var(--gray); }
-
-    /* CHAT WIDGET */
-    .chat-widget { position: fixed; bottom: 24px; right: 24px; z-index: 1000; font-family: 'Inter', sans-serif; }
-
-    .chat-toggle {
-      width: 56px; height: 56px; background: var(--amber);
-      border-radius: 50%; border: none; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 20px rgba(245,166,35,0.4);
-      transition: transform 0.2s, box-shadow 0.2s; margin-left: auto;
-    }
-
-    .chat-toggle:hover { transform: scale(1.05); box-shadow: 0 6px 24px rgba(245,166,35,0.5); }
-    .chat-toggle svg { width: 24px; height: 24px; }
-
-    .chat-panel {
-      position: absolute; bottom: 68px; right: 0;
-      width: 360px; height: 480px;
-      background: var(--white); border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-      display: flex; flex-direction: column; overflow: hidden;
-      opacity: 0; transform: translateY(12px) scale(0.97);
-      pointer-events: none;
-      transition: opacity 0.25s, transform 0.25s, height 0.35s ease;
-    }
-
-    .chat-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
-    .chat-panel.expanded { height: 560px; }
-
-    .chat-header {
-      background: var(--navy); padding: 16px 20px;
-      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-    }
-
-    .chat-avatar {
-      width: 36px; height: 36px; background: var(--amber);
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.9rem;
-      color: var(--navy); flex-shrink: 0;
-    }
-
-    .chat-header-info { flex: 1; }
-    .chat-header-name { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--white); }
-    .chat-header-status { font-size: 0.75rem; color: var(--gray); }
-
-    .chat-close {
-      background: none; border: none; cursor: pointer; color: var(--gray);
-      padding: 8px; display: flex; align-items: center; justify-content: center;
-      width: 36px; height: 36px; flex-shrink: 0; transition: color 0.2s;
-    }
-
-    .chat-close:hover { color: var(--white); }
-
-    .chat-messages {
-      flex: 1; overflow-y: auto; padding: 20px;
-      display: flex; flex-direction: column; gap: 12px;
-      background: var(--offwhite);
-    }
-
-    .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.875rem; line-height: 1.55; }
-
-    .msg.agent {
-      background: var(--white); color: var(--navy);
-      align-self: flex-start; border-bottom-left-radius: 4px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    }
-
-    .msg.user { background: var(--navy); color: var(--white); align-self: flex-end; border-bottom-right-radius: 4px; }
-    .msg.typing { background: var(--white); align-self: flex-start; color: var(--gray); }
-
-    .chat-input-row {
-      display: flex; gap: 8px; padding: 12px 16px;
-      background: var(--white); border-top: 1px solid #EAEAEA;
-      flex-shrink: 0; align-items: flex-end;
-    }
-
-    .chat-input {
-      flex: 1; border: 1.5px solid #E0E0E0; border-radius: 8px;
-      padding: 9px 12px; font-family: 'Inter', sans-serif; font-size: 0.875rem;
-      color: var(--navy); outline: none; transition: border-color 0.2s;
-      resize: none; overflow: hidden; min-height: 38px; max-height: 120px;
-      line-height: 1.5; display: block;
-    }
-
-    .chat-input:focus { border-color: var(--navy); }
-
-    .chat-send {
-      background: var(--amber); border: none; border-radius: 8px;
-      width: 38px; height: 38px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: opacity 0.2s;
-    }
-
-    .chat-send:hover { opacity: 0.85; }
-    .chat-send svg { width: 16px; height: 16px; }
-
-    /* SCROLL REVEAL */
-    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-
-    /* ADVISOR SECTION */
-    .advisor-section { background: var(--white); padding: 100px 0; }
-
-    .advisor-section-inner { max-width: 720px; }
-
-    .advisor-section-inner h2 {
-      font-size: clamp(1.8rem, 2.8vw, 2.6rem);
-      color: var(--navy); line-height: 1.2; margin-bottom: 24px;
-    }
-
-    .advisor-section-body {
-      font-size: 1.05rem; color: var(--gray);
-      line-height: 1.85; margin-bottom: 24px;
-    }
-
-    .advisor-referral-cta {
-      font-size: 1.05rem; color: var(--gray); line-height: 1.85;
-    }
-
-    .advisor-referral-cta a {
-      color: var(--navy);
-      border-bottom: 1px solid rgba(30,45,64,0.3);
-      transition: border-color 0.2s;
-    }
-
-    .advisor-referral-cta a:hover { border-color: var(--navy); }
-
-    /* ADVISOR INTEL */
-    .advisor-intel-section { background: var(--offwhite); padding: 80px 0 100px; }
-
-    .advisor-intel-intro {
-      max-width: 680px;
-      margin-bottom: 40px;
-    }
-
-    .advisor-intel-desc {
-      font-size: 1.05rem;
-      color: var(--gray);
-      line-height: 1.85;
-    }
-
-    .advisor-intel-frame { margin-bottom: 36px; }
-
-    .advisor-intel-return { padding-top: 8px; }
+    /* REVEAL */
+    .reveal { opacity:0; transform:translateY(14px); transition:opacity 0.5s ease, transform 0.5s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
 
     /* RESPONSIVE */
-    @media (max-width: 1280px) {
-      .container { max-width: 1160px; padding: 0 40px; }
-      .nav-inner { max-width: 1160px; padding: 0 40px; }
+    @media (max-width: 1100px) {
+      .desk-grid { grid-template-columns: 200px 1fr 260px; gap: 18px; }
     }
-
     @media (max-width: 900px) {
-      .book-inner { grid-template-columns: 1fr; gap: 48px; }
-      .book-cover img { width: 240px; }
-      .coming-row { grid-template-columns: 1fr; gap: 48px; }
+      .desk-grid { grid-template-columns: 1fr 1fr; grid-template-areas: "header notebook" "intel intel" "folder recorder" "note note"; }
+    }
+    @media (max-width: 680px) {
+      .nav-inner, .desk-content, .drawer-belt-inner, .panel-inner, .advisor-inner, .footer-inner { padding-left: 20px; padding-right: 20px; }
+      .desk-grid { grid-template-columns: 78vw 78vw 78vw 60vw 60vw; grid-template-rows: auto; grid-template-areas: "header notebook intel folder recorder"; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 18px; }
+      .desk-grid > * { scroll-snap-align: start; min-width: 0; }
+      .obj-notepad { display: none; }
+      .drawer-belt-inner { grid-template-columns: repeat(2,1fr); }
+      .book-layout { grid-template-columns: 1fr; gap: 28px; }
       .articles-grid { grid-template-columns: 1fr; }
-      .episode-card { padding: 36px 28px; }
-      .chat-panel { width: 320px; }
-      .container { padding: 0 20px; }
-      .nav-inner { padding: 0 20px; }
+      .coming-split { grid-template-columns: 1fr; gap: 28px; }
+      .notepad-panel { width: 100%; top: auto; bottom: 0; height: 70vh; transform: translateY(100%); border-left: none; border-top: 1px solid var(--rule-strong); }
+      .notepad-panel.open { transform: translateY(0); }
+      .notepad-scrim { inset: 60px 0 70vh 0; }
+      .drawer-content { padding: 24px 20px 28px; }
     }
   </style>
 </head>
@@ -648,425 +317,549 @@
   <!-- NAV -->
   <nav>
     <div class="nav-inner">
-      <a class="nav-logo" href="/"><span class="wordmark">FrontFrame</span></a>
-      <a class="nav-cta" href="intake.html">Get Started</a>
+      <a href="/"><span class="wordmark">FrontFrame</span></a>
+      <a class="nav-back" href="/">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Home
+      </a>
     </div>
   </nav>
 
-  <!-- PAGE HEADER -->
-  <section class="page-header">
-    <div class="container">
-      <div class="page-header-inner reveal">
-        <span class="page-eyebrow">Resources</span>
-        <h1>For owners who are building<br>something worth keeping.</h1>
-        <p class="page-header-sub">Most local service businesses are invisible to the people who would buy them, advise them, or send them clients. This page is for owners who intend to change that — and for the advisors who work with them.</p>
+  <!-- DESK SURFACE -->
+  <div style="padding-top:60px;">
+  <section class="desk-surface">
+    <div class="desk-content">
+      <div class="desk-grid">
+
+        <!-- HEADER -->
+        <div class="desk-header">
+          <span class="desk-eyebrow">Welcome to your desk</span>
+          <h1 class="desk-headline serif">A few things worth your attention.</h1>
+          <p class="desk-sub">Thoughts, signals, conversations, and tools to help you see your business more clearly.</p>
+          <div class="desk-rule-amber"></div>
+        </div>
+
+        <!-- NOTEBOOK -->
+        <div class="desk-obj obj-notebook reveal" data-panel="notebook" tabindex="0" role="button" aria-pressed="false">
+          <div class="obj-label">Reading</div>
+          <h2 class="notebook-heading serif">Things worth knowing.</h2>
+          <div class="notebook-inner">
+            <div class="notebook-col">
+              <div class="notebook-entry">
+                <p class="entry-title">Why Good Local Businesses Stay Invisible</p>
+                <p class="entry-desc">Doing good work is not the same as being findable. Most owners never close that gap.</p>
+              </div>
+              <div class="notebook-entry">
+                <p class="entry-title">The Website Nobody Wants to Call</p>
+                <p class="entry-desc">What your site communicates before a prospect reads a single word.</p>
+              </div>
+              <div class="notebook-entry">
+                <p class="entry-title">When Referrals Quietly Stop Working</p>
+                <p class="entry-desc">Referrals don't disappear overnight. They thin out slowly, then suddenly.</p>
+              </div>
+              <a class="notebook-more" href="#">View all reading →</a>
+            </div>
+            <div class="notebook-col">
+              <div class="notebook-entry">
+                <p class="entry-title">The Cost of Being the Only One Who Knows</p>
+                <p class="entry-desc">When every question comes to you, you are the bottleneck. That's a structural problem.</p>
+              </div>
+              <div class="notebook-entry">
+                <p class="entry-title">Why Customers Leave Before Contacting You</p>
+                <p class="entry-desc">Most decisions are made before anyone picks up the phone.</p>
+              </div>
+              <div class="notebook-entry">
+                <p class="entry-title">Busy Is Not the Same as Discoverable</p>
+                <p class="entry-desc">A full schedule can hide a fragile business. Here's what to look for.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INTEL TRAY -->
+        <div class="desk-obj obj-intel reveal" data-panel="intel" tabindex="0" role="button" aria-pressed="false">
+          <div class="intel-clip"></div>
+          <div class="obj-label">Patterns <span class="obj-label-dot"></span></div>
+          <div class="intel-cards">
+            <div class="intel-card">
+              <div><p class="intel-card-title">What Other Owners Are Seeing</p><p class="intel-card-desc">Signals showing up across similar businesses.</p></div>
+              <div class="intel-dot"></div>
+            </div>
+            <div class="intel-card">
+              <div><p class="intel-card-title">Questions Showing Up Repeatedly</p><p class="intel-card-desc">If your customers keep asking it, it belongs on your site.</p></div>
+              <div class="intel-dot"></div>
+            </div>
+            <div class="intel-card">
+              <div><p class="intel-card-title">Patterns Worth Watching</p><p class="intel-card-desc">Trends that tend to reach local service businesses last.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FOLDER -->
+        <div class="desk-obj obj-folder reveal" data-panel="valuation" tabindex="0" role="button" aria-pressed="false">
+          <div class="folder-tab">Value</div>
+          <h2 class="folder-heading serif">What makes a business valuable.</h2>
+          <div class="folder-rule"></div>
+          <ul class="folder-items">
+            <li>What buyers look for</li>
+            <li>What makes it transferable</li>
+            <li>What reduces it silently</li>
+          </ul>
+        </div>
+
+        <!-- RECORDER -->
+        <div class="desk-obj obj-recorder reveal" data-panel="conversations" tabindex="0" role="button" aria-pressed="false">
+          <div class="recorder-body">
+            <div class="obj-label">Listening</div>
+            <h2 class="recorder-heading serif">Conversations for owners.</h2>
+            <div class="recorder-entry">
+              <p class="recorder-entry-title">Why the Phone Keeps Ringing at the Wrong Time</p>
+              <p class="recorder-entry-meta">Conversations for owners</p>
+            </div>
+            <div class="recorder-controls">
+              <button class="rec-btn" aria-label="Rewind"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+              <button class="rec-btn" aria-label="Play"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+              <button class="rec-btn" aria-label="Forward"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+            </div>
+          </div>
+          <div class="recorder-grille" id="grilleGrid"></div>
+        </div>
+
+        <!-- NOTEPAD — host -->
+        <div class="obj-notepad" id="notepadObj" tabindex="0" role="button" aria-label="Open thinking notepad">
+          <div class="notepad-lines">
+            <div class="notepad-line"></div><div class="notepad-line"></div>
+            <div class="notepad-line"></div><div class="notepad-line"></div>
+            <div class="notepad-line"></div><div class="notepad-line"></div>
+          </div>
+          <p class="notepad-prompt">A question worth sorting.</p>
+          <p class="notepad-cue">Pick it up →</p>
+        </div>
+
+      </div><!-- /desk-grid -->
+    </div><!-- /desk-content -->
+
+    <!-- SURFACE PANELS -->
+
+    <div class="surface-panel" id="panel-notebook">
+      <div class="panel-inner">
+        <div class="panel-close-bar">
+          <span class="panel-label">Reading</span>
+          <button class="panel-close-btn" data-close="notebook"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Close</button>
+        </div>
+
+        <!-- ARTICLES FIRST -->
+        <div class="reveal" style="margin-bottom:48px;">
+          <h2 class="serif articles-heading" style="font-size:1.4rem;margin-bottom:6px;">Short pieces for owners who are running the business and trying to improve it at the same time.</h2>
+          <div class="articles-grid" style="margin-top:20px;">
+            <div class="article-card">
+              <p class="article-topic">Why Good Local Businesses Stay Invisible</p>
+              <p class="article-blurb">Doing good work is not enough. Most local service businesses never solve the visibility problem, and most never realize it.</p>
+              <span class="status-badge">In progress</span>
+            </div>
+            <div class="article-card">
+              <p class="article-topic">The Website Nobody Wants to Call</p>
+              <p class="article-blurb">Prospects make a decision before they read your first sentence. Here is what they are actually evaluating.</p>
+              <span class="status-badge">In progress</span>
+            </div>
+            <div class="article-card">
+              <p class="article-topic">The Cost of Being the Only One Who Knows</p>
+              <p class="article-blurb">When all the knowledge lives in the owner's head, the business can't grow, can't rest, and can't be handed off.</p>
+              <span class="status-badge">In progress</span>
+            </div>
+          </div>
+          <div class="articles-substack">
+            <p>Longer pieces published on Substack. Written for owners who want to think about the business, not just run it.</p>
+            <a class="btn-outline" href="https://thebusiness.substack.com" target="_blank" rel="noopener">The Transferable Business →</a>
+          </div>
+        </div>
+
+        <!-- BOOK BELOW -->
+        <div class="book-layout reveal" style="padding-top:40px;border-top:1px solid var(--rule);">
+          <div class="book-cover"><img src="images/book-cover-kdp.jpg" alt="Your Business Is Invisible — Ed Dziuk"></div>
+          <div class="book-copy">
+            <h2>Your Business Is Invisible</h2>
+            <p class="book-sub">A short book about why some businesses become easier to run, easier to grow, and eventually easier to hand off — and what separates them from ones that don't.</p>
+            <p class="book-author">Ed Dziuk · FrontFrame, LLC</p>
+            <p class="book-desc">Most service businesses are built entirely around their owner. That's usually how they start. This book is about what happens next — and what it takes to build something that works without you at the center of everything.</p>
+            <div class="book-ctas">
+              <a class="btn-primary" href="https://buy.stripe.com/test_dRm7sK7Wf23zaVb89E8so01" target="_blank" rel="noopener">eBook — $6.99</a>
+              <a class="btn-outline" href="https://buy.stripe.com/test_28E3cu5O70Zvd3j61w8so02" target="_blank" rel="noopener">Print — $9.99</a>
+              <a class="btn-text" href="https://a.co/d/0ahGHKil" target="_blank" rel="noopener">Also on Amazon →</a>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
-  </section>
 
-  <!-- ADVISOR AUDIENCE -->
+    <div class="surface-panel" id="panel-intel">
+      <div class="panel-inner">
+        <div class="panel-close-bar">
+          <span class="panel-label">Intelligence</span>
+          <button class="panel-close-btn" data-close="intel"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Close</button>
+        </div>
+        <p class="intel-panel-desc reveal">Patterns showing up across local service businesses. What owners in similar verticals are running into, what questions keep surfacing, and what shifts tend to reach small businesses last. Advisor Intel is available deeper in the drawers for those who work with owners professionally.</p>
+        <div class="intel-frame reveal"><iframe src="advisor-intel.html" title="Advisor Intel" loading="lazy"></iframe></div>
+      </div>
+    </div>
+
+    <div class="surface-panel" id="panel-conversations">
+      <div class="panel-inner">
+        <div class="panel-close-bar">
+          <span class="panel-label">Listening</span>
+          <button class="panel-close-btn" data-close="conversations"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Close</button>
+        </div>
+        <div class="reveal" style="max-width:520px;margin-bottom:28px;">
+          <h2 class="serif" style="font-size:1.3rem;margin-bottom:7px;">The businesses that recognize themselves.</h2>
+          <p style="font-size:0.85rem;color:var(--ink-mid);line-height:1.75;">Stories from the verticals we serve — in audio and in print. Every owner who hears them will know someone who lived them.</p>
+        </div>
+        <div id="episodesContainer"><p class="episodes-loading">Loading episodes…</p></div>
+        <div class="coming-split reveal">
+          <div class="coming-split-copy">
+            <h3>More conversations coming.</h3>
+            <p>Stories from pet sitters, bookkeepers, cleaners, tutors, handymen, photographers, and similar owner-operators. The situations change. The patterns don't.</p>
+          </div>
+          <div class="coming-card">
+            <span class="coming-eyebrow">Coming</span>
+            <div><p class="coming-hosts">Ed Dziuk<span>Founder, FrontFrame</span></p></div>
+            <div class="coming-divider"></div>
+            <p class="coming-desc">Recorded conversations with owners and the people who work alongside them. On visibility, on workload, on what makes a local business easier to run.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="surface-panel" id="panel-valuation">
+      <div class="panel-inner">
+        <div class="panel-close-bar">
+          <span class="panel-label">Value</span>
+          <button class="panel-close-btn" data-close="valuation"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Close</button>
+        </div>
+        <div class="valuation-placeholder reveal">
+          <span class="vp-eyebrow">In development</span>
+          <h3 class="serif">What makes a local business valuable?</h3>
+          <p style="margin-bottom:18px;">Not in theory. In practice. What do buyers, lenders, and referral sources actually look for — and how does a pet sitter, cleaner, or bookkeeper build toward that without thinking about it in those terms?</p>
+          <p style="font-size:0.78rem; color:var(--ink-light); line-height:1.7;">This folder is being developed. When it opens, it will hold short readings and tools built around that question — not broker services, not exit planning checklists. Owner thinking, applied to owner businesses.</p>
+        </div>
+      </div>
+    </div>
+
+  </section><!-- /desk-surface -->
+
+  <!-- DRAWER BELT -->
+  <div class="drawer-belt">
+    <div class="drawer-belt-inner">
+      <div class="drawer" data-drawer="archive">
+        <div class="drawer-face">
+          <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+          <span class="drawer-label">Archive</span>
+        </div>
+        <div class="drawer-pull-bar"></div>
+      </div>
+      <div class="drawer" data-drawer="templates">
+        <div class="drawer-face">
+          <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span class="drawer-label">Templates</span>
+        </div>
+        <div class="drawer-pull-bar"></div>
+      </div>
+      <div class="drawer" data-drawer="cases">
+        <div class="drawer-face">
+          <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span class="drawer-label">Case Studies</span>
+        </div>
+        <div class="drawer-pull-bar"></div>
+      </div>
+      <div class="drawer" data-drawer="tools">
+        <div class="drawer-face">
+          <svg class="drawer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          <span class="drawer-label">Tools</span>
+        </div>
+        <div class="drawer-pull-bar"></div>
+      </div>
+    </div>
+
+    <div class="drawer-content" id="drawer-archive">
+      <div class="drawer-content-inner">
+        <div><p class="drawer-content-heading">Archive</p><p>Earlier writing and reference material. This drawer fills as the body of work grows.</p></div>
+        <button class="drawer-close" data-close-drawer="archive" aria-label="Close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+    </div>
+    <div class="drawer-content" id="drawer-templates">
+      <div class="drawer-content-inner">
+        <div><p class="drawer-content-heading">Templates</p><p>Working documents and frameworks for owners building operational clarity. Coming as the curriculum develops.</p></div>
+        <button class="drawer-close" data-close-drawer="templates" aria-label="Close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+    </div>
+    <div class="drawer-content" id="drawer-cases">
+      <div class="drawer-content-inner">
+        <div><p class="drawer-content-heading">Case Studies</p><p>Owner stories, pattern examples, and before-and-after business profiles. In development.</p></div>
+        <button class="drawer-close" data-close-drawer="cases" aria-label="Close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+    </div>
+    <div class="drawer-content" id="drawer-tools">
+      <div class="drawer-content-inner">
+        <div>
+          <p class="drawer-content-heading">Advisors &amp; Tools</p>
+          <p>Nolan Baum, CBI — Certified Business Intermediary and author of <em>Helping Clients Sell Their Businesses Successfully</em> — will have material here for owners and advisors thinking about business value and transition. The Advisor Intel feed is also accessible here. Both are in development.</p>
+        </div>
+        <button class="drawer-close" data-close-drawer="tools" aria-label="Close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+    </div>
+  </div><!-- /drawer-belt -->
+
+  <!-- ADVISOR -->
   <section class="advisor-section">
-    <div class="container">
-      <div class="advisor-section-inner reveal">
-        <h2>For advisors who work with local owners</h2>
-        <p class="advisor-section-body">Your clients' businesses are often invisible to the people who might buy them, lend to them, or send them work. This section gives you simple language and tools you can use with local service owners when you want them to start treating the business like an asset, not just a job.</p>
-        <p class="advisor-referral-cta">If you work with owner-operators and want a consistent resource to point them to, this page is built for that. <a href="/contact">Reach out</a> to talk about how FrontFrame fits into your existing advisory work.</p>
+    <div class="advisor-inner">
+      <div class="advisor-copy reveal">
+        <h2 class="serif">For advisors who work alongside owners</h2>
+        <p>CPAs, attorneys, brokers, and coaches who work with local service businesses will find material here that is useful to share. Deeper resources — including the Advisor Intel feed — are in the drawers. If you want to talk about how FrontFrame fits your advisory practice, the notepad on the desk is a good place to start.</p>
       </div>
     </div>
   </section>
-
-  <!-- ADVISOR INTEL -->
-  <section class="advisor-intel-section">
-    <div class="container">
-      <div class="advisor-intel-intro reveal">
-        <p class="section-label">Advisor Intel</p>
-        <p class="advisor-intel-desc">This feed is built for advisors who work with small business owners. Every article is pulled live, scored for relevance to exit planning, valuation, M&amp;A, and operational strategy, and filtered so the signal-to-noise ratio actually works. Use the feed manager to add your own sources. Bookmarked articles are saved to your browser — they'll be here when you come back.</p>
-      </div>
-      <div class="advisor-intel-frame reveal">
-        <iframe
-          src="advisor-intel.html"
-          style="width: 100%; height: 760px; border: 1px solid #e4e0d9; border-radius: 10px; background: #f5f3ef;"
-          title="Advisor Intel — Small Business Strategy Feed"
-          loading="lazy"
-        ></iframe>
-      </div>
-      <div class="advisor-intel-return reveal">
-        <a class="btn-ghost-dark" href="/">← Back to Home</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- STAGED SECTIONS: held in <template> (inert/not rendered). Move each section out of the template when ready to deploy. -->
-  <template id="staged-sections">
-
-  <!-- BOOK -->
-  <section class="book-section">
-    <div class="container">
-      <div class="book-inner">
-        <div class="book-cover reveal">
-          <img src="images/book-cover-kdp.jpg" alt="Your Business Is Invisible — Ed Dziuk">
-        </div>
-        <div class="book-copy reveal">
-          <p class="section-label">The Book</p>
-          <!-- TODO: link to book page -->
-          <h2>Your Business Is Invisible</h2>
-          <p class="book-subtitle">The Difference Between Self-Employment and a Transferable Business</p>
-          <p class="book-author">Ed Dziuk &nbsp;·&nbsp; FrontFrame, LLC</p>
-          <p class="book-desc">Most service businesses are built entirely around their owner — and that's exactly what makes them impossible to sell. This book shows you the difference between a job you own and a business that transfers, and how to start building the latter before you think you need to.</p>
-          <div class="book-cta-row">
-            <a class="btn-primary" href="https://buy.stripe.com/test_dRm7sK7Wf23zaVb89E8so01" target="_blank" rel="noopener">eBook — $6.99</a>
-            <a class="btn-primary" href="https://buy.stripe.com/test_28E3cu5O70Zvd3j61w8so02" target="_blank" rel="noopener">Print Edition — $9.99</a>
-            <a class="btn-ghost-dark" href="https://a.co/d/0ahGHKil" target="_blank" rel="noopener">Also on Amazon →</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ARTICLES -->
-  <section class="articles-section">
-    <div class="container">
-      <div class="articles-header reveal">
-        <p class="section-label">Articles</p>
-        <h2>Written for owners who think ahead.</h2>
-        <p class="articles-sub">These develop from the curriculum Ed and Nolan Baum are building for CPE. First pieces in progress now.</p>
-      </div>
-      <div class="articles-grid">
-        <div class="article-card reveal">
-          <p class="article-topic">What buyers actually look for — and why most owners miss it</p>
-          <p class="article-desc">A business that depends on its owner is not an asset. Buyers know this. Most sellers find out too late. This piece walks through the criteria buyers apply and what you can do now to meet them.</p>
-          <span class="status-badge">In progress</span>
-        </div>
-        <div class="article-card reveal">
-          <p class="article-topic">The four-year window: starting before you think you need to</p>
-          <p class="article-desc">Preparation for a business transition takes longer than most owners expect — not because it's complicated, but because the habits that make a business transferable take time to document and embed.</p>
-          <span class="status-badge">In progress</span>
-        </div>
-        <div class="article-card reveal">
-          <p class="article-topic">Your website is a business asset. Most owners treat it like a cost.</p>
-          <p class="article-desc">When a buyer evaluates your business, your web presence is part of what they're buying. This piece examines what a transferable web presence looks like and what it signals to someone writing a check.</p>
-          <span class="status-badge">In progress</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CONVERSATIONS -->
-  <section class="conversations-section">
-    <div class="container">
-
-      <div class="conversations-header reveal">
-        <p class="section-label">Conversations</p>
-        <h2>The businesses that recognize themselves.</h2>
-        <p class="conversations-sub">Stories from the verticals we serve — in audio and in print. Every owner who hears them will know someone who lived them.</p>
-      </div>
-
-      <div id="episodesContainer">
-        <p class="episodes-loading">Loading episodes…</p>
-      </div>
-
-      <div class="coming-row reveal">
-        <div class="coming-row-copy">
-          <h3>When Ed and Nolan sit down to record.</h3>
-          <p class="coming-row-desc">Ed Dziuk and Nolan Baum — a Certified Business Intermediary with a career built on business transitions — are developing recorded content for owners at every stage of the four-year preparation timeline. The same material that anchors their CPE curriculum. Sessions are coming.</p>
-        </div>
-        <div class="coming-card">
-          <span class="coming-eyebrow">Coming</span>
-          <div>
-            <p class="coming-hosts">Ed Dziuk<span>Founder, FrontFrame</span></p>
-          </div>
-          <div class="coming-divider"></div>
-          <div>
-            <p class="coming-hosts">Nolan Baum, CBI<span>Certified Business Intermediary</span></p>
-          </div>
-          <p class="coming-desc">Conversations on building, preparing, and transitioning a service business — from the people who spend their careers on it.</p>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- FINAL CTA -->
-  <section class="final-cta">
-    <div class="container">
-      <div class="reveal">
-        <h2>Start building something worth keeping.</h2>
-        <p>A web presence built to transfer starts the same day you do. Tell us about your business.</p>
-        <a class="btn-primary" href="intake.html">Get Started</a>
-      </div>
-    </div>
-  </section>
-
-  </template>
-  <!-- END STAGED SECTIONS -->
 
   <!-- FOOTER -->
   <footer>
-    <div class="container">
-      <div class="footer-inner">
-        <span class="footer-wordmark">FrontFrame</span>
-        <p class="footer-right">© 2026 FrontFrame · frontframe.co</p>
-      </div>
+    <div class="footer-inner">
+      <span class="footer-wordmark">FrontFrame</span>
+      <p class="footer-right">© 2026 FrontFrame LLC · frontframe.co</p>
     </div>
   </footer>
 
-  <!-- CHAT WIDGET -->
-  <div class="chat-widget" id="chatWidget">
-    <div class="chat-panel" id="chatPanel">
-      <div class="chat-header">
-        <div class="chat-avatar">Ed</div>
-        <div class="chat-header-info">
-          <div class="chat-header-name">Ed · FrontFrame</div>
-          <div class="chat-header-status">Ready when you are</div>
-        </div>
-        <button class="chat-close" id="chatClose" aria-label="Close chat">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-      <div class="chat-messages" id="chatMessages"></div>
-      <div class="chat-input-row">
-        <textarea class="chat-input" id="chatInput" placeholder="Ask a question…" autocomplete="off" rows="1"></textarea>
-        <button class="chat-send" id="chatSend" aria-label="Send">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
-            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-          </svg>
-        </button>
+  </div><!-- /pt-60 wrapper -->
+
+  <!-- NOTEPAD SCRIM -->
+  <div class="notepad-scrim" id="notepadScrim"></div>
+
+  <!-- NOTEPAD SIDE PANEL -->
+  <div class="notepad-panel" id="notepadPanel" role="dialog" aria-label="Thinking notepad">
+    <div class="notepad-panel-head">
+      <span class="notepad-panel-label">Working notes</span>
+      <button class="notepad-dismiss" id="notepadDismiss" aria-label="Close notepad">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="notepad-sort" id="notepadSort">
+      <p class="notepad-sort-q">What are you trying to think through?</p>
+      <div class="notepad-choices">
+        <button class="notepad-choice" data-topic="visible">Getting found more often</button>
+        <button class="notepad-choice" data-topic="established">Looking more established</button>
+        <button class="notepad-choice" data-topic="questions">Spending less time answering routine questions</button>
+        <button class="notepad-choice" data-topic="pressure">Taking some pressure off the owner</button>
+        <button class="notepad-choice" data-topic="unsure">I'm not sure yet</button>
       </div>
     </div>
-    <button class="chat-toggle" id="chatToggle" aria-label="Open chat">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#1E2D40" stroke-width="2">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
-    </button>
+    <div class="notepad-messages" id="notepadMessages"></div>
+    <div class="notepad-input-row" id="notepadInputRow" style="display:none;">
+      <textarea class="notepad-input" id="notepadInput" placeholder="Write it here…" rows="1" autocomplete="off"></textarea>
+      <button class="notepad-send" id="notepadSend" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
   </div>
 
   <script>
-    // Scroll Reveal
-    const revealObserver = new IntersectionObserver((entries) => {
-      entries.forEach((e, i) => {
-        if (e.isIntersecting) {
-          setTimeout(() => e.target.classList.add('visible'), i * 80);
-          revealObserver.unobserve(e.target);
-        }
+    // Grille dots
+    const grille=document.getElementById('grilleGrid');
+    if(grille){for(let i=0;i<42;i++){const d=document.createElement('div');d.className='grille-dot';grille.appendChild(d);}}
+
+    // Reveal
+    const revealObs=new IntersectionObserver((entries)=>{
+      entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('visible'),i*60);revealObs.unobserve(e.target);}});
+    },{threshold:0.08});
+    document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
+
+    // Surface panels
+    const deskObjs=document.querySelectorAll('.desk-obj[data-panel]');
+    const surfacePanels=document.querySelectorAll('.surface-panel');
+
+    function openPanel(id){
+      surfacePanels.forEach(p=>p.classList.remove('active'));
+      deskObjs.forEach(o=>{o.classList.remove('active');o.setAttribute('aria-pressed','false');});
+      const panel=document.getElementById('panel-'+id);
+      const obj=document.querySelector(`.desk-obj[data-panel="${id}"]`);
+      if(!panel||!obj)return;
+      panel.classList.add('active');obj.classList.add('active');obj.setAttribute('aria-pressed','true');
+      setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'start'}),40);
+      panel.querySelectorAll('.reveal:not(.visible)').forEach(el=>revealObs.observe(el));
+    }
+
+    deskObjs.forEach(obj=>{
+      obj.addEventListener('click',()=>{
+        const id=obj.dataset.panel;
+        if(obj.classList.contains('active')){obj.classList.remove('active');obj.setAttribute('aria-pressed','false');document.getElementById('panel-'+id)?.classList.remove('active');}
+        else{openPanel(id);}
       });
-    }, { threshold: 0.12 });
-    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+      obj.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();obj.click();}});
+    });
 
-    // Episode Loader
-    const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
-    const COPYRIGHT  = '© 2026 FrontFrame LLC. All rights reserved.';
+    document.querySelectorAll('.panel-close-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const id=btn.dataset.close;
+        document.getElementById('panel-'+id)?.classList.remove('active');
+        document.querySelector(`.desk-obj[data-panel="${id}"]`)?.classList.remove('active');
+      });
+    });
 
-    const DOWNLOAD_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-      <polyline points="7 10 12 15 17 10"/>
-      <line x1="12" y1="15" x2="12" y2="3"/>
-    </svg>`;
+    // Drawers
+    document.querySelectorAll('.drawer[data-drawer]').forEach(tab=>{
+      tab.addEventListener('click',()=>{
+        const id=tab.dataset.drawer;
+        const content=document.getElementById('drawer-'+id);
+        const isOpen=content.classList.contains('open');
+        document.querySelectorAll('.drawer-content').forEach(c=>c.classList.remove('open'));
+        document.querySelectorAll('.drawer').forEach(t=>t.classList.remove('open'));
+        if(!isOpen){content.classList.add('open');tab.classList.add('open');}
+      });
+    });
+    document.querySelectorAll('.drawer-close').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        const id=btn.dataset.closeDrawer;
+        document.getElementById('drawer-'+id)?.classList.remove('open');
+        document.querySelector(`.drawer[data-drawer="${id}"]`)?.classList.remove('open');
+      });
+    });
 
-    const CHEVRON_ICON = `<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>`;
+    // Episodes
+    const WORKER_URL='https://frontframe-worker.ed-e5c.workers.dev';
+    const COPYRIGHT='© 2026 FrontFrame LLC. All rights reserved.';
+    const DOWNLOAD_ICON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+    const CHEVRON_ICON=`<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
 
-    async function loadEpisodes() {
-      const container = document.getElementById('episodesContainer');
-      try {
-        const res  = await fetch(`${WORKER_URL}/podcast-episodes`);
-        const data = await res.json();
-
-        if (!Array.isArray(data) || data.length === 0) {
-          container.innerHTML = '';
-          return;
-        }
-
-        container.innerHTML = `<div class="episodes-list">${data.map(renderEpisode).join('')}</div>`;
-
-        // Transcript toggle
-        container.querySelectorAll('.transcript-toggle').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const card = btn.closest('.episode-card');
-            const body = card.querySelector('.transcript-body');
-            const open = body.classList.toggle('visible');
-            btn.classList.toggle('open', open);
-            btn.setAttribute('aria-expanded', String(open));
-            btn.querySelector('.toggle-label').textContent = open ? 'Hide Transcript' : 'Read Transcript';
+    async function loadEpisodes(){
+      const container=document.getElementById('episodesContainer');
+      try{
+        const res=await fetch(`${WORKER_URL}/podcast-episodes`);
+        const data=await res.json();
+        if(!Array.isArray(data)||data.length===0){container.innerHTML='';return;}
+        container.innerHTML=`<div class="episodes-list">${data.map(renderEpisode).join('')}</div>`;
+        container.querySelectorAll('.transcript-toggle').forEach(btn=>{
+          btn.addEventListener('click',()=>{
+            const card=btn.closest('.episode-card');
+            const body=card.querySelector('.transcript-body');
+            const open=body.classList.toggle('visible');
+            btn.classList.toggle('open',open);btn.setAttribute('aria-expanded',String(open));
+            btn.querySelector('.toggle-label').textContent=open?'Hide Transcript':'Read Transcript';
           });
         });
-
-        // Transcript download
-        container.querySelectorAll('.btn-dl-transcript').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const card = btn.closest('.episode-card');
-            downloadTranscript(
-              card.dataset.series,
-              card.dataset.title,
-              card.dataset.transcript
-            );
-          });
+        container.querySelectorAll('.btn-dl-transcript').forEach(btn=>{
+          btn.addEventListener('click',()=>{const card=btn.closest('.episode-card');downloadTranscript(card.dataset.series,card.dataset.title,card.dataset.transcript);});
         });
-
-        // Reveal newly added cards
-        container.querySelectorAll('.episode-card').forEach(card => revealObserver.observe(card));
-
-      } catch (err) {
-        console.error('Episode load failed:', err);
-        container.innerHTML = '';
-      }
+        container.querySelectorAll('.episode-card').forEach(card=>revealObs.observe(card));
+      }catch(err){console.error('Episode load failed:',err);container.innerHTML='';}
     }
 
-    function renderEpisode(ep) {
-      const safeTranscript = ep.transcript || '';
-
-      const audioPlayer = ep.audio_path
-        ? `<audio class="episode-audio" controls preload="none" src="${ep.audio_path}"></audio>`
-        : '';
-
-      const audioDownload = ep.audio_path
-        ? `<a class="episode-btn" href="${ep.audio_path}" download>
-             ${DOWNLOAD_ICON} Audio
-           </a>`
-        : '';
-
-      const transcriptBtns = safeTranscript
-        ? `<div class="episode-actions-divider"></div>
-           <button class="episode-btn btn-dl-transcript">
-             ${DOWNLOAD_ICON} Transcript
-           </button>
-           <div class="episode-actions-divider"></div>
-           <button class="episode-btn transcript-toggle" aria-expanded="false">
-             ${CHEVRON_ICON}
-             <span class="toggle-label">Read Transcript</span>
-           </button>`
-        : '';
-
-      const transcriptBody = safeTranscript
-        ? `<div class="transcript-body">
-             <p class="transcript-text">${escHtml(safeTranscript)}</p>
-             <p class="transcript-copyright">${COPYRIGHT}</p>
-           </div>`
-        : '';
-
-      return `
-        <div class="episode-card reveal"
-          data-series="${escAttr(ep.series)}"
-          data-title="${escAttr(ep.title)}"
-          data-transcript="${escAttr(safeTranscript)}">
-          <p class="episode-series">${escHtml(ep.series)}</p>
-          <h3 class="episode-title">${escHtml(ep.title)}</h3>
-          ${audioPlayer}
-          <div class="episode-actions">
-            ${audioDownload}
-            ${transcriptBtns}
-          </div>
-          ${transcriptBody}
-        </div>`;
+    function renderEpisode(ep){
+      const t=ep.transcript||'';
+      const ap=ep.audio_path?`<audio class="episode-audio" controls preload="none" src="${ep.audio_path}"></audio>`:'';
+      const ad=ep.audio_path?`<a class="episode-btn" href="${ep.audio_path}" download>${DOWNLOAD_ICON} Audio</a>`:'';
+      const tb=t?`<div class="episode-actions-divider"></div><button class="episode-btn btn-dl-transcript">${DOWNLOAD_ICON} Transcript</button><div class="episode-actions-divider"></div><button class="episode-btn transcript-toggle" aria-expanded="false">${CHEVRON_ICON}<span class="toggle-label">Read Transcript</span></button>`:'';
+      const body=t?`<div class="transcript-body"><p class="transcript-text">${escHtml(t)}</p><p class="transcript-copyright">${COPYRIGHT}</p></div>`:'';
+      return `<div class="episode-card reveal" data-series="${escAttr(ep.series)}" data-title="${escAttr(ep.title)}" data-transcript="${escAttr(t)}"><p class="episode-series">${escHtml(ep.series)}</p><h3 class="episode-title">${escHtml(ep.title)}</h3>${ap}<div class="episode-actions">${ad}${tb}</div>${body}</div>`;
     }
 
-    function downloadTranscript(series, title, transcript) {
-      const content  = [series, title, '', transcript, '', COPYRIGHT].join('\n');
-      const blob     = new Blob([content], { type: 'text/plain;charset=utf-8' });
-      const url      = URL.createObjectURL(blob);
-      const a        = Object.assign(document.createElement('a'), { href: url, download: slugify(title) + '.txt' });
-      a.click();
-      URL.revokeObjectURL(url);
+    function downloadTranscript(series,title,transcript){
+      const blob=new Blob([[series,title,'',transcript,'',COPYRIGHT].join('\n')],{type:'text/plain;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=Object.assign(document.createElement('a'),{href:url,download:slugify(title)+'.txt'});
+      a.click();URL.revokeObjectURL(url);
     }
 
-    function slugify(str) {
-      return String(str).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    }
-
-    function escHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    function escAttr(str) {
-      return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
+    function slugify(s){return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+    function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    function escAttr(s){return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
     loadEpisodes();
 
-    // Chat Widget
-    const WORKER = 'https://frontframe-worker.ed-e5c.workers.dev';
-    const PAGE   = 'resources';
+    // ─── NOTEPAD ───
+    const WORKER='https://frontframe-worker.ed-e5c.workers.dev';
+    const PAGE='resources';
+    const sessionId=crypto.randomUUID();
+    let npHistory=[],npStarted=false;
 
-    const panel    = document.getElementById('chatPanel');
-    const toggle   = document.getElementById('chatToggle');
-    const closeBtn = document.getElementById('chatClose');
-    const messages = document.getElementById('chatMessages');
-    const input    = document.getElementById('chatInput');
-    const sendBtn  = document.getElementById('chatSend');
+    const notepadObj    = document.getElementById('notepadObj');
+    const notepadPanel  = document.getElementById('notepadPanel');
+    const notepadDismiss= document.getElementById('notepadDismiss');
+    const notepadSort   = document.getElementById('notepadSort');
+    const notepadMsgs   = document.getElementById('notepadMessages');
+    const notepadInputRow=document.getElementById('notepadInputRow');
+    const notepadInput  = document.getElementById('notepadInput');
+    const notepadSend   = document.getElementById('notepadSend');
+    const notepadScrim  = document.getElementById('notepadScrim');
 
-    const sessionId = crypto.randomUUID();
-    let history = [], greeted = false, expanded = false;
-
-    input.addEventListener('input', () => {
-      input.style.height = 'auto';
-      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
-    });
-
-    toggle.addEventListener('click', () => {
-      panel.classList.add('open');
-      toggle.style.display = 'none';
-      if (!greeted) { greeted = true; greet(); }
-      setTimeout(() => input.focus(), 300);
-    });
-
-    closeBtn.addEventListener('click', () => {
-      panel.classList.remove('open');
-      toggle.style.display = 'flex';
-    });
-
-    function addMsg(text, role) {
-      const d = document.createElement('div');
-      d.className = `msg ${role === 'user' ? 'user' : 'agent'}`;
-      d.textContent = text;
-      messages.appendChild(d);
-      messages.scrollTop = messages.scrollHeight;
+    function openNotepad(){
+      notepadObj.classList.add('open');
+      notepadPanel.classList.add('open');
+      notepadScrim.classList.add('visible');
+    }
+    function closeNotepad(){
+      notepadObj.classList.remove('open');
+      notepadPanel.classList.remove('open');
+      notepadScrim.classList.remove('visible');
     }
 
-    function greet() {
-      const msg = "Welcome. Are you a local service business owner, or do you work with them — as a bookkeeper, CPA, attorney, or coach?";
-      addMsg(msg, 'agent');
-      history.push({ role: 'assistant', content: msg });
+    notepadObj.addEventListener('click', openNotepad);
+    notepadObj.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();openNotepad();} });
+    notepadDismiss.addEventListener('click', closeNotepad);
+    notepadScrim.addEventListener('click', closeNotepad);
+
+    function addNotepadMsg(text, role){
+      // Hide sort choices once conversation begins
+      if(role==='host' && !npStarted){ notepadSort.style.display='none'; notepadInputRow.style.display='flex'; npStarted=true; }
+      const d=document.createElement('div');
+      d.className='notepad-msg '+role;
+      d.textContent=text;
+      notepadMsgs.appendChild(d);
+      notepadMsgs.scrollTop=notepadMsgs.scrollHeight;
     }
 
-    async function sendMessage(text) {
-      if (!text.trim()) return;
-      if (!expanded) { expanded = true; panel.classList.add('expanded'); }
-      addMsg(text, 'user');
-      history.push({ role: 'user', content: text });
-      input.value = ''; input.style.height = 'auto';
-      sendBtn.disabled = true;
+    // Sorting choices — send as first user message, get oriented response
+    document.querySelectorAll('.notepad-choice').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const topic=btn.dataset.topic;
+        const topicText=btn.textContent.trim();
+        addNotepadMsg(topicText,'visitor');
+        npHistory.push({role:'user',content:topicText});
+        await sendNotepadMessage(null); // null = already pushed
+      });
+    });
 
-      const typing = document.createElement('div');
-      typing.className = 'msg typing'; typing.id = 'typing'; typing.textContent = 'Thinking…';
-      messages.appendChild(typing); messages.scrollTop = messages.scrollHeight;
+    notepadInput.addEventListener('input',()=>{
+      notepadInput.style.height='auto';
+      notepadInput.style.height=Math.min(notepadInput.scrollHeight,84)+'px';
+    });
 
-      try {
-        const res  = await fetch(`${WORKER}/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ page: PAGE, message: text, history: history.slice(-10), session_id: sessionId }),
-        });
-        const data  = await res.json();
-        document.getElementById('typing')?.remove();
-        const reply = data.response || 'Sorry, something went wrong.';
-        addMsg(reply, 'agent');
-        history.push({ role: 'assistant', content: reply });
-      } catch {
-        document.getElementById('typing')?.remove();
-        addMsg('Having trouble connecting right now. Please try again.', 'agent');
-      } finally {
-        sendBtn.disabled = false;
-        input.focus();
+    async function sendNotepadMessage(text){
+      if(text!==null){
+        if(!text.trim())return;
+        addNotepadMsg(text,'visitor');
+        npHistory.push({role:'user',content:text});
+        notepadInput.value=''; notepadInput.style.height='auto';
       }
+      notepadSend.disabled=true;
+      const thinking=document.createElement('div');
+      thinking.className='notepad-msg thinking'; thinking.id='npthinking'; thinking.textContent='…';
+      notepadMsgs.appendChild(thinking); notepadMsgs.scrollTop=notepadMsgs.scrollHeight;
+      try{
+        const res=await fetch(`${WORKER}/chat`,{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({page:PAGE, message:npHistory[npHistory.length-1].content, history:npHistory.slice(-10), session_id:sessionId})
+        });
+        const data=await res.json();
+        document.getElementById('npthinking')?.remove();
+        const reply=data.response||'Having trouble connecting right now.';
+        addNotepadMsg(reply,'host');
+        npHistory.push({role:'assistant',content:reply});
+      }catch{
+        document.getElementById('npthinking')?.remove();
+        addNotepadMsg('Having trouble connecting right now. Please try again.','host');
+      }finally{ notepadSend.disabled=false; notepadInput.focus(); }
     }
 
-    sendBtn.addEventListener('click', () => sendMessage(input.value));
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input.value); }
+    notepadSend.addEventListener('click',()=>sendNotepadMessage(notepadInput.value));
+    notepadInput.addEventListener('keydown',e=>{
+      if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendNotepadMessage(notepadInput.value);}
     });
   </script>
 
