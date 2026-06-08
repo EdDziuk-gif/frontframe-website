@@ -534,6 +534,24 @@
           </table>
         </div>
       </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Review Queue</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-sm" id="rq-btn-candidate"             onclick="setRqView('candidate')">Candidates</button>
+            <button class="btn btn-sm" id="rq-btn-comprehension_failure" onclick="setRqView('comprehension_failure')">Comp. Failures</button>
+            <button class="btn btn-sm" id="rq-btn-dismissed"             onclick="setRqView('dismissed')">Dismissed</button>
+            <button class="btn btn-ghost btn-sm" onclick="loadReviewQueue()">&#x21BA;</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead id="rq-thead"></thead>
+            <tbody id="rq-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- Solutions -->
@@ -1362,6 +1380,8 @@ let agreements    = [];
 let qaPairs       = [];
 let defects       = [];
 let feedback      = [];
+let reviewQueue   = [];
+let rqView        = 'candidate';
 let subscriptions = [];
 let mktLog        = [];
 let problems      = [];
@@ -1968,8 +1988,20 @@ async function resolveDefect(id) {
 // Feedback
 
 async function loadFeedback() {
-  try { feedback = await api('GET', '/admin/feedback'); } catch (e) { toast('Failed to load feedback: ' + e.message, 'error'); return; }
+  try {
+    [feedback, reviewQueue] = await Promise.all([
+      api('GET', '/admin/feedback'),
+      api('GET', '/admin/review-queue?status=all'),
+    ]);
+  } catch (e) { toast('Failed to load feedback: ' + e.message, 'error'); return; }
   renderFeedback();
+  renderReviewQueue();
+  updateBadges();
+}
+
+async function loadReviewQueue() {
+  try { reviewQueue = await api('GET', '/admin/review-queue?status=all'); } catch (e) { toast('Failed to load review queue: ' + e.message, 'error'); return; }
+  renderReviewQueue();
   updateBadges();
 }
 
@@ -2521,6 +2553,108 @@ async function saveConfig() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
+// Review Queue
+
+function setRqView(view) {
+  rqView = view;
+  renderReviewQueue();
+}
+
+function renderReviewQueue() {
+  ['candidate', 'comprehension_failure', 'dismissed'].forEach(v => {
+    const btn = document.getElementById('rq-btn-' + v);
+    if (btn) btn.className = 'btn btn-sm ' + (v === rqView ? 'btn-primary' : 'btn-ghost');
+  });
+
+  const records = reviewQueue.filter(r => r.status === rqView);
+  const tbody   = document.getElementById('rq-tbody');
+  const thead   = document.getElementById('rq-thead');
+  if (!tbody || !thead) return;
+
+  if (rqView === 'candidate') {
+    thead.innerHTML = `<tr><th>Visitor Question</th><th>Bot Response</th><th>Score</th><th>Reasoning</th><th>Actions</th></tr>`;
+    if (!records.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No candidates</div></td></tr>`; return; }
+    tbody.innerHTML = records.map(r => {
+      const q      = esc(r.flagged_turn?.visitor_message ?? '—');
+      const a      = esc((r.flagged_turn?.bot_response ?? '—').slice(0, 120));
+      const score  = r.auto_score ?? '—';
+      const reason = esc(r.auto_reasoning ?? '—');
+      return `<tr>
+        <td style="max-width:200px">${q}</td>
+        <td style="max-width:200px;color:var(--gray)">${a}</td>
+        <td><strong style="color:var(--red)">${score}</strong></td>
+        <td style="max-width:220px;color:var(--gray)">${reason}</td>
+        <td>
+          <div class="flex-row">
+            <button class="btn btn-amber btn-xs" onclick="proposeAnswerFromQueue('${r.id}')">Propose Answer</button>
+            <button class="btn btn-ghost btn-xs"  onclick="dismissQueueRecord('${r.id}')">Dismiss</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  } else if (rqView === 'comprehension_failure') {
+    thead.innerHTML = `<tr><th>Visitor Question</th><th>Bot Response</th><th>Date</th><th>Actions</th></tr>`;
+    if (!records.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No comprehension failures</div></td></tr>`; return; }
+    tbody.innerHTML = records.map(r => {
+      const q = esc(r.flagged_turn?.visitor_message ?? '—');
+      const a = esc((r.flagged_turn?.bot_response ?? '—').slice(0, 120));
+      return `<tr>
+        <td style="max-width:240px">${q}</td>
+        <td style="max-width:240px;color:var(--gray)">${a}</td>
+        <td>${fmtDate(r.created_at)}</td>
+        <td><button class="btn btn-ghost btn-xs" onclick="dismissQueueRecord('${r.id}')">Dismiss</button></td>
+      </tr>`;
+    }).join('');
+  } else {
+    thead.innerHTML = `<tr><th>Visitor Question</th><th>Date</th><th>Actions</th></tr>`;
+    if (!records.length) { tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">No dismissed records</div></td></tr>`; return; }
+    tbody.innerHTML = records.map(r => {
+      const q = esc(r.flagged_turn?.visitor_message ?? '—');
+      return `<tr>
+        <td style="max-width:360px">${q}</td>
+        <td>${fmtDate(r.created_at)}</td>
+        <td><button class="btn btn-danger btn-xs" onclick="deleteQueueRecord('${r.id}')">Delete</button></td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+async function proposeAnswerFromQueue(id) {
+  const rec = reviewQueue.find(r => r.id === id);
+  if (!rec) return;
+  const question   = rec.flagged_turn?.visitor_message ?? '';
+  const edResponse = rec.flagged_turn?.bot_response    ?? '';
+  if (!question) { toast('No visitor question on this record.', 'error'); return; }
+  try {
+    const created = await api('POST', '/admin/feedback', { question, ed_response: edResponse });
+    const newFb   = Array.isArray(created) ? created[0] : created;
+    if (newFb) {
+      feedback.unshift(newFb);
+      openReviewPromoteModal(newFb.id);
+    }
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function dismissQueueRecord(id) {
+  try {
+    await api('PATCH', `/admin/review-queue/${id}`, { status: 'dismissed' });
+    const idx = reviewQueue.findIndex(r => r.id === id);
+    if (idx >= 0) reviewQueue[idx].status = 'dismissed';
+    renderReviewQueue();
+    updateBadges();
+    toast('Dismissed.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteQueueRecord(id) {
+  try {
+    await api('DELETE', `/admin/review-queue/${id}`);
+    reviewQueue = reviewQueue.filter(r => r.id !== id);
+    renderReviewQueue();
+    toast('Deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
 // Badges
 
 function updateBadges() {
@@ -2529,8 +2663,9 @@ function updateBadges() {
   setBadge('badge-pipeline', pipelineCount + newCount);
   const openDefects  = defects.filter(d => !d.status || d.status === 'open').length;
   setBadge('badge-defects', openDefects);
-  const openFeedback = feedback.filter(f => !f.promoted).length;
-  setBadge('badge-feedback', openFeedback);
+  const openFeedback   = feedback.filter(f => !f.promoted).length;
+  const queueCandidates = reviewQueue.filter(r => r.status === 'candidate').length;
+  setBadge('badge-feedback', openFeedback + queueCandidates);
 }
 
 function setBadge(id, count) {
