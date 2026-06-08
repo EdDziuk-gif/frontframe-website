@@ -122,7 +122,7 @@ select.filter-select:focus{outline:2px solid rgba(1,105,111,0.4);outline-offset:
 .sig-noise{background:#f2f0ec;color:#8a8479;border-color:#d4cfc8}
 .score-bar{height:2px;border-radius:2px;background:#e4e0d9;overflow:hidden}
 .score-bar-fill{height:100%;border-radius:2px;transition:width .4s}
-.article-title{font-family:'Cabinet Grotesk',sans-serif;font-size:13px;font-weight:600;color:#1e1b14;line-height:1.35;cursor:pointer}
+.article-title{font-family:'Cabinet Grotesk',sans-serif;font-size:13px;font-weight:600;color:#1e1b14;line-height:1.35;cursor:pointer;text-decoration:none;display:block}
 .article-title:hover{color:#01696f;text-decoration:underline;text-decoration-color:rgba(1,105,111,0.4)}
 .article-summary{font-size:12px;color:#6b6660;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .article-footer{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px}
@@ -805,7 +805,7 @@ function articleCard(a){
 	  <span class="signal-badge ${sigClass(a.signalScore)}">${sigLabel(a.signalScore)} · ${Math.round(a.signalScore)}</span>
 	</div>
 	<div class="score-bar"><div class="score-bar-fill" style="width:${a.signalScore}%;background:${barColor(a.signalScore)}"></div></div>
-	<div class="article-title" onclick="openArticle(${a.id})">${escHtml(a.title)}</div>
+	<a class="article-title" href="${escHtml(a.url)}" target="_blank" rel="noopener" onclick="markRead(${a.id})">${escHtml(a.title)}</a>
 	${a.summary ? `<div class="article-summary">${escHtml(a.summary)}</div>` : ''}
 	<div class="article-footer">
 	  <span class="cat-badge ${CAT_CLASS[a.category]||'cat-gen'}">${CAT_LABEL[a.category]||'General'}</span>
@@ -825,10 +825,15 @@ function articleCard(a){
   </div>`;
 }
 
+function markRead(id){
+  const a = articles.find(x=>x.id===id);
+  if(!a || a.isRead) return;
+  a.isRead = true; renderArticles(); updateStats();
+}
 function openArticle(id){
   const a = articles.find(x=>x.id===id);
   if(!a) return;
-  if(!a.isRead){ a.isRead = true; renderArticles(); updateStats(); }
+  markRead(id);
   window.open(a.url,'_blank','noopener');
 }
 function toggleBookmark(id){
