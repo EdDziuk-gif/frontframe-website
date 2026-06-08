@@ -298,9 +298,11 @@
     }
     @media (max-width: 680px) {
       .nav-inner, .desk-content, .drawer-belt-inner, .panel-inner, .advisor-inner, .footer-inner { padding-left: 20px; padding-right: 20px; }
-      .desk-grid { grid-template-columns: 78vw 78vw 78vw 60vw 60vw; grid-template-rows: auto; grid-template-areas: "header notebook intel folder recorder"; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 18px; }
+      .desk-grid { grid-template-columns: 78vw 78vw 78vw 60vw; grid-template-rows: auto; grid-template-areas: "header notebook intel folder"; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 18px; }
       .desk-grid > * { scroll-snap-align: start; min-width: 0; }
+      /* Notepad pulled out of horizontal scroll — sits below as full-width strip */
       .obj-notepad { display: none; }
+      .obj-notepad-mobile { display: block !important; margin-top: 4px; box-shadow: var(--obj-shadow), 3px 3px 0 #EDE7D9; }
       .drawer-belt-inner { grid-template-columns: repeat(2,1fr); }
       .book-layout { grid-template-columns: 1fr; gap: 28px; }
       .articles-grid { grid-template-columns: 1fr; }
@@ -437,6 +439,16 @@
         </div>
 
       </div><!-- /desk-grid -->
+
+      <!-- Mobile notepad — sits below horizontal scroll row, always reachable -->
+      <div class="obj-notepad obj-notepad-mobile" id="notepadObjMobile" tabindex="0" role="button" aria-label="Open thinking notepad" style="display:none;">
+        <div class="notepad-lines">
+          <div class="notepad-line"></div><div class="notepad-line"></div>
+          <div class="notepad-line"></div><div class="notepad-line"></div>
+        </div>
+        <p class="notepad-prompt">A question worth sorting.</p>
+        <p class="notepad-cue">Pick it up →</p>
+      </div>
     </div><!-- /desk-content -->
 
     <!-- SURFACE PANELS -->
@@ -660,6 +672,10 @@
   </div>
 
   <script>
+    // Always open at the top — disable browser scroll restoration
+    if (history.scrollRestoration) history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+
     // Grille dots
     const grille=document.getElementById('grilleGrid');
     if(grille){for(let i=0;i<42;i++){const d=document.createElement('div');d.className='grille-dot';grille.appendChild(d);}}
@@ -790,17 +806,26 @@
 
     function openNotepad(){
       notepadObj.classList.add('open');
+      const mob=document.getElementById('notepadObjMobile');
+      if(mob) mob.classList.add('open');
       notepadPanel.classList.add('open');
       notepadScrim.classList.add('visible');
     }
     function closeNotepad(){
       notepadObj.classList.remove('open');
+      const mob=document.getElementById('notepadObjMobile');
+      if(mob) mob.classList.remove('open');
       notepadPanel.classList.remove('open');
       notepadScrim.classList.remove('visible');
     }
 
     notepadObj.addEventListener('click', openNotepad);
     notepadObj.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();openNotepad();} });
+    const notepadObjMobile=document.getElementById('notepadObjMobile');
+    if(notepadObjMobile){
+      notepadObjMobile.addEventListener('click', openNotepad);
+      notepadObjMobile.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();openNotepad();} });
+    }
     notepadDismiss.addEventListener('click', closeNotepad);
     notepadScrim.addEventListener('click', closeNotepad);
 
