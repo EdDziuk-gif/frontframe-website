@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resources — FrontFrame</title>
-  <meta name="description" content="Tools and resources for small business owners preparing to scale, sell, or systematize — and the advisors who work with them.">
+  <title>Local Service Business Owner &amp; Advisor Resources | FrontFrame</title>
+  <meta name="description" content="Most local service businesses are invisible to the people who would buy them, advise them, or send them clients. This page gives owners and their advisors practical tools to change that.">
   <link rel="canonical" href="https://frontframe.co/resources">
   <meta name="robots" content="index, follow">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://frontframe.co/resources">
-  <meta property="og:title" content="Resources — FrontFrame">
-  <meta property="og:description" content="Tools and resources for small business owners preparing to scale, sell, or systematize — and the advisors who work with them.">
+  <meta property="og:title" content="Local Service Business Owner &amp; Advisor Resources | FrontFrame">
+  <meta property="og:description" content="Most local service businesses are invisible to the people who would buy them, advise them, or send them clients. This page gives owners and their advisors practical tools to change that.">
   <meta property="og:image" content="https://frontframe.co/images/FrontFrame-Hero.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Resources — FrontFrame">
-  <meta name="twitter:description" content="Tools and resources for small business owners preparing to scale, sell, or systematize — and the advisors who work with them.">
+  <meta name="twitter:title" content="Local Service Business Owner &amp; Advisor Resources | FrontFrame">
+  <meta name="twitter:description" content="Most local service businesses are invisible to the people who would buy them, advise them, or send them clients. This page gives owners and their advisors practical tools to change that.">
   <link rel="icon" type="image/png" href="images/Logo_FF.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -173,6 +173,10 @@
       font-size: 1.1rem;
       color: rgba(255,255,255,0.6);
       line-height: 1.75;
+    }
+
+    .page-header-sub + .page-header-sub {
+      margin-top: 8px;
     }
 
     /* BOOK */
@@ -576,6 +580,33 @@
     .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .reveal.visible { opacity: 1; transform: translateY(0); }
 
+    /* ADVISOR SECTION */
+    .advisor-section { background: var(--white); padding: 100px 0; }
+
+    .advisor-section-inner { max-width: 720px; }
+
+    .advisor-section-inner h2 {
+      font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+      color: var(--navy); line-height: 1.2; margin-bottom: 24px;
+    }
+
+    .advisor-section-body {
+      font-size: 1.05rem; color: var(--gray);
+      line-height: 1.85; margin-bottom: 24px;
+    }
+
+    .advisor-referral-cta {
+      font-size: 1.05rem; color: var(--gray); line-height: 1.85;
+    }
+
+    .advisor-referral-cta a {
+      color: var(--navy);
+      border-bottom: 1px solid rgba(30,45,64,0.3);
+      transition: border-color 0.2s;
+    }
+
+    .advisor-referral-cta a:hover { border-color: var(--navy); }
+
     /* ADVISOR INTEL */
     .advisor-intel-section { background: var(--offwhite); padding: 80px 0 100px; }
 
@@ -628,7 +659,18 @@
       <div class="page-header-inner reveal">
         <span class="page-eyebrow">Resources</span>
         <h1>For owners who are building<br>something worth keeping.</h1>
-        <p class="page-header-sub">A book, articles in progress, and conversations on the way.</p>
+        <p class="page-header-sub">Most local service businesses are invisible to the people who would buy them, advise them, or send them clients. This page is for owners who intend to change that — and for the advisors who work with them.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADVISOR AUDIENCE -->
+  <section class="advisor-section">
+    <div class="container">
+      <div class="advisor-section-inner reveal">
+        <h2>For advisors who work with local owners</h2>
+        <p class="advisor-section-body">Your clients' businesses are often invisible to the people who might buy them, lend to them, or send them work. This section gives you simple language and tools you can use with local service owners when you want them to start treating the business like an asset, not just a job.</p>
+        <p class="advisor-referral-cta">If you work with owner-operators and want a consistent resource to point them to, this page is built for that. <a href="/contact">Reach out</a> to talk about how FrontFrame fits into your existing advisory work.</p>
       </div>
     </div>
   </section>
@@ -666,6 +708,7 @@
         </div>
         <div class="book-copy reveal">
           <p class="section-label">The Book</p>
+          <!-- TODO: link to book page -->
           <h2>Your Business Is Invisible</h2>
           <p class="book-subtitle">The Difference Between Self-Employment and a Transferable Business</p>
           <p class="book-author">Ed Dziuk &nbsp;·&nbsp; FrontFrame, LLC</p>
@@ -673,7 +716,7 @@
           <div class="book-cta-row">
             <a class="btn-primary" href="https://buy.stripe.com/test_dRm7sK7Wf23zaVb89E8so01" target="_blank" rel="noopener">eBook — $6.99</a>
             <a class="btn-primary" href="https://buy.stripe.com/test_28E3cu5O70Zvd3j61w8so02" target="_blank" rel="noopener">Print Edition — $9.99</a>
-            <a class="btn-ghost-dark" href="#" target="_blank" rel="noopener">Also on Amazon →</a>
+            <a class="btn-ghost-dark" href="https://a.co/d/0ahGHKil" target="_blank" rel="noopener">Also on Amazon →</a>
           </div>
         </div>
       </div>
@@ -784,7 +827,7 @@
       </div>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="chat-input-row">
-        <textarea class="chat-input" id="chatInput" placeholder="Ask Ed a question…" autocomplete="off" rows="1"></textarea>
+        <textarea class="chat-input" id="chatInput" placeholder="Ask a question…" autocomplete="off" rows="1"></textarea>
         <button class="chat-send" id="chatSend" aria-label="Send">
           <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
             <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -792,7 +835,7 @@
         </button>
       </div>
     </div>
-    <button class="chat-toggle" id="chatToggle" aria-label="Open chat with Ed">
+    <button class="chat-toggle" id="chatToggle" aria-label="Open chat">
       <svg viewBox="0 0 24 24" fill="none" stroke="#1E2D40" stroke-width="2">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
@@ -813,7 +856,7 @@
 
     // Episode Loader
     const WORKER_URL = 'https://frontframe-worker.ed-e5c.workers.dev';
-    const COPYRIGHT  = '\u00A9 2026 FrontFrame LLC. All rights reserved.';
+    const COPYRIGHT  = '© 2026 FrontFrame LLC. All rights reserved.';
 
     const DOWNLOAD_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -946,7 +989,7 @@
 
     // Chat Widget
     const WORKER = 'https://frontframe-worker.ed-e5c.workers.dev';
-    const PAGE   = 'ADVISOR';
+    const PAGE   = 'resources';
 
     const panel    = document.getElementById('chatPanel');
     const toggle   = document.getElementById('chatToggle');
@@ -984,7 +1027,7 @@
     }
 
     function greet() {
-      const msg = "Hi, I'm Ed. The Advisor Intel feed pulls live content from across the small business strategy landscape and scores it for signal — exit planning, valuation, M&A, and operations. Ask me how to get the most out of it, or anything about what you're seeing.";
+      const msg = "Welcome. Are you a local service business owner, or do you work with them — as a bookkeeper, CPA, attorney, or coach?";
       addMsg(msg, 'agent');
       history.push({ role: 'assistant', content: msg });
     }
@@ -998,7 +1041,7 @@
       sendBtn.disabled = true;
 
       const typing = document.createElement('div');
-      typing.className = 'msg typing'; typing.id = 'typing'; typing.textContent = 'Ed is typing…';
+      typing.className = 'msg typing'; typing.id = 'typing'; typing.textContent = 'Thinking…';
       messages.appendChild(typing); messages.scrollTop = messages.scrollHeight;
 
       try {
