@@ -1846,7 +1846,7 @@ function renderDefects() {
       <td><span class="badge badge-${d.status ?? 'open'}">${d.status ?? 'open'}</span></td>
       <td class="text-small text-gray">${esc(d.build_version ?? '')}</td>
       <td>
-        <button class="btn btn-ghost btn-xs" onclick="openDefectModal(${d.id})">Edit</button>
+        <button class="btn btn-ghost btn-xs" onclick="openDefectModal('${d.id}')">Edit</button>
         ${d.status !== 'resolved' ? `<button class="btn btn-ghost btn-xs" onclick="resolveDefect('${d.id}')">Resolve</button>` : ''}
       </td>
     </tr>
