@@ -444,24 +444,25 @@ const LS_KEYWORDS = 'advisorintel_keywords';
 
 const DEFAULT_SIGNALS = {
   framework: {
-    "Exit Planning":        ["exit planning","exit strategy","succession","business transition","owner exit","sellability","exit readiness","business exit","exit plan","sell their business","selling a business","business succession"],
-    "Business Valuation":   ["valuation","ebitda","multiple","seller discretionary","sde","business worth","fair market value","deal structure","business value","asking price","purchase price","valuation multiple","business appraisal"],
-    "Growth Strategy":      ["growth strategy","scaling","scale a business","revenue growth","growth plan","organic growth","acquisition strategy","grow a business","business growth"],
-    "Cash Flow":            ["cash flow","working capital","liquidity","cash management","burn rate","runway","profitability","cash position"],
-    "M&A":                  ["mergers and acquisitions","m&a","deal flow","due diligence","letter of intent","loi","acquisition","business sale","business buyer","business buyers","buying a business","first-time buyer","deal terms","acquisition target"],
-    "Customer Acquisition": ["customer acquisition","lead generation","sales funnel","conversion","cac","churn","retention","go-to-market"],
-    "Operations":           ["operations","systems","process improvement","sop","standard operating","efficiency","workflow","automation"],
-    "Owner Strategy":       ["owner-operator","founder","entrepreneur","small business owner","lifestyle business","micro business","main street","owner operator","business owner","self-employed"],
+    // Lower/main-street market focus: businesses $500K–$10M, SBA-financed, owner-operated
+    "Exit Planning":        ["exit planning","exit strategy","succession","business transition","owner exit","sellability","exit readiness","business exit","exit plan","sell their business","selling a business","business succession","ready to sell","preparing to sell","years before selling","exit options","transferable business","owner dependency","key person"],
+    "Business Valuation":   ["business valuation","seller discretionary","sde","business worth","fair market value","business value","asking price","valuation multiple","business appraisal","what is my business worth","value my business","goodwill","intangible value","seller note","owner financing"],
+    "Advisor Relationship": ["cpa","accountant","financial planner","financial advisor","wealth advisor","estate planning","referral","advisor relationship","professional advisor","trusted advisor","client conversation","planning conversation","business owner client"],
+    "Deal Mechanics":       ["business sale","business buyer","buying a business","first-time buyer","sba loan","sba financing","seller financing","earn-out","deal terms","purchase agreement","closing","asset sale","stock sale","business broker","broker listing"],
+    "Cash Flow":            ["cash flow","working capital","owner benefit","profitability","cash position","owner's draw","distributions","recurring revenue","normalized earnings"],
+    "Growth & Value Build": ["growth strategy","value builder","scalable","transferable","reduce owner dependency","build to sell","sellable business","increase business value","recurring clients","systems and processes"],
+    "Operations":           ["operations","systems","process improvement","sop","standard operating","efficiency","workflow","automation","documented processes","key employee"],
+    "Owner Strategy":       ["owner-operator","small business owner","lifestyle business","main street","business owner","self-employed","family business","closely-held","founder-led","solo owner","micro business"],
   },
   category: {
-    "strategy-definition":     ["strategy","business strategy","planning","vision","positioning","competitive advantage","value proposition","business model","advisory","consulting","advise","advisor"],
-    "strategy-execution":      ["growth","execution","scaling","implementation","kpi","metrics","operations","process","systems","profitability","cash flow","revenue"],
-    "competitive-intelligence":["market trend","industry","small business","main street","owner-operator","economy","interest rates","lending","deal activity","transaction","business owners"],
-    "case-study":              ["case study","how they did","lessons from","playbook","story","sold their business","exit story","turnaround","what worked","breakdown","how i","what i learned"],
-    "frameworks":              ["framework","model","template","checklist","guide","how to","approach","tool for","method","applying"],
+    "advisor-intelligence":    ["advisor","cpa","financial planner","estate plan","referral","client conversation","planning","wealth","retirement from business","personal financial"],
+    "exit-and-transition":     ["exit","succession","transition","sell","selling","sale","transfer","buyer","buyers","business broker","acquisition","ownership change"],
+    "valuation-and-deal":      ["valuation","sde","seller discretionary","business worth","deal","offer","purchase price","asking price","sba","financing","earn-out","seller note"],
+    "case-study":              ["case study","how they did","lessons from","playbook","story","sold their business","exit story","turnaround","what worked","breakdown","how i","what i learned","owner who sold"],
+    "market-conditions":       ["small business","main street","economy","interest rates","lending","deal activity","business owner","owner-operator","market trend","buyer demand","seller market"],
   },
-  noise: ["sponsored","advertisement","press release","new hire","job opening","hiring for","webinar registration","free trial","sign up now","limited time offer","discount","podcast episode","watch our","join us live","register now","award winner"],
-  high:  ["exit multiple","seller financing","sba loan","owner operator","succession plan","business valuation","ebitda multiple","deal structure","referral relationship","cpa advisor","financial advisor","estate planning","wealth transfer","due diligence","letter of intent","sellability","recurring revenue","transferable value","business buyers","buying a business","exit planning","sell a business","business acquisition","owner-operated"],
+  noise: ["sponsored","advertisement","press release","new hire","job opening","hiring for","webinar registration","free trial","sign up now","limited time offer","discount","podcast episode","watch our","join us live","register now","award winner","ipo","public company","private equity fund","venture capital","series a","series b","unicorn","wall street","hedge fund","stock market","quarterly earnings"],
+  high:  ["seller discretionary earnings","sba loan","owner financing","seller note","exit planning","business valuation","sellability","succession plan","referral relationship","cpa advisor","financial advisor","estate planning","wealth transfer","transferable value","recurring revenue","owner-operated","ready to sell","what is my business worth","business broker","sell a business","buying a business","lifestyle business sale","main street deal","financial readiness","retirement from business","advisor relationship","closely held business","family business sale"],
 };
 
 let FRAMEWORK_SIGNALS = DEFAULT_SIGNALS.framework;
