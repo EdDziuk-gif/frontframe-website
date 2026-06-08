@@ -1993,6 +1993,7 @@ async function loadFeedback() {
       api('GET', '/admin/feedback'),
       api('GET', '/admin/review-queue?status=all'),
     ]);
+    feedback = feedback.filter(f => f.suggested_answer !== '[dismissed]');
   } catch (e) { toast('Failed to load feedback: ' + e.message, 'error'); return; }
   renderFeedback();
   renderReviewQueue();
