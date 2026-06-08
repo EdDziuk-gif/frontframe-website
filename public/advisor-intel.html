@@ -152,6 +152,21 @@ select.filter-select:focus{outline:2px solid rgba(1,105,111,0.4);outline-offset:
 .scan-progress.visible{display:block}
 .toast{position:fixed;bottom:20px;right:20px;background:#1e1b14;color:#f5f3ef;padding:10px 16px;border-radius:6px;font-size:13px;z-index:100;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
+
+/* ── Help modal ────────────────────────────────────────────────── */
+.btn-help{width:28px;height:28px;padding:0;border-radius:50%;border:1px solid #dedad3;background:#f0ede8;color:#6b6660;font-size:13px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s}
+.btn-help:hover{background:#e8e4de;color:#1e1b14}
+.help-backdrop{position:fixed;inset:0;background:rgba(30,27,20,.55);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.help-backdrop.open{opacity:1;pointer-events:all}
+.help-modal{background:#faf9f6;border:1px solid #e4e0d9;border-radius:10px;box-shadow:0 8px 32px rgba(30,27,20,.18);max-width:680px;width:calc(100% - 32px);max-height:calc(100dvh - 48px);display:flex;flex-direction:column;overflow:hidden}
+.help-modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #e4e0d9}
+.help-modal-header h2{font-family:'Cabinet Grotesk',sans-serif;font-size:14px;font-weight:700;color:#1e1b14}
+.help-modal-close{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:4px;color:#8a8479;transition:background .15s,color .15s}
+.help-modal-close:hover{background:#eeece8;color:#1e1b14}
+.help-modal-body{overflow-y:auto;padding:16px}
+.help-gif{width:100%;border-radius:6px;border:1px solid #e4e0d9;display:block}
+.help-caption{margin-top:10px;font-size:12px;color:#8a8479;line-height:1.6}
+.help-caption strong{color:#1e1b14}
 </style>
 </head>
 <body>
@@ -258,8 +273,32 @@ select.filter-select:focus{outline:2px solid rgba(1,105,111,0.4);outline-offset:
 		<svg id="scan-icon" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 8A6 6 0 1 1 8 2"/><polyline points="14 2 14 6 10 6"/></svg>
 		Scan Now
 	  </button>
+	  <button class="btn-help" onclick="openHelp()" title="How to use this feed">?</button>
 	</div>
   </header>
+
+  <!-- ── Help modal ──────────────────────────────────────────── -->
+  <div class="help-backdrop" id="help-backdrop" onclick="closeHelp(event)">
+	<div class="help-modal" role="dialog" aria-modal="true" aria-label="How to use Advisor Intel">
+	  <div class="help-modal-header">
+		<h2>How to use Advisor Intel</h2>
+		<button class="help-modal-close" onclick="closeHelp()" aria-label="Close">
+		  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="2" x2="14" y2="14"/><line x1="14" y1="2" x2="2" y2="14"/></svg>
+		</button>
+	  </div>
+	  <div class="help-modal-body">
+		<img class="help-gif" src="HELP_GIF_URL" alt="Walkthrough of the Advisor Intel feed — showing Dashboard, Manage Feeds, Signal Keywords, filters, and Scan Now" />
+		<div class="help-caption">
+		  <strong>Dashboard</strong> — your scored article feed. Use the filters to narrow by category, topic, or signal strength.<br>
+		  <strong>Saved</strong> — view only bookmarked articles. Bookmarks persist in your browser.<br>
+		  <strong>Log</strong> — download a JSON log of the last scan for debugging.<br>
+		  <strong>Scan Now</strong> — fetches fresh content from all active feeds and re-scores everything.<br>
+		  <strong>Manage Feeds</strong> — add or remove RSS sources. Any active feed is included in the next scan.<br>
+		  <strong>Signal Keywords</strong> — edit the JSON keyword arrays that drive scoring and categorisation.
+		</div>
+	  </div>
+	</div>
+  </div>
 
   <!-- ── Main: Dashboard ──────────────────────────────────────── -->
   <main id="main">
@@ -444,22 +483,22 @@ const LS_KEYWORDS = 'advisorintel_keywords';
 
 const DEFAULT_SIGNALS = {
   framework: {
-    // Lower/main-street market focus: businesses $500K–$10M, SBA-financed, owner-operated
-    "Exit Planning":        ["exit planning","exit strategy","succession","business transition","owner exit","sellability","exit readiness","business exit","exit plan","sell their business","selling a business","business succession","ready to sell","preparing to sell","years before selling","exit options","transferable business","owner dependency","key person","cepa","certified exit planning","value acceleration","owner readiness","transferable value"],
-    "Business Valuation":   ["business valuation","seller discretionary","sde","business worth","fair market value","business value","asking price","valuation multiple","business appraisal","what is my business worth","value my business","goodwill","intangible value","seller note","owner financing","seller discretionary earnings","normalized earnings","business reference guide","deal multiple","broker opinion of value"],
-    "Advisor Relationship": ["cpa","accountant","financial planner","financial advisor","wealth advisor","estate planning","referral","advisor relationship","professional advisor","trusted advisor","client conversation","planning conversation","business owner client"],
-    "Deal Mechanics":       ["business sale","business buyer","buying a business","first-time buyer","sba loan","sba financing","seller financing","earn-out","deal terms","purchase agreement","closing","asset sale","stock sale","business broker","broker listing","lower middle market","main street","owner-operated","closely held","family business sale","sba 7a","seller note"],
-    "Cash Flow":            ["cash flow","working capital","owner benefit","profitability","cash position","owner's draw","distributions","recurring revenue","normalized earnings"],
-    "Growth & Value Build": ["growth strategy","value builder","scalable","transferable","reduce owner dependency","build to sell","sellable business","increase business value","recurring clients","systems and processes"],
-    "Operations":           ["operations","systems","process improvement","sop","standard operating","efficiency","workflow","automation","documented processes","key employee"],
-    "Owner Strategy":       ["owner-operator","small business owner","lifestyle business","main street","business owner","self-employed","family business","closely-held","founder-led","solo owner","micro business"],
+	// Lower/main-street market focus: businesses $500K–$10M, SBA-financed, owner-operated
+	"Exit Planning":        ["exit planning","exit strategy","succession","business transition","owner exit","sellability","exit readiness","business exit","exit plan","sell their business","selling a business","business succession","ready to sell","preparing to sell","years before selling","exit options","transferable business","owner dependency","key person","cepa","certified exit planning","value acceleration","owner readiness","transferable value"],
+	"Business Valuation":   ["business valuation","seller discretionary","sde","business worth","fair market value","business value","asking price","valuation multiple","business appraisal","what is my business worth","value my business","goodwill","intangible value","seller note","owner financing","seller discretionary earnings","normalized earnings","business reference guide","deal multiple","broker opinion of value"],
+	"Advisor Relationship": ["cpa","accountant","financial planner","financial advisor","wealth advisor","estate planning","referral","advisor relationship","professional advisor","trusted advisor","client conversation","planning conversation","business owner client"],
+	"Deal Mechanics":       ["business sale","business buyer","buying a business","first-time buyer","sba loan","sba financing","seller financing","earn-out","deal terms","purchase agreement","closing","asset sale","stock sale","business broker","broker listing","lower middle market","main street","owner-operated","closely held","family business sale","sba 7a","seller note"],
+	"Cash Flow":            ["cash flow","working capital","owner benefit","profitability","cash position","owner's draw","distributions","recurring revenue","normalized earnings"],
+	"Growth & Value Build": ["growth strategy","value builder","scalable","transferable","reduce owner dependency","build to sell","sellable business","increase business value","recurring clients","systems and processes"],
+	"Operations":           ["operations","systems","process improvement","sop","standard operating","efficiency","workflow","automation","documented processes","key employee"],
+	"Owner Strategy":       ["owner-operator","small business owner","lifestyle business","main street","business owner","self-employed","family business","closely-held","founder-led","solo owner","micro business"],
   },
   category: {
-    "advisor-intelligence":    ["advisor","cpa","financial planner","estate plan","referral","client conversation","planning","wealth","retirement from business","personal financial"],
-    "exit-and-transition":     ["exit","succession","transition","sell","selling","sale","transfer","buyer","buyers","business broker","acquisition","ownership change"],
-    "valuation-and-deal":      ["valuation","sde","seller discretionary","business worth","deal","offer","purchase price","asking price","sba","financing","earn-out","seller note"],
-    "case-study":              ["case study","how they did","lessons from","playbook","story","sold their business","exit story","turnaround","what worked","breakdown","how i","what i learned","owner who sold"],
-    "market-conditions":       ["small business","main street","economy","interest rates","lending","deal activity","business owner","owner-operator","market trend","buyer demand","seller market"],
+	"advisor-intelligence":    ["advisor","cpa","financial planner","estate plan","referral","client conversation","planning","wealth","retirement from business","personal financial"],
+	"exit-and-transition":     ["exit","succession","transition","sell","selling","sale","transfer","buyer","buyers","business broker","acquisition","ownership change"],
+	"valuation-and-deal":      ["valuation","sde","seller discretionary","business worth","deal","offer","purchase price","asking price","sba","financing","earn-out","seller note"],
+	"case-study":              ["case study","how they did","lessons from","playbook","story","sold their business","exit story","turnaround","what worked","breakdown","how i","what i learned","owner who sold"],
+	"market-conditions":       ["small business","main street","economy","interest rates","lending","deal activity","business owner","owner-operator","market trend","buyer demand","seller market"],
   },
   noise: ["sponsored","advertisement","press release","new hire","job opening","hiring for","webinar registration","free trial","sign up now","limited time offer","discount","podcast episode","watch our","join us live","register now","award winner","ipo","public company","private equity fund","venture capital","series a","series b","unicorn","wall street","hedge fund","stock market","quarterly earnings"],
   high:  ["seller discretionary earnings","sba loan","owner financing","seller note","exit planning","business valuation","sellability","succession plan","referral relationship","cpa advisor","financial advisor","estate planning","wealth transfer","transferable value","recurring revenue","owner-operated","ready to sell","what is my business worth","business broker","sell a business","buying a business","lifestyle business sale","main street deal","financial readiness","retirement from business","advisor relationship","closely held business","family business sale"],
@@ -472,13 +511,13 @@ let HIGH_SIGNAL       = DEFAULT_SIGNALS.high;
 
 function loadKeywords(){
   try {
-    const raw = localStorage.getItem(LS_KEYWORDS);
-    if(!raw) return;
-    const kw = JSON.parse(raw);
-    if(kw.framework) FRAMEWORK_SIGNALS = kw.framework;
-    if(kw.category)  CATEGORY_SIGNALS  = kw.category;
-    if(kw.noise)     NOISE_SIGNALS     = kw.noise;
-    if(kw.high)      HIGH_SIGNAL       = kw.high;
+	const raw = localStorage.getItem(LS_KEYWORDS);
+	if(!raw) return;
+	const kw = JSON.parse(raw);
+	if(kw.framework) FRAMEWORK_SIGNALS = kw.framework;
+	if(kw.category)  CATEGORY_SIGNALS  = kw.category;
+	if(kw.noise)     NOISE_SIGNALS     = kw.noise;
+	if(kw.high)      HIGH_SIGNAL       = kw.high;
   } catch(e){}
 }
 
@@ -486,15 +525,15 @@ function saveKeywords(){
   const errEl = document.getElementById('kw-error');
   errEl.style.display = 'none';
   const fields = [
-    { id:'kw-framework', key:'framework', label:'Framework Signals' },
-    { id:'kw-category',  key:'category',  label:'Category Signals' },
-    { id:'kw-noise',     key:'noise',     label:'Noise Signals' },
-    { id:'kw-high',      key:'high',      label:'High-Signal Boosts' },
+	{ id:'kw-framework', key:'framework', label:'Framework Signals' },
+	{ id:'kw-category',  key:'category',  label:'Category Signals' },
+	{ id:'kw-noise',     key:'noise',     label:'Noise Signals' },
+	{ id:'kw-high',      key:'high',      label:'High-Signal Boosts' },
   ];
   const kw = {};
   for(const f of fields){
-    try { kw[f.key] = JSON.parse(document.getElementById(f.id).value); }
-    catch(e){ errEl.textContent = `JSON error in ${f.label}: ${e.message}`; errEl.style.display='block'; return; }
+	try { kw[f.key] = JSON.parse(document.getElementById(f.id).value); }
+	catch(e){ errEl.textContent = `JSON error in ${f.label}: ${e.message}`; errEl.style.display='block'; return; }
   }
   FRAMEWORK_SIGNALS = kw.framework;
   CATEGORY_SIGNALS  = kw.category;
@@ -980,6 +1019,27 @@ function showToast(msg){
 }
 
 // ═══════════════════════════════════════════════════════════════
+// HELP MODAL
+// ═══════════════════════════════════════════════════════════════
+// Update this URL once you've uploaded the GIF to Cloudflare / your CDN
+const HELP_GIF_URL = 'https://frontframe.co/frontframe-resources-walkthrough.gif';
+
+function openHelp(){
+  const backdrop = document.getElementById('help-backdrop');
+  // Swap placeholder with real URL on first open
+  const img = backdrop.querySelector('.help-gif');
+  if(img.src !== HELP_GIF_URL) img.src = HELP_GIF_URL;
+  backdrop.classList.add('open');
+  document.addEventListener('keydown', _helpEsc);
+}
+function closeHelp(e){
+  if(e && e.target !== document.getElementById('help-backdrop')) return;
+  document.getElementById('help-backdrop').classList.remove('open');
+  document.removeEventListener('keydown', _helpEsc);
+}
+function _helpEsc(e){ if(e.key==='Escape') closeHelp(); }
+
+// ═══════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════
 loadKeywords();
@@ -987,6 +1047,8 @@ loadFeeds();
 loadBookmarks();
 updateStats();
 renderArticles();
+// Patch help GIF src on load
+document.querySelector('.help-gif').src = HELP_GIF_URL;
 </script>
 </body>
 </html>
