@@ -1248,6 +1248,57 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="feedback-edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Edit Feedback Entry</div>
+      <button class="modal-close" onclick="closeModal('feedback-edit-modal')">&#x00D7;</button>
+    </div>
+    <input type="hidden" id="fbe-id">
+    <div class="form-group"><label>Question</label><input type="text" id="fbe-question" readonly style="background:var(--surface2);color:var(--gray)"></div>
+    <div class="form-group"><label>Suggested Answer</label><textarea id="fbe-answer" rows="5"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('feedback-edit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFeedbackEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="review-promote-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">Review &amp; Promote to Q&amp;A</div>
+      <button class="modal-close" onclick="closeModal('review-promote-modal')">&#x00D7;</button>
+    </div>
+    <input type="hidden" id="rp-id">
+    <div class="form-group"><label>Question</label><div id="rp-question" style="padding:8px;background:var(--surface2);border-radius:6px;font-size:0.9rem;color:var(--text)"></div></div>
+    <div class="form-group"><label>Suggested Answer</label><div id="rp-answer" style="padding:8px;background:var(--surface2);border-radius:6px;font-size:0.9rem;color:var(--text);white-space:pre-wrap"></div></div>
+    <div class="form-group">
+      <label>Target Page</label>
+      <select id="rp-page">
+        <option value="all">all (global)</option>
+        <option value="home">home</option>
+        <option value="intake">intake</option>
+        <option value="discovery">discovery</option>
+        <option value="yours">yours</option>
+        <option value="admin">admin</option>
+        <option value="proposal">proposal</option>
+        <option value="resources">resources</option>
+      </select>
+    </div>
+    <div style="margin-bottom:12px">
+      <button class="btn btn-ghost" id="rp-check-btn" onclick="runFeedbackConflictCheck()">Check for Conflicts</button>
+    </div>
+    <div id="rp-conflict-result" style="margin-bottom:12px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('review-promote-modal')">Cancel</button>
+      <button class="btn btn-amber" id="rp-promote-btn" onclick="confirmPromoteFeedback()">
+        <span id="rp-promote-label">&#x2192; Q&amp;A <span id="rp-warn-label" style="font-size:0.75rem;opacity:0.8">(check not run)</span></span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="sub-modal">
   <div class="modal" style="max-width:540px">
     <div class="modal-header">
@@ -1932,7 +1983,8 @@ function renderFeedback() {
       <td>${f.promoted ? '<span class="badge badge-promoted">Promoted</span>' : '<span class="badge badge-open">Open</span>'}</td>
       <td>
         <div class="flex-row">
-          ${!f.promoted ? `<button class="btn btn-amber btn-xs" onclick="promoteFeedback('${f.id}')">\u2192 Q&A</button>` : ''}
+          ${!f.promoted ? `<button class="btn btn-amber btn-xs" onclick="openReviewPromoteModal('${f.id}')">\u2192 Q&A</button>` : ''}
+          <button class="btn btn-ghost btn-xs" onclick="openFeedbackEditModal('${f.id}')">Edit</button>
           <button class="btn btn-ghost btn-xs" onclick="dismissFeedback('${f.id}')">Dismiss</button>
         </div>
       </td>
@@ -1972,6 +2024,98 @@ async function dismissFeedback(id) {
     feedback = feedback.filter(f => f.id !== id);
     renderFeedback();
     toast('Dismissed.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function openFeedbackEditModal(id) {
+  const f = feedback.find(x => x.id === id);
+  if (!f) return;
+  document.getElementById('fbe-id').value = id;
+  document.getElementById('fbe-question').value = f.question;
+  document.getElementById('fbe-answer').value = f.suggested_answer || '';
+  document.getElementById('feedback-edit-modal').classList.add('open');
+}
+
+async function saveFeedbackEdit() {
+  const id     = document.getElementById('fbe-id').value;
+  const answer = document.getElementById('fbe-answer').value.trim();
+  if (!answer) { toast('Answer is required.', 'error'); return; }
+  try {
+    await api('PATCH', `/admin/feedback/${id}`, { suggested_answer: answer });
+    const idx = feedback.findIndex(f => f.id === id);
+    if (idx >= 0) feedback[idx].suggested_answer = answer;
+    closeModal('feedback-edit-modal');
+    renderFeedback();
+    toast('Saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function openReviewPromoteModal(id) {
+  const f = feedback.find(x => x.id === id);
+  if (!f) return;
+  document.getElementById('rp-id').value = id;
+  document.getElementById('rp-question').textContent = f.question;
+  document.getElementById('rp-answer').textContent = f.suggested_answer || f.ed_response || '—';
+  document.getElementById('rp-page').value = 'all';
+  document.getElementById('rp-conflict-result').innerHTML = '';
+  document.getElementById('rp-warn-label').style.display = '';
+  document.getElementById('rp-check-btn').disabled = false;
+  document.getElementById('rp-check-btn').textContent = 'Check for Conflicts';
+  document.getElementById('review-promote-modal').classList.add('open');
+}
+
+async function runFeedbackConflictCheck() {
+  const id       = document.getElementById('rp-id').value;
+  const question = document.getElementById('rp-question').textContent;
+  const answer   = document.getElementById('rp-answer').textContent;
+  const page     = document.getElementById('rp-page').value;
+  const btn      = document.getElementById('rp-check-btn');
+  const resultEl = document.getElementById('rp-conflict-result');
+
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+  resultEl.innerHTML = '';
+
+  try {
+    const r = await api('POST', '/admin/feedback/check-conflicts', { question, answer, page });
+    document.getElementById('rp-warn-label').style.display = 'none';
+
+    if (r.severity === 'none') {
+      resultEl.innerHTML = `<div style="padding:10px;background:var(--green-soft,#d4edda);border-radius:6px;color:#155724;font-size:0.875rem">
+        ✓ No conflicts detected across ${r.pairs_checked} existing pairs and the system prompt for <strong>${page}</strong>.
+      </div>`;
+    } else {
+      const color = r.severity === 'blocking' ? { bg: '#f8d7da', text: '#721c24' } : { bg: '#fff3cd', text: '#856404' };
+      const icon  = r.severity === 'blocking' ? '✗' : '⚠';
+      const detailsHtml = r.details?.length
+        ? `<ul style="margin:6px 0 0 16px;padding:0">${r.details.map(d => `<li>${esc(d)}</li>`).join('')}</ul>`
+        : '';
+      const blockingNote = r.severity === 'blocking'
+        ? `<p style="margin:8px 0 0;font-size:0.8rem">Review the Q&amp;A tab and System Prompt for page '<strong>${page}</strong>' before promoting.</p>`
+        : '';
+      resultEl.innerHTML = `<div style="padding:10px;background:${color.bg};border-radius:6px;color:${color.text};font-size:0.875rem">
+        ${icon} <strong>${esc(r.summary)}</strong>${detailsHtml}${blockingNote}
+      </div>`;
+    }
+  } catch (e) {
+    resultEl.innerHTML = `<div style="padding:10px;background:var(--surface2);border-radius:6px;font-size:0.875rem;color:var(--gray)">Check failed: ${esc(e.message)}</div>`;
+    document.getElementById('rp-warn-label').style.display = 'none';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Check for Conflicts';
+  }
+}
+
+async function confirmPromoteFeedback() {
+  const id   = document.getElementById('rp-id').value;
+  const page = document.getElementById('rp-page').value;
+  try {
+    await api('PATCH', `/admin/feedback/${id}`, { action: 'promote', page });
+    const idx = feedback.findIndex(f => f.id === id);
+    if (idx >= 0) feedback[idx].promoted = true;
+    closeModal('review-promote-modal');
+    renderFeedback();
+    toast('Promoted to Q&A.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
