@@ -266,10 +266,6 @@
     .notepad-dismiss { background: none; border: none; cursor: pointer; color: var(--ink-light); padding: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
     .notepad-dismiss:hover { color: var(--ink); }
     .notepad-sort { padding: 22px 20px 0 38px; flex-shrink: 0; }
-    .notepad-sort-q { font-family: 'DM Serif Display', Georgia, serif; font-size: 0.975rem; line-height: 1.4; color: var(--ink); margin-bottom: 14px; }
-    .notepad-choices { display: flex; flex-direction: column; gap: 5px; }
-    .notepad-choice { background: none; border: 1px solid var(--rule-strong); border-radius: 2px; padding: 8px 13px; font-size: 0.78rem; color: var(--ink-mid); cursor: pointer; text-align: left; transition: background 0.15s, border-color 0.15s, color 0.15s; }
-    .notepad-choice:hover { background: var(--paper-warm); border-color: var(--ink-mid); color: var(--ink); }
     .notepad-messages { flex: 1; overflow-y: auto; padding: 18px 20px 10px 38px; display: flex; flex-direction: column; gap: 13px; }
     .notepad-msg { font-size: 0.81rem; line-height: 1.65; white-space: pre-line; }
     .notepad-msg.host { color: var(--ink); padding-left: 11px; border-left: 2px solid var(--rule-strong); }
@@ -307,9 +303,16 @@
       .book-layout { grid-template-columns: 1fr; gap: 28px; }
       .articles-grid { grid-template-columns: 1fr; }
       .coming-split { grid-template-columns: 1fr; gap: 28px; }
-      .notepad-panel { width: 100%; top: auto; bottom: 0; height: 70vh; transform: translateY(100%); border-left: none; border-top: 1px solid var(--rule-strong); }
+      .notepad-panel { width: 100%; top: 0; bottom: 0; height: 100%; transform: translateY(100%); border-left: none; border-top: none; z-index: 500; }
       .notepad-panel.open { transform: translateY(0); }
-      .notepad-scrim { inset: 60px 0 70vh 0; }
+      .notepad-scrim { display: none !important; }
+      .notepad-panel-head { padding: 14px 16px 12px 20px; }
+      .notepad-panel::before { left: 18px; }
+      .notepad-panel-label::after { content: ' — tap × to return'; font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 0.62rem; color: var(--ink-light); }
+      .notepad-messages { padding: 16px 16px 10px 20px; }
+      .notepad-input-row { padding: 10px 12px 20px 20px; }
+      .notepad-input { font-size: 1rem; min-height: 36px; }
+      .notepad-send svg { width: 18px; height: 18px; }
       .drawer-content { padding: 24px 20px 28px; }
     }
   </style>
@@ -652,16 +655,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-    <div class="notepad-sort" id="notepadSort">
-      <p class="notepad-sort-q">What are you trying to think through?</p>
-      <div class="notepad-choices">
-        <button class="notepad-choice" data-topic="visible">Getting found more often</button>
-        <button class="notepad-choice" data-topic="established">Looking more established</button>
-        <button class="notepad-choice" data-topic="questions">Spending less time answering routine questions</button>
-        <button class="notepad-choice" data-topic="pressure">Taking some pressure off the owner</button>
-        <button class="notepad-choice" data-topic="unsure">I'm not sure yet</button>
-      </div>
-    </div>
+    <div class="notepad-sort" id="notepadSort" style="display:none;"></div>
     <div class="notepad-messages" id="notepadMessages"></div>
     <div class="notepad-input-row" id="notepadInputRow" style="display:none;">
       <textarea class="notepad-input" id="notepadInput" placeholder="Write it here…" rows="1" autocomplete="off"></textarea>
@@ -810,6 +804,9 @@
       if(mob) mob.classList.add('open');
       notepadPanel.classList.add('open');
       notepadScrim.classList.add('visible');
+      notepadInputRow.style.display='flex';
+      if(!npStarted){ npStarted=true; greetNotepad(); }
+      setTimeout(()=>notepadInput.focus(), 320);
     }
     function closeNotepad(){
       notepadObj.classList.remove('open');
@@ -830,8 +827,6 @@
     notepadScrim.addEventListener('click', closeNotepad);
 
     function addNotepadMsg(text, role){
-      // Hide sort choices once conversation begins
-      if(role==='host' && !npStarted){ notepadSort.style.display='none'; notepadInputRow.style.display='flex'; npStarted=true; }
       const d=document.createElement('div');
       d.className='notepad-msg '+role;
       d.textContent=text;
@@ -839,16 +834,25 @@
       notepadMsgs.scrollTop=notepadMsgs.scrollHeight;
     }
 
-    // Sorting choices — send as first user message, get oriented response
-    document.querySelectorAll('.notepad-choice').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const topic=btn.dataset.topic;
-        const topicText=btn.textContent.trim();
-        addNotepadMsg(topicText,'visitor');
-        npHistory.push({role:'user',content:topicText});
-        await sendNotepadMessage(null); // null = already pushed
-      });
-    });
+    async function greetNotepad(){
+      const thinking=document.createElement('div');
+      thinking.className='notepad-msg thinking'; thinking.id='npthinking'; thinking.textContent='…';
+      notepadMsgs.appendChild(thinking); notepadMsgs.scrollTop=notepadMsgs.scrollHeight;
+      try{
+        const res=await fetch(`${WORKER}/chat`,{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({page:PAGE, message:'__greet__', history:[], session_id:sessionId})
+        });
+        const data=await res.json();
+        document.getElementById('npthinking')?.remove();
+        const reply=data.response||"What's on your mind?";
+        addNotepadMsg(reply,'host');
+        npHistory.push({role:'assistant',content:reply});
+      }catch{
+        document.getElementById('npthinking')?.remove();
+        addNotepadMsg("What's on your mind?",'host');
+      }
+    }
 
     notepadInput.addEventListener('input',()=>{
       notepadInput.style.height='auto';
@@ -856,12 +860,10 @@
     });
 
     async function sendNotepadMessage(text){
-      if(text!==null){
-        if(!text.trim())return;
-        addNotepadMsg(text,'visitor');
-        npHistory.push({role:'user',content:text});
-        notepadInput.value=''; notepadInput.style.height='auto';
-      }
+      if(!text.trim())return;
+      addNotepadMsg(text,'visitor');
+      npHistory.push({role:'user',content:text});
+      notepadInput.value=''; notepadInput.style.height='auto';
       notepadSend.disabled=true;
       const thinking=document.createElement('div');
       thinking.className='notepad-msg thinking'; thinking.id='npthinking'; thinking.textContent='…';
@@ -869,7 +871,7 @@
       try{
         const res=await fetch(`${WORKER}/chat`,{
           method:'POST', headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({page:PAGE, message:npHistory[npHistory.length-1].content, history:npHistory.slice(-10), session_id:sessionId})
+          body:JSON.stringify({page:PAGE, message:text, history:npHistory.slice(-10), session_id:sessionId})
         });
         const data=await res.json();
         document.getElementById('npthinking')?.remove();
