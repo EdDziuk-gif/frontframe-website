@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You Should Not Have to Plan Your Own Website | FrontFrame</title>
+  <meta name="description" content="Why asking a business owner to design their own website is the wrong question — and what a better process looks like.">
+  <link rel="canonical" href="https://frontframe.co/resources/you-should-not-have-to-plan-your-own-website">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" type="image/png" href="../images/Logo_FF.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:         #1E2D40;
+      --amber:        #C8861A;
+      --amber-bright: #F5A623;
+      --surface:      #E8E3D8;
+      --surface-mid:  #DDD7CB;
+      --parchment:    #F2EDE3;
+      --paper:        #FAF8F3;
+      --paper-warm:   #F5F1E8;
+      --ink:          #2A3542;
+      --ink-mid:      #4A5568;
+      --ink-light:    #7A8A9A;
+      --rule:         rgba(42,53,66,0.10);
+      --rule-strong:  rgba(42,53,66,0.18);
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--parchment); color: var(--ink); overflow-x: hidden; }
+    h1, h2, h3, .serif { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; }
+    a { text-decoration: none; color: inherit; }
+    img { display: block; max-width: 100%; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      background: rgba(30,45,64,0.97); backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-inner {
+      max-width: 1400px; margin: 0 auto; padding: 0 48px;
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .wordmark { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.3rem; color: #fff; letter-spacing: -0.01em; }
+    .nav-back {
+      font-size: 0.8rem; color: rgba(255,255,255,0.45);
+      display: flex; align-items: center; gap: 6px; transition: color 0.2s;
+    }
+    .nav-back:hover { color: rgba(255,255,255,0.75); }
+
+    /* ARTICLE LAYOUT */
+    .article-wrap {
+      padding-top: 60px;
+      min-height: 100vh;
+    }
+
+    .article-header {
+      background: var(--navy);
+      padding: 72px 0 64px;
+      position: relative;
+      overflow: hidden;
+    }
+    .article-header::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(200,134,26,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .header-inner {
+      max-width: 720px; margin: 0 auto; padding: 0 48px;
+    }
+    .article-eyebrow {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--amber); margin-bottom: 20px; display: block;
+    }
+    .article-title {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(1.7rem, 4vw, 2.5rem);
+      line-height: 1.12;
+      color: #fff;
+      margin-bottom: 22px;
+    }
+    .article-meta {
+      font-size: 0.75rem; color: rgba(255,255,255,0.35);
+      display: flex; align-items: center; gap: 14px;
+    }
+    .article-meta-divider { width: 1px; height: 10px; background: rgba(255,255,255,0.15); }
+
+    /* BODY */
+    .article-body {
+      background: var(--paper);
+      border-top: 3px solid var(--amber);
+    }
+    .body-inner {
+      max-width: 720px; margin: 0 auto; padding: 64px 48px 80px;
+    }
+
+    .article-body p {
+      font-size: 1.0rem;
+      line-height: 1.9;
+      color: var(--ink);
+      margin-bottom: 1.5em;
+    }
+
+    .article-body p:last-child { margin-bottom: 0; }
+
+    /* Pull quote */
+    .pull-quote {
+      margin: 44px 0;
+      padding: 28px 32px;
+      border-left: 3px solid var(--amber);
+      background: var(--parchment);
+    }
+    .pull-quote p {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.15rem !important;
+      line-height: 1.55 !important;
+      color: var(--ink) !important;
+      margin-bottom: 0 !important;
+    }
+
+    /* Summary block */
+    .summary-block {
+      margin: 44px 0;
+      padding: 30px 32px;
+      background: var(--parchment);
+      border: 1px solid var(--rule-strong);
+      border-radius: 2px;
+    }
+    .summary-block-label {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--amber); margin-bottom: 14px; display: block;
+    }
+    .summary-block p {
+      font-size: 0.9rem !important;
+      line-height: 1.8 !important;
+      color: var(--ink-mid) !important;
+      margin-bottom: 0.6em !important;
+    }
+    .summary-block p:last-child { margin-bottom: 0 !important; }
+
+    /* Blueprint callout */
+    .blueprint-callout {
+      margin: 56px 0 0;
+      padding: 36px 38px;
+      background: var(--navy);
+      border-radius: 3px;
+      position: relative;
+      overflow: hidden;
+    }
+    .blueprint-callout::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(200,134,26,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .callout-eyebrow {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--amber-bright); margin-bottom: 10px; display: block;
+    }
+    .callout-heading {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 1.25rem; color: #fff; line-height: 1.25; margin-bottom: 12px;
+    }
+    .callout-body {
+      font-size: 0.84rem; color: rgba(255,255,255,0.48); line-height: 1.75;
+    }
+
+    /* FOOTER */
+    footer { background: var(--navy); padding: 30px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 0; }
+    .footer-inner {
+      max-width: 1400px; margin: 0 auto; padding: 0 48px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+    .footer-wordmark { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.05rem; color: rgba(255,255,255,0.5); }
+    .footer-right { font-size: 0.72rem; color: rgba(255,255,255,0.28); }
+
+    @media (max-width: 680px) {
+      .nav-inner, .header-inner, .body-inner, .footer-inner { padding-left: 20px; padding-right: 20px; }
+      .article-header { padding: 56px 0 48px; }
+      .body-inner { padding-top: 48px; padding-bottom: 60px; }
+      .pull-quote, .summary-block, .blueprint-callout { padding: 22px 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/"><span class="wordmark">FrontFrame</span></a>
+      <a class="nav-back" href="/resources">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Resources
+      </a>
+    </div>
+  </nav>
+
+  <div class="article-wrap">
+
+    <!-- HEADER -->
+    <header class="article-header">
+      <div class="header-inner">
+        <span class="article-eyebrow">FrontFrame · Reading</span>
+        <h1 class="article-title">You Should Not Have to Plan Your Own Website</h1>
+        <div class="article-meta">
+          <span>Ed Dziuk</span>
+          <div class="article-meta-divider"></div>
+          <span>FrontFrame</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- BODY -->
+    <article class="article-body">
+      <div class="body-inner">
+
+        <p>If I hired a bookkeeper and the first thing they asked me was how to design a chart of accounts, I would have concerns.</p>
+
+        <p>Not because I know how to design one. Quite the opposite.</p>
+
+        <p>I would wonder why I was being asked to perform the very work I was hiring someone else to do.</p>
+
+        <p>Yet that is how many website projects begin.</p>
+
+        <p>A business owner decides it's time for a professional website and is immediately handed a list of questions. What pages do you want? What should the navigation look like? What should happen after a visitor fills out a form? What should your customer journey be?</p>
+
+        <p>Most owners answer these questions the best they can. Then they spend the next several weeks discovering they were never qualified to answer them in the first place.</p>
+
+        <div class="pull-quote">
+          <p>That isn't a criticism of the owner. It's a criticism of the process.</p>
+        </div>
+
+        <p>A successful pet sitter understands anxious owners, medication schedules, travel plans, and the difference between a bird owner and a dog owner. A successful consultant understands client concerns, buying decisions, and project risks. A successful bookkeeper can often spot a problem in a financial statement before anyone else realizes one exists.</p>
+
+        <p>Those people possess valuable expertise.</p>
+
+        <p>Website planning is not part of it.</p>
+
+        <p>The mistake many web projects make is assuming the owner's expertise and the designer's expertise are interchangeable. They are not. In fact, the entire reason the owner is successful is because they have spent years learning things the designer does not know.</p>
+
+        <p>At FrontFrame, we begin with a different assumption.</p>
+
+        <p>We assume you know your customers better than we ever will.</p>
+
+        <p>You know what they worry about before they hire you. You know the questions they ask. You know which services generate referrals and which services consume time without producing much value. You know where prospects become confused and where they gain confidence. You know the language customers actually use when they describe their problems.</p>
+
+        <p>No amount of website experience can replace that knowledge.</p>
+
+        <p>At the same time, knowing your customers does not automatically tell you how to organize a website.</p>
+
+        <p>Those are different skills.</p>
+
+        <p>The challenge is creating a bridge between them.</p>
+
+        <p>That bridge is the FrontFrame Blueprint.</p>
+
+        <p>Instead of asking you to design a website from a blank sheet of paper, we create the first draft. We take what we learn about your business and turn it into something visible. We propose pages. We organize information. We sketch how a visitor might move through the site and where key questions should be answered.</p>
+
+        <p>Then we put it in front of you.</p>
+
+        <p>That is when your expertise becomes useful.</p>
+
+        <p>Not because you suddenly become a website strategist, but because you immediately recognize what feels wrong.</p>
+
+        <p>You notice a service that should be more prominent. You point out a question customers ask every day that somehow didn't make it onto the page. You identify terminology that no real customer would ever use. You explain why one offering belongs at the center of the business while another barely deserves mention.</p>
+
+        <p>In other words, you do what experts do.</p>
+
+        <p>You recognize reality when you see it.</p>
+
+        <div class="summary-block">
+          <span class="summary-block-label">The process, briefly</span>
+          <p>You do not have to know how to plan a website.</p>
+          <p>We give you the first draft.</p>
+          <p>You show us what does not fit.</p>
+          <p>We turn that into the final build.</p>
+        </div>
+
+        <p>The reason this works is surprisingly simple. Most people are far better at improving something they can see than inventing something from nothing. The Blueprint gives shape to conversations that otherwise remain trapped inside experience, intuition, and years of customer interactions.</p>
+
+        <p>By the time the website is complete, the pages are usually better than what either side could have produced alone. The owner contributes a deep understanding of the market. FrontFrame contributes the structure needed to communicate that understanding.</p>
+
+        <p>But there is another outcome that appears often enough to be worth mentioning.</p>
+
+        <p>Many owners discover things about their business while reviewing the Blueprint.</p>
+
+        <p>Not because the business changed.</p>
+
+        <p>Not because they learned something new.</p>
+
+        <p>For the first time, they were able to see what they already knew.</p>
+
+        <p>The website was simply the instrument that made it visible.</p>
+
+        <div class="blueprint-callout">
+          <span class="callout-eyebrow">Coming · FrontFrame Blueprint</span>
+          <h2 class="callout-heading serif">The first draft is ours to write.</h2>
+          <p class="callout-body">The Blueprint is FrontFrame's structured approach to site planning — we build the first version, you tell us what doesn't fit. Coming soon.</p>
+        </div>
+
+      </div>
+    </article>
+
+  </div><!-- /article-wrap -->
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-wordmark">FrontFrame</span>
+      <span class="footer-right">© 2026 FrontFrame, LLC</span>
+    </div>
+  </footer>
+
+</body>
+</html>

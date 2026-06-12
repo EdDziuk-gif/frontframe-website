@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Leaves Are Fine | FrontFrame</title>
+  <meta name="description" content="LinkedIn asked a web designer if he needed to hire a web designer. That is not a failure. It tells you something about every tool you are paying to work on your behalf.">
+  <link rel="canonical" href="https://frontframe.co/resources/the-leaves-are-fine">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" type="image/png" href="../images/Logo_FF.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:         #1E2D40;
+      --amber:        #C8861A;
+      --amber-bright: #F5A623;
+      --surface:      #E8E3D8;
+      --surface-mid:  #DDD7CB;
+      --parchment:    #F2EDE3;
+      --paper:        #FAF8F3;
+      --paper-warm:   #F5F1E8;
+      --ink:          #2A3542;
+      --ink-mid:      #4A5568;
+      --ink-light:    #7A8A9A;
+      --rule:         rgba(42,53,66,0.10);
+      --rule-strong:  rgba(42,53,66,0.18);
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--parchment); color: var(--ink); overflow-x: hidden; }
+    h1, h2, h3, .serif { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; }
+    a { text-decoration: none; color: inherit; }
+    img { display: block; max-width: 100%; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      background: rgba(30,45,64,0.97); backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-inner {
+      max-width: 1400px; margin: 0 auto; padding: 0 48px;
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .wordmark { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.3rem; color: #fff; letter-spacing: -0.01em; }
+    .nav-back {
+      font-size: 0.8rem; color: rgba(255,255,255,0.45);
+      display: flex; align-items: center; gap: 6px; transition: color 0.2s;
+    }
+    .nav-back:hover { color: rgba(255,255,255,0.75); }
+
+    /* ARTICLE LAYOUT */
+    .article-wrap {
+      padding-top: 60px;
+      min-height: 100vh;
+    }
+
+    .article-header {
+      background: var(--navy);
+      padding: 72px 0 64px;
+      position: relative;
+      overflow: hidden;
+    }
+    .article-header::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(200,134,26,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .header-inner {
+      max-width: 720px; margin: 0 auto; padding: 0 48px;
+    }
+    .article-eyebrow {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--amber); margin-bottom: 20px; display: block;
+    }
+    .article-title {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(1.7rem, 4vw, 2.5rem);
+      line-height: 1.12;
+      color: #fff;
+      margin-bottom: 22px;
+    }
+    .article-meta {
+      font-size: 0.75rem; color: rgba(255,255,255,0.35);
+      display: flex; align-items: center; gap: 14px;
+    }
+    .article-meta-divider { width: 1px; height: 10px; background: rgba(255,255,255,0.15); }
+
+    /* BODY */
+    .article-body {
+      background: var(--paper);
+      border-top: 3px solid var(--amber);
+    }
+    .body-inner {
+      max-width: 720px; margin: 0 auto; padding: 64px 48px 80px;
+    }
+
+    .article-body p {
+      font-size: 1.0rem;
+      line-height: 1.9;
+      color: var(--ink);
+      margin-bottom: 1.5em;
+    }
+
+    .article-body p:last-child { margin-bottom: 0; }
+
+    /* Pull quote */
+    .pull-quote {
+      margin: 44px 0;
+      padding: 28px 32px;
+      border-left: 3px solid var(--amber);
+      background: var(--parchment);
+    }
+    .pull-quote p {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.15rem !important;
+      line-height: 1.55 !important;
+      color: var(--ink) !important;
+      margin-bottom: 0 !important;
+    }
+
+    /* Blueprint callout */
+    .blueprint-callout {
+      margin: 56px 0 0;
+      padding: 36px 38px;
+      background: var(--navy);
+      border-radius: 3px;
+      position: relative;
+      overflow: hidden;
+    }
+    .blueprint-callout::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(200,134,26,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .callout-eyebrow {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--amber-bright); margin-bottom: 10px; display: block;
+    }
+    .callout-heading {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 1.25rem; color: #fff; line-height: 1.25; margin-bottom: 12px;
+    }
+    .callout-body {
+      font-size: 0.84rem; color: rgba(255,255,255,0.48); line-height: 1.75; margin-bottom: 20px;
+    }
+    .callout-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.82rem; font-weight: 700; color: var(--amber-bright);
+      border-bottom: 1px solid rgba(245,166,35,0.3); transition: border-color 0.2s;
+    }
+    .callout-link:hover { border-color: var(--amber-bright); }
+
+    /* FOOTER */
+    footer { background: var(--navy); padding: 30px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 0; }
+    .footer-inner {
+      max-width: 1400px; margin: 0 auto; padding: 0 48px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+    .footer-wordmark { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.05rem; color: rgba(255,255,255,0.5); }
+    .footer-right { font-size: 0.72rem; color: rgba(255,255,255,0.28); }
+
+    @media (max-width: 680px) {
+      .nav-inner, .header-inner, .body-inner, .footer-inner { padding-left: 20px; padding-right: 20px; }
+      .article-header { padding: 56px 0 48px; }
+      .body-inner { padding-top: 48px; padding-bottom: 60px; }
+      .pull-quote, .blueprint-callout { padding: 22px 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/"><span class="wordmark">FrontFrame</span></a>
+      <a class="nav-back" href="/resources">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Resources
+      </a>
+    </div>
+  </nav>
+
+  <div class="article-wrap">
+
+    <!-- HEADER -->
+    <header class="article-header">
+      <div class="header-inner">
+        <span class="article-eyebrow">FrontFrame · Reading</span>
+        <h1 class="article-title">The Leaves Are Fine</h1>
+        <div class="article-meta">
+          <span>Ed Dziuk</span>
+          <div class="article-meta-divider"></div>
+          <span>FrontFrame</span>
+          <div class="article-meta-divider"></div>
+          <span>June 2026</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- BODY -->
+    <article class="article-body">
+      <div class="body-inner">
+
+        <p>A teacher once told me that things often die long before people realize they are dead. At the time, I thought he was talking about ideas — philosophies that had lost their moorings, movements that had abandoned their first principles. Now I understand he was talking about everything. Ideas, institutions, governments, businesses. The trajectory is always the same. The onlooker never sees the tipping point. By the time the failure is obvious to those inside, it is far too late. The roots are dead. But the leaves still show life.</p>
+
+        <p>I thought of this recently when LinkedIn sent me a request. It asked whether I need a web designer. The problem with this request is that I design websites. I have built them for decades. Microsoft owns LinkedIn, and Microsoft possesses more information about me than I possess about myself. Somewhere within that vast technological apparatus — the algorithms, the data warehouses, the machine learning systems that claim to understand human behavior — someone's matching engine reviewed my professional history, my published work, my network, my credentials, and concluded that a website designer might benefit from hiring a website designer.</p>
+
+        <p>I laughed at first. It seemed absurd. Then I began to wonder whether I was misunderstanding what had happened.</p>
+
+        <p>The question Microsoft set out to answer is straightforward: Does this person have a problem that our platform might solve? But I had assumed that question was aimed at understanding me. I had believed the purpose of that enormous data collection, all those algorithms, was to improve the quality of matches between people who could genuinely help each other. I was wrong about that. Or rather, I was right about the question, but wrong about who was asking it.</p>
+
+        <div class="pull-quote">
+          <p>For most of my career as a CPA, I observed something that seemed at odds with how the world preferred to think about professional problems. Clients arrived in my office with solutions.</p>
+        </div>
+
+        <p>They wanted corporations, or they wanted different deductions, or they wanted new bookkeeping systems, or they wanted tax strategies, or they wanted better legal structures. These were not needs. They were ideas. Almost every time, the actual problem hiding behind the proposed solution was different from the solution itself. The real work was diagnosis. The best professionals, I noticed, were those willing to ask questions until they understood the actual problem — the one that made the proposed solution seem necessary in the first place. Everyone else was just selling things.</p>
+
+        <p>This observation followed me through decades of work. I watched businesses hire accountants not because they needed accounting but because they needed clarity about what they could afford. I watched people restructure entities not to save taxes but to sleep at night. I watched them buy software not because the software was sophisticated but because the alternative — manual processes — was drowning them. What mattered was not the tool itself but the problem the tool promised to solve. Until that problem was properly understood, talking about tools was like discussing medication before diagnosing the illness.</p>
+
+        <p>Yet something has shifted. The technology industry celebrates different metrics now. The emphasis has moved from solving problems to multiplying features, from clarity to complexity, from capability to capability multiplied by capability. Every year, the software becomes more sophisticated. Every year, paradoxically, the user spends more time managing the software than doing the work the software was meant to enable. I watched this happen in accounting. What began as a simple bookkeeping tool evolved into something that required specialists and consultants, forums and support tickets, training courses and YouTube channels. We needed artificial intelligence to help us understand how to work with the software we had purchased in order to do accounting. The tool had become the problem to solve.</p>
+
+        <p>This pattern is not unique to accounting. Email platforms that once simplified communication now require administrators. Professional networks that promised connections now require strategists to navigate their promotion algorithms. Productivity software demands consultants. At each stage, the technology becomes more capable, and the user becomes more dependent on interpreting what the technology is doing rather than on doing the work that originally prompted the technology's purchase.</p>
+
+        <p>I had assumed that the LinkedIn request represented a failure — a glitch in an otherwise sensible system. How could a company with access to that much information about me, to that much processing power, to that much artificial intelligence, still conclude that a website designer needs to hire a website designer? But I was asking the wrong question. I was assuming that LinkedIn's job was to help me find what I needed. I was assuming that the goal was to improve the quality of connections between people who could genuinely help each other.</p>
+
+        <p>The answer becomes clear once you stop assuming. LinkedIn is not failing. The system is working. But it is not working toward the goal I assumed. A website designer receives an encouraging notification to pursue a lead. The prospective client receives an encouraging notification to engage with the platform. Both parties are nudged toward activity. The subscription renews. The metrics improve. The platform has successfully created a transaction. And that is the point. Not matching, but transaction. Not connection, but engagement.</p>
+
+        <p>This is when the memory of my teacher finally made sense. Things do not die because they stop functioning. They die because they stop serving the purpose that justified their existence in the first place. They continue to work brilliantly — just toward something else. The machine runs exactly as designed. The leaves are still green. The question is only whether it is still doing the job we are paying it for.</p>
+
+        <p>A website is one of those tools. For a local service business, it has one job: someone who doesn't know you yet should be able to find you, understand what you do, and decide to contact you. FrontFrame builds for owners who want to know whether that's actually happening.</p>
+
+        <div class="blueprint-callout">
+          <span class="callout-eyebrow">FrontFrame</span>
+          <h2 class="callout-heading serif">Is your website doing the job you're paying it for?</h2>
+          <p class="callout-body">Most owners don't know. FrontFrame starts every engagement by finding out — before anything is built or rebuilt.</p>
+          <a class="callout-link" href="/">Start with FrontFrame →</a>
+        </div>
+
+      </div>
+    </article>
+
+  </div><!-- /article-wrap -->
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-wordmark">FrontFrame</span>
+      <span class="footer-right">© 2026 FrontFrame, LLC</span>
+    </div>
+  </footer>
+
+</body>
+</html>
