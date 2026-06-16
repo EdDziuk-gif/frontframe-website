@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The FrontFrame Blueprint — A Written Model of How Your Business Should Work Online | FrontFrame</title>
+  <meta name="description" content="The FrontFrame Blueprint is not a wireframe or sitemap. It maps your website, booking system, and AI assistant into one coherent plan. Every FrontFrame build starts here.">
+  <link rel="canonical" href="https://frontframe.co/blueprint">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="FrontFrame" />
+  <meta property="og:title" content="The FrontFrame Blueprint — A Written Model of How Your Business Should Work Online | FrontFrame" />
+  <meta property="og:description" content="The FrontFrame Blueprint is not a wireframe or sitemap. It maps your website, booking system, and AI assistant into one coherent plan. Every FrontFrame build starts here." />
+  <meta property="og:url" content="https://frontframe.co/blueprint" />
+  <meta property="og:image" content="https://frontframe.co/social-preview.png" />
+  <meta property="og:image:alt" content="The FrontFrame Blueprint — a written model of how your business should work online" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter / X Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="The FrontFrame Blueprint — A Written Model of How Your Business Should Work Online | FrontFrame" />
+  <meta name="twitter:description" content="The FrontFrame Blueprint is not a wireframe or sitemap. It maps your website, booking system, and AI assistant into one coherent plan." />
+  <meta name="twitter:image" content="https://frontframe.co/social-preview.png" />
+  <link rel="icon" type="image/png" href="images/Logo_FF.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:         #1E2D40;
+      --amber:        #C8861A;
+      --amber-bright: #F5A623;
+      --surface:      #E8E3D8;
+      --surface-mid:  #DDD7CB;
+      --parchment:    #F2EDE3;
+      --paper:        #FAF8F3;
+      --paper-warm:   #F5F1E8;
+      --ink:          #2A3542;
+      --ink-mid:      #4A5568;
+      --ink-light:    #7A8A9A;
+      --rule:         rgba(42,53,66,0.10);
+      --rule-strong:  rgba(42,53,66,0.18);
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--surface); color: var(--ink); overflow-x: hidden; }
+    h1, h2, h3, .serif { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; }
+    a { text-decoration: none; color: inherit; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      background: rgba(30,45,64,0.97); backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-inner {
+      max-width: 1400px; margin: 0 auto; padding: 0 48px;
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .wordmark { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.3rem; color: #fff; letter-spacing: -0.01em; }
+    .nav-back {
+      font-size: 0.8rem; color: rgba(255,255,255,0.45);
+      display: flex; align-items: center; gap: 6px; transition: color 0.2s;
+    }
+    .nav-back:hover { color: rgba(255,255,255,0.75); }
+
+    /* HERO */
+    .hero {
+      padding-top: 60px;
+      background: var(--navy);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: -80px; right: -80px;
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, rgba(200,134,26,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 1400px; margin: 0 auto; padding: 88px 48px 80px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      border: 1px solid rgba(200,134,26,0.3); border-radius: 2px;
+      padding: 5px 12px; margin-bottom: 32px;
+    }
+    .badge-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--amber); animation: blink 2.4s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .badge-text {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--amber);
+    }
+    .hero-headline {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      line-height: 1.1;
+      color: #fff;
+      max-width: 680px;
+      margin-bottom: 24px;
+    }
+    .hero-sub {
+      font-size: 1.0rem; color: rgba(255,255,255,0.48);
+      line-height: 1.8; max-width: 520px; margin-bottom: 48px;
+    }
+    .hero-rule { width: 28px; height: 1.5px; background: var(--amber); margin-bottom: 28px; }
+
+    /* SHARED BODY TEXT */
+    .section-body {
+      font-size: 0.9rem; color: var(--ink-mid); line-height: 1.85;
+      margin-bottom: 1.4em; max-width: 620px;
+    }
+    .section-body:last-child { margin-bottom: 0; }
+    .section-body a { border-bottom: 1px solid var(--amber); padding-bottom: 1px; transition: color 0.2s; }
+    .section-body a:hover { color: var(--amber); }
+
+    /* COVERS SECTION (8-element grid) */
+    .covers-section {
+      background: var(--surface);
+      padding: 80px 0;
+      border-top: 1px solid var(--rule-strong);
+    }
+
+    /* HOW YOU GET ONE */
+    .origin-section {
+      background: var(--paper-warm);
+      padding: 80px 0;
+      border-top: 1px solid var(--rule-strong);
+    }
+
+    /* HOW IT WORKS */
+    .how-section {
+      background: var(--paper);
+      border-top: 3px solid var(--amber);
+      padding: 80px 0;
+    }
+    .section-inner { max-width: 1400px; margin: 0 auto; padding: 0 48px; }
+    .section-eyebrow {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--amber); margin-bottom: 14px; display: block;
+    }
+    .section-heading {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 1.65rem; color: var(--ink); line-height: 1.2; margin-bottom: 48px;
+      max-width: 520px;
+    }
+
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--rule-strong); border: 1px solid var(--rule-strong); border-radius: 2px; overflow: hidden; }
+    .step { background: var(--paper-warm); padding: 34px 30px; position: relative; }
+    .step-num {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 2.2rem; color: rgba(42,53,66,0.07);
+      line-height: 1; margin-bottom: 18px; display: block;
+    }
+    .step-heading {
+      font-size: 0.88rem; font-weight: 700; color: var(--ink);
+      line-height: 1.35; margin-bottom: 10px;
+    }
+    .step-body { font-size: 0.79rem; color: var(--ink-mid); line-height: 1.75; }
+
+    /* DISTINCTION */
+    .distinction-section {
+      background: var(--parchment);
+      padding: 80px 0;
+      border-top: 1px solid var(--rule-strong);
+    }
+    .distinction-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start;
+    }
+    .distinction-copy h2 {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 1.5rem; color: var(--ink); line-height: 1.2; margin-bottom: 20px;
+    }
+    .distinction-copy p {
+      font-size: 0.9rem; color: var(--ink-mid); line-height: 1.85; margin-bottom: 1.4em;
+    }
+    .distinction-copy p:last-child { margin-bottom: 0; }
+
+    .comparison { display: flex; flex-direction: column; gap: 1px; }
+    .comparison-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1px; background: var(--rule-strong);
+    }
+    .comparison-row:first-child .comp-cell { border-radius: 2px 2px 0 0; }
+    .comparison-row:last-child .comp-cell { border-radius: 0 0 2px 2px; }
+    .comp-cell { padding: 16px 20px; background: var(--paper); }
+    .comp-cell.header { background: var(--surface-mid); }
+    .comp-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-light); }
+    .comp-cell.header.bad .comp-label { color: rgba(42,53,66,0.45); }
+    .comp-cell.header.good .comp-label { color: var(--amber); }
+    .comp-text { font-size: 0.8rem; color: var(--ink-mid); line-height: 1.65; margin-top: 4px; }
+    .comp-text.good { color: var(--ink); }
+
+    /* COMING SOON BANNER */
+    .coming-banner {
+      background: var(--navy);
+      padding: 64px 0;
+    }
+    .coming-inner {
+      max-width: 1400px; margin: 0 auto; padding: 0 48px;
+      display: flex; align-items: center; justify-content: space-between; gap: 40px; flex-wrap: wrap;
+    }
+    .coming-copy h2 {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 1.5rem; color: #fff; line-height: 1.2; margin-bottom: 10px;
+    }
+    .coming-copy p { font-size: 0.88rem; color: rgba(255,255,255,0.42); line-height: 1.75; max-width: 420px; }
+    .coming-tag {
+      display: inline-flex; align-items: center; gap: 7px;
+      border: 1px solid rgba(200,134,26,0.25); border-radius: 2px;
+      padding: 12px 22px; flex-shrink: 0;
+    }
+    .coming-tag-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--amber); animation: blink 2.4s ease-in-out infinite; }
+    .coming-tag-text { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.55); }
+
+    /* ARTICLE LINK */
+    .article-link-section {
+      background: var(--paper-warm);
+      border-top: 1px solid var(--rule-strong);
+      padding: 56px 0;
+    }
+    .article-link-inner {
+      max-width: 1400px; margin: 0 auto; padding: 0 48px;
+    }
+    .article-link-card {
+      border: 1px solid var(--rule-strong); border-radius: 2px;
+      background: var(--paper); padding: 30px 34px;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 28px;
+      max-width: 640px; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .article-link-card:hover { border-color: var(--amber); box-shadow: 0 4px 18px rgba(42,53,66,0.09); }
+    .alc-eyebrow { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); margin-bottom: 8px; display: block; }
+    .alc-title { font-size: 0.95rem; font-weight: 600; color: var(--ink); line-height: 1.35; margin-bottom: 6px; }
+    .alc-desc { font-size: 0.78rem; color: var(--ink-mid); line-height: 1.65; }
+    .alc-arrow { font-size: 1.1rem; color: var(--amber); flex-shrink: 0; margin-top: 2px; }
+
+    /* FOOTER */
+    footer { background: var(--navy); padding: 30px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+    .footer-inner {
+      max-width: 1400px; margin: 0 auto; padding: 0 48px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+    .footer-wordmark { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.05rem; color: rgba(255,255,255,0.5); }
+    .footer-right { font-size: 0.72rem; color: rgba(255,255,255,0.28); }
+
+    @media (max-width: 900px) {
+      .steps { grid-template-columns: 1fr 1fr; }
+      .distinction-grid { grid-template-columns: 1fr; gap: 40px; }
+    }
+    @media (max-width: 680px) {
+      .nav-inner, .hero-inner, .section-inner, .coming-inner, .article-link-inner, .footer-inner { padding-left: 20px; padding-right: 20px; }
+      .steps { grid-template-columns: 1fr; }
+      .comparison-row { grid-template-columns: 1fr; }
+      .coming-inner { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/"><span class="wordmark">FrontFrame</span></a>
+      <a class="nav-back" href="/">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Home
+      </a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">
+        <div class="badge-dot"></div>
+        <span class="badge-text">FrontFrame Blueprint</span>
+      </div>
+      <h1 class="hero-headline serif">The first draft is ours to write.</h1>
+      <div class="hero-rule"></div>
+      <p class="hero-sub">The Blueprint is not a wireframe. It is not a sitemap. It is not a list of pages. It is a written model of how your business should work online — and every FrontFrame build starts with one.</p>
+    </div>
+  </section>
+
+  <!-- WHAT IT IS -->
+  <section class="how-section">
+    <div class="section-inner">
+      <span class="section-eyebrow">The Blueprint</span>
+      <h2 class="section-heading serif">A written model of how the business should work online.</h2>
+      <p class="section-body">The Blueprint answers the question most website projects never ask: how should this business actually function once it's online?</p>
+      <p class="section-body">The website is built from the Blueprint. The booking system is built from the Blueprint. The AI assistant is built from the Blueprint. The customer experience — how a visitor finds the business, what they see, how they make contact, and what happens next — is built from the Blueprint.</p>
+      <p class="section-body">Nothing gets built without it.</p>
+    </div>
+  </section>
+
+  <!-- WHAT IT COVERS -->
+  <section class="covers-section">
+    <div class="section-inner">
+      <span class="section-eyebrow">What it covers</span>
+      <h2 class="section-heading serif">Eight dimensions. One document.</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">01</span>
+          <p class="step-heading">Homepage structure</p>
+          <p class="step-body">What goes above the fold, how services are sequenced, and what a visitor needs to see to make contact.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">02</span>
+          <p class="step-heading">Service structure and positioning</p>
+          <p class="step-body">How the business describes what it does, to whom, and how scope and price are communicated before a call.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">03</span>
+          <p class="step-heading">Booking and intake flow</p>
+          <p class="step-body">How a prospect becomes a client — what they fill out, what triggers a response, and who handles what step.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">04</span>
+          <p class="step-heading">AI assistant role and scope</p>
+          <p class="step-body">What questions the assistant answers, what it routes to the owner, and what it never touches.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">05</span>
+          <p class="step-heading">FAQ logic</p>
+          <p class="step-body">The questions every prospect asks and the answers that should never require the owner to be available to deliver them.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">06</span>
+          <p class="step-heading">Customer filters</p>
+          <p class="step-body">How the site pre-qualifies visitors and discourages poor fits without the owner having to screen every inquiry manually.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">07</span>
+          <p class="step-heading">Local and authority positioning</p>
+          <p class="step-body">How the business signals credibility, experience, and location to the right audience before a phone call takes place.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">08</span>
+          <p class="step-heading">Owner workflow post-launch</p>
+          <p class="step-body">What the owner does after the site goes live — what the system handles, what still requires a person, and what to expect in the first 30 days.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW YOU GET ONE -->
+  <section class="origin-section">
+    <div class="section-inner">
+      <span class="section-eyebrow">How you get one</span>
+      <h2 class="section-heading serif">Discovery produces the Blueprint.</h2>
+      <p class="section-body">Blueprint does not begin with a build. It begins with <a href="discovery.html">Discovery</a> — a structured evaluation of the business before anything gets designed or coded. An initial conversation, a front-end evaluation, a prioritization session, and written findings.</p>
+      <p class="section-body">The Written Findings from Discovery become the basis for the Blueprint. Once the Blueprint is reviewed and approved, it becomes the build specification. The site, booking system, and AI assistant are all built from it.</p>
+      <p class="section-body">A live proof-of-concept Blueprint is available at <a href="https://phoenix-grant.frontframe.co" target="_blank" rel="noopener">phoenix-grant.frontframe.co</a> — developed by FrontFrame on its own initiative to demonstrate the methodology applied to a real public-sector intake problem.</p>
+    </div>
+  </section>
+
+  <!-- DISTINCTION -->
+  <section class="distinction-section">
+    <div class="section-inner">
+      <div class="distinction-grid">
+        <div class="distinction-copy">
+          <span class="section-eyebrow">Why this matters</span>
+          <h2 class="serif">You are an expert. Just not at website planning.</h2>
+          <p>Most service businesses are run by people who have spent years learning something specific. That expertise is exactly what makes their business valuable.</p>
+          <p>Website planning is a separate skill. The mistake is assuming these two kinds of knowledge can substitute for each other. They can't — and trying usually produces a site that reflects neither.</p>
+          <p>The Blueprint separates the contributions. You provide the market knowledge. We provide the structure. The result belongs to both.</p>
+        </div>
+        <div>
+          <div class="comparison">
+            <div class="comparison-row">
+              <div class="comp-cell header bad"><span class="comp-label">Typical approach</span></div>
+              <div class="comp-cell header good"><span class="comp-label">Blueprint approach</span></div>
+            </div>
+            <div class="comparison-row">
+              <div class="comp-cell"><p class="comp-text">Owner handed a list of planning questions on day one</p></div>
+              <div class="comp-cell"><p class="comp-text good">FrontFrame builds the first version before questions begin</p></div>
+            </div>
+            <div class="comparison-row">
+              <div class="comp-cell"><p class="comp-text">Owner invents structure they've never been trained to create</p></div>
+              <div class="comp-cell"><p class="comp-text good">Owner reacts to something visible — which is far easier</p></div>
+            </div>
+            <div class="comparison-row">
+              <div class="comp-cell"><p class="comp-text">Weeks pass before anyone can see what the site will be</p></div>
+              <div class="comp-cell"><p class="comp-text good">Shape of the site is established early; revisions are targeted</p></div>
+            </div>
+            <div class="comparison-row">
+              <div class="comp-cell"><p class="comp-text">Owner's expertise applied too late or not at all</p></div>
+              <div class="comp-cell"><p class="comp-text good">Owner's expertise applied exactly where it matters</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="coming-banner">
+    <div class="coming-inner">
+      <div class="coming-copy">
+        <h2 class="serif">Blueprint starts with Discovery.</h2>
+        <p>Discovery is a structured evaluation of your business before anything gets built. The written findings become your Blueprint. The Blueprint becomes your site.</p>
+      </div>
+      <a href="discovery.html" style="display: inline-block; background: var(--amber-bright); color: var(--navy); font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.88rem; padding: 14px 28px; border-radius: 4px; flex-shrink: 0; transition: opacity 0.2s; white-space: nowrap;">Start with Discovery →</a>
+    </div>
+  </section>
+
+  <!-- ARTICLE LINK -->
+  <section class="article-link-section">
+    <div class="article-link-inner">
+      <a class="article-link-card" href="/resources/you-should-not-have-to-plan-your-own-website">
+        <div>
+          <span class="alc-eyebrow">Reading · FrontFrame</span>
+          <p class="alc-title">You Should Not Have to Plan Your Own Website</p>
+          <p class="alc-desc">The full article on why this process exists — and what it means for the owner who has been through a bad website project before.</p>
+        </div>
+        <span class="alc-arrow">→</span>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-wordmark">FrontFrame</span>
+      <span class="footer-right">© 2026 FrontFrame, LLC</span>
+    </div>
+  </footer>
+
+</body>
+</html>
