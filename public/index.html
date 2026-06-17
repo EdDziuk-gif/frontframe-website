@@ -861,6 +861,32 @@
     .chat-send:hover { opacity: 0.85; }
     .chat-send svg { width: 16px; height: 16px; }
 
+    /* ── INTRO BUBBLE ── */
+    .chat-bubble {
+      position: absolute;
+      bottom: 68px;
+      right: 0;
+      background: #fff;
+      border-radius: 14px 14px 2px 14px;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: #1E2D40;
+      max-width: 240px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.13);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chat-bubble.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+
     /* ── SCROLL REVEAL ── */
     .reveal {
       opacity: 0;
@@ -1115,6 +1141,7 @@
 
   <!-- CHAT WIDGET -->
   <div class="chat-widget" id="chatWidget">
+    <div class="chat-bubble" id="chatBubble">Hi — questions welcome. If you'd rather talk, I can connect you with Ed directly.</div>
     <div class="chat-panel" id="chatPanel">
       <div class="chat-header">
         <div class="chat-avatar">Ed</div>
@@ -1350,16 +1377,17 @@
       }
     });
 
-    // Auto-open after 3 s — skipped if visitor already dismissed this session.
-    // Auto-close after 17 s of inactivity, but only if the visitor has not
-    // sent a message (autoCloseTimer is cleared on first send).
-    if (!sessionStorage.getItem('chatDismissed_home')) {
+    // Show intro bubble after 1.5 s — skipped if visitor already dismissed this session.
+    const bubble = document.getElementById('chatBubble');
+    if (bubble && !sessionStorage.getItem('chatDismissed_home')) {
       setTimeout(() => {
+        bubble.classList.add('visible');
+        setTimeout(() => bubble.classList.remove('visible'), 6000);
+      }, 1500);
+      bubble.addEventListener('click', () => {
+        bubble.classList.remove('visible');
         openChat();
-        autoCloseTimer = setTimeout(() => {
-          if (isOpen) closeChat();
-        }, 17000);
-      }, 3000);
+      });
     }
   </script>
 

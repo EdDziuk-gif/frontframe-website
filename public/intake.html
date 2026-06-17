@@ -376,6 +376,32 @@
     .chat-send:hover { opacity: 0.85; }
     .chat-send svg { width: 16px; height: 16px; }
 
+    /* ── INTRO BUBBLE ── */
+    .chat-bubble {
+      position: absolute;
+      bottom: 68px;
+      right: 0;
+      background: #fff;
+      border-radius: 14px 14px 2px 14px;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: #1E2D40;
+      max-width: 240px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.13);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chat-bubble.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 1024px) {
       .sidebar { padding: 60px 48px; }
@@ -474,6 +500,7 @@
 
   <!-- CHAT WIDGET -->
   <div class="chat-widget" id="chatWidget">
+    <div class="chat-bubble" id="chatBubble">Hi — questions welcome. If you'd rather talk, I can connect you with Ed directly.</div>
     <div class="chat-panel" id="chatPanel">
       <div class="chat-header">
         <div class="chat-avatar">Ed</div>
@@ -623,6 +650,19 @@
 
     sendBtn.addEventListener('click', () => send(input.value));
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(input.value); });
+
+    // Intro bubble
+    const bubble = document.getElementById('chatBubble');
+    if (bubble && !sessionStorage.getItem('chatDismissed')) {
+      setTimeout(() => {
+        bubble.classList.add('visible');
+        setTimeout(() => bubble.classList.remove('visible'), 6000);
+      }, 1500);
+      bubble.addEventListener('click', () => {
+        bubble.classList.remove('visible');
+        openChat();
+      });
+    }
   </script>
 
 </body>

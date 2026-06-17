@@ -352,5 +352,178 @@ cd ..<!DOCTYPE html>
     &copy; 2026 <span>FrontFrame LLC</span> &mdash; Phoenix, Arizona
   </footer>
 
+
+  <!-- CHAT WIDGET -->
+  <style>
+    .chat-widget{position:fixed;bottom:24px;right:24px;z-index:1000;font-family:'Inter',sans-serif;}
+    .chat-bubble{position:absolute;bottom:68px;right:0;background:#fff;border-radius:14px 14px 2px 14px;padding:12px 16px;font-size:0.85rem;line-height:1.55;color:#1E2D40;max-width:240px;box-shadow:0 4px 18px rgba(0,0,0,0.13);opacity:0;transform:translateY(6px);transition:opacity 0.3s ease,transform 0.3s ease;pointer-events:none;cursor:pointer;user-select:none;}
+    .chat-bubble.visible{opacity:1;transform:translateY(0);pointer-events:all;}
+    .chat-toggle{width:56px;height:56px;background:var(--amber);border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(245,166,35,0.4);transition:transform 0.2s,box-shadow 0.2s;margin-left:auto;}
+    .chat-toggle:hover{transform:scale(1.05);box-shadow:0 6px 24px rgba(245,166,35,0.5);}
+    .chat-toggle svg{width:24px;height:24px;}
+    .chat-panel{position:absolute;bottom:68px;right:0;width:360px;height:480px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.2);display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(12px) scale(0.97);pointer-events:none;transition:opacity 0.25s,transform 0.25s,height 0.35s ease;}
+    .chat-panel.open{opacity:1;transform:translateY(0) scale(1);pointer-events:all;}
+    .chat-panel.expanded{height:560px;}
+    .chat-header{background:var(--navy);padding:16px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+    .chat-avatar{width:36px;height:36px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:700;color:var(--navy);}
+    .chat-header-name{font-size:0.875rem;font-weight:600;color:#fff;}
+    .chat-header-status{font-size:0.72rem;color:rgba(255,255,255,0.6);margin-top:1px;}
+    .chat-close{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.6);padding:4px;margin-left:auto;transition:color 0.2s;}
+    .chat-close:hover{color:#fff;}
+    .chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;}
+    .msg{padding:10px 14px;border-radius:14px;font-size:0.875rem;line-height:1.55;max-width:85%;}
+    .msg.agent{background:#F5F5F5;color:#1E2D40;align-self:flex-start;border-bottom-left-radius:4px;}
+    .msg.user{background:var(--navy);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+    .msg.typing{background:#F5F5F5;align-self:flex-start;color:#999;}
+    .msg.confirmed{background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);color:var(--navy);align-self:flex-start;border-bottom-left-radius:4px;max-width:92%;}
+    .chat-input-row{display:flex;gap:8px;padding:12px 16px;background:#fff;border-top:1px solid #EAEAEA;flex-shrink:0;align-items:flex-end;}
+    .chat-input{flex:1;border:1.5px solid #E0E0E0;border-radius:8px;padding:9px 12px;font-family:'Inter',sans-serif;font-size:0.875rem;color:var(--navy);outline:none;transition:border-color 0.2s;resize:none;overflow:hidden;min-height:38px;max-height:120px;line-height:1.5;}
+    .chat-input:focus{border-color:var(--navy);}
+    .chat-send{background:var(--amber);border:none;border-radius:8px;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity 0.2s;}
+    .chat-send:hover{opacity:0.85;}
+    .chat-send svg{width:16px;height:16px;}
+    @media(max-width:480px){.chat-widget{bottom:16px;right:16px;}.chat-panel{width:calc(100vw - 32px);}}
+  </style>
+  <div class="chat-widget" id="chatWidget">
+    <div class="chat-bubble" id="chatBubble">Hi &#8212; questions welcome. If you&#8217;d rather talk, I can connect you with Ed directly.</div>
+    <div class="chat-panel" id="chatPanel">
+      <div class="chat-header">
+        <div class="chat-avatar">Ed</div>
+        <div>
+          <div class="chat-header-name">Ed · FrontFrame</div>
+          <div class="chat-header-status">Ready when you are</div>
+        </div>
+        <button class="chat-close" id="chatClose" aria-label="Close chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chatInput" placeholder="Ask Ed a question&#8230;" autocomplete="off" rows="1"></textarea>
+        <button class="chat-send" id="chatSend" aria-label="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+    <button class="chat-toggle" id="chatToggle" aria-label="Open chat with Ed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1E2D40" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </button>
+  </div>
+  <script>
+    (function() {
+      var WORKER_URL = 'https://api.frontframe.co';
+      var PAGE = 'about';
+      var SK   = 'chatDismissed_' + PAGE;
+      var panel    = document.getElementById('chatPanel');
+      var toggle   = document.getElementById('chatToggle');
+      var closeBtn = document.getElementById('chatClose');
+      var messages = document.getElementById('chatMessages');
+      var input    = document.getElementById('chatInput');
+      var sendBtn  = document.getElementById('chatSend');
+      var bubble   = document.getElementById('chatBubble');
+      var sessionId = crypto.randomUUID();
+      var isOpen = false, history = [], greeted = false, expanded = false, handoffDone = false;
+
+      input.addEventListener('input', function() {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+      });
+
+      function expandPanel() { if (!expanded) { expanded = true; panel.classList.add('expanded'); } }
+
+      function openChat() {
+        isOpen = true; panel.classList.add('open'); toggle.style.display = 'none';
+        if (!greeted) { greeted = true; greet(); }
+        setTimeout(function() { input.focus(); }, 300);
+      }
+
+      function closeChat() {
+        isOpen = false; panel.classList.remove('open'); toggle.style.display = 'flex';
+        sessionStorage.setItem(SK, 'true');
+      }
+
+      toggle.addEventListener('click', openChat);
+      closeBtn.addEventListener('click', closeChat);
+
+      function addMessage(text, role) {
+        var d = document.createElement('div');
+        d.className = 'msg ' + (role === 'user' ? 'user' : role === 'confirmed' ? 'confirmed' : 'agent');
+        d.textContent = text; messages.appendChild(d); messages.scrollTop = messages.scrollHeight;
+      }
+
+      function addTyping() {
+        var d = document.createElement('div');
+        d.className = 'msg typing'; d.id = 'np-typing'; d.textContent = 'Ed is typing…';
+        messages.appendChild(d); messages.scrollTop = messages.scrollHeight;
+      }
+
+      function removeTyping() { var el = document.getElementById('np-typing'); if (el) el.remove(); }
+
+      function parseCollected(r) {
+        var m = r.match(/\[COLLECTED:([\s\S]*?)\]/);
+        if (!m) return null;
+        try { return JSON.parse(m[1]); } catch(e) { return null; }
+      }
+
+      async function notifyEd(contactData) {
+        if (handoffDone) return; handoffDone = true;
+        var transcript = history.filter(function(m) { return m.role === 'user' || m.role === 'assistant'; })
+          .map(function(m) { return (m.role === 'user' ? 'Visitor' : 'Assistant') + ': ' + m.content; }).join('\n');
+        try {
+          await fetch(WORKER_URL + '/notify', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId, name: contactData.name || '',
+              contact: contactData.contact || '', method: contactData.method || '',
+              summary: contactData.summary || '', transcript: transcript, source: 'agent' }),
+          });
+        } catch(e) {}
+      }
+
+      async function sendMessage(text) {
+        if (!text.trim()) return;
+        expandPanel(); addMessage(text, 'user'); history.push({ role: 'user', content: text });
+        input.value = ''; input.style.height = 'auto'; sendBtn.disabled = true; addTyping();
+        try {
+          var res = await fetch(WORKER_URL + '/chat', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ page: PAGE, message: text, history: history.slice(-10), session_id: sessionId }),
+          });
+          var data = await res.json(); removeTyping();
+          var reply = data.response || 'Sorry, something went wrong.';
+          var collected = parseCollected(reply);
+          if (collected) {
+            var clean = reply.replace(/\[COLLECTED:[\s\S]*?\]/, '').trim();
+            if (clean) { addMessage(clean, 'agent'); history.push({ role: 'assistant', content: clean }); }
+            setTimeout(function() {
+              addMessage("Got it. Ed will be in touch — you’ll hear from him directly, not from a system.", 'confirmed');
+              input.disabled = true; sendBtn.disabled = true; input.placeholder = 'Ed has your details.';
+            }, 600);
+            await notifyEd(collected); return;
+          }
+          addMessage(reply, 'agent'); history.push({ role: 'assistant', content: reply });
+        } catch(e) { removeTyping(); addMessage('Having trouble connecting right now. Please try again.', 'agent'); }
+        finally { if (!handoffDone) sendBtn.disabled = false; input.focus(); }
+      }
+
+      function greet() {
+        var msg = "Hi, I’m Ed. If you have any questions while you look around I’ll be right here.";
+        addMessage(msg, 'agent'); history.push({ role: 'assistant', content: msg });
+      }
+
+      sendBtn.addEventListener('click', function() { sendMessage(input.value); });
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input.value); }
+      });
+
+      if (bubble && !sessionStorage.getItem(SK)) {
+        setTimeout(function() {
+          bubble.classList.add('visible');
+          setTimeout(function() { bubble.classList.remove('visible'); }, 6000);
+        }, 1500);
+        bubble.addEventListener('click', function() { bubble.classList.remove('visible'); openChat(); });
+      }
+    })();
+  </script>
+
 </body>
 </html>

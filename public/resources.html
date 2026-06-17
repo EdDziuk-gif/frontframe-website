@@ -890,5 +890,37 @@
     });
   </script>
 
+  <!-- CHAT BUBBLE — opens existing notepad panel -->
+  <style>
+    .ff-bubble-widget{position:fixed;bottom:24px;right:24px;z-index:1000;font-family:'DM Sans',sans-serif;}
+    .ff-bubble-msg{position:absolute;bottom:68px;right:0;background:#fff;border-radius:14px 14px 2px 14px;padding:12px 16px;font-size:0.85rem;line-height:1.55;color:#1E2D40;max-width:240px;box-shadow:0 4px 18px rgba(0,0,0,0.13);opacity:0;transform:translateY(6px);transition:opacity 0.3s ease,transform 0.3s ease;pointer-events:none;cursor:pointer;user-select:none;}
+    .ff-bubble-msg.visible{opacity:1;transform:translateY(0);pointer-events:all;}
+    .ff-bubble-btn{width:56px;height:56px;background:var(--amber);border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(245,166,35,0.4);transition:transform 0.2s,box-shadow 0.2s;margin-left:auto;}
+    .ff-bubble-btn:hover{transform:scale(1.05);box-shadow:0 6px 24px rgba(245,166,35,0.5);}
+    .ff-bubble-btn svg{width:24px;height:24px;}
+  </style>
+  <div class="ff-bubble-widget">
+    <div class="ff-bubble-msg" id="ffBubbleMsg">Hi &#8212; questions welcome. If you&#8217;d rather talk, I can connect you with Ed directly.</div>
+    <button class="ff-bubble-btn" id="ffBubbleBtn" aria-label="Open chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1E2D40" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </button>
+  </div>
+  <script>
+    (function(){
+      var msg = document.getElementById('ffBubbleMsg');
+      var btn = document.getElementById('ffBubbleBtn');
+      var SK  = 'chatDismissed_resources';
+      function openNotepadFromBubble(){ if(typeof openNotepad==='function') openNotepad(); }
+      btn.addEventListener('click', openNotepadFromBubble);
+      if(msg && !sessionStorage.getItem(SK)){
+        setTimeout(function(){
+          msg.classList.add('visible');
+          setTimeout(function(){ msg.classList.remove('visible'); }, 6000);
+        }, 1500);
+        msg.addEventListener('click', function(){ msg.classList.remove('visible'); openNotepadFromBubble(); });
+      }
+    })();
+  </script>
+
 </body>
 </html>
