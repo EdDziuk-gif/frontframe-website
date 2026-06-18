@@ -192,7 +192,10 @@
     .episode-btn.open .chevron { transform:rotate(180deg); }
     .episode-actions-divider { width:1px; height:13px; background:var(--rule); flex-shrink:0; }
     .transcript-body { display:none; margin-top:20px; padding-top:20px; border-top:1px solid var(--rule); }
-    .transcript-body.visible { display:block; }
+    .transcript-body.visible { display:block; height:62vh; min-height:380px; overflow-y:auto; padding-right:16px; scrollbar-width:thin; scrollbar-color:var(--amber) transparent; }
+    .transcript-body.visible::-webkit-scrollbar { width:4px; }
+    .transcript-body.visible::-webkit-scrollbar-track { background:transparent; }
+    .transcript-body.visible::-webkit-scrollbar-thumb { background:var(--amber); border-radius:2px; }
     .transcript-text { font-size:0.85rem; color:var(--ink); line-height:1.95; white-space:pre-line; max-width:620px; margin-bottom:12px; }
     .transcript-copyright { font-size:0.68rem; color:var(--ink-light); font-style:italic; }
     .episodes-loading { font-size:0.8rem; color:var(--ink-light); padding:8px 0; }
