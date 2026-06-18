@@ -359,6 +359,51 @@
     transition: background .15s;
   }
   .sub-link-btn:hover { background: var(--offwhite); }
+
+  /* Outreach */
+  .outreach-stage-track { display: flex; align-items: flex-start; gap: 0; overflow-x: auto; padding: 8px 0 4px; }
+  .outreach-stage-node { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; min-width: 60px; }
+  .outreach-stage-dot {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid var(--border); background: var(--offwhite);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: var(--gray); position: relative; z-index: 1; flex-shrink: 0;
+  }
+  .outreach-stage-dot.done    { background: var(--green); border-color: var(--green); color: white; }
+  .outreach-stage-dot.current { background: var(--navy); border-color: var(--navy); color: white; font-weight: 700; }
+  .outreach-stage-lbl { font-size: 9px; color: var(--gray); text-align: center; line-height: 1.2; max-width: 60px; }
+  .outreach-stage-lbl.current { color: var(--navy); font-weight: 600; }
+  .outreach-stage-line { flex: 1; height: 2px; background: var(--border); margin: 0 -2px; position: relative; top: -19px; z-index: 0; }
+  .outreach-stage-line.done { background: var(--green); }
+  .outreach-section-lbl { font-size: 0.72rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .5px; margin: 16px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  .outreach-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .outreach-field { display: flex; flex-direction: column; gap: 4px; }
+  .outreach-field label { font-size: 0.72rem; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: .4px; }
+  .of-value { font-size: 0.875rem; padding: 8px 10px; background: var(--offwhite); border-radius: 6px; color: var(--navy); min-height: 34px; word-break: break-all; }
+  .of-value.empty { color: var(--gray); font-style: italic; }
+  .outreach-touch-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .outreach-touch-table th { text-align: left; padding: 7px 10px; font-size: 0.72rem; font-weight: 600; color: var(--gray); text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--offwhite); }
+  .outreach-touch-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .outreach-touch-table tr:last-child td { border-bottom: none; }
+  .badge-stage-identified   { background: #F2F3F4; color: var(--gray); }
+  .badge-stage-researched   { background: #EBF5FB; color: #2980B9; }
+  .badge-stage-approached   { background: #EBF5FB; color: #2980B9; }
+  .badge-stage-in_follow_up { background: #FEF9E7; color: var(--yellow); }
+  .badge-stage-demo         { background: #FEF9E7; color: var(--yellow); }
+  .badge-stage-contract_sent { background: #E8F8EE; color: var(--green); }
+  .badge-stage-closed_won   { background: #E8F8EE; color: var(--green); }
+  .badge-stage-closed_lost  { background: #F2F3F4; color: var(--gray); }
+  .badge-contract-not_sent  { background: #F2F3F4; color: var(--gray); }
+  .badge-contract-sent      { background: #EBF5FB; color: #2980B9; }
+  .badge-contract-signed    { background: #E8F8EE; color: var(--green); }
+  .badge-contract-expired   { background: #FDECEA; color: var(--red); }
+  .badge-touch-call  { background: #FEF9E7; color: var(--yellow); }
+  .badge-touch-email { background: #EBF5FB; color: #2980B9; }
+  .badge-touch-sms   { background: #E8F8EE; color: var(--green); }
+  .badge-touch-visit { background: #F2F3F4; color: var(--gray); }
+  .outreach-contract-notice { background: #FDECEA; border: 1px solid #FADBD8; border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; color: var(--red); display: flex; gap: 8px; align-items: flex-start; }
+  .outreach-detail-panel { display: none; }
+  .outreach-detail-panel.open { display: block; }
 </style>
 </head>
 <body>
@@ -400,6 +445,7 @@
     <div class="sidebar-logo">Front<span>Frame</span> <span style="font-size:.7rem;opacity:.5;font-weight:400">Admin</span></div>
     <div class="sidebar-nav">
       <button class="nav-item" data-tab="pipeline"      onclick="switchTab('pipeline')">&#x1F4CB; Pipeline <span class="nav-badge hidden" id="badge-pipeline">0</span></button>
+      <button class="nav-item" data-tab="outreach"      onclick="switchTab('outreach')">&#x1F4E4; Outreach</button>
       <button class="nav-item" data-tab="qa"            onclick="switchTab('qa')">&#x1F4AC; Q&amp;A</button>
       <button class="nav-item" data-tab="system-prompt" onclick="switchTab('system-prompt')">&#x1F9E0; System Prompt</button>
       <button class="nav-item" data-tab="defects"       onclick="switchTab('defects')">&#x1F41B; Defects <span class="nav-badge hidden" id="badge-defects">0</span></button>
@@ -443,6 +489,124 @@
             <thead><tr><th>Prospect</th><th>Signal</th><th>Page</th><th>Status</th><th>SMS</th><th>Date</th><th>Actions</th></tr></thead>
             <tbody id="alerts-tbody"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Outreach -->
+    <div class="tab-panel" id="tab-outreach">
+      <div class="page-header">
+        <div class="page-title">Outreach</div>
+        <div class="page-sub">Cold prospect pipeline — from identification to conversion</div>
+      </div>
+
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card"><div class="stat-label">Active prospects</div><div class="stat-value" id="os-active">—</div></div>
+        <div class="stat-card"><div class="stat-label">Approached</div><div class="stat-value" id="os-approached">—</div></div>
+        <div class="stat-card"><div class="stat-label">Contract sent</div><div class="stat-value" id="os-contract">—</div></div>
+        <div class="stat-card"><div class="stat-label">Closed (all time)</div><div class="stat-value" id="os-closed">—</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Prospects</div>
+          <div class="filter-bar">
+            <input type="text" id="or-search" placeholder="Search name or business&#x2026;" oninput="renderOutreach()">
+            <select id="or-show-closed" onchange="renderOutreach()">
+              <option value="">Active only</option>
+              <option value="all">All (incl. closed)</option>
+            </select>
+            <select id="or-stage-filter" onchange="renderOutreach()">
+              <option value="">All stages</option>
+              <option value="identified">Identified</option>
+              <option value="researched">Researched</option>
+              <option value="approached">Approached</option>
+              <option value="in_follow_up">In follow-up</option>
+              <option value="demo">Demo</option>
+              <option value="contract_sent">Contract sent</option>
+              <option value="closed_won">Closed won</option>
+              <option value="closed_lost">Closed lost</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openNewProspectPanel()">+ New prospect</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name / Business</th><th>Stage</th><th>Prototype</th><th>Contract</th><th>Last touch</th><th></th></tr></thead>
+            <tbody id="outreach-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- New prospect inline panel -->
+      <div class="card outreach-detail-panel" id="outreach-new-panel">
+        <div class="card-header">
+          <div class="card-title">New Prospect</div>
+          <button class="btn btn-ghost btn-sm" onclick="closeNewProspectPanel()">Cancel</button>
+        </div>
+        <div class="card-body">
+          <div class="outreach-field-grid">
+            <div class="outreach-field"><label>Owner name *</label><input type="text" id="np-name" placeholder="Full name"></div>
+            <div class="outreach-field"><label>Business name *</label><input type="text" id="np-business" placeholder="Business"></div>
+            <div class="outreach-field"><label>Email *</label><input type="email" id="np-email" placeholder="email@domain.com"></div>
+            <div class="outreach-field"><label>Phone</label><input type="text" id="np-phone" placeholder="Optional"></div>
+            <div class="outreach-field" style="grid-column:1/-1"><label>Prototype subdomain</label><input type="text" id="np-subdomain" placeholder="slug.frontframe.co"></div>
+            <div class="outreach-field" style="grid-column:1/-1"><label>Research notes</label><textarea id="np-notes" rows="4" placeholder="Pre-approach research&#x2026;"></textarea></div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn btn-ghost" onclick="closeNewProspectPanel()">Cancel</button>
+            <button class="btn btn-primary" onclick="createProspect()">Create prospect</button>
+          </div>
+          <div class="error-msg" id="np-error"></div>
+        </div>
+      </div>
+
+      <!-- Prospect detail panel -->
+      <div class="card outreach-detail-panel" id="outreach-detail-panel" style="border:1.5px solid var(--navy)">
+        <div class="card-header" style="background:var(--offwhite)">
+          <div>
+            <div class="card-title" id="od-title">—</div>
+            <div class="text-gray text-small" id="od-meta">—</div>
+          </div>
+          <div class="flex-row">
+            <select id="od-stage-select" style="font-size:0.8rem;padding:5px 8px;border-radius:6px;border:1.5px solid var(--border)">
+              <option value="identified">Identified</option>
+              <option value="researched">Researched</option>
+              <option value="approached">Approached</option>
+              <option value="in_follow_up">In follow-up</option>
+              <option value="demo">Demo</option>
+              <option value="contract_sent">Contract sent</option>
+              <option value="closed_won">Closed won</option>
+              <option value="closed_lost">Closed lost</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="saveProspectStage()">Save stage</button>
+            <button class="btn btn-ghost btn-sm" onclick="closeProspectDetail()">&#x00D7;</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="outreach-section-lbl">Identity</div>
+          <div class="outreach-field-grid" id="od-identity"></div>
+
+          <div class="outreach-section-lbl">Stage</div>
+          <div class="outreach-stage-track" id="od-stage-track"></div>
+
+          <div class="outreach-section-lbl">Research notes</div>
+          <textarea id="od-notes" rows="4" style="width:100%;margin-bottom:8px"></textarea>
+          <div style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="saveResearchNotes()">Save notes</button></div>
+
+          <div class="outreach-section-lbl">Contract</div>
+          <div id="od-contract"></div>
+
+          <div class="outreach-section-lbl" style="margin-top:20px">Touch log</div>
+          <div class="table-wrap">
+            <table class="outreach-touch-table">
+              <thead><tr><th>Date</th><th>Method</th><th>Outcome / notes</th><th>Next action</th></tr></thead>
+              <tbody id="od-touch-tbody"></tbody>
+            </table>
+          </div>
+          <div style="margin-top:10px;text-align:right">
+            <button class="btn btn-primary btn-sm" onclick="openTouchModal()">+ Log touch</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1475,6 +1639,32 @@
   </div>
 </div>
 
+<!-- Outreach: Log Touch -->
+<div class="modal-backdrop" id="outreach-touch-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Log Touch</div>
+      <button class="modal-close" onclick="closeModal('outreach-touch-modal')">&#x00D7;</button>
+    </div>
+    <div class="form-group"><label>Date</label><input type="date" id="ot-date"></div>
+    <div class="form-group">
+      <label>Method</label>
+      <select id="ot-method">
+        <option value="call">Call</option>
+        <option value="email">Email</option>
+        <option value="sms">SMS</option>
+        <option value="visit">Visit</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Outcome / notes</label><textarea id="ot-outcome" rows="3" placeholder="What happened?"></textarea></div>
+    <div class="form-group"><label>Next action</label><input type="text" id="ot-next" placeholder="What's the next step?"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('outreach-touch-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="logTouch()">Save touch</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1496,6 +1686,10 @@ let schedule      = [];
 let overrides     = [];
 let ovFormOpen    = false;
 let currentTab    = '';
+
+let outreachProspects = [];
+let outreachTouches   = [];
+let outreachActiveId  = null;
 
 // Vault
 const VAULT_FIELDS = {
@@ -1676,6 +1870,7 @@ function switchTab(tab) {
     case 'solutions':     loadSolutions().catch(e => toast('Solutions: ' + e.message, 'error')); break;
     case 'subscriptions': loadSubscriptions().catch(e => toast('Subscriptions: ' + e.message, 'error')); break;
     case 'office-hours':  loadOfficeHours().catch(e => toast('Office Hours: ' + e.message, 'error')); break;
+    case 'outreach':      loadOutreachTab().catch(e => toast('Outreach: ' + e.message, 'error')); break;
     case 'config':        loadConfig().catch(e => toast('Config: ' + e.message, 'error')); break;
   }
 }
@@ -2815,6 +3010,370 @@ function fmtDateShort(iso) {
 }
 function esc(str) {
   return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Outreach ──────────────────────────────────────────────────────────────────
+
+const OUTREACH_STAGES = [
+  { key: 'identified',    label: 'Identified' },
+  { key: 'researched',    label: 'Researched' },
+  { key: 'approached',    label: 'Approached' },
+  { key: 'in_follow_up',  label: 'Follow-up' },
+  { key: 'demo',          label: 'Demo' },
+  { key: 'contract_sent', label: 'Contract' },
+  { key: 'closed_won',    label: 'Closed Won' },
+  { key: 'closed_lost',   label: 'Closed Lost' },
+];
+
+async function loadOutreachTab() {
+  try {
+    outreachProspects = await api('GET', '/admin/outreach');
+  } catch (e) {
+    toast('Failed to load outreach: ' + e.message, 'error');
+    outreachProspects = [];
+  }
+  renderOutreach();
+  if (outreachActiveId) {
+    const p = outreachProspects.find(x => x.id === outreachActiveId);
+    if (p) renderProspectDetail(p);
+  }
+}
+
+function renderOutreach() {
+  renderOutreachStats();
+  const search     = (document.getElementById('or-search')?.value ?? '').toLowerCase();
+  const showClosed = document.getElementById('or-show-closed')?.value === 'all';
+  const stageFilt  = document.getElementById('or-stage-filter')?.value ?? '';
+  const CLOSED     = ['closed_won', 'closed_lost'];
+
+  const filtered = outreachProspects.filter(p => {
+    if (!showClosed && CLOSED.includes(p.status)) return false;
+    if (stageFilt && p.status !== stageFilt) return false;
+    if (search) {
+      const hay = ((p.owner_name ?? '') + ' ' + (p.business_name ?? '')).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('outreach-tbody');
+  if (!tbody) return;
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">&#x1F4C2;</div>No prospects found</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(p => {
+    const isActive = outreachActiveId === p.id;
+    const lt = (outreachActiveId === p.id && outreachTouches.length)
+      ? lastTouchSummary(outreachTouches)
+      : (p._last_touch ?? '—');
+    return `<tr style="${isActive ? 'background:#EBF5FB' : ''}">
+      <td><strong>${esc(p.owner_name)}</strong><br><span class="text-small text-gray">${esc(p.business_name)}</span></td>
+      <td>${outreachStageBadge(p.status)}</td>
+      <td class="text-small">${p.prototype_subdomain ? `<a href="https://${esc(p.prototype_subdomain)}" target="_blank" style="color:var(--navy)">${esc(p.prototype_subdomain)}</a>` : '<span class="text-gray">—</span>'}</td>
+      <td>${outreachContractBadge(p.contract_status)}</td>
+      <td class="text-small text-gray">${esc(lt)}</td>
+      <td><button class="btn btn-ghost btn-xs" onclick="openProspect(${p.id})">${isActive ? 'Viewing' : 'Open'}</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderOutreachStats() {
+  const CLOSED     = ['closed_won', 'closed_lost'];
+  const active     = outreachProspects.filter(p => !CLOSED.includes(p.status)).length;
+  const approached = outreachProspects.filter(p => ['approached','in_follow_up','demo','contract_sent'].includes(p.status)).length;
+  const contracts  = outreachProspects.filter(p => ['sent','signed'].includes(p.contract_status)).length;
+  const closed     = outreachProspects.filter(p => CLOSED.includes(p.status)).length;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('os-active',    active);
+  set('os-approached', approached);
+  set('os-contract',  contracts);
+  set('os-closed',    closed);
+}
+
+function outreachStageBadge(status) {
+  const label = OUTREACH_STAGES.find(s => s.key === status)?.label ?? (status ?? '—');
+  return `<span class="badge badge-stage-${esc(status ?? 'identified')}">${esc(label)}</span>`;
+}
+function outreachContractBadge(cs) {
+  const labels = { not_sent: 'Not sent', sent: 'Sent', signed: 'Signed', expired: 'Expired' };
+  const s = cs ?? 'not_sent';
+  return `<span class="badge badge-contract-${esc(s)}">${esc(labels[s] ?? s)}</span>`;
+}
+function lastTouchSummary(touches) {
+  if (!touches?.length) return '—';
+  const t = touches[0];
+  return `${fmtDateShort(t.touch_date ?? t.created_at)} · ${t.method ?? ''}`;
+}
+
+async function openProspect(id) {
+  outreachActiveId = id;
+  const p = outreachProspects.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('outreach-new-panel').classList.remove('open');
+  document.getElementById('outreach-detail-panel').classList.add('open');
+  renderProspectDetail(p);
+  try {
+    outreachTouches = await api('GET', `/admin/outreach/${id}/touches`);
+  } catch { outreachTouches = []; }
+  renderTouchLog(outreachTouches);
+  renderOutreach();
+  document.getElementById('outreach-detail-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeProspectDetail() {
+  outreachActiveId = null;
+  outreachTouches  = [];
+  document.getElementById('outreach-detail-panel').classList.remove('open');
+  renderOutreach();
+}
+
+function renderProspectDetail(p) {
+  document.getElementById('od-title').textContent = `${p.owner_name} — ${p.business_name}`;
+  document.getElementById('od-meta').textContent  = `Created ${fmtDate(p.created_at)} · cold_outreach`;
+  document.getElementById('od-stage-select').value = p.status ?? 'identified';
+  document.getElementById('od-notes').value = p.research_notes ?? '';
+
+  const subdomain = p.prototype_subdomain
+    ? `<a href="https://${esc(p.prototype_subdomain)}" target="_blank" style="color:var(--navy)">${esc(p.prototype_subdomain)} ↗</a>`
+    : '<span class="empty">—</span>';
+
+  document.getElementById('od-identity').innerHTML = `
+    <div class="outreach-field"><label>Name</label><div class="of-value">${esc(p.owner_name)}</div></div>
+    <div class="outreach-field"><label>Business</label><div class="of-value">${esc(p.business_name)}</div></div>
+    <div class="outreach-field"><label>Email</label><div class="of-value">${p.email ? `<a href="mailto:${esc(p.email)}" style="color:var(--navy)">${esc(p.email)}</a>` : '<span class="empty">—</span>'}</div></div>
+    <div class="outreach-field"><label>Phone</label><div class="of-value ${p.phone ? '' : 'empty'}">${esc(p.phone ?? '—')}</div></div>
+    <div class="outreach-field" style="grid-column:1/-1"><label>Prototype subdomain</label><div class="of-value">${subdomain}</div></div>
+  `;
+
+  document.getElementById('od-stage-track').innerHTML = renderOutreachStageTrack(p.status);
+  document.getElementById('od-contract').innerHTML    = renderOutreachContractSection(p);
+}
+
+function renderOutreachStageTrack(currentStatus) {
+  const DISPLAY = OUTREACH_STAGES.filter(s => !['closed_won','closed_lost'].includes(s.key));
+  const currentIdx   = DISPLAY.findIndex(s => s.key === currentStatus);
+  const isClosed     = ['closed_won','closed_lost'].includes(currentStatus);
+  const effectiveIdx = isClosed ? DISPLAY.length : currentIdx;
+
+  let html = '';
+  DISPLAY.forEach((stage, i) => {
+    const isDone    = i < effectiveIdx;
+    const isCurrent = i === effectiveIdx;
+    const dotCls    = isDone ? 'done' : isCurrent ? 'current' : '';
+    const dotContent = isDone ? '&#x2713;' : (i + 1);
+    html += `<div class="outreach-stage-node">
+      <div class="outreach-stage-dot ${dotCls}">${dotContent}</div>
+      <div class="outreach-stage-lbl ${isCurrent ? 'current' : ''}">${esc(stage.label)}</div>
+    </div>`;
+    if (i < DISPLAY.length - 1) {
+      html += `<div class="outreach-stage-line ${isDone ? 'done' : ''}"></div>`;
+    }
+  });
+
+  if (isClosed) {
+    const isWon  = currentStatus === 'closed_won';
+    const lbl    = isWon ? 'Closed Won' : 'Closed Lost';
+    const dotCls = isWon ? 'done' : 'current';
+    const icon   = isWon ? '&#x2713;' : '&#x00D7;';
+    html += `<div class="outreach-stage-line done"></div>
+      <div class="outreach-stage-node">
+        <div class="outreach-stage-dot ${dotCls}">${icon}</div>
+        <div class="outreach-stage-lbl current">${lbl}</div>
+      </div>`;
+  }
+  return html;
+}
+
+function renderOutreachContractSection(p) {
+  const cs       = p.contract_status ?? 'not_sent';
+  const hasEmail = !!p.email;
+
+  if (cs === 'not_sent') {
+    return `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:14px;background:var(--offwhite);border-radius:8px;border:1px solid var(--border)">
+      <div>
+        <div style="margin-bottom:6px">${outreachContractBadge('not_sent')}</div>
+        <div class="text-gray text-small">Send when ready to convert. DocuSeal → Stripe chain fires automatically on signature.</div>
+      </div>
+      <button class="btn btn-amber btn-sm" onclick="sendOutreachContract(${p.id})" ${hasEmail ? '' : 'disabled title="Email required"'}>Send contract</button>
+    </div>`;
+  }
+  if (cs === 'sent') {
+    return `<div style="padding:14px;background:var(--offwhite);border-radius:8px;border:1px solid var(--border)">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        ${outreachContractBadge('sent')}
+        <span class="text-small text-gray">Sent ${fmtDate(p.contract_sent_at)}</span>
+        ${p.contract_expires_at ? `<span class="text-small text-gray">Expires ${fmtDate(p.contract_expires_at)}</span>` : ''}
+      </div>
+      <div class="text-small text-gray">Awaiting signature. Expiry is a hard close — no chase needed.</div>
+    </div>`;
+  }
+  if (cs === 'signed') {
+    return `<div style="padding:14px;background:#F0FBF4;border-radius:8px;border:1px solid #C3E6CC">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        ${outreachContractBadge('signed')}
+        <span class="text-small text-gray">Signed</span>
+      </div>
+      <div class="text-small text-gray">Stripe payment request sent automatically.</div>
+    </div>`;
+  }
+  if (cs === 'expired') {
+    return `<div style="padding:14px;background:var(--offwhite);border-radius:8px;border:1px solid var(--border)">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        ${outreachContractBadge('expired')}
+        ${p.contract_expires_at ? `<span class="text-small text-gray">Expired ${fmtDate(p.contract_expires_at)}</span>` : ''}
+      </div>
+      <div class="outreach-contract-notice" style="margin-bottom:12px">&#x26A0;&#xFE0F;&nbsp; Contract expired — hard close. No further chase. Reopen only if circumstances genuinely change.</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-danger btn-sm" onclick="markOutreachClosedLost(${p.id})">Mark closed lost</button>
+        <button class="btn btn-ghost btn-sm" onclick="reopenOutreachProspect(${p.id})">Reopen</button>
+      </div>
+    </div>`;
+  }
+  return '';
+}
+
+function renderTouchLog(touches) {
+  const tbody = document.getElementById('od-touch-tbody');
+  if (!tbody) return;
+  if (!touches?.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--gray);padding:16px">No touches logged yet.</td></tr>`;
+    return;
+  }
+  const METHOD_LABELS = { call: 'Call', email: 'Email', sms: 'SMS', visit: 'Visit' };
+  tbody.innerHTML = touches.map(t => `
+    <tr>
+      <td style="white-space:nowrap">${fmtDate(t.touch_date ?? t.created_at)}</td>
+      <td><span class="badge badge-touch-${esc(t.method ?? 'call')}">${esc(METHOD_LABELS[t.method] ?? t.method)}</span></td>
+      <td>${esc(t.outcome ?? '—')}</td>
+      <td class="text-gray">${esc(t.next_action ?? '—')}</td>
+    </tr>
+  `).join('');
+}
+
+function openNewProspectPanel() {
+  closeProspectDetail();
+  ['np-name','np-business','np-email','np-phone','np-subdomain','np-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('np-error').textContent = '';
+  document.getElementById('outreach-new-panel').classList.add('open');
+  document.getElementById('np-name').focus();
+  document.getElementById('outreach-new-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeNewProspectPanel() {
+  document.getElementById('outreach-new-panel').classList.remove('open');
+}
+
+async function createProspect() {
+  const name     = document.getElementById('np-name').value.trim();
+  const business = document.getElementById('np-business').value.trim();
+  const email    = document.getElementById('np-email').value.trim();
+  const errEl    = document.getElementById('np-error');
+  errEl.textContent = '';
+  if (!name || !business || !email) { errEl.textContent = 'Name, business, and email are required.'; return; }
+  const body = {
+    owner_name:          name,
+    business_name:       business,
+    email,
+    phone:               document.getElementById('np-phone').value.trim() || null,
+    prototype_subdomain: document.getElementById('np-subdomain').value.trim() || null,
+    research_notes:      document.getElementById('np-notes').value.trim() || null,
+    source:              'cold_outreach',
+    status:              'identified',
+    source_page:         'outreach',
+  };
+  try {
+    const created = await api('POST', '/admin/outreach', body);
+    const newP = Array.isArray(created) ? created[0] : created;
+    if (newP) outreachProspects.unshift(newP);
+    closeNewProspectPanel();
+    renderOutreach();
+    toast('Prospect created.');
+    if (newP) openProspect(newP.id);
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+async function saveProspectStage() {
+  if (!outreachActiveId) return;
+  const status = document.getElementById('od-stage-select').value;
+  try {
+    await api('PATCH', `/admin/outreach/${outreachActiveId}`, { status });
+    const p = outreachProspects.find(x => x.id === outreachActiveId);
+    if (p) { p.status = status; renderOutreach(); renderProspectDetail(p); }
+    toast('Stage saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function saveResearchNotes() {
+  if (!outreachActiveId) return;
+  const notes = document.getElementById('od-notes').value.trim();
+  try {
+    await api('PATCH', `/admin/outreach/${outreachActiveId}`, { research_notes: notes });
+    const p = outreachProspects.find(x => x.id === outreachActiveId);
+    if (p) p.research_notes = notes;
+    toast('Notes saved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function sendOutreachContract(id) {
+  try {
+    await api('POST', `/admin/outreach/${id}/send-contract`);
+    await loadOutreachTab();
+    toast('Contract sent.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function markOutreachClosedLost(id) {
+  try {
+    await api('PATCH', `/admin/outreach/${id}`, { status: 'closed_lost' });
+    const p = outreachProspects.find(x => x.id === id);
+    if (p) { p.status = 'closed_lost'; renderOutreach(); renderProspectDetail(p); }
+    toast('Marked closed lost.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function reopenOutreachProspect(id) {
+  try {
+    await api('PATCH', `/admin/outreach/${id}`, { contract_status: 'not_sent', contract_sent_at: null, contract_expires_at: null });
+    const p = outreachProspects.find(x => x.id === id);
+    if (p) { p.contract_status = 'not_sent'; p.contract_sent_at = null; p.contract_expires_at = null; renderOutreach(); renderProspectDetail(p); }
+    toast('Prospect reopened.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function openTouchModal() {
+  if (!outreachActiveId) return;
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('ot-date').value    = today;
+  document.getElementById('ot-method').value  = 'call';
+  document.getElementById('ot-outcome').value = '';
+  document.getElementById('ot-next').value    = '';
+  document.getElementById('outreach-touch-modal').classList.add('open');
+}
+
+async function logTouch() {
+  if (!outreachActiveId) return;
+  const date    = document.getElementById('ot-date').value;
+  const outcome = document.getElementById('ot-outcome').value.trim();
+  if (!date || !outcome) { toast('Date and outcome are required.', 'error'); return; }
+  const body = {
+    touch_date:  date,
+    method:      document.getElementById('ot-method').value,
+    outcome,
+    next_action: document.getElementById('ot-next').value.trim() || null,
+  };
+  try {
+    const result = await api('POST', `/admin/outreach/${outreachActiveId}/touches`, body);
+    const t = Array.isArray(result) ? result[0] : result;
+    if (t) outreachTouches.unshift(t);
+    renderTouchLog(outreachTouches);
+    closeModal('outreach-touch-modal');
+    toast('Touch logged.');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 // Init
