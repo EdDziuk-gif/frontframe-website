@@ -619,6 +619,8 @@
               <option value="docuseal">DocuSeal</option>
               <option value="stripe">Stripe</option>
               <option value="anthropic">Anthropic</option>
+              <option value="cal">Cal.com</option>
+              <option value="resend">Resend</option>
               <option value="google">Google</option>
             </optgroup>
             <optgroup label="Payment Methods">
@@ -864,6 +866,17 @@
               <div class="sub-field"><label>Template ID</label>
                 <input type="text" id="docuseal_template_id" placeholder="3600228" oninput="vaultMarkDirty('docuseal')"></div>
             </div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Webhook Secret</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="docuseal_webhook_secret" placeholder="whsec_…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('docuseal')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('docuseal_webhook_secret', this)">SHOW</button>
+                </div>
+              </div>
+              <div class="sub-field"><label>Signature URL</label>
+                <input type="text" id="docuseal_signature_url" placeholder="https://frontframe.co/assets/frontframe-signature.png" oninput="vaultMarkDirty('docuseal')">
+              </div>
+            </div>
             <div class="sub-field"><label>API Certificate</label>
               <textarea id="docuseal_certificate" rows="5" placeholder="-----BEGIN CERTIFICATE-----…" autocomplete="off" oninput="vaultMarkDirty('docuseal')"></textarea>
             </div>
@@ -909,8 +922,17 @@
                 </div>
               </div>
             </div>
-            <div class="sub-field"><label>Account ID</label>
-              <input type="text" id="stripe_account_id" placeholder="acct_…" oninput="vaultMarkDirty('stripe')"></div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Webhook Secret</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="stripe_webhook_secret" placeholder="whsec_…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('stripe')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('stripe_webhook_secret', this)">SHOW</button>
+                </div>
+              </div>
+              <div class="sub-field"><label>Account ID</label>
+                <input type="text" id="stripe_account_id" placeholder="acct_…" oninput="vaultMarkDirty('stripe')">
+              </div>
+            </div>
             <div class="sub-field"><label>Notes</label>
               <textarea id="stripe_notes" rows="4" oninput="vaultMarkDirty('stripe')"></textarea>
             </div>
@@ -954,6 +976,90 @@
           <button class="sub-save-btn" onclick="vaultSave('anthropic')">Save Anthropic</button>
         </div>
       </div><!-- /anthropic -->
+
+      <!-- ══ CAL.COM ══ -->
+      <div class="sub-panel" id="subPanel-cal">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">🔐 Account Credentials</div>
+            <a href="https://cal.com/team/frontframe-team" target="_blank" class="sub-link-btn">Team Page ↗</a>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Login Email</label>
+                <input type="email" id="cal_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('cal')"></div>
+              <div class="sub-field"><label>Password</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="cal_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('cal')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('cal_password', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>API Key</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="cal_api_key" placeholder="cal_live_…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('cal')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('cal_api_key', this)">SHOW</button>
+                </div>
+              </div>
+              <div class="sub-field"><label>Team URL</label>
+                <input type="text" id="cal_team_url" placeholder="cal.com/team/frontframe-team" oninput="vaultMarkDirty('cal')">
+              </div>
+            </div>
+            <div class="sub-field"><label>Webhook Secret</label>
+              <div class="sub-card-wrap">
+                <input type="password" id="cal_webhook_secret" placeholder="Generated in Cal.com → Settings → Developer → Webhooks" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('cal')">
+                <button class="sub-card-toggle" onclick="vaultTogglePassword('cal_webhook_secret', this)">SHOW</button>
+              </div>
+            </div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="cal_notes" rows="5" placeholder="Webhook setup: Cal.com → Settings → Developer → Webhooks → Add Webhook&#10;Endpoint URL: https://api.frontframe.co/webhooks/cal&#10;Events to subscribe: BOOKING_CREATED, BOOKING_CANCELLED, BOOKING_RESCHEDULED&#10;Copy the generated secret into Webhook Secret above, then run: wrangler secret put CAL_WEBHOOK_SECRET" oninput="vaultMarkDirty('cal')"></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('cal')">Save Cal.com</button>
+        </div>
+      </div><!-- /cal -->
+
+      <!-- ══ RESEND ══ -->
+      <div class="sub-panel" id="subPanel-resend">
+        <div class="sub-section">
+          <div class="sub-section-header">
+            <div class="sub-section-title">🔐 Account Credentials</div>
+            <a href="https://resend.com/login" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+          </div>
+          <div class="sub-section-body">
+            <div class="sub-field-row">
+              <div class="sub-field"><label>Login Email</label>
+                <input type="email" id="resend_email" placeholder="ed@frontframe.co" oninput="vaultMarkDirty('resend')"></div>
+              <div class="sub-field"><label>Password</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="resend_password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('resend')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('resend_password', this)">SHOW</button>
+                </div>
+              </div>
+            </div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>API Key</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="resend_api_key" placeholder="re_…" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('resend')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('resend_api_key', this)">SHOW</button>
+                </div>
+              </div>
+              <div class="sub-field"><label>From Address</label>
+                <input type="text" id="resend_from_address" placeholder="no-reply@frontframe.co" oninput="vaultMarkDirty('resend')">
+              </div>
+            </div>
+            <div class="sub-field"><label>Notes</label>
+              <textarea id="resend_notes" rows="4" oninput="vaultMarkDirty('resend')"></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:0.25rem;">
+          <button class="sub-save-btn" onclick="vaultSave('resend')">Save Resend</button>
+        </div>
+      </div><!-- /resend -->
 
       <!-- ══ GOOGLE ══ -->
       <div class="sub-panel" id="subPanel-google">
@@ -1397,9 +1503,11 @@ const VAULT_FIELDS = {
   supabase:   ['email','password','project_id','project_url','publishable_key','secret_key','vault_key','notes'],
   cloudflare: ['email','password','account_id','zone_id','notes'],
   buttondown: ['email','password','api_key','notes'],
-  docuseal:   ['email','password','api_key','template_id','certificate','notes'],
-  stripe:     ['email','password','pub_key','secret_key','account_id','notes'],
+  docuseal:   ['email','password','api_key','template_id','webhook_secret','signature_url','certificate','notes'],
+  stripe:     ['email','password','pub_key','secret_key','webhook_secret','account_id','notes'],
   anthropic:  ['email','password','api_key','notes'],
+  cal:        ['email','password','api_key','team_url','webhook_secret','notes'],
+  resend:     ['email','password','api_key','from_address','notes'],
   google:     ['email','password','maps_key','gbp_url','notes'],
   card_1:     ['name','number','expiry','zip','use','notes'],
   card_2:     ['name','number','expiry','zip','use','notes'],
@@ -1407,7 +1515,7 @@ const VAULT_FIELDS = {
 const VAULT_CATEGORIES = {
   surge: 'subscription', supabase: 'platform', cloudflare: 'platform',
   buttondown: 'platform', docuseal: 'platform', stripe: 'platform',
-  anthropic: 'platform', google: 'platform',
+  anthropic: 'platform', cal: 'platform', resend: 'platform', google: 'platform',
   card_1: 'payment', card_2: 'payment',
 };
 const vaultDirty = new Set();
