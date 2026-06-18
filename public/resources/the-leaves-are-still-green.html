@@ -98,7 +98,15 @@
     .article-body {
       background: var(--paper);
       border-top: 3px solid var(--amber);
+      height: 62vh;
+      min-height: 380px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--amber) transparent;
     }
+    .article-body::-webkit-scrollbar { width: 4px; }
+    .article-body::-webkit-scrollbar-track { background: transparent; }
+    .article-body::-webkit-scrollbar-thumb { background: var(--amber); border-radius: 2px; }
     .body-inner {
       max-width: 720px; margin: 0 auto; padding: 64px 48px 80px;
     }
