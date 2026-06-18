@@ -210,7 +210,14 @@
     .coming-desc { font-size:0.78rem; color:rgba(255,255,255,0.42); line-height:1.7; }
 
     /* VALUATION PANEL */
-    .valuation-placeholder { max-width: 440px; background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 30px 34px; }
+    .valuation-placeholder { }
+    .article-reader { max-width: 640px; height: 62vh; min-height: 380px; overflow-y: auto; padding-right: 20px; scrollbar-width: thin; scrollbar-color: var(--amber) transparent; }
+    .article-reader::-webkit-scrollbar { width: 4px; }
+    .article-reader::-webkit-scrollbar-track { background: transparent; }
+    .article-reader::-webkit-scrollbar-thumb { background: var(--amber); border-radius: 2px; }
+    .article-reader-fade { position: relative; }
+    .article-reader-fade::after { content: ''; position: absolute; bottom: 0; left: 0; right: 20px; height: 48px; background: linear-gradient(to bottom, transparent, var(--parchment)); pointer-events: none; transition: opacity 0.3s; }
+    .article-reader-fade.at-bottom::after { opacity: 0; }
     .vp-eyebrow { font-size:0.6rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); margin-bottom:11px; display:block; }
     .valuation-placeholder h3 { font-size:1.15rem; color:var(--ink); margin-bottom:9px; }
     .valuation-placeholder p { font-size:0.82rem; color:var(--ink-mid); line-height:1.75; }
@@ -551,9 +558,11 @@
           <span class="panel-label">Value</span>
           <button class="panel-close-btn" data-close="valuation"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Close</button>
         </div>
-        <div class="valuation-placeholder reveal" style="max-width:640px;">
-          <h2 class="serif" style="font-size:1.55rem;line-height:1.2;margin-bottom:24px;">When Smart People Agree</h2>
-          <div style="font-size:0.9rem;color:var(--ink-mid);line-height:1.9;">
+        <div class="valuation-placeholder reveal">
+          <h2 class="serif" style="font-size:1.55rem;line-height:1.2;margin-bottom:20px;max-width:640px;">When Smart People Agree</h2>
+          <div class="article-reader-fade">
+          <div class="article-reader" id="articleReader">
+          <div style="font-size:0.9rem;color:var(--ink-mid);line-height:1.9;max-width:640px;">
             <p style="margin-bottom:1.1em;">One of the dangers of listening to smart people is that they are often right.</p>
             <p style="margin-bottom:1.1em;">When Bill Ackman observes that the probability of disruption has increased enormously, most of us incorporate that idea into our worldview without much resistance. He manages billions of dollars, studies businesses for a living, and has forgotten more about capital allocation than most of us will ever know. If someone like Ackman says that technological change has made businesses more vulnerable, there is a good chance he is seeing something important.</p>
             <p style="margin-bottom:1.1em;">He is probably right.</p>
@@ -582,6 +591,8 @@
             <p style="margin-bottom:0.4em;">The question is not which businesses artificial intelligence will destroy.</p>
             <p style="margin-bottom:0;">The question is where the advantage has moved.</p>
           </div>
+          </div><!-- /article-reader -->
+          </div><!-- /article-reader-fade -->
         </div>
       </div>
     </div>
@@ -914,6 +925,16 @@
     notepadInput.addEventListener('keydown',e=>{
       if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendNotepadMessage(notepadInput.value);}
     });
+
+    // Article reader — hide fade when scrolled to bottom
+    const articleReader = document.getElementById('articleReader');
+    if (articleReader) {
+      const fade = articleReader.closest('.article-reader-fade');
+      articleReader.addEventListener('scroll', () => {
+        const atBottom = articleReader.scrollHeight - articleReader.scrollTop <= articleReader.clientHeight + 4;
+        if (fade) fade.classList.toggle('at-bottom', atBottom);
+      });
+    }
   </script>
 
   <!-- CHAT BUBBLE — opens existing notepad panel -->
