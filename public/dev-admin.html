@@ -282,11 +282,12 @@
 		  <button class="btn btn-primary btn-sm" onclick="toggleRdForm()">+ Log Time</button>
 		</div>
 		<div id="rd-form-wrap" style="display:none; padding:20px; border-bottom:1px solid var(--border)">
-		  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:12px">
+		  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:12px">
+			<div class="form-group" style="margin:0"><label>Client</label><input type="text" id="rd-client" placeholder="FrontFrame"></div>
 			<div class="form-group" style="margin:0"><label>Date</label><input type="date" id="rd-date"></div>
 			<div class="form-group" style="margin:0"><label>Hours</label><input type="number" id="rd-hours" step="0.25" min="0.25" max="24" placeholder="0.5"></div>
 			<div class="form-group" style="margin:0"><label>Category</label>
-			  <select id="rd-category">
+			  <select id="rd-category" onchange="autoQualifies()">
 				<optgroup label="Qualifying">
 				  <option value="DB">DB — Database / Schema</option>
 				  <option value="API">API — Worker / API</option>
@@ -305,6 +306,11 @@
 			</div>
 		  </div>
 		  <div class="form-group" style="margin-bottom:12px"><label>Description</label><textarea id="rd-desc" rows="2" placeholder="What was built or investigated?"></textarea></div>
+		  <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
+			<label style="display:flex;align-items:center;gap:8px;font-size:0.875rem;font-weight:500;cursor:pointer">
+			  <input type="checkbox" id="rd-qualifies"> Qualifies for R&amp;D tax credit
+			</label>
+		  </div>
 		  <div style="display:flex;gap:10px">
 			<button class="btn btn-primary btn-sm" onclick="saveRdEntry()">Save Entry</button>
 			<button class="btn btn-ghost btn-sm" onclick="toggleRdForm()">Cancel</button>
@@ -312,7 +318,7 @@
 		</div>
 		<div class="table-wrap">
 		  <table>
-			<thead><tr><th>Date</th><th>Cat</th><th>Hours</th><th>Description</th><th></th></tr></thead>
+			<thead><tr><th>Date</th><th>Client</th><th>Cat</th><th>Hours</th><th>Description</th><th>Qualifies</th><th></th></tr></thead>
 			<tbody id="rd-tbody"></tbody>
 		  </table>
 		</div>
@@ -440,6 +446,46 @@
 	<div class="modal-footer">
 	  <button class="btn btn-ghost" onclick="closeModal('rq-notes-modal')">Cancel</button>
 	  <button class="btn btn-primary" onclick="submitReviewNotes()">Save &amp; Mark Reviewed</button>
+	</div>
+  </div>
+</div>
+
+
+<!-- R&D Edit Modal -->
+<div class="modal-backdrop" id="rd-edit-modal">
+  <div class="modal-box wide">
+	<div class="modal-title">Edit R&amp;D Entry</div>
+	<input type="hidden" id="re-id">
+	<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+	  <div class="form-group"><label>Client</label><input type="text" id="re-client"></div>
+	  <div class="form-group"><label>Date</label><input type="date" id="re-date"></div>
+	  <div class="form-group"><label>Hours</label><input type="number" id="re-hours" step="0.25" min="0.25" max="24"></div>
+	  <div class="form-group"><label>Category</label>
+		<select id="re-category" onchange="document.getElementById('re-qualifies').checked = QUALIFYING_CATS.has(this.value)">
+		  <optgroup label="Qualifying">
+			<option value="DB">DB — Database / Schema</option>
+			<option value="API">API — Worker / API</option>
+			<option value="FE">FE — Frontend / UI</option>
+			<option value="AI">AI — AI / Prompting</option>
+			<option value="TEST">TEST — Testing / QA</option>
+		  </optgroup>
+		  <optgroup label="Non-Qualifying">
+			<option value="CONT">CONT — Content</option>
+			<option value="STRAT">STRAT — Strategy</option>
+			<option value="MKT">MKT — Marketing</option>
+			<option value="LEGAL">LEGAL — Legal</option>
+			<option value="ADMIN">ADMIN — Admin</option>
+		  </optgroup>
+		</select>
+	  </div>
+	</div>
+	<div class="form-group" style="margin-bottom:12px"><label>Description (narrative)</label><textarea id="re-desc" rows="3"></textarea></div>
+	<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:.875rem">
+	  <input type="checkbox" id="re-qualifies"> <label for="re-qualifies">Qualifies for R&amp;D tax credit</label>
+	</div>
+	<div class="modal-footer">
+	  <button class="btn btn-ghost" onclick="closeModal('rd-edit-modal')">Cancel</button>
+	  <button class="btn btn-primary" onclick="saveRdEdit()">Save changes</button>
 	</div>
   </div>
 </div>
@@ -582,10 +628,12 @@ function toggleRdForm() {
   rdFormOpen = !rdFormOpen;
   document.getElementById('rd-form-wrap').style.display = rdFormOpen ? 'block' : 'none';
   if (rdFormOpen) {
-	document.getElementById('rd-date').value     = new Date().toISOString().slice(0,10);
-	document.getElementById('rd-hours').value    = '';
-	document.getElementById('rd-desc').value     = '';
-	document.getElementById('rd-category').value = 'AI';
+	document.getElementById('rd-client').value      = 'FrontFrame';
+	document.getElementById('rd-date').value        = new Date().toISOString().slice(0,10);
+	document.getElementById('rd-hours').value       = '';
+	document.getElementById('rd-desc').value        = '';
+	document.getElementById('rd-category').value    = 'AI';
+	document.getElementById('rd-qualifies').checked = true;
   }
 }
 
@@ -594,28 +642,52 @@ async function loadRdLog() {
   renderRdLog();
 }
 
+const QUALIFYING_CATS = new Set(['DB','API','FE','AI','TEST']);
+
 function renderRdLog() {
   const tbody = document.getElementById('rd-tbody');
-  if (!rdLog.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No entries</div></td></tr>`; return; }
-  tbody.innerHTML = rdLog.map(r => `
-	<tr>
-	  <td class="text-small text-gray">${esc(r.entry_date ?? '')}</td>
+  if (!rdLog.length) { tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">No entries</div></td></tr>`; return; }
+  tbody.innerHTML = rdLog.map(r => {
+	const isLegacy = !r.session_date || !r.duration_minutes;
+	const dateCell = r.session_date
+	  ? `<td class="text-small text-gray">${esc(r.session_date)}</td>`
+	  : `<td><span style="color:var(--red);font-size:.78rem">No date</span></td>`;
+	const hoursCell = r.duration_minutes
+	  ? `<td class="text-small">${r.duration_minutes / 60}</td>`
+	  : `<td><span style="color:var(--red);font-size:.78rem">—</span></td>`;
+	const text = esc(r.narrative ?? r.description ?? '');
+	const qualBadge = r.qualifies
+	  ? `<span class="badge badge-resolved">Yes</span>`
+	  : `<span class="badge badge-dismissed">No</span>`;
+	return `
+	<tr${isLegacy ? ' style="background:rgba(243,156,18,.08)"' : ''}>
+	  ${dateCell}
+	  <td class="text-small text-gray">${esc(r.client ?? '')}</td>
 	  <td><span class="badge badge-new">${esc(r.category ?? '')}</span></td>
-	  <td class="text-small">${esc(String(r.hours ?? ''))}</td>
-	  <td style="max-width:400px">${esc(r.description ?? '')}</td>
-	  <td><button class="btn btn-danger btn-xs" onclick="deleteRdEntry('${r.id}')">Del</button></td>
-	</tr>
-  `).join('');
+	  ${hoursCell}
+	  <td>${qualBadge}</td>
+	  <td style="max-width:340px;font-size:.82rem;color:var(--gray)">${text}</td>
+	  <td>
+		<div class="flex-row">
+		  <button class="btn btn-ghost btn-xs" onclick="openRdEditModal('${r.id}')">Edit</button>
+		  <button class="btn btn-danger btn-xs" onclick="deleteRdEntry('${r.id}')">Del</button>
+		</div>
+	  </td>
+	</tr>`;
+  }).join('');
 }
 
 async function saveRdEntry() {
-  const entry_date  = document.getElementById('rd-date').value;
-  const hours       = parseFloat(document.getElementById('rd-hours').value);
-  const category    = document.getElementById('rd-category').value;
-  const description = document.getElementById('rd-desc').value.trim();
-  if (!entry_date || isNaN(hours) || !description) { toast('Date, hours, and description required.', 'error'); return; }
+  const client           = document.getElementById('rd-client').value.trim() || 'FrontFrame';
+  const session_date     = document.getElementById('rd-date').value;
+  const hours            = parseFloat(document.getElementById('rd-hours').value);
+  const duration_minutes = Math.round(hours * 60);
+  const category         = document.getElementById('rd-category').value;
+  const narrative        = document.getElementById('rd-desc').value.trim();
+  const qualifies        = document.getElementById('rd-qualifies').checked;
+  if (!session_date || isNaN(hours) || !narrative) { toast('Date, hours, and description required.', 'error'); return; }
   try {
-	const created = await api('POST', '/api/rd-log', { entry_date, hours, category, description });
+	const created = await api('POST', '/api/rd-log', { client, session_date, duration_minutes, category, narrative, qualifies });
 	const newEntry = Array.isArray(created) ? created[0] : created;
 	if (newEntry) rdLog.unshift(newEntry);
 	toggleRdForm();
@@ -631,6 +703,46 @@ async function deleteRdEntry(id) {
 	rdLog = rdLog.filter(r => r.id !== id);
 	renderRdLog();
 	toast('Deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// R&D helpers
+
+function autoQualifies() {
+  const cat = document.getElementById('rd-category').value;
+  document.getElementById('rd-qualifies').checked = QUALIFYING_CATS.has(cat);
+}
+
+function openRdEditModal(id) {
+  const r = rdLog.find(e => e.id === id);
+  if (!r) return;
+  document.getElementById('re-id').value          = r.id;
+  document.getElementById('re-client').value      = r.client ?? 'FrontFrame';
+  document.getElementById('re-date').value        = r.session_date ?? '';
+  document.getElementById('re-hours').value       = r.duration_minutes ? (r.duration_minutes / 60) : '';
+  document.getElementById('re-category').value    = r.category ?? 'AI';
+  document.getElementById('re-desc').value        = r.narrative ?? r.description ?? '';
+  document.getElementById('re-qualifies').checked = r.qualifies ?? false;
+  document.getElementById('rd-edit-modal').classList.add('open');
+}
+
+async function saveRdEdit() {
+  const id               = document.getElementById('re-id').value;
+  const client           = document.getElementById('re-client').value.trim() || 'FrontFrame';
+  const session_date     = document.getElementById('re-date').value;
+  const hours            = parseFloat(document.getElementById('re-hours').value);
+  const duration_minutes = Math.round(hours * 60);
+  const category         = document.getElementById('re-category').value;
+  const narrative        = document.getElementById('re-desc').value.trim();
+  const qualifies        = document.getElementById('re-qualifies').checked;
+  if (!session_date || isNaN(hours)) { toast('Date and hours are required.', 'error'); return; }
+  try {
+		await api('PATCH', `/api/rd-log/${id}`, { client, session_date, duration_minutes, category, narrative, qualifies });
+		const idx = rdLog.findIndex(e => e.id === id);
+		if (idx >= 0) rdLog[idx] = { ...rdLog[idx], client, session_date, duration_minutes, category, narrative, qualifies };
+		closeModal('rd-edit-modal');
+		renderRdLog();
+		toast('Updated.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
