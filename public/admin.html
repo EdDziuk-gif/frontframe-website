@@ -624,7 +624,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Question</th><th>Answer</th><th>Page</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Question</th><th>Answer</th><th>Page</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="qa-tbody"></tbody>
           </table>
         </div>
@@ -1478,6 +1478,15 @@
         <option value="resources">resources</option>
       </select>
     </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="qa-status">
+        <option value="implemented">implemented</option>
+        <option value="under_review">under_review</option>
+        <option value="redundant">redundant</option>
+        <option value="dismissed">dismissed</option>
+      </select>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('qa-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveQaPair()">Save Pair</button>
@@ -2124,12 +2133,14 @@ async function loadQa() {
 
 function renderQa() {
   const tbody = document.getElementById('qa-tbody');
-  if (!qaPairs.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No pairs yet</div></td></tr>`; return; }
+  if (!qaPairs.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No pairs yet</div></td></tr>`; return; }
+  const statusClass = { implemented: 'badge-active', under_review: 'badge-open', redundant: 'badge-closed', dismissed: 'badge-closed' };
   tbody.innerHTML = qaPairs.map(p => `
     <tr>
       <td style="max-width:220px">${esc(p.question)}</td>
       <td style="max-width:300px;color:var(--gray)">${esc(p.answer?.slice(0,120))}${p.answer?.length>120?'\u2026':''}</td>
       <td><span class="badge badge-new">${esc(p.page ?? 'all')}</span></td>
+      <td><span class="badge ${statusClass[p.status] ?? 'badge-closed'}">${esc(p.status ?? '\u2014')}</span></td>
       <td>
         <div class="flex-row">
           <button class="btn btn-ghost btn-xs" onclick="openQaModal('${p.id}')">Edit</button>
@@ -2147,6 +2158,7 @@ function openQaModal(id) {
   document.getElementById('qa-question').value   = p?.question ?? '';
   document.getElementById('qa-answer').value     = p?.answer ?? '';
   document.getElementById('qa-page').value       = p?.page ?? 'all';
+  document.getElementById('qa-status').value     = p?.status ?? 'under_review';
   document.getElementById('qa-modal').classList.add('open');
 }
 
@@ -2155,14 +2167,15 @@ async function saveQaPair() {
   const question = document.getElementById('qa-question').value.trim();
   const answer   = document.getElementById('qa-answer').value.trim();
   const page     = document.getElementById('qa-page').value;
+  const status   = document.getElementById('qa-status').value;
   if (!question || !answer) { toast('Question and answer are required.', 'error'); return; }
   try {
     if (id) {
-      await api('PUT', `/qa/${id}`, { question, answer, page });
+      await api('PUT', `/qa/${id}`, { question, answer, page, status });
       const idx = qaPairs.findIndex(p => p.id === id);
-      if (idx >= 0) qaPairs[idx] = { ...qaPairs[idx], question, answer, page };
+      if (idx >= 0) qaPairs[idx] = { ...qaPairs[idx], question, answer, page, status };
     } else {
-      const created = await api('POST', '/qa', { question, answer, page });
+      const created = await api('POST', '/qa', { question, answer, page, status });
       const newPair = Array.isArray(created) ? created[0] : created;
       if (newPair) qaPairs.push(newPair);
     }
