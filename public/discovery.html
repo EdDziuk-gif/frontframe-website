@@ -672,13 +672,13 @@
 
   <!-- CHAT WIDGET -->
   <div class="chat-widget" id="chatWidget">
-    <div class="chat-bubble" id="chatBubble">Hi — questions welcome. If you'd rather talk, I can connect you with Ed directly.</div>
+    <div class="chat-bubble" id="chatBubble">Questions about FrontFrame? Ask the AI assistant, or connect with Ed directly.</div>
     <div class="chat-panel" id="chatPanel">
       <div class="chat-header">
         <div class="chat-avatar">Ed</div>
         <div class="chat-header-info">
-          <div class="chat-header-name">Ed · FrontFrame</div>
-          <div class="chat-header-status">Questions about Discovery?</div>
+          <div class="chat-header-name">FrontFrame Assistant</div>
+          <div class="chat-header-status">AI · Ed follows up personally</div>
         </div>
         <button class="chat-close" id="chatClose" aria-label="Close chat">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -688,13 +688,14 @@
       </div>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="chat-input-row">
-        <input class="chat-input" id="chatInput" type="text" placeholder="Ask about Discovery…" autocomplete="off">
+        <input class="chat-input" id="chatInput" type="text" placeholder="Ask a question…" autocomplete="off">
         <button class="chat-send" id="chatSend" aria-label="Send">
           <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
             <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
         </button>
       </div>
+      <div style="font-size:0.72rem;color:#8A9BAE;padding:4px 16px 10px;line-height:1.4;">Don't share passwords, payment details, or sensitive personal information.</div>
     </div>
     <button class="chat-toggle" id="chatToggle" aria-label="Open chat with Ed">
       <svg viewBox="0 0 24 24" fill="none" stroke="#1E2D40" stroke-width="2">
@@ -746,7 +747,7 @@
     function addTyping() {
       const div = document.createElement('div');
       div.className = 'msg typing';
-      div.textContent = 'Ed is typing…';
+      div.textContent = 'Thinking…';
       div.id = 'typing-indicator';
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
@@ -810,10 +811,15 @@
           const clean = reply.replace(/\[COLLECTED:[\s\S]*?\]/, '').trim();
           if (clean) { addMsg(clean, 'agent'); history.push({ role: 'assistant', content: clean }); }
           setTimeout(() => {
-            addMsg("Got it. Ed will be in touch — you'll hear from him directly, not from a system.", 'confirmed');
+            addMsg("Got it — Ed will follow up directly.", 'confirmed');
+            const privacyNote = document.createElement('div');
+            privacyNote.style.cssText = 'font-size:0.72rem;color:#8A9BAE;padding:2px 14px 8px;';
+            privacyNote.innerHTML = 'Contact info stored by FrontFrame. <a href="/about#privacy" style="color:#8A9BAE;text-decoration:underline;">Privacy policy</a>';
+            msgs.appendChild(privacyNote);
+            msgs.scrollTop = msgs.scrollHeight;
             input.disabled    = true;
             sendBtn.disabled  = true;
-            input.placeholder = 'Ed has your details.';
+            input.placeholder = 'Ed will be in touch.';
           }, 600);
           await notifyEd(collected);
           return;
