@@ -89,25 +89,55 @@
     return result;
   };
 
+  // NOTE: admin.html declares `const WORKER_URL` and `let session` at the
+  // top level of its own classic <script> block. Neither becomes a window
+  // property (that's only true of top-level `function`/`var` declarations),
+  // so this script cannot read them directly. Hardcode the known-current
+  // Worker URL and pull the session token straight from sessionStorage
+  // (same key admin.html's own loadSession() reads) instead.
+  const DEBUG_WORKER_URL = 'https://api.frontframe.co';
+  function debugGetToken() {
+    try { return JSON.parse(sessionStorage.getItem('ff_session'))?.access_token ?? null; }
+    catch { return null; }
+  }
+
+  async function debugFetchVault(bustCache) {
+    const token = debugGetToken();
+    if (!token) { console.error('[DEBUG:vault] no session token found in sessionStorage("ff_session")'); return null; }
+    const url = DEBUG_WORKER_URL + '/admin/vault' + (bustCache ? ('?_=' + Date.now()) : '');
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}`, ...(bustCache ? { 'Cache-Control': 'no-cache' } : {}) },
+      cache: bustCache ? 'no-store' : 'default',
+    });
+    const body = await res.json().catch(() => null);
+    return { status: res.status, body, cfCacheStatus: res.headers.get('cf-cache-status') };
+  }
+
   window.vaultLoad = async function () {
     console.group('[DEBUG:vault] vaultLoad()');
     try {
-      // Re-fetch here too so we can see the raw payload even though
-      // origLoad will fetch it again internally — cheap GET, worth the
-      // duplicate call for visibility during debugging.
-      let rawEntries = null;
-      try {
-        const res = await fetch(window.WORKER_URL + '/admin/vault', {
-          headers: { 'Authorization': `Bearer ${window.session?.access_token}` },
-        });
-        console.log('raw GET /admin/vault status:', res.status);
-        rawEntries = await res.clone().json().catch(() => null);
-        console.log('raw GET /admin/vault body:', rawEntries);
-        if (rawEntries) {
-          console.log('vendor keys in response:', Object.keys(rawEntries));
-        }
-      } catch (fetchErr) {
-        console.error('[DEBUG:vault] manual trace fetch failed:', fetchErr);
+      // Normal-path fetch — mirrors exactly what the app itself does.
+      const normal = await debugFetchVault(false).catch(e => { console.error('[DEBUG:vault] normal fetch failed:', e); return null; });
+      if (normal) {
+        console.log('normal fetch → status:', normal.status, ' cf-cache-status:', normal.cfCacheStatus);
+        console.log('normal fetch → surge.data:', normal.body?.surge?.data);
+        console.log('normal fetch → cloudflare.data:', normal.body?.cloudflare?.data);
+      }
+
+      // Cache-busted fetch — unique query string + no-store + Cache-Control: no-cache.
+      const busted = await debugFetchVault(true).catch(e => { console.error('[DEBUG:vault] cache-busted fetch failed:', e); return null; });
+      if (busted) {
+        console.log('cache-busted fetch → status:', busted.status, ' cf-cache-status:', busted.cfCacheStatus);
+        console.log('cache-busted fetch → surge.data:', busted.body?.surge?.data);
+        console.log('cache-busted fetch → cloudflare.data:', busted.body?.cloudflare?.data);
+      }
+
+      if (normal && busted) {
+        const same = JSON.stringify(normal.body?.surge?.data) === JSON.stringify(busted.body?.surge?.data);
+        console.log(same
+          ? '%cnormal vs cache-busted surge.data: IDENTICAL — caching ruled out'
+          : '%cnormal vs cache-busted surge.data: DIFFERENT — caching is very likely the cause',
+          'font-weight:bold;color:' + (same ? '#888' : '#e74c3c'));
       }
 
       const result = await origLoad.apply(this, arguments);
