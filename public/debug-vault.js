@@ -104,9 +104,13 @@
   async function debugFetchVault(bustCache) {
     const token = debugGetToken();
     if (!token) { console.error('[DEBUG:vault] no session token found in sessionStorage("ff_session")'); return null; }
+    // No custom Cache-Control request header here — the Worker's CORS
+    // preflight doesn't allow it and the browser blocks the whole request
+    // if we try. The cache-busting query string + fetch's own `cache:
+    // 'no-store'` mode are enough and don't require preflight approval.
     const url = DEBUG_WORKER_URL + '/admin/vault' + (bustCache ? ('?_=' + Date.now()) : '');
     const res = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${token}`, ...(bustCache ? { 'Cache-Control': 'no-cache' } : {}) },
+      headers: { 'Authorization': `Bearer ${token}` },
       cache: bustCache ? 'no-store' : 'default',
     });
     const body = await res.json().catch(() => null);
