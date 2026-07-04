@@ -877,6 +877,20 @@
         <div style="display:flex;gap:1rem;margin-top:0.25rem;">
           <button class="sub-save-btn" onclick="vaultSave('surge')">Save Surge</button>
         </div>
+
+        <!-- Compliance Records -->
+        <div class="card" style="margin-top:24px">
+          <div class="card-header">
+            <div class="card-title">Compliance Records</div>
+            <button class="btn btn-primary btn-sm" onclick="openSubModal()">+ Add Record</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Platform</th><th>Provisioned By</th><th>Number</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="subs-tbody"></tbody>
+            </table>
+          </div>
+        </div>
       </div><!-- /surge -->
 
       <!-- ══ SUPABASE ══ -->
@@ -957,6 +971,14 @@
                 <input type="text" id="cloudflare_account_id" placeholder="e5c0c71b…" oninput="vaultMarkDirty('cloudflare')"></div>
               <div class="sub-field"><label>Zone ID (this domain)</label>
                 <input type="text" id="cloudflare_zone_id" placeholder="xxxxxxxx…" oninput="vaultMarkDirty('cloudflare')"></div>
+            </div>
+            <div class="sub-field-row">
+              <div class="sub-field"><label>API Token</label>
+                <div class="sub-card-wrap">
+                  <input type="password" id="cloudflare_api_token" placeholder="••••••••••••" autocomplete="off" style="padding-right:3.5rem;" oninput="vaultMarkDirty('cloudflare')">
+                  <button class="sub-card-toggle" onclick="vaultTogglePassword('cloudflare_api_token', this)">SHOW</button>
+                </div>
+              </div>
             </div>
             <div class="sub-field"><label>Notes</label>
               <textarea id="cloudflare_notes" rows="4" oninput="vaultMarkDirty('cloudflare')"></textarea>
@@ -1333,20 +1355,6 @@
         </div>
       </div><!-- /card_2 -->
 
-      <!-- Compliance Records -->
-      <div class="card" style="margin-top:24px">
-        <div class="card-header">
-          <div class="card-title">Compliance Records</div>
-          <button class="btn btn-primary btn-sm" onclick="openSubModal()">+ Add Record</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Platform</th><th>Provisioned By</th><th>Number</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="subs-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
     </div>
 
     <!-- Office Hours -->
@@ -1704,7 +1712,7 @@ let outreachActiveId  = null;
 const VAULT_FIELDS = {
   surge:      ['email','password','account_id','api_key','from_number','alert_phone','biz_name','legal_name','org_type','ein','industry','website','contact_name','contact_email','campaign_desc','notes'],
   supabase:   ['email','password','project_id','project_url','publishable_key','secret_key','vault_key','notes'],
-  cloudflare: ['email','password','account_id','zone_id','notes'],
+  cloudflare: ['email','password','account_id','zone_id','api_token','notes'],
   buttondown: ['email','password','api_key','notes'],
   docuseal:   ['email','password','api_key','template_id','webhook_secret','signature_url','certificate','notes'],
   stripe:     ['email','password','pub_key','secret_key','webhook_secret','account_id','notes'],
