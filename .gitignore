@@ -165,3 +165,6 @@ dist
 .env*
 !.env.example
 .wrangler/
+
+# OS junk
+.DS_Store
