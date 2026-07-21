@@ -617,7 +617,7 @@ function downloadScanLog(){
 // RSS FETCHING — sequential proxy fallback chain
 // Worker proxy first (reliable); public proxies as fallback.
 // ═══════════════════════════════════════════════════════════════
-const WORKER_RSS = 'https://frontframe-worker.ed-e5c.workers.dev/rss-proxy';
+const WORKER_RSS = 'https://api.frontframe.co/rss-proxy';
 const PROXY_NAMES = ['Worker', 'corsproxy.io', 'allorigins', 'codetabs'];
 
 async function fetchFeed(feed, feedLog){
