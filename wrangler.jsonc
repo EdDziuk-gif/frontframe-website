@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "frontframe-worker",
+  "account_id": "5dac8f30ac5b7f15be2c3cdbf12cbba8",
+  "main": "src/index.js",
+  "compatibility_date": "2026-04-18",
+  "observability": {
+    "enabled": true
+  },
+  "upload_source_maps": true,
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "routes": [
+    {
+      "pattern": "api.frontframe.co",
+      "zone_name": "frontframe.co",
+      "custom_domain": true
+    }
+  ],
+  "vars": {
+    "SUPABASE_URL": "https://ifjsepyzdnpmwyuytppr.supabase.co"
+  }
+}
