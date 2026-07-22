@@ -1,0 +1,15 @@
+/* FrontFrame — brand.css
+ * Shared brand palette, extracted from the :root {} block duplicated across
+ * ~16 pages. Only variables that were byte-identical everywhere they
+ * appeared are included here. Page-specific tokens (theme accents, spacing,
+ * dark-mode overrides, etc.) stay declared locally on each page.
+ *
+ * Load this before any page-local <style> block that references these vars.
+ */
+:root {
+  --navy:     #1E2D40;
+  --amber:    #F5A623;
+  --offwhite: #F8F6F1;
+  --gray:     #8A9BAE;
+  --white:    #FFFFFF;
+}
