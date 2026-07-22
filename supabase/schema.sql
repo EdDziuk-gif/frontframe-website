@@ -12,6 +12,13 @@
 -- pipeline_stages and verticals exist as lookup tables but are not yet
 -- foreign-keyed to inquiries — inquiries uses a status TEXT field instead.
 -- Update this file as the schema evolves toward the normalized design.
+--
+-- 2026-07-21: Verified via live pg_dump that migration 001 (cold_outreach
+-- columns below) had been committed to git since 2026-06-18 but was never
+-- actually run against production — the columns did not exist live even
+-- though worker/src/index.js already reads/writes them for the cold-outreach
+-- admin feature. Apply 001 and 002 together to bring prod in line with this
+-- file and the code.
 -- -----------------------------------------------------------------------------
 
 
@@ -75,8 +82,13 @@ CREATE TABLE inquiries (
 
 -- -----------------------------------------------------------------------------
 -- ROW-LEVEL SECURITY
--- Service role key (Worker) has full access.
--- Public/anon role has insert-only on inquiries (form submissions).
+-- Service role key (Worker) has full access (bypasses RLS by design).
+-- Public/anon role has insert-only on inquiries, restricted to source='inbound'
+-- (see migration 002 — cold_outreach rows may only be created by staff).
+-- Staff (frontframe_admin/frontframe_staff, via is_reviewer()) get
+-- select/insert/update on inquiries. Policies added in migration 002 —
+-- RLS had been enabled here since day one with zero policies (deny-by-default
+-- for anything not using service_role) until that migration.
 -- -----------------------------------------------------------------------------
 
 ALTER TABLE pipeline_stages ENABLE ROW LEVEL SECURITY;
