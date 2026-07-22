@@ -36,7 +36,10 @@
   var ds = (scriptEl && scriptEl.dataset) || {};
 
   var PAGE = ds.page || 'unknown';
-  var WORKER_URL = 'https://api.frontframe.co';
+  // Reads the shared value set by /js/config.js when that script is loaded
+  // on the page; falls back to the hardcoded default for any page that
+  // hasn't added config.js yet.
+  var WORKER_URL = window.WORKER_URL || 'https://api.frontframe.co';
   var SK = 'chatDismissed_' + PAGE;
 
   var GREETING = ds.greeting ||
