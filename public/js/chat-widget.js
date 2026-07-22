@@ -1,17 +1,52 @@
 // FrontFrame — chat-widget.js
 // Shared chat widget logic, extracted from ~12 pages of copy-pasted inline
 // <script> blocks (see: about.html, yours.html, resources/*.html, intake.html,
-// operating-model.html, blueprint.html, etc.).
+// added-intake.html, discovery.html, intake-confirmation.html, operating-model.html,
+// blueprint.html, etc.).
 //
-// Usage: <script src="/js/chat-widget.js" data-page="yours"></script>
-// The page name is read from this script tag's data-page attribute so a
-// single file can serve every page without per-page copies.
+// Usage:
+//   <script src="/js/chat-widget.js" data-page="yours"></script>
+//
+// Optional per-page customization (all have sensible defaults matching the
+// original "canonical" widget, so most pages need only data-page):
+//   data-greeting            Custom opening message. Default: the standard
+//                             FrontFrame intro.
+//   data-source               Label sent to /notify so leads can be traced back
+//                             to the page they came from. Default: "agent".
+//   data-handoff              "false" disables the [COLLECTED:...] parsing and
+//                             the notify-Ed handoff entirely — the chat stays
+//                             plain Q&A. Default: enabled. Use this for pages
+//                             where the visitor's contact info is already known
+//                             (e.g. right after they've submitted a form).
+//   data-confirm-msg          Message shown after a successful handoff. Default:
+//                             "Got it — Ed will follow up directly." Ignored if
+//                             data-handoff="false".
+//   data-show-privacy-note    "false" skips the "Contact info stored by
+//                             FrontFrame..." privacy line after handoff. Default:
+//                             shown. Ignored if data-handoff="false".
+//   data-placeholder-after    Input placeholder shown once the input is disabled
+//                             after handoff. Default: "Ed will be in touch."
+//
+// The page name is read from this script tag's data-page attribute (and the
+// customization above from the same tag) so a single file can serve every
+// page without per-page copies.
 
 (function () {
   var scriptEl = document.currentScript;
-  var PAGE = (scriptEl && scriptEl.dataset && scriptEl.dataset.page) || 'unknown';
+  var ds = (scriptEl && scriptEl.dataset) || {};
+
+  var PAGE = ds.page || 'unknown';
   var WORKER_URL = 'https://api.frontframe.co';
   var SK = 'chatDismissed_' + PAGE;
+
+  var GREETING = ds.greeting ||
+    "Hi — I'm an AI assistant for FrontFrame. Ask me anything about our services, or I can connect you with Ed.";
+  var SOURCE = ds.source || 'agent';
+  var HANDOFF_ENABLED = ds.handoff !== 'false';
+  var CONFIRM_MSG = ds.confirmMsg || 'Got it — Ed will follow up directly.';
+  var SHOW_PRIVACY_NOTE = ds.showPrivacyNote !== 'false';
+  var PLACEHOLDER_AFTER = ds.placeholderAfter || 'Ed will be in touch.';
+
   var panel = document.getElementById('chatPanel');
   var toggle = document.getElementById('chatToggle');
   var closeBtn = document.getElementById('chatClose');
@@ -78,7 +113,7 @@
         body: JSON.stringify({
           session_id: sessionId, name: contactData.name || '',
           contact: contactData.contact || '', method: contactData.method || '',
-          summary: contactData.summary || '', transcript: transcript, source: 'agent'
+          summary: contactData.summary || '', transcript: transcript, source: SOURCE
         }),
       });
     } catch (e) {}
@@ -95,18 +130,20 @@
       });
       var data = await res.json(); removeTyping();
       var reply = data.response || 'Sorry, something went wrong.';
-      var collected = parseCollected(reply);
+      var collected = HANDOFF_ENABLED ? parseCollected(reply) : null;
       if (collected) {
         var clean = reply.replace(/\[COLLECTED:[\s\S]*?\]/, '').trim();
         if (clean) { addMessage(clean, 'agent'); history.push({ role: 'assistant', content: clean }); }
         setTimeout(function () {
-          addMessage("Got it — Ed will follow up directly.", 'confirmed');
-          var privacyNote = document.createElement('div');
-          privacyNote.style.cssText = 'font-size:0.72rem;color:#8A9BAE;padding:2px 14px 8px;';
-          privacyNote.innerHTML = 'Contact info stored by FrontFrame. <a href="/about#privacy" style="color:#8A9BAE;text-decoration:underline;">Privacy policy</a>';
-          messages.appendChild(privacyNote);
-          messages.scrollTop = messages.scrollHeight;
-          input.disabled = true; sendBtn.disabled = true; input.placeholder = 'Ed will be in touch.';
+          addMessage(CONFIRM_MSG, 'confirmed');
+          if (SHOW_PRIVACY_NOTE) {
+            var privacyNote = document.createElement('div');
+            privacyNote.style.cssText = 'font-size:0.72rem;color:#8A9BAE;padding:2px 14px 8px;';
+            privacyNote.innerHTML = 'Contact info stored by FrontFrame. <a href="/about#privacy" style="color:#8A9BAE;text-decoration:underline;">Privacy policy</a>';
+            messages.appendChild(privacyNote);
+            messages.scrollTop = messages.scrollHeight;
+          }
+          input.disabled = true; sendBtn.disabled = true; input.placeholder = PLACEHOLDER_AFTER;
         }, 600);
         await notifyEd(collected); return;
       }
@@ -116,8 +153,7 @@
   }
 
   function greet() {
-    var msg = "Hi — I'm an AI assistant for FrontFrame. Ask me anything about our services, or I can connect you with Ed.";
-    addMessage(msg, 'agent'); history.push({ role: 'assistant', content: msg });
+    addMessage(GREETING, 'agent'); history.push({ role: 'assistant', content: GREETING });
   }
 
   sendBtn.addEventListener('click', function () { sendMessage(input.value); });
