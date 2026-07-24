@@ -543,16 +543,33 @@ async function handleNotify(request, env, ctx, corsHeaders) {
 // § DOMAIN: inquiry
 // ════════════════════════════════════════════════════════════════════════════
 
+async function verifyTurnstile(token, remoteIp, env) {
+  if (!env.TURNSTILE_SECRET_KEY) return true; // not configured yet — don't hard-fail existing deploys
+  if (!token) return false;
+  const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ secret: env.TURNSTILE_SECRET_KEY, response: token, ...(remoteIp ? { remoteip: remoteIp } : {}) }),
+  });
+  const data = await res.json().catch(() => ({ success: false }));
+  return data.success === true;
+}
+
 async function handleInquiry(request, env, corsHeaders) {
   let body;
   try { body = await request.json(); }
   catch { return jsonResponse({ error: "Invalid JSON" }, 400, corsHeaders); }
 
   const { owner_name, business_name, email, phone, business_type, tier_interest,
-          description, services, clients, anything_else, source_page } = body;
+          description, services, clients, anything_else, source_page, turnstileToken } = body;
 
   if (!owner_name || !business_name || !email)
     return jsonResponse({ error: "owner_name, business_name, and email are required" }, 400, corsHeaders);
+
+  const clientIp = request.headers.get("CF-Connecting-IP");
+  const humanVerified = await verifyTurnstile(turnstileToken, clientIp, env).catch(() => false);
+  if (!humanVerified)
+    return jsonResponse({ error: "Verification failed. Please retry the checkbox above." }, 400, corsHeaders);
 
   const fullDescription = [
     description,

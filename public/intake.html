@@ -8,6 +8,8 @@
   <meta name="description" content="Tell us about your business. No payment yet — this is where a FrontFrame engagement begins. We respond within one business day." />
   <link rel="canonical" href="https://frontframe.co/intake" />
   <meta name="robots" content="noindex, follow" />
+  <!-- Cloudflare Turnstile (bot protection) -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
@@ -485,6 +487,12 @@
           </div>
         </div>
 
+        <!-- Cloudflare Turnstile widget — site key injected from config.js -->
+        <div class="cf-turnstile" id="turnstileWidget" data-theme="light" style="margin-bottom: 16px;"></div>
+        <script>document.getElementById('turnstileWidget').dataset.sitekey = window.TURNSTILE_SITE_KEY;</script>
+
+        <p id="formError" style="display:none; color:#B3261E; font-size:0.9rem; margin-bottom:12px;"></p>
+
         <button type="submit" class="submit-btn" id="submitBtn">Continue →</button>
         <p class="form-note">No payment required at this step. We'll follow up within one business day.</p>
       </form>
@@ -532,27 +540,50 @@
 
     document.getElementById('intakeForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      const btn = document.getElementById('submitBtn');
+      const btn      = document.getElementById('submitBtn');
+      const errorEl  = document.getElementById('formError');
+      errorEl.style.display = 'none';
+
+      const turnstileToken = document.querySelector('[name="cf-turnstile-response"]')?.value || '';
+      if (!turnstileToken) {
+        errorEl.textContent = 'Please complete the verification checkbox above.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
       btn.textContent = 'Submitting…';
       btn.disabled = true;
 
       const payload = {
-        owner_name:    document.getElementById('ownerName').value.trim(),
-        business_name: document.getElementById('businessName').value.trim(),
-        email:         document.getElementById('email').value.trim(),
-        phone:         document.getElementById('phone').value.trim(),
-        business_type: document.getElementById('businessType').value,
+        owner_name:      document.getElementById('ownerName').value.trim(),
+        business_name:   document.getElementById('businessName').value.trim(),
+        email:           document.getElementById('email').value.trim(),
+        phone:           document.getElementById('phone').value.trim(),
+        business_type:   document.getElementById('businessType').value,
+        source_page:     'intake',
+        turnstileToken,
       };
 
       try {
-        await fetch(`${WORKER_URL}/intake`, {
+        const res    = await fetch(`${WORKER_URL}/inquiry`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-      } catch { /* navigate regardless */ }
+        const result = await res.json().catch(() => ({}));
 
-      window.location.href = `intake-confirmation.html?email=${encodeURIComponent(payload.email)}&name=${encodeURIComponent(payload.owner_name)}`;
+        if (!res.ok || !result.ok) {
+          throw new Error(result.error || 'Something went wrong. Please try again.');
+        }
+
+        window.location.href = `intake-confirmation.html?email=${encodeURIComponent(payload.email)}&name=${encodeURIComponent(payload.owner_name)}`;
+      } catch (err) {
+        errorEl.textContent = err.message || 'Something went wrong submitting the form. Please try again, or email us directly.';
+        errorEl.style.display = 'block';
+        btn.textContent = 'Continue →';
+        btn.disabled = false;
+        if (window.turnstile) window.turnstile.reset(document.getElementById('turnstileWidget'));
+      }
     });
 
   </script>
