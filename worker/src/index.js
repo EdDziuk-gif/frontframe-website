@@ -126,6 +126,51 @@ function extractJwt(request) {
   return match ? match[1] : null;
 }
 
+// Non-/admin/* routes that are still staff-only tools (office hours schedule
+// management, R&D log) and therefore still need the reviewer gate below.
+// Everything under /admin/* is covered automatically by the prefix check in
+// fetch(); this Set only exists for the handful of exceptions.
+const ADMIN_EXTRA_PROTECTED_PATHS = new Set([
+  "/api/office-hours/schedule",
+  "/api/office-hours/schedule/:day",
+  "/api/office-hours/overrides",
+  "/api/office-hours/overrides/:date",
+  "/api/rd-log",
+  "/api/rd-log/:id",
+]);
+
+// Added 2026-07-24 -- see docs/stack.md "Admin Access Control Decision" for
+// why this is an app-layer gate rather than Postgres RLS.
+//
+// Validates the caller's bearer token against Supabase Auth itself (so a
+// forged/expired/signed-out token is rejected even though this Worker never
+// signed it), then checks the corresponding row in `reviewers` has an
+// allowed role and is active. Mirrors the same role pair already enforced
+// at the database layer via is_reviewer() for tables that have RLS.
+async function requireReviewer(request, env, allowedRoles = ["frontframe_admin", "frontframe_staff"]) {
+  const jwt = extractJwt(request);
+  if (!jwt) return { ok: false, status: 401, error: "Missing Authorization header" };
+
+  const userRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+    headers: { "apikey": env.SUPABASE_SERVICE_ROLE_KEY, "Authorization": `Bearer ${jwt}` },
+  });
+  if (!userRes.ok) return { ok: false, status: 401, error: "Invalid or expired session" };
+
+  const user  = await userRes.json();
+  const email = user?.email;
+  if (!email) return { ok: false, status: 401, error: "Invalid session" };
+
+  const rows = await supabaseFetch(env, "reviewers",
+    `?select=role,active&email=eq.${encodeURIComponent(email)}`);
+  const reviewer = rows?.[0];
+  if (!reviewer || reviewer.active === false)
+    return { ok: false, status: 403, error: "Not an active reviewer" };
+  if (allowedRoles && !allowedRoles.includes(reviewer.role))
+    return { ok: false, status: 403, error: "Insufficient role" };
+
+  return { ok: true, email, role: reviewer.role };
+}
+
 
 // ════════════════════════════════════════════════════════════════════════════
 // § SUPABASE DATA ACCESS
@@ -591,6 +636,109 @@ async function handleInquiry(request, env, corsHeaders) {
   });
 
   return jsonResponse({ ok: true }, 200, corsHeaders);
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// § DOMAIN: scheduling (blackout dates + consultation bookings)
+// ════════════════════════════════════════════════════════════════════════════
+
+const CONSULT_SLOTS = ["9:00 AM MST", "10:00 AM MST", "11:00 AM MST", "1:00 PM MST", "2:00 PM MST", "3:00 PM MST"];
+
+// Public — returns active/future blackout ranges so the client can grey out
+// unavailable dates. Mirrors eleanor-website's /blackout endpoint.
+async function getBlackout(env, corsHeaders) {
+  const today  = new Date().toISOString().slice(0, 10);
+  const rows   = await supabaseFetch(env, "blackout_periods",
+    "?end_date=gte." + today + "&select=start_date,end_date,reason&order=start_date.asc");
+  const periods = rows.map(r => ({ startDate: r.start_date, endDate: r.end_date, reason: r.reason ?? null }));
+  return jsonResponse({ periods, slots: CONSULT_SLOTS }, 200, corsHeaders);
+}
+
+function dateInBlackout(dateStr, periods) {
+  const d = new Date(dateStr + "T12:00:00");
+  return periods.some(p => {
+    const start = new Date(p.start_date + "T12:00:00");
+    const end   = new Date(p.end_date   + "T12:00:00");
+    return d >= start && d <= end;
+  });
+}
+
+// Public — books a consultation/kickoff call. Validates the date against
+// blackout periods and the requested slot against existing bookings
+// server-side (never trust the client-side picker alone).
+async function handleSchedule(request, env, corsHeaders) {
+  let body;
+  try { body = await request.json(); }
+  catch { return jsonResponse({ error: "Invalid JSON" }, 400, corsHeaders); }
+
+  const { name, email, business_name, phone, requested_date, slot_label, notes, inquiry_id, turnstileToken } = body;
+
+  if (!name || !email || !requested_date || !slot_label)
+    return jsonResponse({ error: "name, email, requested_date, and slot_label are required" }, 400, corsHeaders);
+  if (!CONSULT_SLOTS.includes(slot_label))
+    return jsonResponse({ error: "Invalid time slot" }, 400, corsHeaders);
+
+  const clientIp = request.headers.get("CF-Connecting-IP");
+  const humanVerified = await verifyTurnstile(turnstileToken, clientIp, env).catch(() => false);
+  if (!humanVerified)
+    return jsonResponse({ error: "Verification failed. Please retry the checkbox above." }, 400, corsHeaders);
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (requested_date < today)
+    return jsonResponse({ error: "Please choose a date in the future." }, 400, corsHeaders);
+
+  const blackoutRows = await supabaseFetch(env, "blackout_periods",
+    "?end_date=gte." + today + "&select=start_date,end_date");
+  if (dateInBlackout(requested_date, blackoutRows))
+    return jsonResponse({ error: "That date isn't available. Please pick another." }, 409, corsHeaders);
+
+  try {
+    const rows = await supabasePost(env, "consultation_bookings", {
+      name: name.trim(), email: email.trim().toLowerCase(),
+      business_name: business_name?.trim() ?? null, phone: phone?.trim() ?? null,
+      requested_date, slot_label, notes: notes?.trim() ?? null,
+      inquiry_id: inquiry_id ?? null, status: "requested",
+    });
+    await sendSms(env, "FrontFrame call booked\n" + name.trim() + " -- " + requested_date + " @ " + slot_label)
+      .catch((e) => console.error("booking SMS failed:", e));
+    return jsonResponse({ ok: true, booking: rows?.[0] ?? null }, 200, corsHeaders);
+  } catch (e) {
+    if (String(e.message).includes("23505")) // unique violation on (requested_date, slot_label)
+      return jsonResponse({ error: "That slot was just taken. Please pick another." }, 409, corsHeaders);
+    throw e;
+  }
+}
+
+// Admin — blackout period CRUD.
+async function getBlackoutAdmin(env, corsHeaders) {
+  return jsonResponse(await supabaseFetch(env, "blackout_periods",
+    "?select=id,start_date,end_date,reason,created_at&order=start_date.asc"), 200, corsHeaders);
+}
+
+async function createBlackoutAdmin(request, env, corsHeaders) {
+  const { start_date, end_date, reason } = await request.json();
+  if (!start_date || !end_date) return jsonResponse({ error: "start_date and end_date are required" }, 400, corsHeaders);
+  return jsonResponse(await supabasePost(env, "blackout_periods", { start_date, end_date, reason: reason ?? null }), 201, corsHeaders);
+}
+
+async function deleteBlackoutAdmin(env, id, corsHeaders) {
+  await supabaseDelete(env, "blackout_periods", id);
+  return jsonResponse({ ok: true }, 200, corsHeaders);
+}
+
+// Admin — view/manage consultation bookings.
+async function getBookingsAdmin(env, corsHeaders) {
+  return jsonResponse(await supabaseFetch(env, "consultation_bookings",
+    "?select=id,name,email,business_name,phone,requested_date,slot_label,notes,status,inquiry_id,created_at&order=requested_date.asc"), 200, corsHeaders);
+}
+
+async function updateBookingAdmin(request, env, id, corsHeaders) {
+  const body = await request.json();
+  const updates = {};
+  ["status", "notes"].forEach(k => { if (body[k] !== undefined) updates[k] = body[k]; });
+  if (!Object.keys(updates).length) return jsonResponse({ error: "No fields to update" }, 400, corsHeaders);
+  return jsonResponse(await supabasePatch(env, "consultation_bookings", id, updates), 200, corsHeaders);
 }
 
 
@@ -1898,6 +2046,10 @@ const ROUTES = [
   { method: "POST", path: "/notify",                  handler: (req, env, ctx, ch) => handleNotify(req, env, ctx, ch) },
   { method: "POST", path: "/inquiry",                 handler: (req, env, _ctx, ch) => handleInquiry(req, env, ch) },
 
+  // ── scheduling (public) ─────────────────────────────────────────────────
+  { method: "GET",  path: "/blackout",                handler: (req, env, _ctx, ch) => getBlackout(env, ch) },
+  { method: "POST", path: "/schedule",                handler: (req, env, _ctx, ch) => handleSchedule(req, env, ch) },
+
   // ── qa ───────────────────────────────────────────────────────────────────
   { method: "GET",    path: "/qa",                    handler: (req, env, _ctx, ch) => getQaPairs(env, ch) },
   { method: "POST",   path: "/qa",                    handler: (req, env, _ctx, ch) => createQaPair(req, env, ch) },
@@ -1920,6 +2072,13 @@ const ROUTES = [
   // ── webhooks ─────────────────────────────────────────────────────────────
   { method: "POST", path: "/webhooks/stripe",         handler: (req, env, _ctx, ch) => handleStripeWebhook(req, env, ch) },
   { method: "POST", path: "/webhooks/docuseal",       handler: (req, env, _ctx, ch) => handleDocusealWebhook(req, env, ch) },
+
+  // ── admin: scheduling ────────────────────────────────────────────────────
+  { method: "GET",    path: "/admin/blackout",         handler: (req, env, _ctx, ch) => getBlackoutAdmin(env, ch) },
+  { method: "POST",   path: "/admin/blackout",         handler: (req, env, _ctx, ch) => createBlackoutAdmin(req, env, ch) },
+  { method: "DELETE", path: "/admin/blackout/:id",     handler: (req, env, _ctx, ch, p) => deleteBlackoutAdmin(env, p.id, ch) },
+  { method: "GET",    path: "/admin/bookings",         handler: (req, env, _ctx, ch) => getBookingsAdmin(env, ch) },
+  { method: "PUT",    path: "/admin/bookings/:id",     handler: (req, env, _ctx, ch, p) => updateBookingAdmin(req, env, p.id, ch) },
 
   // ── admin: config ─────────────────────────────────────────────────────────
   { method: "GET",  path: "/admin/config",            handler: (req, env, _ctx, ch) => getConfig(env, extractJwt(req), ch) },
@@ -2058,7 +2217,15 @@ export default {
       if (debugHit) return debugHit.route.handler(request, env, ctx, CORS_HEADERS, debugHit.params);
 
       const hit = matchRoute(ROUTES, method, url.pathname);
-      if (hit) return hit.route.handler(request, env, ctx, CORS_HEADERS, hit.params);
+      if (hit) {
+        const isProtected = hit.route.path.startsWith("/admin/") || hit.route.path === "/admin"
+          || ADMIN_EXTRA_PROTECTED_PATHS.has(hit.route.path);
+        if (isProtected) {
+          const auth = await requireReviewer(request, env);
+          if (!auth.ok) return jsonResponse({ error: auth.error }, auth.status, CORS_HEADERS);
+        }
+        return hit.route.handler(request, env, ctx, CORS_HEADERS, hit.params);
+      }
 
       return jsonResponse({ error: "Not found" }, 404, CORS_HEADERS);
     } catch (err) {
