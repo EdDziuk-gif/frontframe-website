@@ -8,4 +8,4 @@ window.WORKER_URL = 'https://api.frontframe.co';
 // https://dash.cloudflare.com/ -> Turnstile -> Add site (use "Managed" mode).
 // The matching secret key goes server-side only, via:
 //   wrangler secret put TURNSTILE_SECRET_KEY
-window.TURNSTILE_SITE_KEY = 'REPLACE_ME_TURNSTILE_SITE_KEY';
+window.TURNSTILE_SITE_KEY = '0x4AAAAAAD9DLDtbdGjc_aUS';
