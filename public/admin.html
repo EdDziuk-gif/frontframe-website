@@ -1682,6 +1682,8 @@
 <div id="toast"></div>
 
 <script src="/js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/js/supabase-client.js"></script>
 <script src="/js/client-utils.js"></script>
 <script src="/js/auth.js"></script>
 <script>
@@ -1774,7 +1776,7 @@ document.getElementById('verify-code-btn').addEventListener('click', async () =>
   btn.textContent = 'Verifying\u2026'; btn.disabled = true;
   try {
     const data = await verifyOtp(pendingEmail, code);
-    saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, user: { email: pendingEmail } });
+    session = { access_token: data.access_token, refresh_token: data.refresh_token, user: { email: pendingEmail } };
     showAdmin();
   } catch (e) {
     errEl.textContent = e.message;
@@ -1795,7 +1797,7 @@ document.getElementById('login-back-btn').addEventListener('click', () => {
   pendingEmail = '';
 });
 
-function signOut() { clearSession(); location.reload(); }
+async function signOut() { await clearSession(); location.reload(); }
 
 function showLogin() {
   document.getElementById('login-screen').classList.remove('hidden');
@@ -3331,9 +3333,9 @@ async function logTouch() {
 
 // Init
 
-(function init() {
-  const stored = loadSession();
-  if (stored?.access_token) { session = stored; showAdmin(); return; }
+(async function init() {
+  const stored = await loadSession();
+  if (stored) { session = stored; showAdmin(); return; }
   showLogin();
 })();
 </script>

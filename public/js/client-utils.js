@@ -11,16 +11,22 @@
 // they're only called from event handlers / async init, never at parse
 // time). Load this file before the page's own inline script.
 
-function loadSession() {
-  try { return JSON.parse(sessionStorage.getItem('ff_session')); } catch { return null; }
+// Backed by the Supabase SDK's own session storage (supabaseClient from
+// supabase-client.js) instead of hand-rolled sessionStorage -- sessions now
+// persist across tabs/restarts and auto-refresh. loadSession() is async
+// (was sync before); call sites use `await`.
+async function loadSession() {
+  const { data } = await supabaseClient.auth.getSession();
+  if (!data?.session) return null;
+  return {
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
+    user: { email: data.session.user.email },
+  };
 }
-function saveSession(s) {
-  session = s;
-  try { sessionStorage.setItem('ff_session', JSON.stringify(s)); } catch {}
-}
-function clearSession() {
+async function clearSession() {
+  await supabaseClient.auth.signOut();
   session = null;
-  try { sessionStorage.removeItem('ff_session'); } catch {}
 }
 
 let toastTimer;
