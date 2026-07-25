@@ -8,7 +8,7 @@ window.WORKER_URL = 'https://api.frontframe.co';
 // client-side by design; it only grants what Supabase Auth + your RLS
 // policies allow. Get it from Dashboard -> Project Settings -> API.
 window.SUPABASE_URL = 'https://ifjsepyzdnpmwyuytppr.supabase.co';
-window.SUPABASE_ANON_KEY = 'PASTE_ANON_KEY_HERE';
+window.SUPABASE_ANON_KEY = 'sb_publishable_32AeSl5fyVdyS36J_048kg_Hb4Do1HK';
 
 // Cloudflare Turnstile site key (public — safe to ship to the browser).
 // Ed: replace with the real site key after creating a Turnstile widget at
