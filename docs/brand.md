@@ -9,7 +9,7 @@ _This document is the canonical source for all finalized brand language. Do not 
 **FrontFrame**
 
 Written as: FrontFrame (intercapped, no space, no suffix)
-Domain: frontframe.com (pending registration — treat as confirmed)
+Domain: frontframe.co
 
 Do not write: Frontframe, FRONTFRAME, FrontFrame Studio, FrontFrame Works, FrontFrame Systems, or any suffixed variant.
 
@@ -134,4 +134,4 @@ FrontFrame originated from building the website and operating platform for **Ele
 
 ---
 
-_Last updated: 2026-04-04_
+_Last updated: 2026-06-15_

@@ -23,7 +23,7 @@ _This document is the canonical source for all technical decisions made to date.
 | Email | Resend | Owner notification on inquiry submission |
 | Payments | Stripe | Future phase — not at launch |
 | Bot protection | Cloudflare Turnstile | All public forms |
-| DNS / Domain | Cloudflare | frontframe.com (pending registration) |
+| DNS / Domain | Cloudflare | frontframe.co |
 
 ---
 
@@ -42,6 +42,24 @@ The `--no-bundle` flag is required. Update the config path to the actual wrangle
 - The Worker is the only component that holds API keys
 - The frontend holds no secrets
 - All form submissions must be Turnstile-validated before any database write occurs
+
+### Admin Access Control Decision (2026-07-24)
+
+**Decision:** FrontFrame's admin API enforces access control with an application-layer JWT gate (`requireReviewer()`, wrapping every `/admin/*` route handler) rather than database-layer Postgres Row Level Security.
+
+**Context:** As of this date, all ~88 `/admin/*` routes in `worker/src/index.js` extract the caller's JWT via `extractJwt(req)` but never validate it -- it is passed down as an unused `_userJwt` parameter, so any client that knows a route path can call it without logging in. Two working alternative patterns already exist in sibling codebases:
+
+| Pattern | Where it's used | How it works |
+|---|---|---|
+| App-layer JWT gate | Eleanor's Bird Sitting (`eleanor-website/worker/worker.js`) | `getAdminPayload()` runs at the top of every admin handler and returns 401 on failure. Verified in all 35 handlers. |
+| Database-layer RLS | Cox Meadows (`Astro-Cox-Meadows`) | Client uses the public anon key directly; Postgres RLS policies (e.g. a `SECURITY DEFINER` helper function) deny access by default per table. Verified working. |
+
+**Rationale for choosing the app-layer gate over migrating to RLS:**
+- FrontFrame's Worker talks to Supabase via the service-role key through custom REST helpers (`supabaseFetch` / `supabasePost` / etc.), not the `supabase-js` SDK with the anon key. Adopting RLS would mean re-architecting how every admin route talks to the database, not just adding a check.
+- The `requireReviewer()` pattern is already proven in this codebase family (Eleanor's site) and only requires wrapping existing routes -- a smaller, more reviewable change for a single-operator tool.
+- RLS is architecturally more robust (Postgres denies by default once RLS is enabled on a table; a forgotten gate cannot leave a route open), but it is also its own bug surface, and pursuing it now would combine a security fix with a data-access rewrite. Per the operator, development speed matters more than that incremental security posture at this stage.
+
+**Revisit trigger:** If FrontFrame grows to the point where someone other than the operator is making decisions about it, or bearing the consequences of a breach (outside investors, employees, or a buyer performing diligence), reconsider migrating admin data access to Postgres RLS -- matching the Cox Meadows pattern -- as defense-in-depth on top of, not instead of, the JWT gate.
 
 ---
 
@@ -251,4 +269,4 @@ All Supabase access is via direct REST API fetch calls from the Worker. The `sup
 
 ---
 
-_Last updated: 2026-04-04_
+_Last updated: 2026-06-15_
