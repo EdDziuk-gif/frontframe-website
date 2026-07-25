@@ -135,6 +135,29 @@ scripts live here instead and git is pointed at them):
   `npm run deploy`; `public/` changes trigger Cloudflare Pages and should
   be verified live afterward), so the two deploy paths stop getting
   conflated.
+- **`post-commit`** -- fires right after a commit lands (it cannot block
+  or undo anything -- the commit object already exists) and prints the
+  same worker/public deploy reminder as `pre-push`, but immediately, so
+  you see it the moment you commit rather than only at push time.
+
+`pre-commit` also runs two additional checks before the wide-commit
+list/confirmation, each skipping gracefully until the underlying tooling
+actually exists in the repo:
+
+- **Lint** -- runs `npx eslint .` only if an ESLint config file is
+  present at the repo root. No config exists yet, so this is currently a
+  no-op; it activates automatically the day a config is added.
+- **Worker tests** -- runs `npx vitest run` inside `worker/` only when
+  staged changes touch `worker/` *and* at least one `*.test.js` file
+  exists there. `worker/package.json` already has a `test` script wired
+  to vitest, but no test files exist yet, so this is also currently a
+  no-op until real tests are added.
+
+`commit-msg` also enforces basic message formatting, on top of the
+backtick guard: non-empty subject line, subject <=72 characters, no
+trailing period on the subject, and a blank line separating the subject
+from any body text (standard git convention -- matches the style already
+used for every commit in this SOP).
 
 **One-time setup per clone:**
 ```bash

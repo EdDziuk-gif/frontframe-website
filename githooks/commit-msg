@@ -27,4 +27,44 @@ if grep -q '`' "$MSG_FILE"; then
   exit 1
 fi
 
+# --- Formatting checks (standard git convention: short imperative
+#     subject, blank line, then body) ---
+SUBJECT=$(head -n1 "$MSG_FILE")
+SUBJECT_STRIPPED=$(printf '%s' "$SUBJECT" | tr -d '[:space:]')
+
+if [ -z "$SUBJECT_STRIPPED" ]; then
+  echo ""
+  echo "COMMIT REJECTED: subject line (first line) is empty."
+  exit 1
+fi
+
+SUBJECT_LEN=${#SUBJECT}
+if [ "$SUBJECT_LEN" -gt 72 ]; then
+  echo ""
+  echo "COMMIT REJECTED: subject line is $SUBJECT_LEN characters (max 72)."
+  echo "Keep the first line short and specific; put details in the body"
+  echo "below a blank line."
+  exit 1
+fi
+
+case "$SUBJECT" in
+  *.)
+    echo ""
+    echo "COMMIT REJECTED: subject line ends with a period -- remove it."
+    exit 1
+    ;;
+esac
+
+LINE_COUNT=$(wc -l < "$MSG_FILE" | tr -d ' ')
+if [ "$LINE_COUNT" -gt 1 ]; then
+  SECOND_LINE=$(sed -n '2p' "$MSG_FILE")
+  SECOND_LINE_STRIPPED=$(printf '%s' "$SECOND_LINE" | tr -d '[:space:]')
+  if [ -n "$SECOND_LINE_STRIPPED" ]; then
+    echo ""
+    echo "COMMIT REJECTED: line 2 must be blank, separating the subject"
+    echo "from the body (standard git convention)."
+    exit 1
+  fi
+fi
+
 exit 0

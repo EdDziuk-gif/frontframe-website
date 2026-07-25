@@ -6,6 +6,36 @@
 # bundled a dozen+ unrelated files (SQL dumps, draft pages, scripts) into
 # a commit whose message only described one small, unrelated change.
 
+# --- Lint (skips gracefully until a linter is actually configured) ---
+if [ -f .eslintrc.json ] || [ -f .eslintrc.js ] || [ -f .eslintrc.cjs ] || [ -f eslint.config.js ] || [ -f eslint.config.mjs ]; then
+  echo "Running lint..."
+  if ! npx eslint .; then
+    echo ""
+    echo "COMMIT REJECTED: lint failed. Fix the errors above."
+    echo "(Bypass once, if truly necessary: git commit --no-verify)"
+    exit 1
+  fi
+fi
+
+# --- Worker tests (only when staged changes touch worker/, and only if
+#     test files actually exist yet -- worker/package.json wires up
+#     vitest, but there is nothing to run until real *.test.js files
+#     are added under worker/) ---
+STAGED_PRECHECK=$(git diff --cached --name-only)
+if printf '%s\n' "$STAGED_PRECHECK" | grep -q '^worker/'; then
+  if find worker -iname '*.test.js' -not -path '*/node_modules/*' 2>/dev/null | grep -q .; then
+    echo "Staged changes touch worker/ -- running tests..."
+    if ! (cd worker && npx vitest run); then
+      echo ""
+      echo "COMMIT REJECTED: worker tests failed."
+      echo "(Bypass once, if truly necessary: git commit --no-verify)"
+      exit 1
+    fi
+  else
+    echo "worker/ changed but no test files exist yet -- skipping test run."
+  fi
+fi
+
 STAGED=$(git diff --cached --name-only)
 COUNT=$(printf '%s\n' "$STAGED" | grep -c .)
 TOP_LEVELS=$(printf '%s\n' "$STAGED" | awk -F/ '{ if (NF>1) print $1; else print $0 }' | sort -u)
