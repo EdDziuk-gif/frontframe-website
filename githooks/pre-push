@@ -1,0 +1,45 @@
+#!/bin/bash
+# FrontFrame pre-push hook -- see DEPLOYMENT-SOP.md
+# git push only triggers the Cloudflare Pages auto-build for the static
+# frontend. Worker changes (worker/src/**) need a separate `npm run deploy`
+# from worker/ -- git push does NOT ship them. This hook inspects the
+# commits about to be pushed and reminds you which deploy step(s) apply
+# and how to verify, so "I pushed, why isn't my change live" stops
+# happening.
+
+ZERO_SHA="0000000000000000000000000000000000000000"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$local_sha" = "$ZERO_SHA" ]; then
+    continue
+  fi
+
+  if [ "$remote_sha" = "$ZERO_SHA" ]; then
+    CHANGED=$(git show --name-only --format='' "$local_sha")
+  else
+    CHANGED=$(git diff --name-only "$remote_sha" "$local_sha")
+  fi
+
+  TOUCHES_WORKER=$(printf '%s\n' "$CHANGED" | grep -c '^worker/')
+  TOUCHES_FRONTEND=$(printf '%s\n' "$CHANGED" | grep -c '^public/')
+
+  echo ""
+  echo "----------------------------------------------------------------"
+  echo "Pre-push deploy reminder ($remote_ref):"
+  if [ "$TOUCHES_WORKER" -gt 0 ]; then
+    echo "  - worker/ files changed: git push does NOT deploy the Worker."
+    echo "    Run separately:  cd worker && npm run deploy"
+  fi
+  if [ "$TOUCHES_FRONTEND" -gt 0 ]; then
+    echo "  - public/ files changed: Cloudflare Pages will auto-build after"
+    echo "    this push. Wait ~1-2 min, then verify live, e.g.:"
+    echo "    curl -s https://frontframe.co/js/config.js | grep SUPABASE_ANON_KEY"
+  fi
+  if [ "$TOUCHES_WORKER" -eq 0 ] && [ "$TOUCHES_FRONTEND" -eq 0 ]; then
+    echo "  - No worker/ or public/ changes detected in this push."
+  fi
+  echo "----------------------------------------------------------------"
+  echo ""
+done
+
+exit 0

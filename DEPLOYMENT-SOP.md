@@ -117,6 +117,64 @@ Work in this order, not in reverse:
 
 ---
 
+## Enforcement: versioned git hooks
+
+The checklist above is now also enforced mechanically via hooks in
+`githooks/` (versioned in this repo -- `.git/hooks` itself is not, so
+scripts live here instead and git is pointed at them):
+
+- **`commit-msg`** -- rejects any commit message containing a backtick,
+  closing off the shell command-substitution mangling risk at the source
+  instead of relying on remembering to write messages to a file.
+- **`pre-commit`** -- if a commit stages 6+ files or touches 3+ top-level
+  paths, prints the full staged file list and requires a typed `YES`
+  confirmation before proceeding. Catches `git add -A` sweeping in
+  unrelated WIP before it becomes a commit, not after.
+- **`pre-push`** -- inspects the commits about to be pushed and prints
+  which deploy step(s) apply (`worker/` changes need a separate
+  `npm run deploy`; `public/` changes trigger Cloudflare Pages and should
+  be verified live afterward), so the two deploy paths stop getting
+  conflated.
+
+**One-time setup per clone:**
+```bash
+bash githooks/install.sh
+```
+This `chmod +x`'s the three hook scripts and runs
+`git config core.hooksPath githooks` so git actually uses them. Re-run it
+after any fresh clone or if `core.hooksPath` ever gets reset.
+
+---
+
+## Enforcement: versioned git hooks
+
+The checklist above is now also enforced mechanically via hooks in
+`githooks/` (versioned in this repo -- `.git/hooks` itself is not, so
+scripts live here instead and git is pointed at them):
+
+- **`commit-msg`** -- rejects any commit message containing a backtick,
+  closing off the shell command-substitution mangling risk at the source
+  instead of relying on remembering to write messages to a file.
+- **`pre-commit`** -- if a commit stages 6+ files or touches 3+ top-level
+  paths, prints the full staged file list and requires a typed `YES`
+  confirmation before proceeding. Catches `git add -A` sweeping in
+  unrelated WIP before it becomes a commit, not after.
+- **`pre-push`** -- inspects the commits about to be pushed and prints
+  which deploy step(s) apply (`worker/` changes need a separate
+  `npm run deploy`; `public/` changes trigger Cloudflare Pages and should
+  be verified live afterward), so the two deploy paths stop getting
+  conflated.
+
+**One-time setup per clone:**
+```bash
+bash githooks/install.sh
+```
+This `chmod +x`'s the three hook scripts and runs
+`git config core.hooksPath githooks` so git actually uses them. Re-run it
+after any fresh clone or if `core.hooksPath` ever gets reset.
+
+---
+
 ## Standing rules (carried over from existing practice)
 
 - Git commands are run by Ed, in his own terminal -- never executed on his

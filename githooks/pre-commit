@@ -1,0 +1,46 @@
+#!/bin/bash
+# FrontFrame pre-commit hook -- see DEPLOYMENT-SOP.md
+# Prints the full staged file list and, for wide commits, requires a
+# typed confirmation before proceeding. This exists because `git add -A`
+# on a repo with unrelated WIP sitting in it has, in practice, silently
+# bundled a dozen+ unrelated files (SQL dumps, draft pages, scripts) into
+# a commit whose message only described one small, unrelated change.
+
+STAGED=$(git diff --cached --name-only)
+COUNT=$(printf '%s\n' "$STAGED" | grep -c .)
+TOP_LEVELS=$(printf '%s\n' "$STAGED" | awk -F/ '{ if (NF>1) print $1; else print $0 }' | sort -u)
+TOP_LEVEL_COUNT=$(printf '%s\n' "$TOP_LEVELS" | grep -c .)
+
+WIDE_THRESHOLD_FILES=6
+WIDE_THRESHOLD_DIRS=3
+
+if [ "$COUNT" -ge "$WIDE_THRESHOLD_FILES" ] || [ "$TOP_LEVEL_COUNT" -ge "$WIDE_THRESHOLD_DIRS" ]; then
+  echo ""
+  echo "This commit stages $COUNT file(s) across $TOP_LEVEL_COUNT top-level path(s):"
+  echo ""
+  printf '%s\n' "$TOP_LEVELS" | sed 's/^/  - /'
+  echo ""
+  echo "Full staged file list:"
+  printf '%s\n' "$STAGED" | sed 's/^/  - /'
+  echo ""
+  echo "This looks wide for a single commit. A common cause is 'git add -A'"
+  echo "sweeping in unrelated WIP alongside the change you meant to commit."
+  echo ""
+  if [ -t 1 ]; then
+    exec < /dev/tty
+    read -r -p "Type YES to commit all of the above, or Ctrl-C to stop and re-stage explicitly: " CONFIRM
+    if [ "$CONFIRM" != "YES" ]; then
+      echo "Aborted. Re-stage with explicit paths, e.g.:"
+      echo "  git reset && git add public/js/config.js public/admin.html"
+      exit 1
+    fi
+  else
+    if [ "$ALLOW_WIDE_COMMIT" != "1" ]; then
+      echo "Non-interactive shell -- refusing wide commit."
+      echo "Re-run with explicit 'git add <paths>', or set ALLOW_WIDE_COMMIT=1 to bypass."
+      exit 1
+    fi
+  fi
+fi
+
+exit 0
