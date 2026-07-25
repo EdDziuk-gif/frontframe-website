@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Primary -->
+  <title>Schedule a Call — FrontFrame</title>
+  <meta name="description" content="Book a discovery or kickoff call with FrontFrame. Pick a date and time that works — we'll confirm right away." />
+  <link rel="canonical" href="https://frontframe.co/schedule" />
+  <meta name="robots" content="noindex, follow" />
+  <!-- Cloudflare Turnstile (bot protection) -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="FrontFrame" />
+  <meta property="og:title" content="Schedule a Call — FrontFrame" />
+  <meta property="og:description" content="Book a discovery or kickoff call with FrontFrame." />
+  <meta property="og:url" content="https://frontframe.co/schedule" />
+  <meta property="og:image" content="https://frontframe.co/social-preview.png" />
+  <meta property="og:image:alt" content="FrontFrame — Schedule a Call" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/brand.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--offwhite);
+      color: var(--navy);
+      min-height: 100vh;
+    }
+
+    h1, h2, h3, label { font-family: 'DM Sans', system-ui, sans-serif; font-weight: 700; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--navy);
+      padding: 0 48px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-wordmark {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--white);
+      letter-spacing: -0.01em;
+    }
+
+    .nav-back { font-size: 0.85rem; color: var(--gray); transition: color 0.2s; }
+    .nav-back:hover { color: var(--white); }
+
+    /* ── LAYOUT ── */
+    .page-wrap {
+      display: grid;
+      grid-template-columns: 1fr 560px;
+      min-height: calc(100vh - 64px);
+    }
+
+    .sidebar {
+      background: var(--navy);
+      padding: 80px 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .sidebar-eyebrow {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 20px;
+    }
+
+    .sidebar h1 { font-size: clamp(2rem, 2.8vw, 3rem); color: var(--white); line-height: 1.15; margin-bottom: 24px; }
+
+    .sidebar-body {
+      font-size: 1.05rem;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.75;
+      margin-bottom: 56px;
+      max-width: 520px;
+    }
+
+    .trust-items { display: flex; flex-direction: column; gap: 24px; }
+    .trust-item { display: flex; gap: 16px; align-items: flex-start; }
+    .trust-icon { color: var(--amber); font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+    .trust-item p { font-size: 0.95rem; color: rgba(255,255,255,0.6); line-height: 1.55; }
+    .trust-item strong { color: var(--white); display: block; font-size: 1rem; margin-bottom: 3px; }
+
+    /* ── FORM AREA ── */
+    .form-area { background: var(--white); padding: 80px 64px; display: flex; flex-direction: column; justify-content: center; }
+    .form-header { margin-bottom: 36px; }
+    .form-header h2 { font-size: 1.75rem; color: var(--navy); margin-bottom: 10px; }
+    .form-header p { font-size: 0.9rem; color: var(--gray); line-height: 1.6; }
+    .form-group { margin-bottom: 24px; }
+
+    label { display: block; font-size: 0.78rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--navy); margin-bottom: 8px; }
+    label .required { color: var(--amber); margin-left: 2px; }
+
+    input[type="text"], input[type="email"], input[type="tel"], input[type="date"], select, textarea {
+      width: 100%;
+      padding: 13px 18px;
+      border: 1.5px solid #E0E5EB;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      color: var(--navy);
+      background: var(--offwhite);
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      appearance: none;
+    }
+
+    textarea { resize: vertical; min-height: 88px; }
+    input:focus, select:focus, textarea:focus { border-color: var(--navy); background: var(--white); }
+
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: '▾'; position: absolute; right: 16px; top: 50%;
+      transform: translateY(-50%); color: var(--gray); pointer-events: none; font-size: 0.9rem;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .blackout-note {
+      display: none;
+      font-size: 0.85rem;
+      color: #B3261E;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--amber);
+      color: var(--navy);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s;
+    }
+
+    .submit-btn:hover { opacity: 0.88; }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .form-note { font-size: 0.8rem; color: var(--gray); text-align: center; margin-top: 16px; line-height: 1.5; }
+
+    /* ── SUCCESS STATE ── */
+    .success-state { display: none; text-align: center; }
+    .success-icon {
+      width: 56px; height: 56px; border-radius: 50%; background: rgba(245,166,35,0.15);
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+    }
+    .success-state h2 { font-size: 1.6rem; margin-bottom: 12px; }
+    .success-state p { font-size: 0.95rem; color: var(--gray); line-height: 1.65; margin-bottom: 8px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .sidebar { padding: 60px 48px; }
+      .form-area { padding: 60px 48px; }
+    }
+
+    @media (max-width: 768px) {
+      .page-wrap { grid-template-columns: 1fr; }
+      .sidebar { padding: 40px 24px; }
+      .form-area { padding: 40px 24px; }
+      .form-row { grid-template-columns: 1fr; }
+      nav { padding: 0 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/"><span class="nav-wordmark">FrontFrame</span></a>
+    <a class="nav-back" href="/">← Back to home</a>
+  </nav>
+
+  <div class="page-wrap">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <p class="sidebar-eyebrow">Schedule a call</p>
+      <h1>Let's talk through your project.</h1>
+      <p class="sidebar-body">Pick a time that works for a short discovery or kickoff call. We'll confirm right away — no back-and-forth email required.</p>
+      <div class="trust-items">
+        <div class="trust-item">
+          <span class="trust-icon">✓</span>
+          <p><strong>15–20 minutes</strong>Enough time to understand what you need and whether we're a fit.</p>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon">✓</span>
+          <p><strong>Real availability</strong>Only open dates and times are shown below.</p>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon">✓</span>
+          <p><strong>No pressure</strong>If it's not the right fit, we'll tell you honestly.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM -->
+    <div class="form-area">
+
+      <div id="formState">
+        <div class="form-header">
+          <h2>Book your call</h2>
+          <p>Fields marked <span style="color: var(--amber);">*</span> are required.</p>
+        </div>
+
+        <form id="scheduleForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Your name <span class="required">*</span></label>
+              <input type="text" id="name" name="name" placeholder="Eleanor Rodriguez" required>
+            </div>
+            <div class="form-group">
+              <label for="businessName">Business name</label>
+              <input type="text" id="businessName" name="businessName" placeholder="Eleanor's Avian Care">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email address <span class="required">*</span></label>
+              <input type="email" id="email" name="email" placeholder="eleanor@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone number</label>
+              <input type="tel" id="phone" name="phone" placeholder="(602) 555-0100">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="requestedDate">Preferred date <span class="required">*</span></label>
+              <input type="date" id="requestedDate" name="requestedDate" required>
+              <p class="blackout-note" id="blackoutNote">That date isn't available — please pick another.</p>
+            </div>
+            <div class="form-group">
+              <label for="slotLabel">Preferred time <span class="required">*</span></label>
+              <div class="select-wrap">
+                <select id="slotLabel" name="slotLabel" required>
+                  <option value="" disabled selected>Loading times…</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">What would you like to discuss?</label>
+            <textarea id="notes" name="notes" placeholder="A quick note on what you're building or looking for help with."></textarea>
+          </div>
+
+          <!-- Cloudflare Turnstile widget — site key injected from config.js -->
+          <div class="cf-turnstile" id="turnstileWidget" data-theme="light" style="margin-bottom: 16px;"></div>
+          <script>document.getElementById('turnstileWidget').dataset.sitekey = window.TURNSTILE_SITE_KEY;</script>
+
+          <p id="formError" style="display:none; color:#B3261E; font-size:0.9rem; margin-bottom:12px;"></p>
+
+          <button type="submit" class="submit-btn" id="submitBtn">Request this time →</button>
+          <p class="form-note">We'll confirm by email shortly after you submit.</p>
+        </form>
+      </div>
+
+      <div id="successState" class="success-state">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#F5A623" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="28" height="28">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <h2>You're booked in.</h2>
+        <p id="successSummary"></p>
+        <p>We'll follow up by email to confirm. If anything changes, just reply to that email.</p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script>
+    // ── Blackout-aware availability ──
+    let BLACKOUT_PERIODS = [];
+
+    function parseDate(str) { return new Date(str + 'T12:00:00'); }
+
+    function dateInBlackout(dateStr) {
+      const d = parseDate(dateStr);
+      return BLACKOUT_PERIODS.some(function(p) {
+        return d >= parseDate(p.startDate) && d <= parseDate(p.endDate);
+      });
+    }
+
+    async function loadAvailability() {
+      const slotSelect = document.getElementById('slotLabel');
+      const dateInput  = document.getElementById('requestedDate');
+      const today      = new Date().toISOString().slice(0, 10);
+      dateInput.min = today;
+
+      try {
+        const res  = await fetch(WORKER_URL + '/blackout');
+        const data = await res.json();
+        BLACKOUT_PERIODS = data.periods || [];
+
+        slotSelect.innerHTML = '<option value="" disabled selected>Select a time</option>';
+        (data.slots || []).forEach(function(slot) {
+          const opt = document.createElement('option');
+          opt.value = slot;
+          opt.textContent = slot;
+          slotSelect.appendChild(opt);
+        });
+      } catch (err) {
+        // Fail open, matching the eleanor-website pattern — don't block the
+        // form if the blackout lookup fails, just skip client-side filtering.
+        slotSelect.innerHTML = '<option value="" disabled selected>Select a time</option>' +
+          '<option value="9:00 AM MST">9:00 AM MST</option>' +
+          '<option value="10:00 AM MST">10:00 AM MST</option>' +
+          '<option value="11:00 AM MST">11:00 AM MST</option>' +
+          '<option value="1:00 PM MST">1:00 PM MST</option>' +
+          '<option value="2:00 PM MST">2:00 PM MST</option>' +
+          '<option value="3:00 PM MST">3:00 PM MST</option>';
+      }
+    }
+
+    document.getElementById('requestedDate').addEventListener('change', function() {
+      const note = document.getElementById('blackoutNote');
+      const btn  = document.getElementById('submitBtn');
+      if (this.value && dateInBlackout(this.value)) {
+        note.style.display = 'block';
+        btn.disabled = true;
+      } else {
+        note.style.display = 'none';
+        btn.disabled = false;
+      }
+    });
+
+    loadAvailability();
+
+    // ── Form Submission ──
+    document.getElementById('scheduleForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn     = document.getElementById('submitBtn');
+      const errorEl = document.getElementById('formError');
+      errorEl.style.display = 'none';
+
+      const requestedDate = document.getElementById('requestedDate').value;
+      if (dateInBlackout(requestedDate)) {
+        errorEl.textContent = "That date isn't available. Please pick another.";
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      const turnstileToken = document.querySelector('[name="cf-turnstile-response"]')?.value || '';
+      if (!turnstileToken) {
+        errorEl.textContent = 'Please complete the verification checkbox above.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.textContent = 'Submitting…';
+      btn.disabled = true;
+
+      const payload = {
+        name:            document.getElementById('name').value.trim(),
+        business_name:   document.getElementById('businessName').value.trim(),
+        email:           document.getElementById('email').value.trim(),
+        phone:           document.getElementById('phone').value.trim(),
+        requested_date:  requestedDate,
+        slot_label:      document.getElementById('slotLabel').value,
+        notes:           document.getElementById('notes').value.trim(),
+        turnstileToken:  turnstileToken,
+      };
+
+      try {
+        const res    = await fetch(WORKER_URL + '/schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await res.json().catch(function() { return {}; });
+
+        if (!res.ok || !result.ok) {
+          throw new Error(result.error || 'Something went wrong. Please try again.');
+        }
+
+        document.getElementById('successSummary').textContent =
+          payload.requested_date + ' at ' + payload.slot_label + '.';
+        document.getElementById('formState').style.display = 'none';
+        document.getElementById('successState').style.display = 'block';
+      } catch (err) {
+        errorEl.textContent = err.message || 'Something went wrong submitting the form. Please try again, or email us directly.';
+        errorEl.style.display = 'block';
+        btn.textContent = 'Request this time →';
+        btn.disabled = false;
+        if (window.turnstile) window.turnstile.reset(document.getElementById('turnstileWidget'));
+      }
+    });
+  </script>
+</body>
+</html>

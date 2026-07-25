@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subscriptions Wireframe — FrontFrame Admin</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F5F4F0;
+    --paper: #FFFFFF;
+    --ink: #1A1A1A;
+    --ink-mid: #4A4A4A;
+    --ink-light: #888;
+    --border: #E0DDD6;
+    --amber: #C8861A;
+    --navy: #1E2D40;
+    --green: #2D7A4F;
+    --red: #B03030;
+    --mono: 'SF Mono', 'Fira Mono', 'Courier New', monospace;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.5; }
+
+  .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar { background: var(--navy); color: rgba(255,255,255,0.7); padding: 0; }
+  .sidebar-logo { padding: 20px 20px 16px; font-size: 1rem; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-logo span { opacity: 0.45; font-weight: 400; font-size: 0.7rem; margin-left: 4px; }
+  .nav-item { display: block; width: 100%; text-align: left; padding: 10px 20px; background: none; border: none; color: rgba(255,255,255,0.55); font-size: 0.82rem; cursor: pointer; border-left: 3px solid transparent; }
+  .nav-item:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.85); }
+  .nav-item.active { background: rgba(255,255,255,0.08); color: #fff; border-left-color: var(--amber); }
+
+  /* MAIN */
+  .main { padding: 32px 40px; overflow-y: auto; }
+  .page-header { margin-bottom: 24px; }
+  .page-title { font-size: 1.35rem; font-weight: 600; color: var(--ink); }
+  .page-sub { font-size: 0.8rem; color: var(--ink-light); margin-top: 3px; }
+
+  /* DROPDOWN */
+  .sub-dropdown-wrap { display: flex; align-items: center; gap: 1rem; margin-bottom: 24px; }
+  .sub-dropdown-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-light); display: block; margin-bottom: 5px; }
+  .sub-dropdown { font-family: inherit; font-size: 0.88rem; padding: 8px 12px; border: 1px solid var(--border); border-radius: 5px; background: var(--paper); color: var(--ink); min-width: 240px; cursor: pointer; }
+  .save-status { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-light); margin-top: 1.1rem; }
+
+  /* SUB PANELS */
+  .sub-panel { display: none; }
+  .sub-panel.active { display: block; }
+
+  /* SECTIONS */
+  .sub-section { background: var(--paper); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+  .sub-section-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border); background: #FAFAF8; }
+  .sub-section-title { font-size: 0.8rem; font-weight: 600; color: var(--ink-mid); }
+  .sub-link-btn { font-size: 0.75rem; color: var(--amber); text-decoration: none; border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; transition: background 0.15s; }
+  .sub-link-btn:hover { background: #FFF8EE; }
+  .sub-section-body { padding: 18px; }
+
+  /* FIELDS */
+  .sub-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+  .sub-field:last-child { margin-bottom: 0; }
+  .sub-field label { font-size: 0.72rem; font-weight: 600; color: var(--ink-mid); }
+  .sub-field input[type="text"],
+  .sub-field input[type="email"],
+  .sub-field input[type="password"],
+  .sub-field select,
+  .sub-field textarea { font-family: inherit; font-size: 0.85rem; padding: 8px 11px; border: 1px solid var(--border); border-radius: 4px; background: var(--paper); color: var(--ink); width: 100%; }
+  .sub-field textarea { resize: vertical; }
+  .sub-field input:focus, .sub-field select:focus, .sub-field textarea:focus { outline: none; border-color: var(--amber); }
+
+  .sub-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .sub-field-row.thirds { grid-template-columns: 1fr 1fr 1fr; }
+  .sub-field-row .sub-field { margin-bottom: 0; }
+
+  .sub-card-wrap { position: relative; display: flex; align-items: center; }
+  .sub-card-wrap input { padding-right: 3.5rem; }
+  .sub-card-toggle { position: absolute; right: 8px; font-size: 0.62rem; font-weight: 700; font-family: var(--mono); color: var(--amber); background: none; border: none; cursor: pointer; letter-spacing: 0.05em; }
+
+  /* SAVE BUTTON */
+  .sub-save-btn { background: var(--navy); color: #fff; border: none; border-radius: 4px; padding: 9px 20px; font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; margin-top: 4px; }
+  .sub-save-btn:hover { opacity: 0.88; }
+
+  /* COMPLIANCE TABLE */
+  .card { background: var(--paper); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-top: 24px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+  .card-title { font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+  .btn-sm { font-family: inherit; font-size: 0.75rem; padding: 5px 12px; border-radius: 4px; background: var(--navy); color: #fff; border: none; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-light); padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: left; background: #FAFAF8; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 0.82rem; color: var(--ink-mid); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* MISSING BADGE */
+  .missing-badge { display: inline-block; background: #FFF3CD; color: #856404; border: 1px solid #FFD75E; border-radius: 3px; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; margin-left: 8px; vertical-align: middle; }
+  .encrypted-note { font-family: var(--mono); font-size: 0.62rem; color: var(--ink-light); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">FrontFrame <span>Admin</span></div>
+    <button class="nav-item">📋 Pipeline</button>
+    <button class="nav-item">💬 Q&A</button>
+    <button class="nav-item">🧠 System Prompt</button>
+    <button class="nav-item">🐛 Defects</button>
+    <button class="nav-item">📝 Feedback</button>
+    <button class="nav-item">💡 Solutions</button>
+    <button class="nav-item active">📱 Subscriptions</button>
+    <button class="nav-item">🕐 Office Hours</button>
+    <button class="nav-item">⚙️ Config</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="page-header">
+      <div class="page-title">Subscriptions</div>
+      <div class="page-sub">Platform credentials, compliance records, and payment methods — all encrypted at rest</div>
+    </div>
+
+    <div class="sub-dropdown-wrap">
+      <div>
+        <label class="sub-dropdown-label">Vendor</label>
+        <select class="sub-dropdown" id="subSelect" onchange="switchSubscription()">
+          <optgroup label="Subscriptions">
+            <option value="surge">Surge — SMS Alerts</option>
+          </optgroup>
+          <optgroup label="Platform">
+            <option value="supabase">Supabase</option>
+            <option value="cloudflare">Cloudflare</option>
+            <option value="buttondown">Buttondown</option>
+            <option value="docuseal">DocuSeal</option>
+            <option value="stripe">Stripe</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="cal">Cal.com</option>
+            <option value="resend">Resend ⚠ MISSING FROM ADMIN</option>
+            <option value="google">Google</option>
+          </optgroup>
+          <optgroup label="Payment Methods">
+            <option value="card_1">Card 1</option>
+            <option value="card_2">Card 2</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="save-status" id="vaultSaveStatus"></div>
+    </div>
+
+    <!-- ══ SURGE ══ -->
+    <div class="sub-panel active" id="subPanel-surge">
+      <div class="sub-section">
+        <div class="sub-section-header">
+          <div class="sub-section-title">🔐 Account Credentials</div>
+          <a href="https://hq.surge.app" target="_blank" class="sub-link-btn">Open Surge ↗</a>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Login Email</label><input type="email" placeholder="ed@frontframe.co"></div>
+            <div class="sub-field"><label>Password</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Account ID</label><input type="text" placeholder="acct_01…"></div>
+            <div class="sub-field"><label>API Key</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="sk_live_…" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field-row">
+            <div class="sub-field"><label>From Number</label><input type="text" placeholder="(844) 940-0984"></div>
+            <div class="sub-field"><label>Alert Phone (Ed)</label><input type="text" placeholder="+14803600069"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sub-section">
+        <div class="sub-section-header"><div class="sub-section-title">📋 Application Reference</div></div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Business Display Name</label><input type="text" placeholder="FrontFrame"></div>
+            <div class="sub-field"><label>Legal Name</label><input type="text" placeholder="FrontFrame LLC"></div>
+          </div>
+          <div class="sub-field-row thirds">
+            <div class="sub-field"><label>Org Type</label>
+              <select><option value="">— select —</option><option>LLC</option><option>Sole Proprietor</option><option>Corporation</option><option>Partnership</option></select>
+            </div>
+            <div class="sub-field"><label>EIN</label><input type="text" placeholder="12-3456789"></div>
+            <div class="sub-field"><label>Industry</label><input type="text" placeholder="Professional Services"></div>
+          </div>
+          <div class="sub-field"><label>Website</label><input type="text" placeholder="https://frontframe.co"></div>
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Contact Name</label><input type="text" placeholder="Ed Dziuk"></div>
+            <div class="sub-field"><label>Contact Email</label><input type="email" placeholder="ed@frontframe.co"></div>
+          </div>
+          <div class="sub-field"><label>Campaign Description</label>
+            <textarea rows="3" placeholder="FrontFrame sends transactional alert notifications to the operator when a prospect signals readiness via the website chat widget. Internal operational alerts only."></textarea>
+          </div>
+          <div class="sub-field"><label>Notes</label><textarea rows="5"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save Surge</button>
+    </div>
+
+    <!-- ══ SUPABASE ══ -->
+    <div class="sub-panel" id="subPanel-supabase">
+      <div class="sub-section">
+        <div class="sub-section-header">
+          <div class="sub-section-title">🔐 Account Credentials</div>
+          <a href="https://supabase.com/dashboard" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Login Email</label><input type="email" placeholder="ed@frontframe.co"></div>
+            <div class="sub-field"><label>Password</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Project ID</label><input type="text" placeholder="ifjsepyzdnpmwyuytppr"></div>
+            <div class="sub-field"><label>Project URL</label><input type="text" placeholder="https://ifjsepyzdnpmwyuytppr.supabase.co"></div>
+          </div>
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Publishable Key</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="sb_publishable_…" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+            <div class="sub-field"><label>Secret Key (Service Role)</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="sb_secret_… or eyJhb…" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field"><label>Vault Encryption Key (VAULT_ENCRYPTION_KEY)</label>
+            <div class="sub-card-wrap"><input type="password" placeholder="base64 32-byte key from openssl rand -base64 32" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+          </div>
+          <div class="sub-field"><label>Notes</label><textarea rows="4" placeholder="Key recovery notes, RoboForm entry names, migration history…"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save Supabase</button>
+    </div>
+
+    <!-- ══ CLOUDFLARE ══ -->
+    <div class="sub-panel" id="subPanel-cloudflare">
+      <div class="sub-section">
+        <div class="sub-section-header">
+          <div class="sub-section-title">🔐 Account Credentials</div>
+          <a href="https://dash.cloudflare.com" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Login Email</label><input type="email" placeholder="ed@frontframe.co"></div>
+            <div class="sub-field"><label>Password</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Account ID</label><input type="text" placeholder="e5c0c71b…"></div>
+            <div class="sub-field"><label>Zone ID (this domain)</label><input type="text" placeholder="xxxxxxxx…"></div>
+          </div>
+          <div class="sub-field"><label>Notes</label><textarea rows="4"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save Cloudflare</button>
+    </div>
+
+    <!-- ══ BUTTONDOWN ══ -->
+    <div class="sub-panel" id="subPanel-buttondown">
+      <div class="sub-section">
+        <div class="sub-section-header">
+          <div class="sub-section-title">🔐 Account Credentials</div>
+          <a href="https://buttondown.com/login" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Login Email</label><input type="email" placeholder="ed@frontframe.co"></div>
+            <div class="sub-field"><label>Password</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field"><label>API Key</label>
+            <div class="sub-card-wrap"><input type="password" placeholder="Token …" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+          </div>
+          <div class="sub-field"><label>Notes</label><textarea rows="4"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save Buttondown</button>
+    </div>
+
+    <!-- ══ DOCUSEAL ══ -->
+    <div class="sub-panel" id="subPanel-docuseal">
+      <div class="sub-section">
+        <div class="sub-section-header">
+          <div class="sub-section-title">🔐 Account Credentials</div>
+          <a href="https://docuseal.com" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Login Email</label><input type="email" placeholder="ed@frontframe.co"></div>
+            <div class="sub-field"><label>Password</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field-row">
+            <div class="sub-field"><label>API Key</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="••••••••••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+            <div class="sub-field"><label>Template ID</label><input type="text" placeholder="3600228"></div>
+          </div>
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Webhook Secret</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="whsec_…" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+            <div class="sub-field"><label>Signature URL</label><input type="text" placeholder="https://frontframe.co/assets/frontframe-signature.png"></div>
+          </div>
+          <div class="sub-field"><label>API Certificate</label>
+            <textarea rows="5" placeholder="-----BEGIN CERTIFICATE-----…" autocomplete="off"></textarea>
+          </div>
+          <div class="sub-field"><label>Notes</label><textarea rows="4"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save DocuSeal</button>
+    </div>
+
+    <!-- ══ STRIPE ══ -->
+    <div class="sub-panel" id="subPanel-stripe">
+      <div class="sub-section">
+        <div class="sub-section-header">
+          <div class="sub-section-title">🔐 Account Credentials</div>
+          <a href="https://dashboard.stripe.com" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Login Email</label><input type="email" placeholder="ed@frontframe.co"></div>
+            <div class="sub-field"><label>Password</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Publishable Key</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="pk_live_…" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+            <div class="sub-field"><label>Secret Key</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="sk_live_…" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Webhook Secret</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="whsec_…" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+            <div class="sub-field"><label>Account ID</label><input type="text" placeholder="acct_…"></div>
+          </div>
+          <div class="sub-field"><label>Notes</label><textarea rows="4"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save Stripe</button>
+    </div>
+
+    <!-- ══ ANTHROPIC ══ -->
+    <div class="sub-panel" id="subPanel-anthropic">
+      <div class="sub-section">
+        <div class="sub-section-header">
+          <div class="sub-section-title">🔐 Account Credentials</div>
+          <a href="https://console.anthropic.com" target="_blank" class="sub-link-btn">Console ↗</a>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Login Email</label><input type="email" placeholder="ed@frontframe.co"></div>
+            <div class="sub-field"><label>Password</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field"><label>API Key</label>
+            <div class="sub-card-wrap"><input type="password" placeholder="sk-ant-…" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+          </div>
+          <div class="sub-field"><label>Notes</label><textarea rows="4"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save Anthropic</button>
+    </div>
+
+    <!-- ══ CAL.COM ══ -->
+    <div class="sub-panel" id="subPanel-cal">
+      <div class="sub-section">
+        <div class="sub-section-header">
+          <div class="sub-section-title">🔐 Account Credentials</div>
+          <a href="https://cal.com/team/frontframe-team" target="_blank" class="sub-link-btn">Team Page ↗</a>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Login Email</label><input type="email" placeholder="ed@frontframe.co"></div>
+            <div class="sub-field"><label>Password</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field-row">
+            <div class="sub-field"><label>API Key</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="cal_live_…" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+            <div class="sub-field"><label>Team URL</label><input type="text" value="cal.com/team/frontframe-team"></div>
+          </div>
+          <div class="sub-field"><label>Webhook Secret</label>
+            <div class="sub-card-wrap"><input type="password" placeholder="Generated in Cal.com → Settings → Developer → Webhooks" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+          </div>
+          <div class="sub-field"><label>Notes</label><textarea rows="4"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save Cal.com</button>
+    </div>
+
+    <!-- ══ RESEND (MISSING FROM ADMIN) ══ -->
+    <div class="sub-panel" id="subPanel-resend">
+      <div class="sub-section" style="border-color:#FFD75E;">
+        <div class="sub-section-header" style="background:#FFFBF0;">
+          <div class="sub-section-title">🔐 Account Credentials <span class="missing-badge">NOT IN ADMIN PANEL</span></div>
+          <a href="https://resend.com/login" target="_blank" class="sub-link-btn">Dashboard ↗</a>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Login Email</label><input type="email" placeholder="ed@frontframe.co"></div>
+            <div class="sub-field"><label>Password</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field"><label>API Key</label>
+            <div class="sub-card-wrap"><input type="password" placeholder="re_…" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+          </div>
+          <div class="sub-field"><label>From Address</label><input type="text" placeholder="no-reply@frontframe.co"></div>
+          <div class="sub-field"><label>Notes</label><textarea rows="4"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save Resend</button>
+    </div>
+
+    <!-- ══ GOOGLE ══ -->
+    <div class="sub-panel" id="subPanel-google">
+      <div class="sub-section">
+        <div class="sub-section-header">
+          <div class="sub-section-title">🔐 Account Credentials</div>
+          <a href="https://console.cloud.google.com" target="_blank" class="sub-link-btn">Console ↗</a>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Login Email</label><input type="email" placeholder="ed@frontframe.co"></div>
+            <div class="sub-field"><label>Password</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="••••••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field"><label>Maps API Key</label>
+            <div class="sub-card-wrap"><input type="password" placeholder="AIza…" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+          </div>
+          <div class="sub-field"><label>Business Profile URL</label><input type="text" placeholder="https://maps.app.goo.gl/…"></div>
+          <div class="sub-field"><label>Notes</label><textarea rows="4"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save Google</button>
+    </div>
+
+    <!-- ══ CARD 1 ══ -->
+    <div class="sub-panel" id="subPanel-card_1">
+      <div class="sub-section">
+        <div class="sub-section-header">
+          <div class="sub-section-title">💳 Payment Card 1</div>
+          <span class="encrypted-note">Encrypted at rest</span>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Cardholder Name</label><input type="text" placeholder="Ed Dziuk"></div>
+            <div class="sub-field"><label>Card Number (full, masked)</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="•••• •••• •••• ••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field-row thirds">
+            <div class="sub-field"><label>Expiry</label><input type="text" placeholder="MM/YY" maxlength="5"></div>
+            <div class="sub-field"><label>Billing ZIP</label><input type="text" placeholder="85021"></div>
+            <div class="sub-field"><label>Used For</label><input type="text" placeholder="e.g. Surge, Cloudflare"></div>
+          </div>
+          <div class="sub-field"><label>Notes</label><textarea rows="4"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save Card 1</button>
+    </div>
+
+    <!-- ══ CARD 2 ══ -->
+    <div class="sub-panel" id="subPanel-card_2">
+      <div class="sub-section">
+        <div class="sub-section-header">
+          <div class="sub-section-title">💳 Payment Card 2</div>
+          <span class="encrypted-note">Encrypted at rest</span>
+        </div>
+        <div class="sub-section-body">
+          <div class="sub-field-row">
+            <div class="sub-field"><label>Cardholder Name</label><input type="text" placeholder="Ed Dziuk"></div>
+            <div class="sub-field"><label>Card Number (full, masked)</label>
+              <div class="sub-card-wrap"><input type="password" placeholder="•••• •••• •••• ••••" autocomplete="off" style="padding-right:3.5rem;"><button class="sub-card-toggle">SHOW</button></div>
+            </div>
+          </div>
+          <div class="sub-field-row thirds">
+            <div class="sub-field"><label>Expiry</label><input type="text" placeholder="MM/YY" maxlength="5"></div>
+            <div class="sub-field"><label>Billing ZIP</label><input type="text" placeholder="85021"></div>
+            <div class="sub-field"><label>Used For</label><input type="text" placeholder="e.g. DocuSeal, Stripe"></div>
+          </div>
+          <div class="sub-field"><label>Notes</label><textarea rows="4"></textarea></div>
+        </div>
+      </div>
+      <button class="sub-save-btn">Save Card 2</button>
+    </div>
+
+    <!-- COMPLIANCE RECORDS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Compliance Records</div>
+        <button class="btn-sm">+ Add Record</button>
+      </div>
+      <table>
+        <thead><tr><th>Platform</th><th>Provisioned By</th><th>Number</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td colspan="5" style="text-align:center;color:var(--ink-light);padding:24px;">No records yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+  function switchSubscription() {
+    const val = document.getElementById('subSelect').value;
+    document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('subPanel-' + val);
+    if (panel) panel.classList.add('active');
+  }
+</script>
+</body>
+</html>
