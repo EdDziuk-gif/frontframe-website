@@ -125,11 +125,35 @@ scripts live here instead and git is pointed at them):
 
 - **`commit-msg`** -- rejects any commit message containing a backtick,
   closing off the shell command-substitution mangling risk at the source
-  instead of relying on remembering to write messages to a file.
+  instead of relying on remembering to write messages to a file. Also
+  enforces basic message formatting: non-empty subject line, subject
+  <=72 characters, no trailing period, and a blank line separating the
+  subject from any body text (standard git convention -- matches the
+  style already used for every commit in this SOP).
 - **`pre-commit`** -- if a commit stages 6+ files or touches 3+ top-level
   paths, prints the full staged file list and requires a typed `YES`
   confirmation before proceeding. Catches `git add -A` sweeping in
-  unrelated WIP before it becomes a commit, not after.
+  unrelated WIP before it becomes a commit, not after. Also runs, in
+  order, before that check:
+  - **Lint** -- `npx eslint .`, only if an ESLint config file is present
+    at the repo root. No config exists yet, so this is currently a no-op;
+    it activates automatically the day a config is added.
+  - **Worker tests** -- `npx vitest run` inside `worker/`, only when
+    staged changes touch `worker/` *and* at least one `*.test.js` file
+    exists there. `worker/package.json` already has a `test` script
+    wired to vitest, but no test files exist yet, so this is also
+    currently a no-op until real tests are added.
+  - **New-feature test-coverage reminder** (`pre-commit-test-check`,
+    called from `pre-commit` -- git only runs one script per hook name,
+    so this lives as a separate script rather than a second hook) --
+    when a *newly added* file under `worker/src/` or `public/` (excluding
+    `debug-*.js`) has no matching `*.test.js`/`*.spec.js` file anywhere in
+    the repo, drafts a ready-to-paste LLM prompt (the new file's content
+    embedded, plus a suggested test path) to `/tmp/test_prompt_<name>.txt`
+    and requires a typed `YES` to commit without a test for now. This does
+    not call any LLM API -- no key needed, no per-commit cost -- you paste
+    the prompt into Perplexity (or whichever LLM you're using) yourself
+    and review what comes back before committing it.
 - **`pre-push`** -- inspects the commits about to be pushed and prints
   which deploy step(s) apply (`worker/` changes need a separate
   `npm run deploy`; `public/` changes trigger Cloudflare Pages and should
@@ -140,59 +164,11 @@ scripts live here instead and git is pointed at them):
   same worker/public deploy reminder as `pre-push`, but immediately, so
   you see it the moment you commit rather than only at push time.
 
-`pre-commit` also runs two additional checks before the wide-commit
-list/confirmation, each skipping gracefully until the underlying tooling
-actually exists in the repo:
-
-- **Lint** -- runs `npx eslint .` only if an ESLint config file is
-  present at the repo root. No config exists yet, so this is currently a
-  no-op; it activates automatically the day a config is added.
-- **Worker tests** -- runs `npx vitest run` inside `worker/` only when
-  staged changes touch `worker/` *and* at least one `*.test.js` file
-  exists there. `worker/package.json` already has a `test` script wired
-  to vitest, but no test files exist yet, so this is also currently a
-  no-op until real tests are added.
-
-`commit-msg` also enforces basic message formatting, on top of the
-backtick guard: non-empty subject line, subject <=72 characters, no
-trailing period on the subject, and a blank line separating the subject
-from any body text (standard git convention -- matches the style already
-used for every commit in this SOP).
-
 **One-time setup per clone:**
 ```bash
 bash githooks/install.sh
 ```
-This `chmod +x`'s the three hook scripts and runs
-`git config core.hooksPath githooks` so git actually uses them. Re-run it
-after any fresh clone or if `core.hooksPath` ever gets reset.
-
----
-
-## Enforcement: versioned git hooks
-
-The checklist above is now also enforced mechanically via hooks in
-`githooks/` (versioned in this repo -- `.git/hooks` itself is not, so
-scripts live here instead and git is pointed at them):
-
-- **`commit-msg`** -- rejects any commit message containing a backtick,
-  closing off the shell command-substitution mangling risk at the source
-  instead of relying on remembering to write messages to a file.
-- **`pre-commit`** -- if a commit stages 6+ files or touches 3+ top-level
-  paths, prints the full staged file list and requires a typed `YES`
-  confirmation before proceeding. Catches `git add -A` sweeping in
-  unrelated WIP before it becomes a commit, not after.
-- **`pre-push`** -- inspects the commits about to be pushed and prints
-  which deploy step(s) apply (`worker/` changes need a separate
-  `npm run deploy`; `public/` changes trigger Cloudflare Pages and should
-  be verified live afterward), so the two deploy paths stop getting
-  conflated.
-
-**One-time setup per clone:**
-```bash
-bash githooks/install.sh
-```
-This `chmod +x`'s the three hook scripts and runs
+This `chmod +x`'s the hook scripts and runs
 `git config core.hooksPath githooks` so git actually uses them. Re-run it
 after any fresh clone or if `core.hooksPath` ever gets reset.
 

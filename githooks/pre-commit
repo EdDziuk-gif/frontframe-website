@@ -36,6 +36,12 @@ if printf '%s\n' "$STAGED_PRECHECK" | grep -q '^worker/'; then
   fi
 fi
 
+# --- New-feature-file test-coverage reminder (secondary check, lives in
+#     its own script since git only runs one script per hook name) ---
+if [ -f githooks/pre-commit-test-check ]; then
+  bash githooks/pre-commit-test-check || exit 1
+fi
+
 STAGED=$(git diff --cached --name-only)
 COUNT=$(printf '%s\n' "$STAGED" | grep -c .)
 TOP_LEVELS=$(printf '%s\n' "$STAGED" | awk -F/ '{ if (NF>1) print $1; else print $0 }' | sort -u)

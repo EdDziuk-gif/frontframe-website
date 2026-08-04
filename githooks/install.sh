@@ -4,6 +4,6 @@
 #   bash githooks/install.sh
 set -e
 cd "$(git rev-parse --show-toplevel)"
-chmod +x githooks/pre-commit githooks/commit-msg githooks/pre-push githooks/post-commit
+chmod +x githooks/pre-commit githooks/commit-msg githooks/pre-push githooks/post-commit githooks/pre-commit-test-check
 git config core.hooksPath githooks
 echo "Git hooks installed (core.hooksPath = githooks)."

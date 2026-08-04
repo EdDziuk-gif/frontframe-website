@@ -1,0 +1,142 @@
+#!/bin/bash
+# FrontFrame pre-commit-test-check -- see DEPLOYMENT-SOP.md
+# Called from githooks/pre-commit as a secondary step (git only runs one
+# script per hook name, so this lives separately and gets invoked, not
+# registered as its own hook).
+#
+# Purpose: when a *newly added* feature file has no matching test file
+# anywhere in the repo, auto-compose a ready-to-paste LLM prompt (the
+# file's own content embedded, plus the expected test path) and save it
+# to /tmp. This does NOT call any LLM API -- no key needed, no cost per
+# commit, and you stay in control of test quality by pasting the prompt
+# into whichever tool you're using (Perplexity, Claude, ChatGPT) and
+# reviewing what comes back before it's committed.
+#
+# Only looks at files git reports as newly added ("A") -- edits to
+# existing files don't retrigger this every time you touch something
+# that already lacked a test.
+
+ADDED=$(git diff --cached --name-status | awk '$1=="A" {print $2}')
+[ -z "$ADDED" ] && exit 0
+
+FOUND_UNTESTED=0
+PROMPT_FILES=()
+
+is_feature_file() {
+  local f="$1"
+  case "$f" in
+    worker/src/*.js)   [[ "$f" != *".test.js" ]] && return 0 ;;
+    public/*.js)        [[ "$f" != *".test.js" ]] && [[ "$(basename "$f")" != debug-* ]] && return 0 ;;
+    public/*.html)      return 0 ;;
+  esac
+  return 1
+}
+
+expected_test_path() {
+  local f="$1"
+  case "$f" in
+    worker/src/*)
+      echo "worker/test/${f#worker/src/}" | sed 's/\.js$/.test.js/'
+      ;;
+    public/js/*)
+      local dir base
+      dir=$(dirname "$f")
+      base=$(basename "$f" .js)
+      echo "${dir}/__tests__/${base}.test.js"
+      ;;
+    public/*.html)
+      local base
+      base=$(basename "$f" .html)
+      echo "public/__tests__/${base}.test.js"
+      ;;
+    public/*.js)
+      local dir base
+      dir=$(dirname "$f")
+      base=$(basename "$f" .js)
+      echo "${dir}/__tests__/${base}.test.js"
+      ;;
+  esac
+}
+
+for FILE in $ADDED; do
+  if ! is_feature_file "$FILE"; then
+    continue
+  fi
+
+  BASE_NAME=$(basename "$FILE")
+  BASE_NO_EXT="${BASE_NAME%.*}"
+
+  # Forgiving search: does ANY *.test.js or *.spec.js matching this
+  # basename already exist anywhere in the repo (not just at the
+  # expected conventional path)?
+  EXISTING_MATCH=$(find . -not -path './node_modules/*' -not -path './.git/*' \
+    \( -iname "${BASE_NO_EXT}.test.js" -o -iname "${BASE_NO_EXT}.spec.js" \) 2>/dev/null | head -1)
+
+  if [ -n "$EXISTING_MATCH" ]; then
+    continue
+  fi
+
+  FOUND_UNTESTED=1
+  EXPECTED_PATH=$(expected_test_path "$FILE")
+  SAFE_NAME=$(echo "$FILE" | tr '/' '_')
+  PROMPT_PATH="/tmp/test_prompt_${SAFE_NAME}.txt"
+
+  {
+    echo "You are writing a unit test for a file in the FrontFrame repository."
+    echo "No test framework decision has been made for anything under public/ yet;"
+    echo "worker/ uses vitest with @cloudflare/vitest-pool-workers."
+    echo ""
+    echo "Feature file: $FILE"
+    echo "Suggested test file path (repo convention, adjust if it doesn't fit): $EXPECTED_PATH"
+    echo ""
+    echo "Instructions:"
+    echo "- If this is a worker/src/ file, write a vitest test using the existing"
+    echo "  @cloudflare/vitest-pool-workers setup already configured in worker/."
+    echo "- If this is a public/ file with embedded or linked JS logic (form"
+    echo "  handling, fetch calls, validation), write tests for that logic and"
+    echo "  note which test runner you assumed, since none is configured yet."
+    echo "- If this is a static page with no meaningful logic to unit test, say"
+    echo "  so plainly instead of inventing tests for markup."
+    echo "- Cover the realistic success path plus at least one failure/edge case."
+    echo ""
+    echo "--- Full content of $FILE ---"
+    cat "$FILE"
+  } > "$PROMPT_PATH"
+
+  PROMPT_FILES+=("$PROMPT_PATH")
+done
+
+if [ "$FOUND_UNTESTED" -eq 1 ]; then
+  echo ""
+  echo "----------------------------------------------------------------"
+  echo "New feature file(s) staged with no matching test found anywhere"
+  echo "in the repo. A ready-to-paste prompt was drafted for each:"
+  echo ""
+  for P in "${PROMPT_FILES[@]}"; do
+    echo "  - $P"
+  done
+  echo ""
+  echo "Paste the prompt into Perplexity (or your LLM of choice), save the"
+  echo "generated test at the suggested path (or wherever fits better),"
+  echo "then 'git add' it before finishing this commit -- or continue"
+  echo "without one for now."
+  echo ""
+  if [ -t 1 ]; then
+    exec < /dev/tty
+    read -r -p "Type YES to commit without a test for now, or Ctrl-C to stop and add one first: " CONFIRM
+    if [ "$CONFIRM" != "YES" ]; then
+      echo "Aborted."
+      exit 1
+    fi
+  else
+    if [ "$ALLOW_UNTESTED_COMMIT" != "1" ]; then
+      echo "Non-interactive shell -- refusing to commit untested feature file(s)."
+      echo "Set ALLOW_UNTESTED_COMMIT=1 to bypass."
+      exit 1
+    fi
+  fi
+  echo "----------------------------------------------------------------"
+  echo ""
+fi
+
+exit 0
