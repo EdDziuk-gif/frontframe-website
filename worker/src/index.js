@@ -1834,18 +1834,43 @@ async function handleStripeWebhook(request, env, corsHeaders) {
     const leadId     = session.metadata?.lead_id     ?? null;
     const priceLabel = session.metadata?.price_label ?? "payment";
     const amount     = session.amount_total          ?? 0;
-    if (leadId) {
-      const agrRows = await supabaseFetch(env, "agreements", `?lead_id=eq.${leadId}&order=sent_at.desc&limit=1`).catch(() => null);
-      if (agrRows?.length) {
-        await supabasePatch(env, "agreements", agrRows[0].id, {
-          payment_received_at: new Date().toISOString(), stripe_session_id: session.id,
-        }).catch((e) => console.error("payment_received_at update failed:", e));
+
+    // Ledger + idempotency: record every completed session before acting on it.
+    // payments.stripe_session_id is UNIQUE -- a duplicate insert means Stripe
+    // already delivered this event, so skip the notification/agreement patch.
+    let alreadyProcessed = false;
+    try {
+      await supabasePost(env, "payments", {
+        client_name: session.customer_details?.name ?? null,
+        client_email: session.customer_details?.email ?? null,
+        amount_cents: amount,
+        currency: session.currency ?? "usd",
+        payment_type: priceLabel,
+        stripe_session_id: session.id,
+        stripe_payment_intent_id: session.payment_intent ?? null,
+      });
+    } catch (e) {
+      if (String(e.message).includes("duplicate key")) {
+        alreadyProcessed = true;
+      } else {
+        console.error("payments ledger insert failed:", e);
       }
     }
-    await sendSms(env,
-      `FrontFrame payment received\nAmount: $${(amount / 100).toFixed(2)}\nItem: ${priceLabel}\n` +
-      (leadId ? `Lead: ${leadId}\n` : "") + `Session: ${session.id.slice(-12)}`
-    ).catch((e) => console.error("Stripe payment SMS failed:", e));
+
+    if (!alreadyProcessed) {
+      if (leadId) {
+        const agrRows = await supabaseFetch(env, "agreements", `?lead_id=eq.${leadId}&order=sent_at.desc&limit=1`).catch(() => null);
+        if (agrRows?.length) {
+          await supabasePatch(env, "agreements", agrRows[0].id, {
+            payment_received_at: new Date().toISOString(), stripe_session_id: session.id,
+          }).catch((e) => console.error("payment_received_at update failed:", e));
+        }
+      }
+      await sendSms(env,
+        `FrontFrame payment received\nAmount: $${(amount / 100).toFixed(2)}\nItem: ${priceLabel}\n` +
+        (leadId ? `Lead: ${leadId}\n` : "") + `Session: ${session.id.slice(-12)}`
+      ).catch((e) => console.error("Stripe payment SMS failed:", e));
+    }
   }
   return jsonResponse({ ok: true }, 200, corsHeaders);
 }
