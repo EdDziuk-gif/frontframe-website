@@ -43,7 +43,6 @@ ALTER TABLE IF EXISTS ONLY storage.s3_multipart_uploads_parts DROP CONSTRAINT IF
 ALTER TABLE IF EXISTS ONLY storage.s3_multipart_uploads_parts DROP CONSTRAINT IF EXISTS s3_multipart_uploads_parts_bucket_id_fkey;
 ALTER TABLE IF EXISTS ONLY storage.s3_multipart_uploads DROP CONSTRAINT IF EXISTS s3_multipart_uploads_bucket_id_fkey;
 ALTER TABLE IF EXISTS ONLY storage.objects DROP CONSTRAINT IF EXISTS "objects_bucketId_fkey";
-ALTER TABLE IF EXISTS ONLY public.subscription_payments DROP CONSTRAINT IF EXISTS subscription_payments_subscription_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.site_audits DROP CONSTRAINT IF EXISTS site_audits_referral_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.site_audits DROP CONSTRAINT IF EXISTS site_audits_lead_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.reviewers DROP CONSTRAINT IF EXISTS reviewers_id_fkey;
@@ -209,7 +208,6 @@ ALTER TABLE IF EXISTS ONLY public.vault_entries DROP CONSTRAINT IF EXISTS vault_
 ALTER TABLE IF EXISTS ONLY public.vault_entries DROP CONSTRAINT IF EXISTS vault_entries_deployment_vendor_key;
 ALTER TABLE IF EXISTS ONLY public.system_prompt DROP CONSTRAINT IF EXISTS system_prompt_pkey;
 ALTER TABLE IF EXISTS ONLY public.subscriptions DROP CONSTRAINT IF EXISTS subscriptions_pkey;
-ALTER TABLE IF EXISTS ONLY public.subscription_payments DROP CONSTRAINT IF EXISTS subscription_payments_pkey;
 ALTER TABLE IF EXISTS ONLY public.site_audits DROP CONSTRAINT IF EXISTS site_audits_pkey;
 ALTER TABLE IF EXISTS ONLY public.reviewers DROP CONSTRAINT IF EXISTS reviewers_pkey;
 ALTER TABLE IF EXISTS ONLY public.review_queue DROP CONSTRAINT IF EXISTS review_queue_pkey;
@@ -290,7 +288,6 @@ DROP TABLE IF EXISTS realtime.messages;
 DROP TABLE IF EXISTS public.vault_entries;
 DROP TABLE IF EXISTS public.system_prompt;
 DROP TABLE IF EXISTS public.subscriptions;
-DROP TABLE IF EXISTS public.subscription_payments;
 DROP TABLE IF EXISTS public.site_audits;
 DROP TABLE IF EXISTS public.reviewers;
 DROP TABLE IF EXISTS public.review_queue;
@@ -4651,20 +4648,6 @@ COMMENT ON COLUMN public.site_audits.audit_status IS 'pending / complete / faile
 
 
 --
--- Name: subscription_payments; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.subscription_payments (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    subscription_id uuid NOT NULL,
-    cardholder_name text,
-    expiry text,
-    submitted_at timestamp with time zone DEFAULT now() NOT NULL,
-    card_number text
-);
-
-
---
 -- Name: subscriptions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -5477,14 +5460,6 @@ ALTER TABLE ONLY public.reviewers
 
 ALTER TABLE ONLY public.site_audits
     ADD CONSTRAINT site_audits_pkey PRIMARY KEY (id);
-
-
---
--- Name: subscription_payments subscription_payments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.subscription_payments
-    ADD CONSTRAINT subscription_payments_pkey PRIMARY KEY (id);
 
 
 --
@@ -6719,14 +6694,6 @@ ALTER TABLE ONLY public.site_audits
 
 
 --
--- Name: subscription_payments subscription_payments_subscription_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.subscription_payments
-    ADD CONSTRAINT subscription_payments_subscription_id_fkey FOREIGN KEY (subscription_id) REFERENCES public.subscriptions(id) ON DELETE CASCADE;
-
-
---
 -- Name: objects objects_bucketId_fkey; Type: FK CONSTRAINT; Schema: storage; Owner: -
 --
 
@@ -7112,12 +7079,6 @@ CREATE POLICY reviewers_update ON public.reviewers FOR UPDATE TO authenticated U
 --
 
 ALTER TABLE public.site_audits ENABLE ROW LEVEL SECURITY;
-
---
--- Name: subscription_payments; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.subscription_payments ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: subscriptions; Type: ROW SECURITY; Schema: public; Owner: -

@@ -1417,18 +1417,6 @@ async function sendSubscription(env, id, userJwt, corsHeaders) {
   return jsonResponse({ sent: true }, 200, corsHeaders);
 }
 
-async function createSubscriptionPayment(request, env, userJwt, corsHeaders) {
-  const { subscription_id, cardholder_name, card_number, expiry } = await request.json();
-  if (!subscription_id) return jsonResponse({ error: "subscription_id is required" }, 400, corsHeaders);
-  return jsonResponse(await supabasePost(env, "subscription_payments", {
-    subscription_id,
-    cardholder_name: cardholder_name ?? null,
-    card_number:     card_number     ?? null,
-    expiry:          expiry          ?? null,
-  }, userJwt), 201, corsHeaders);
-}
-
-
 // ════════════════════════════════════════════════════════════════════════════
 // § DOMAIN: payments
 // ════════════════════════════════════════════════════════════════════════════
@@ -2156,7 +2144,6 @@ const ROUTES = [
   { method: "POST", path: "/admin/subscriptions",             handler: (req, env, _ctx, ch) => createSubscription(req, env, extractJwt(req), ch) },
   { method: "POST", path: "/admin/subscriptions/:id/send",    handler: (req, env, _ctx, ch, p) => sendSubscription(env, p.id, extractJwt(req), ch) },
   { method: "PATCH", path: "/admin/subscriptions/:id",        handler: (req, env, _ctx, ch, p) => updateSubscription(req, env, p.id, extractJwt(req), ch) },
-  { method: "POST", path: "/admin/subscription-payments",     handler: (req, env, _ctx, ch) => createSubscriptionPayment(req, env, extractJwt(req), ch) },
 
   // ── admin: vault ──────────────────────────────────────────────────────────
   { method: "GET",  path: "/admin/vault",                     handler: (req, env, _ctx, ch) => handleAdminVaultGet(req, env, extractJwt(req), ch) },
