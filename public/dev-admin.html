@@ -390,7 +390,17 @@
 <div class="modal-backdrop" id="changelog-modal">
   <div class="modal-box">
 	<div class="modal-title">Log Event</div>
-	<div class="form-group"><label>Event Type</label><input type="text" id="cl-event-type" placeholder="e.g. deploy, decision, fix"></div>
+	<div class="form-group">
+	  <label for="cl-event-type">Event Type</label>
+	  <select id="cl-event-type" required>
+		<option value="" disabled selected>Select an event type</option>
+		<option value="defect_resolved">Defect resolved</option>
+		<option value="defect_deferred">Defect deferred</option>
+		<option value="feedback_promoted">Feedback promoted</option>
+		<option value="version_bump">Version bump</option>
+		<option value="go_live">Go live</option>
+	  </select>
+	</div>
 	<div class="form-group"><label>Summary</label><textarea id="cl-summary" rows="4" placeholder="What happened?"></textarea></div>
 	<div class="modal-footer">
 	  <button class="btn btn-ghost" onclick="closeModal('changelog-modal')">Cancel</button>
