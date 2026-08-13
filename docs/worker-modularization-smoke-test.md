@@ -1,5 +1,9 @@
 # Worker Modularization Production Smoke Test
 
+**Status:** Closed on 2026-08-13.
+
+**Closure basis:** The modularized Worker was deployed to production, all migration-related contract and smoke checks passed, authenticated admin surfaces loaded cleanly, and no modularization regression was identified. The pre-existing `/blackout` failure and dependency-maintenance observations are outside this closed migration.
+
 ## Purpose
 
 Verify that the modularized Cloudflare Worker preserves the deployed API contract and that defects introduced by moving routing, authentication, shared infrastructure, or handler code are identified before the modularization project is summarized and closed.
