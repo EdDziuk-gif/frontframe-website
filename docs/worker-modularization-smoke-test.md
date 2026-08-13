@@ -51,6 +51,24 @@ These checks must pass against the exact commit being deployed:
 - Route contract test reports 92 routes.
 - Protected-route contract test reports all admin routes and the six extra protected path patterns.
 
+## Recorded pre-deployment baseline
+
+Captured against production on 2026-08-13 before deploying the modularized build:
+
+| Request | Baseline result |
+|---|---|
+| `OPTIONS /chat` | `204` |
+| `GET /__worker-smoke-not-found__` | `404` with `{"error":"Not found"}` |
+| `GET /chat` | `404` with `{"error":"Not found"}` |
+| `GET /podcast-episodes` | `200` |
+| `GET /api/office-hours` | `200` |
+| `GET /admin/config` without a token | `401` with `Missing Authorization header` |
+| `GET /api/rd-log` without a token | `401` with `Missing Authorization header` |
+| `GET /admin/config` with an invalid token | `401` with `Invalid or expired session` |
+| `GET /blackout` | `500`, Cloudflare error code `1101` |
+
+The `/blackout` failure predates this migration. If it remains after deployment, record it as an existing production defect rather than a modularization regression. If its behavior changes, investigate the difference before closure.
+
 ## Deployment gate
 
 1. Record the currently deployed Worker version so it can be restored.
@@ -172,4 +190,3 @@ The modularization project may be summarized and closed only when:
 - The observation window completes without a new Worker error.
 - Every defect has a disposition.
 - Any approved write-path probe has been cleaned up and verified.
-
