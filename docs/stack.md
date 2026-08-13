@@ -18,7 +18,7 @@ _This document is the canonical source for all technical decisions made to date.
 |---|---|---|
 | Frontend | Static HTML / CSS / JS | No framework |
 | Hosting | Cloudflare Pages | Serves /public |
-| Backend | Cloudflare Workers | No-bundle deployment |
+| Backend | Cloudflare Workers | Wrangler-bundled ES module deployment |
 | Database | Supabase (PostgreSQL) | Direct REST API fetch only — no supabase-js package |
 | Email | Resend | Owner notification on inquiry submission |
 | Payments | Stripe | Future phase — not at launch |
@@ -30,10 +30,10 @@ _This document is the canonical source for all technical decisions made to date.
 ## Deployment
 
 ```
-npx wrangler deploy --config /path/to/wrangler.toml --no-bundle
+npx wrangler deploy --config /path/to/wrangler.jsonc
 ```
 
-The `--no-bundle` flag is required. Update the config path to the actual wrangler.toml location before use.
+Wrangler bundling is required because the Worker entry point imports route, middleware, and shared-infrastructure modules. Do not use `--no-bundle`. Update the config path to the actual `wrangler.jsonc` location before use.
 
 ---
 

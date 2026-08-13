@@ -33,7 +33,7 @@ Read the following reference documents before writing any code:
 | Bot protection | Cloudflare Turnstile on all public forms |
 | DNS / Domain | Cloudflare — frontframe.com |
 
-**Deployment:** `npx wrangler deploy --config /path/to/wrangler.toml --no-bundle`
+**Deployment:** `npx wrangler deploy --config /path/to/wrangler.jsonc`
 
 The Worker is the only component that holds API keys. The frontend holds no secrets. All form submissions must pass Turnstile validation before any database write occurs.
 
@@ -151,7 +151,7 @@ _Update this section at the start of each session based on `/docs/status.md`._
 - No WhatsApp integration
 - Cloudflare Turnstile on every public form — no exceptions
 - Worker is the sole secret holder
-- Deployment via wrangler with --no-bundle flag
+- Deployment via Wrangler bundling; do not use the incompatible `--no-bundle` flag
 
 ---
 
