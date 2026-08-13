@@ -392,7 +392,7 @@
 	<div class="modal-title">Log Event</div>
 	<div class="form-group">
 	  <label for="cl-event-type">Event Type</label>
-	  <select id="cl-event-type" required>
+	  <select id="cl-event-type" onchange="toggleChangelogVersion()" required>
 		<option value="" disabled selected>Select an event type</option>
 		<option value="defect_resolved">Defect resolved</option>
 		<option value="defect_deferred">Defect deferred</option>
@@ -401,7 +401,11 @@
 		<option value="go_live">Go live</option>
 	  </select>
 	</div>
-	<div class="form-group"><label>Summary</label><textarea id="cl-summary" rows="4" placeholder="What happened?"></textarea></div>
+	<div class="form-group" id="cl-version-group" hidden>
+	  <label for="cl-build-version">Version</label>
+	  <input type="text" id="cl-build-version" placeholder="e.g. 1.2.3" autocomplete="off">
+	</div>
+	<div class="form-group"><label for="cl-summary">Summary</label><textarea id="cl-summary" rows="4" placeholder="What happened?"></textarea></div>
 	<div class="modal-footer">
 	  <button class="btn btn-ghost" onclick="closeModal('changelog-modal')">Cancel</button>
 	  <button class="btn btn-primary" onclick="saveChangelog()">Log</button>
@@ -591,18 +595,33 @@ function renderChangelog() {
   `).join('');
 }
 
+function toggleChangelogVersion() {
+  const isVersionBump = document.getElementById('cl-event-type').value === 'version_bump';
+  const group         = document.getElementById('cl-version-group');
+  const input         = document.getElementById('cl-build-version');
+  group.hidden        = !isVersionBump;
+  input.required      = isVersionBump;
+  if (!isVersionBump) input.value = '';
+}
+
 function openChangelogModal() {
-  document.getElementById('cl-event-type').value = '';
-  document.getElementById('cl-summary').value    = '';
+  document.getElementById('cl-event-type').value    = '';
+  document.getElementById('cl-build-version').value = '';
+  document.getElementById('cl-summary').value       = '';
+  toggleChangelogVersion();
   document.getElementById('changelog-modal').classList.add('open');
 }
 
 async function saveChangelog() {
-  const event_type = document.getElementById('cl-event-type').value.trim();
-  const summary    = document.getElementById('cl-summary').value.trim();
-  if (!event_type || !summary) { toast('All fields required.', 'error'); return; }
+  const event_type    = document.getElementById('cl-event-type').value.trim();
+  const build_version = document.getElementById('cl-build-version').value.trim();
+  const summary       = document.getElementById('cl-summary').value.trim();
+  if (!event_type || !summary || (event_type === 'version_bump' && !build_version)) {
+	toast('All required fields must be completed.', 'error');
+	return;
+  }
   try {
-	const created = await api('POST', '/admin/changelog', { event_type, summary });
+	const created = await api('POST', '/admin/changelog', { event_type, summary, build_version });
 	const newCl   = Array.isArray(created) ? created[0] : created;
 	if (newCl) changelog.unshift(newCl);
 	closeModal('changelog-modal');
