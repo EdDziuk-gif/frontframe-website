@@ -45,7 +45,7 @@ The `--no-bundle` flag is required. Update the config path to the actual wrangle
 
 ### Admin Access Control Decision (2026-07-24)
 
-**Decision:** FrontFrame's admin API enforces access control with an application-layer JWT gate (`requireReviewer()`, wrapping every `/admin/*` route handler) rather than database-layer Postgres Row Level Security.
+**Decision:** FrontFrame's admin API enforces access control with an application-layer JWT gate (`requireReviewer()`), applied centrally by the Worker router to every `/admin/*` route and the explicit `ADMIN_EXTRA_PROTECTED_PATHS` staff-tool exceptions, rather than database-layer Postgres Row Level Security.
 
 **Context:** As of this date, all ~88 `/admin/*` routes in `worker/src/index.js` extract the caller's JWT via `extractJwt(req)` but never validate it -- it is passed down as an unused `_userJwt` parameter, so any client that knows a route path can call it without logging in. Two working alternative patterns already exist in sibling codebases:
 
@@ -116,18 +116,50 @@ No login, no dashboard, no client portal at launch.
 
 ## Worker Architecture
 
-The Cloudflare Worker handles all backend logic. Entry point is `/worker/index.js`. Handlers are organized in `/worker/handlers/`.
+The single deployed Cloudflare Worker uses `worker/src/index.js` as a small composition entry point. It does not introduce a second Worker or runtime dependency.
 
-### handleInquiry.js
+```
+/worker/src
+  index.js                 # composition, CORS, error boundary, central auth gate
+  router.js                # first-match path matching
+  /middleware
+    auth.js                # JWT extraction, reviewer validation, protected-path policy
+  /shared
+    http.js                # JSON response + CORS headers
+    supabase.js            # direct REST access helpers
+    runtime.js             # cross-domain API and time utilities
+    office-hours.js        # shared current-hours formatter
+  /routes
+    public.js              # ordered public route declarations
+    admin.js               # ordered admin/staff route declarations
+    debug.js               # intentionally empty production debug route list
+    registry.js            # handler export registry for ordered manifests
+    auth.js                # authentication handlers
+    chat.js                # chat and session-capture handlers
+    intake.js              # inquiry, scheduling, and booking handlers
+    content.js             # Q&A, proposal, podcast, and RSS handlers
+    operations.js          # configuration, defect, and feedback handlers
+    pipeline.js            # lead, agreement, reviewer, and alert handlers
+    marketing.js           # marketing problem and deliverable handlers
+    billing.js             # subscription, payment, and vault handlers
+    office.js              # office-hours handlers
+    rd-log.js              # R&D-log handlers
+    outreach.js            # outreach and review-queue handlers
+    webhooks.js            # Stripe and DocuSeal webhook handlers
+```
 
-Handles the main inquiry form submission from the Contact page. On valid submission:
-1. Validates Turnstile token (reject if invalid — no DB write)
-2. Writes record to `inquiries` table in Supabase via REST API
-3. Sends notification email to owner via Resend, including a pre-populated `mailto:` reply link
+Each feature domain owns its handler bodies. Feature modules only import shared infrastructure; they do not import one another. `ROUTES` is composed as public declarations followed by admin declarations. The router returns the first matching route, so declaration order is part of the API contract. Literal sub-routes remain before parameterized fallbacks.
 
-### handleContact.js
+Before any protected handler runs, `index.js` calls `isProtectedRoute()` and then `requireReviewer()`. The middleware validates the Supabase bearer token, checks the `reviewers` row is active, and permits only `frontframe_admin` or `frontframe_staff`. The protection policy covers all `/admin` and `/admin/*` declarations plus:
 
-Handles any secondary contact form flows (to be defined during development).
+- `/api/office-hours/schedule`
+- `/api/office-hours/schedule/:day`
+- `/api/office-hours/overrides`
+- `/api/office-hours/overrides/:date`
+- `/api/rd-log`
+- `/api/rd-log/:id`
+
+Focused Vitest contract tests lock the ordered 92-route manifest and this protected-route policy.
 
 ---
 

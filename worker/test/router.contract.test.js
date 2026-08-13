@@ -1,0 +1,56 @@
+import { createHash } from "node:crypto";
+import { describe, expect, it } from "vitest";
+import { ADMIN_EXTRA_PROTECTED_PATHS, isProtectedRoute } from "../src/middleware/auth.js";
+import { ROUTES } from "../src/index.js";
+import { matchRoute } from "../src/router.js";
+
+const manifest = ROUTES.map(({ method, path }) => `${method} ${path}`).join("\n");
+
+describe("Worker route contract", () => {
+  it("preserves the approved 92-route manifest and declaration order", () => {
+    expect(ROUTES).toHaveLength(92);
+    expect(createHash("sha256").update(manifest).digest("hex"))
+      .toBe("bc9837a5504ab51a3c537d95cc9b6298ec211ee1deb3c5c0224d08c00c5b3af7");
+  });
+
+  it("keeps literal sub-routes ahead of their parameterized fallbacks", () => {
+    const position = (method, path) =>
+      ROUTES.findIndex((route) => route.method === method && route.path === path);
+
+    expect(position("GET", "/admin/lead-alerts/:id/session"))
+      .toBeLessThan(position("PATCH", "/admin/lead-alerts/:id"));
+    expect(position("POST", "/admin/subscriptions/:id/send"))
+      .toBeLessThan(position("PATCH", "/admin/subscriptions/:id"));
+    expect(position("DELETE", "/admin/review-queue/bulk"))
+      .toBeLessThan(position("DELETE", "/admin/review-queue/:id"));
+
+    expect(matchRoute(ROUTES, "DELETE", "/admin/review-queue/bulk")?.route.path)
+      .toBe("/admin/review-queue/bulk");
+  });
+});
+
+describe("central reviewer protection contract", () => {
+  it("protects all admin routes and only the declared non-admin exceptions", () => {
+    expect(ADMIN_EXTRA_PROTECTED_PATHS).toEqual(new Set([
+      "/api/office-hours/schedule",
+      "/api/office-hours/schedule/:day",
+      "/api/office-hours/overrides",
+      "/api/office-hours/overrides/:date",
+      "/api/rd-log",
+      "/api/rd-log/:id",
+    ]));
+
+    for (const route of ROUTES) {
+      if (route.path.startsWith("/admin/"))
+        expect(isProtectedRoute(route.path)).toBe(true);
+    }
+    for (const path of ADMIN_EXTRA_PROTECTED_PATHS) {
+      expect(ROUTES.some((route) => route.path === path)).toBe(true);
+      expect(isProtectedRoute(path)).toBe(true);
+    }
+    expect(isProtectedRoute("/admin")).toBe(true);
+    expect(isProtectedRoute("/adminish")).toBe(false);
+    expect(isProtectedRoute("/api/office-hours")).toBe(false);
+    expect(isProtectedRoute("/chat")).toBe(false);
+  });
+});

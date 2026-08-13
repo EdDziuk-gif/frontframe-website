@@ -1,0 +1,194 @@
+// ════════════════════════════════════════════════════════════════════════════
+// § CONSTANTS & PATTERNS
+// ════════════════════════════════════════════════════════════════════════════
+
+export const ANTHROPIC_MODEL      = "claude-sonnet-4-6";
+export const ANTHROPIC_MAX_TOKENS = 1024;
+
+export const SURGE_ACCOUNT_ID = "acct_01krevy9esf46rgm7ym1e66k8k";
+export const SURGE_TO_NUMBER  = "+14803600069";
+
+export const RESEND_FROM  = "FrontFrame LLC <ed@frontframe.co>";
+export const ADMIN_EMAIL  = "ed@frontframe.co";
+export const ADMIN_URL    = "https://frontframe.co/admin";
+
+export const STRIPE_PRICE_IDS = {
+  due_diligence_deposit:               "price_1TSiPFAdkI41hYTRVam5PmPW",
+  standard_implementation_deposit:     "price_1TSiLOAdkI41hYTR7kO86MP0",
+  professional_implementation_deposit: "price_1TSikEAdkI41hYTRVta0cQ7G",
+  standard_completion:                 "price_1TSiUdAdkI41hYTRzr9naeqQ",
+  professional_completion:             "price_1TSin8AdkI41hYTRCyqIdSF7",
+};
+
+export const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+export const ESCALATION_PATTERN = /\{[^{}]*"_escalate"\s*:\s*true[^{}]*\}/s;
+export const DEFECT_PATTERN     = /\{[^{}]*"_defect"\s*:\s*true[^{}]*\}/s;
+export const RESEARCH_PATTERN   = /\{[^{}]*"_research"\s*:\s*true[^{}]*\}/s;
+
+export const GAP_SIGNAL = "I do not have a strong answer to that yet";
+
+export const TESTING_LAYER = `
+
+---
+
+TESTING MODE — You are operating in a pre-launch testing environment. Real prospects
+are not present. Testers are FrontFrame staff, contractors, or designated client reviewers.
+
+If you do not have a confident answer to a question, say so directly:
+"I do not have a strong answer to that yet. What do you think the right answer is?"
+
+Do not simulate confidence you do not have. Honest gaps found in testing are valuable.
+Gaps found by a real prospect are not.`;
+
+// ════════════════════════════════════════════════════════════════════════════
+// § ANTHROPIC
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function callAnthropic(env, systemPrompt, messages) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type":      "application/json",
+      "x-api-key":         env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model:      ANTHROPIC_MODEL,
+      max_tokens: ANTHROPIC_MAX_TOKENS,
+      system:     systemPrompt,
+      messages,
+    }),
+  });
+  if (!res.ok) throw new Error(`Anthropic API call failed: ${await res.text()}`);
+  return (await res.json()).content?.[0]?.text ?? "";
+}
+
+export function buildSystemPrompt(systemPromptContent, qaPairs) {
+  let prompt = systemPromptContent ?? "";
+  if (qaPairs?.length)
+    prompt += `\n\n---\n\nKnowledge Base:\n\n${qaPairs.map(r => `Q: ${r.question}\nA: ${r.answer}`).join("\n\n")}`;
+  return prompt;
+}
+
+// § DOMAIN: sms (Surge)
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function sendSms(env, message) {
+  if (!env.SURGE_API_KEY) { console.warn("SURGE_API_KEY not configured"); return { success: false, status: "not_configured" }; }
+  try {
+    const res = await fetch(`https://api.surge.app/accounts/${SURGE_ACCOUNT_ID}/messages`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${env.SURGE_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ to: SURGE_TO_NUMBER, body: message }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { console.error("Surge error:", res.status, JSON.stringify(data)); return { success: false, status: data.message ?? `http_${res.status}` }; }
+    return { success: true, status: data.status ?? "sent" };
+  } catch (err) {
+    console.error("Surge fetch failed:", err.message);
+    return { success: false, status: "fetch_error" };
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// § DOMAIN: email (Resend)
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function sendResendEmail(env, to, subject, html) {
+  if (!env.RESEND_API_KEY) { console.warn("RESEND_API_KEY not configured"); return { success: false, status: "not_configured" }; }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: RESEND_FROM, to: [to], subject, html }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { console.error("Resend error:", res.status, JSON.stringify(data)); return { success: false, status: data.message ?? `http_${res.status}` }; }
+    return { success: true, status: "sent", id: data.id };
+  } catch (err) {
+    console.error("Resend fetch failed:", err.message);
+    return { success: false, status: "fetch_error" };
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// § DOMAIN: docuseal (PDF store)
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function fetchAndStoreDocument(env, submissionId, leadId, agreementId) {
+  try {
+    const dsRes = await fetch(`https://api.docuseal.com/submissions/${submissionId}`,
+      { headers: { "X-Auth-Token": env.DOCUSEAL_API_KEY } });
+    if (!dsRes.ok) { console.error("DocuSeal submission fetch failed:", await dsRes.text()); return null; }
+    const submission = await dsRes.json();
+    const docUrl     = submission?.documents?.[0]?.url ?? null;
+    if (!docUrl) { console.error("No document URL in DocuSeal submission"); return null; }
+    const pdfRes = await fetch(docUrl);
+    if (!pdfRes.ok) { console.error("PDF download failed:", pdfRes.status); return null; }
+    const pdfBuffer   = await pdfRes.arrayBuffer();
+    const storagePath = `${leadId ?? agreementId}/${submissionId}.pdf`;
+    const uploadRes   = await fetch(`${env.SUPABASE_URL}/storage/v1/object/agreements/${storagePath}`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        "apikey":        env.SUPABASE_SERVICE_ROLE_KEY,
+        "Content-Type":  "application/pdf",
+        "x-upsert":      "true",
+      },
+      body: pdfBuffer,
+    });
+    if (!uploadRes.ok) { console.error("Supabase Storage upload failed:", await uploadRes.text()); return null; }
+    return `${env.SUPABASE_URL}/storage/v1/object/agreements/${storagePath}`;
+  } catch (err) { console.error("fetchAndStoreDocument failed:", err.message); return null; }
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// § DOMAIN: stripe (signature verification)
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function verifyStripeSignature(payload, sigHeader, secret) {
+  try {
+    const parts = sigHeader.split(",").reduce((acc, part) => {
+      const [k, v] = part.split("="); if (k && v) acc[k] = v; return acc;
+    }, {});
+    if (!parts["t"] || !parts["v1"]) return false;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const sigBytes = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${parts["t"]}.${payload}`));
+    const computed = Array.from(new Uint8Array(sigBytes)).map(b => b.toString(16).padStart(2, "0")).join("");
+    return computed === parts["v1"];
+  } catch { return false; }
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// § UTILITY: ip hash, phoenix timezone
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function hashIp(ip) {
+  const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip));
+  return Array.from(new Uint8Array(buffer)).slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+export function getPhoenixDateStr() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Phoenix" });
+}
+
+export function getPhoenixDayOfWeek() {
+  return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Phoenix" })).getDay();
+}
+
+export function formatTime12(timeStr) {
+  if (!timeStr) return "";
+  const [h, m] = timeStr.slice(0, 5).split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const h12    = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
