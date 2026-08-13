@@ -190,3 +190,55 @@ The modularization project may be summarized and closed only when:
 - The observation window completes without a new Worker error.
 - Every defect has a disposition.
 - Any approved write-path probe has been cleaned up and verified.
+
+## Execution record: 2026-08-13
+
+### Deployment
+
+- Production Worker: `frontframe-worker`
+- Custom domain: `api.frontframe.co`
+- Worker version: `e4100151-096d-4cd4-84b4-dcc41ff2fc95`
+- Modularization commit: `96d4143`
+- Deployment source: verified `main` at `3feeffc`
+- Wrangler upload: 111.78 KiB, 22.94 KiB compressed
+- Reported Worker startup time: 5 ms
+
+The repository commit deployed is a documented descendant of the modularization commit. Commits after `96d4143` contain only the smoke-test plan, its baseline record, and corrected bundled-deployment instructions.
+
+### Pre-deployment verification
+
+- Vitest route and authentication contracts: 3 of 3 passed.
+- Route manifest: 92 routes.
+- Wrangler bundled deployment completed successfully.
+- No `--no-bundle` flag was used.
+
+### Production results
+
+The immediate post-deployment comparison and the final comparison after more than 15 minutes both matched the pre-deployment baseline:
+
+- CORS preflight: passed.
+- Unknown-route handling: passed.
+- Unsupported-method handling: passed.
+- Public podcast route: passed.
+- Public office-hours route: passed.
+- Missing-token admin protection: passed.
+- Missing-token extra-path protection: passed.
+- Protected parameter routes rejected before handler execution: passed.
+- Invalid-token handling: passed.
+- Authenticated `admin` page read-only load: operator reported clean.
+- Authenticated `dev-admin` page read-only load: operator reported clean.
+
+No production write-path probe was performed. No smoke request created, changed, sent, charged, or deleted production data.
+
+### Defect disposition
+
+- `GET /blackout` returned Cloudflare `500`, error code `1101`, before and after deployment. Disposition: pre-existing production defect; not introduced by the modularization.
+- No modularization regression was identified by the required non-destructive smoke checks.
+
+### Remaining limitation
+
+Direct Worker log-tail access was unavailable during this run because Cloudflare connector authorization failed and the local-device execution sandbox blocked network access. The observation window therefore used repeated external route checks plus operator-confirmed authenticated admin loads rather than an independent log-tail review.
+
+### Separate maintenance observation
+
+Local `npm install` reported seven dependency audit findings: one low and six high. No automatic audit fix was run because dependency upgrades are outside this behavior-preserving migration and could change the verified toolchain. Review these findings as separate maintenance work.
