@@ -105,19 +105,11 @@
     }
     .article-meta-divider { width: 1px; height: 10px; background: rgba(255,255,255,0.15); }
 
-    /* BODY — fixed-height scrollable window */
+    /* BODY — reads in normal page flow, like the rest of the site */
     .article-body {
       background: var(--paper);
       border-top: 3px solid var(--amber);
-      height: 62vh;
-      min-height: 380px;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--amber) transparent;
     }
-    .article-body::-webkit-scrollbar { width: 4px; }
-    .article-body::-webkit-scrollbar-track { background: transparent; }
-    .article-body::-webkit-scrollbar-thumb { background: var(--amber); border-radius: 2px; }
     .body-inner {
       max-width: 720px; margin: 0 auto; padding: 64px 48px 80px;
     }
@@ -203,11 +195,11 @@
       font-size: 0.58rem; font-weight: 700; letter-spacing: 0.16em;
       text-transform: uppercase; color: var(--amber-bright); margin-bottom: 10px; display: block;
     }
-    .callout-heading {
+    .blueprint-callout .callout-heading {
       font-family: 'DM Serif Display', Georgia, serif;
       font-size: 1.25rem; color: #fff; line-height: 1.25; margin-bottom: 12px;
     }
-    .callout-body {
+    .blueprint-callout .callout-body {
       font-size: 0.84rem; color: rgba(255,255,255,0.48); line-height: 1.75; margin-bottom: 20px;
     }
     .callout-link {
@@ -284,7 +276,7 @@
       </div>
     </header>
 
-    <!-- BODY — fixed scrollable window -->
+    <!-- BODY — flows normally with the page -->
     <article class="article-body">
       <div class="body-inner">
 

@@ -28,25 +28,36 @@ Implementation notes:
 - It's progressive enhancement. The default (no-JS) state is the footer behaving exactly as a normal static footer — always visible, in normal flow. JS adds a `js-collapsible-footer` class to `<body>`, and only CSS scoped under that class turns the footer into the collapse/expand behavior. A page with this pattern must never be *worse* than a plain footer if JS fails to run.
 - The footer stays in **normal document flow** at all times — no `position: fixed`, no reserved spacer element. It's collapsed by default (`max-height: 0; overflow: hidden;`) and expands to its real height (measured via `footer.scrollHeight`, stored in a `--footer-h` custom property) when revealed. This was a fixed-position + spacer design originally; that broke whenever the page's real content was shorter than the viewport (a short article on a tall or portrait monitor), because the footer would detach from the content above it, leaving a visible gap between the spacer and the fixed-position footer. Keeping it in normal flow means it's always contiguous with whatever precedes it, on any screen.
 - The trigger is an `IntersectionObserver` watching a dedicated `<div class="footer-sentinel" aria-hidden="true"></div>` placed right after the real content, immediately before the footer — not a comparison of scroll position against `document.documentElement.scrollHeight`. That scroll-math approach has a trap: when a page's content is shorter than the viewport, the browser reports `scrollHeight` as clamped to the viewport height, so the "have we scrolled to the bottom" check comes back true immediately on load, before the visitor has scrolled at all. Watching a real sentinel element's visibility sidesteps that entirely.
-- If a page has an internally-scrolling reading pane (see below), the sentinel/footer still live outside it in normal page flow — reaching the end of that inner pane and revealing the footer are two different things; don't conflate them.
 - If the page has a floating chat widget anchored to the bottom corner, nudge it out of the way (`translateY`) at the same moment the footer reveals, so the two never overlap.
 
 Reference: the inline `<script>` and the `footer` / `.footer-sentinel` / `.chat-widget.footer-open` CSS at the bottom of `public/constitution.html` and `public/resources/an-ai-assistant-needs-more-than-your-business-information.html` — copy both the CSS and the script as a unit.
 
 ---
 
-## Internally-scrolling reading panes
+## Don't put reading content inside a fixed-height scrolling pane
 
-The essay page reads inside a fixed-height `.article-body` (`height: 62vh; overflow-y: auto`) rather than letting the whole page scroll through the article text. If a future page uses this pattern, remember: anything placed *outside* that inner box (a CTA, a footnote, the footer) is reached by scrolling the outer page, not by finishing the inner box — reaching the end of the article and reaching the bottom of the page are two different user actions. Don't assume one implies the other when wiring up scroll-triggered behavior.
+The essay page originally read inside a fixed-height `.article-body` (`height: 62vh; overflow-y: auto`), with the CTA placed at the end of that inner box so it would only be seen by a reader who finished the article. This was abandoned — it's a trap, not a pattern.
+
+The problem: a visitor's natural gesture is to scroll the *page*, not to discover that a small box mid-page has its own independent scrollbar. On an ordinary desktop viewport the outer page can reach its true bottom (revealing the footer) after only a few hundred pixels of scroll, while the inner pane — still sitting at scroll position zero — is showing just the first paragraph or two. The result: the footer and footnote appear right under the article opening, the CTA is never seen at all, and the visitor never encounters 90% of the content. This is exactly what happened on the essay page and took several rounds to properly diagnose, because every symptom (footer too close, CTA "missing," blank space) looked like a separate layout bug when they were all downstream of the same cause.
+
+Let long-form reading content flow in normal page layout, full stop. If a CTA should be "earned" by reading to the end, place it in normal flow directly after the closing content — the reader reaches it by the same single, ordinary page scroll that reveals everything else. No inner scroll surface, no ambiguity about which scroll gesture does what.
 
 ---
 
 ## CTA placement should match how much commitment the content asks for
 
-Don't default to a CTA that's permanently visible regardless of how much a visitor has actually read. For a short piece, a visitor who didn't scroll to the end was unlikely to act on the CTA anyway — put it at the end of the content (inside the reading pane, if there is one) so it's the payoff for finishing, not dead weight sitting under the fold on every load. A longer or multi-section page may still warrant a persistently visible CTA — this is a judgment call per page, not a fixed rule, but the default should be "earn its placement," not "always on."
+Don't default to a CTA that's permanently visible regardless of how much a visitor has actually read. For a short piece, a visitor who didn't scroll to the end was unlikely to act on the CTA anyway — put it directly after the closing content, in normal page flow, so it's the payoff for finishing, not dead weight sitting under the fold on every load. A longer or multi-section page may still warrant a persistently visible CTA — this is a judgment call per page, not a fixed rule, but the default should be "earn its placement," not "always on."
 
 ---
 
 ## Prefer native HTML interactivity over JS where the browser already does the job
 
 The Constitution page's ten sections use native `<details>`/`<summary>` (with a shared `name` attribute for single-open-at-a-time behavior) instead of a JS-driven accordion. No JS required, keyboard and screen-reader support built in, content stays indexable when collapsed. Reach for this before writing custom show/hide JS for anything that's fundamentally "expand this section."
+
+---
+
+## Watch for CSS specificity collisions when nesting a colored callout inside body copy
+
+A dark-background callout box (a CTA, a pull-quote, anything with `color: #fff` text set on its own class) that lives inside a generic content container is vulnerable to a subtle bug: a broad rule like `.article-body h2 { color: var(--navy); }` or `.article-body p { color: var(--ink); }` can end up *more specific* than the callout's own `.callout-heading` / `.callout-body` class rule (one class + one element beats one class alone), silently overriding its white text back to dark navy-on-navy — text that's technically there but invisible. This exact bug shipped on the essay page's CTA after it was moved inside `.article-body` and wasn't caught until a real screenshot was compared against the rendered computed styles.
+
+The fix is to always scope a callout's own text-color rules with its parent class (`.blueprint-callout .callout-heading`, not just `.callout-heading`) so they win on specificity regardless of what broad rules exist in whatever container the callout ends up nested inside. When something "looks faded" or "washed out" in a screenshot rather than cleanly wrong, check `getComputedStyle(...).color` before assuming it's a spacing or opacity issue — a specificity collision reads visually like faint/faded text.
