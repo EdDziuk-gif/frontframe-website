@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>An AI Assistant Needs More Than Your Business Information | FrontFrame</title>
+  <meta name="description" content="Handing an AI assistant your website and documents paints a picture of your business — but it doesn't give it a soul. What a Constitution actually protects, and why the question was never whether the AI can know your business better than you can.">
+  <link rel="canonical" href="https://frontframe.co/resources/an-ai-assistant-needs-more-than-your-business-information">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" type="image/png" href="/images/Logo_FF.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:         #1E2D40;
+      --amber:        #C8861A;
+      --amber-bright: #F5A623;
+      --surface:      #E8E3D8;
+      --surface-mid:  #DDD7CB;
+      --parchment:    #F2EDE3;
+      --paper:        #FAF8F3;
+      --paper-warm:   #F5F1E8;
+      --ink:          #2A3542;
+      --ink-mid:      #4A5568;
+      --ink-light:    #7A8A9A;
+      --rule:         rgba(42,53,66,0.10);
+      --rule-strong:  rgba(42,53,66,0.18);
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--parchment); color: var(--ink); overflow-x: hidden; }
+    h1, h2, h3, .serif { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; }
+    a { text-decoration: none; color: inherit; }
+    img { display: block; max-width: 100%; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      background: rgba(30,45,64,0.97); backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-inner {
+      max-width: 1400px; margin: 0 auto; padding: 0 48px;
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .wordmark { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.3rem; color: #fff; letter-spacing: -0.01em; }
+    .nav-back {
+      font-size: 0.8rem; color: rgba(255,255,255,0.45);
+      display: flex; align-items: center; gap: 6px; transition: color 0.2s;
+    }
+    .nav-back:hover { color: rgba(255,255,255,0.75); }
+
+    /* ARTICLE LAYOUT */
+    .article-wrap {
+      padding-top: 60px;
+      min-height: 100vh;
+    }
+
+    .article-header {
+      background: var(--navy);
+      padding: 38px 0 34px;
+      position: relative;
+      overflow: hidden;
+    }
+    .article-header::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(200,134,26,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .header-inner {
+      max-width: 720px; margin: 0 auto; padding: 0 48px;
+    }
+    .article-eyebrow {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--amber); margin-bottom: 12px; display: block;
+    }
+    .article-title {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(1.4rem, 3vw, 1.9rem);
+      line-height: 1.2;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+    .article-meta {
+      font-size: 0.75rem; color: rgba(255,255,255,0.35);
+      display: flex; align-items: center; gap: 14px;
+    }
+    .article-meta-divider { width: 1px; height: 10px; background: rgba(255,255,255,0.15); }
+
+    /* BODY — fixed-height scrollable window */
+    .article-body {
+      background: var(--paper);
+      border-top: 3px solid var(--amber);
+      height: 62vh;
+      min-height: 380px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--amber) transparent;
+    }
+    .article-body::-webkit-scrollbar { width: 4px; }
+    .article-body::-webkit-scrollbar-track { background: transparent; }
+    .article-body::-webkit-scrollbar-thumb { background: var(--amber); border-radius: 2px; }
+    .body-inner {
+      max-width: 720px; margin: 0 auto; padding: 64px 48px 80px;
+    }
+
+    .article-body p {
+      font-size: 1.0rem;
+      line-height: 1.9;
+      color: var(--ink);
+      margin-bottom: 1.5em;
+    }
+
+    .article-body p:last-child { margin-bottom: 0; }
+
+    .article-body h2 {
+      font-size: 1.4rem;
+      color: var(--navy);
+      line-height: 1.25;
+      margin: 1.9em 0 0.7em;
+    }
+
+    .article-body ul.rules {
+      list-style: none;
+      margin: 0 0 1.75em;
+      padding: 0;
+    }
+    .article-body ul.rules li {
+      position: relative;
+      padding-left: 1.4em;
+      margin-bottom: 0.85em;
+      font-size: 1.0rem;
+      line-height: 1.75;
+      color: var(--ink);
+    }
+    .article-body ul.rules li::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0.6em;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+
+    .closing-question {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 1.3rem;
+      color: var(--navy);
+      line-height: 1.4;
+    }
+
+    /* Pull quote */
+    .pull-quote {
+      margin: 44px 0;
+      padding: 28px 32px;
+      border-left: 3px solid var(--amber);
+      background: var(--parchment);
+    }
+    .pull-quote p {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.15rem !important;
+      line-height: 1.55 !important;
+      color: var(--ink) !important;
+      margin-bottom: 0 !important;
+    }
+
+    /* Blueprint callout */
+    .blueprint-callout {
+      margin: 0;
+      padding: 36px 38px;
+      background: var(--navy);
+      border-radius: 3px;
+      position: relative;
+      overflow: hidden;
+    }
+    .blueprint-callout::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(200,134,26,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .callout-eyebrow {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--amber-bright); margin-bottom: 10px; display: block;
+    }
+    .callout-heading {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 1.25rem; color: #fff; line-height: 1.25; margin-bottom: 12px;
+    }
+    .callout-body {
+      font-size: 0.84rem; color: rgba(255,255,255,0.48); line-height: 1.75; margin-bottom: 20px;
+    }
+    .callout-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.82rem; font-weight: 700; color: var(--amber-bright);
+      border-bottom: 1px solid rgba(245,166,35,0.3); transition: border-color 0.2s;
+    }
+    .callout-link:hover { border-color: var(--amber-bright); }
+
+    /* FOOTER */
+    footer { background: var(--navy); padding: 30px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 0; }
+    .footer-inner {
+      max-width: 1400px; margin: 0 auto; padding: 0 48px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+    .footer-wordmark { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.05rem; color: rgba(255,255,255,0.5); }
+    .footer-right { font-size: 0.72rem; color: rgba(255,255,255,0.28); }
+
+    /* Collapsible footer — progressive enhancement, only active once JS confirms it can run.
+       Without JS, .footer-spacer stays collapsed and the footer behaves exactly as before:
+       static, always visible, at the true end of the page. */
+    .footer-spacer { height: 0; }
+    body.js-collapsible-footer .footer-spacer { height: var(--footer-h, 84px); }
+    body.js-collapsible-footer footer {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 250;
+      transform: translateY(100%);
+      transition: transform 0.35s ease;
+    }
+    body.js-collapsible-footer footer.is-visible { transform: translateY(0); }
+    .chat-widget { transition: transform 0.35s ease; }
+    body.js-collapsible-footer .chat-widget.footer-open { transform: translateY(calc(-1 * var(--footer-h, 84px))); }
+    @media (prefers-reduced-motion: reduce) {
+      body.js-collapsible-footer footer, .chat-widget { transition: none; }
+    }
+
+    @media (max-width: 680px) {
+      .nav-inner, .header-inner, .body-inner, .footer-inner { padding-left: 20px; padding-right: 20px; }
+      .article-header { padding: 56px 0 48px; }
+      .body-inner { padding-top: 48px; padding-bottom: 60px; }
+      .pull-quote, .blueprint-callout { padding: 22px 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/"><span class="wordmark">FrontFrame</span></a>
+      <a class="nav-back" href="/resources">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Resources
+      </a>
+    </div>
+  </nav>
+
+  <div class="article-wrap">
+
+    <!-- HEADER -->
+    <header class="article-header">
+      <div class="header-inner">
+        <span class="article-eyebrow">FrontFrame · Reading</span>
+        <h1 class="article-title">An AI Assistant Needs More Than Your Business Information</h1>
+        <div class="article-meta">
+          <span>Ed Dziuk</span>
+          <div class="article-meta-divider"></div>
+          <span>FrontFrame</span>
+          <div class="article-meta-divider"></div>
+          <span>August 2026</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- BODY — fixed scrollable window -->
+    <article class="article-body">
+      <div class="body-inner">
+
+        <p>It's 11:40 on a Tuesday night. Someone found your business on Google. They're looking for something specific. If your website says you have it and you don't, that's a problem. If you have it but your website doesn't say that clearly, that's a problem. If you're not set up to field the visitor's questions, it's lights out.</p>
+
+        <p>Handing an AI assistant your website, documents, policies, and procedures paints a picture of your business — but it doesn't give it a soul.</p>
+
+        <p>It doesn't tell it what's still true. It doesn't tell it who to trust. It doesn't tell it what it's allowed to promise. And it doesn't tell it what to do when it doesn't know.</p>
+
+        <p>Those aren't abstract questions. A customer feels it the moment something doesn't add up. Staff feel it when the assistant contradicts them. And a buyer will feel it too — quietly, without you in the room, on the day they're deciding what your business is actually worth.</p>
+
+        <p>A haphazard bot doesn't know the difference between a guess and a fact — it just answers. A well-built assistant knows exactly where its knowledge ends, and says so instead of pretending. Most days, nobody will notice the difference. Then a buyer visits the site, asks the wrong question at the right moment, and the difference becomes the whole story.</p>
+
+        <h2>Information Is Just Information</h2>
+
+        <p>Information is just information. It doesn't carry authority, no matter how much of it the assistant has. It can read a policy, draft a message, schedule work, or recommend a next step — being capable of something was never the same as having permission. The assistant was never supposed to have authority. The system exists to make sure it never does.</p>
+
+        <ul class="rules">
+          <li>Your people retain authority.</li>
+          <li>The assistant works only within the knowledge and authority your business establishes.</li>
+          <li>Information does not represent your business merely because the assistant can find it.</li>
+          <li>The assistant does not turn a guess, an inference, or a missing answer into a business decision.</li>
+          <li>When it reaches a boundary, it raises the question for a person who has authority to decide it.</li>
+          <li>When someone challenges an answer, the assistant hands the question to a person. It does not treat its own answer as final.</li>
+        </ul>
+
+        <div class="pull-quote">
+          <p>We call this framework the assistant's Constitution.</p>
+        </div>
+
+        <h2>It Governs the Assistant</h2>
+
+        <p>The Constitution does not tell you how to run your business.</p>
+
+        <p>It does not manage your employees. It does not decide your policies. It does not determine who should have authority in your business. It does not replace the judgment of the owner or the people doing the work.</p>
+
+        <p>Your business decides what information represents it, who may approve it, what authority is delegated, what the assistant may do, and where questions should go when the assistant reaches a limit.</p>
+
+        <p>FrontFrame provides the framework and infrastructure that make those decisions usable by the assistant over time.</p>
+
+        <div class="pull-quote">
+          <p>Your people know the business. FrontFrame does not pretend otherwise.</p>
+        </div>
+
+        <p>The purpose is to help turn what its people know into something the business can retain, use, question, improve, and carry forward — rather than leaving it entirely in the memory of one owner, manager, or employee.</p>
+
+        <h2>How and Why FrontFrame Uses It</h2>
+
+        <p>The Constitution is not a replacement for the work of building a useful system.</p>
+
+        <p>It establishes the conditions under which that work can happen without asking an AI model — or FrontFrame — to decide what your business should believe, authorize, or do.</p>
+
+        <p>FrontFrame provides the tools and system foundation through which your business can:</p>
+
+        <ul class="rules">
+          <li>Bring knowledge held by individual people into a form the business can retain.</li>
+          <li>Surface the places where the business hasn't said what's true yet.</li>
+          <li>Record decisions made by the people authorized to make them.</li>
+          <li>Make approved knowledge available when someone needs it.</li>
+        </ul>
+
+        <p>The business remains responsible for its own knowledge, authority, rules, decisions, and development.</p>
+
+        <p>The question is not whether FrontFrame can learn your business better than you can. It cannot.</p>
+
+        <p>Your people know what the business does, what works, what doesn't, what customers need, and how the work actually gets done.</p>
+
+        <p>The question is what happens to all of that when nobody who knows the answer is there.</p>
+
+        <p>At 11:40 on a Tuesday night, the person asking may be a customer.</p>
+
+        <p>Someday, it may be the person deciding what your business is worth.</p>
+
+        <p class="closing-question">What will your business know when you're not in the room?</p>
+
+      </div>
+    </article>
+
+    <!-- CTA — outside scroll window, always visible -->
+    <div style="background: var(--paper); padding: 0 48px 64px; max-width: 720px; margin: 0 auto;">
+      <div class="blueprint-callout">
+        <span class="callout-eyebrow">FrontFrame</span>
+        <h2 class="callout-heading serif">Every FrontFrame assistant starts from the same Constitution.</h2>
+        <p class="callout-body">This is the default framework every client begins with — the rules above, in full, before anything gets customized to a specific business.</p>
+        <a class="callout-link" href="/constitution">Read the Constitution →</a>
+      </div>
+      <p style="font-size:0.78rem; color:var(--ink-light); line-height:1.6; margin-top:16px;">Though this piece speaks in terms of a business, FrontFrame builds the same Constitution for non-profits and government offices as well.</p>
+    </div>
+
+  </div><!-- /article-wrap -->
+
+  <div class="footer-spacer" aria-hidden="true"></div>
+  <footer>
+    <div class="footer-inner">
+      <span class="footer-wordmark">FrontFrame</span>
+      <span class="footer-right">© 2026 FrontFrame, LLC</span>
+    </div>
+  </footer>
+
+  <!-- CHAT WIDGET -->
+  <style>
+    .chat-widget{position:fixed;bottom:24px;right:24px;z-index:1000;font-family:'Inter',sans-serif;}
+    .chat-bubble{position:absolute;bottom:68px;right:0;background:#fff;border-radius:14px 14px 2px 14px;padding:12px 16px;font-size:0.85rem;line-height:1.55;color:#1E2D40;max-width:240px;box-shadow:0 4px 18px rgba(0,0,0,0.13);opacity:0;transform:translateY(6px);transition:opacity 0.3s ease,transform 0.3s ease;pointer-events:none;cursor:pointer;user-select:none;}
+    .chat-bubble.visible{opacity:1;transform:translateY(0);pointer-events:all;}
+    .chat-toggle{width:56px;height:56px;background:var(--amber);border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(245,166,35,0.4);transition:transform 0.2s,box-shadow 0.2s;margin-left:auto;}
+    .chat-toggle:hover{transform:scale(1.05);box-shadow:0 6px 24px rgba(245,166,35,0.5);}
+    .chat-toggle svg{width:24px;height:24px;}
+    .chat-panel{position:absolute;bottom:68px;right:0;width:360px;height:480px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.2);display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(12px) scale(0.97);pointer-events:none;transition:opacity 0.25s,transform 0.25s,height 0.35s ease;}
+    .chat-panel.open{opacity:1;transform:translateY(0) scale(1);pointer-events:all;}
+    .chat-panel.expanded{height:560px;}
+    .chat-header{background:var(--navy);padding:16px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+    .chat-avatar{width:36px;height:36px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:700;color:var(--navy);}
+    .chat-header-name{font-size:0.875rem;font-weight:600;color:#fff;}
+    .chat-header-status{font-size:0.72rem;color:rgba(255,255,255,0.6);margin-top:1px;}
+    .chat-close{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.6);padding:4px;margin-left:auto;transition:color 0.2s;}
+    .chat-close:hover{color:#fff;}
+    .chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;}
+    .msg{padding:10px 14px;border-radius:14px;font-size:0.875rem;line-height:1.55;max-width:85%;}
+    .msg.agent{background:#F5F5F5;color:#1E2D40;align-self:flex-start;border-bottom-left-radius:4px;}
+    .msg.user{background:var(--navy);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+    .msg.typing{background:#F5F5F5;align-self:flex-start;color:#999;}
+    .msg.confirmed{background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);color:var(--navy);align-self:flex-start;border-bottom-left-radius:4px;max-width:92%;}
+    .chat-input-row{display:flex;gap:8px;padding:12px 16px;background:#fff;border-top:1px solid #EAEAEA;flex-shrink:0;align-items:flex-end;}
+    .chat-input{flex:1;border:1.5px solid #E0E0E0;border-radius:8px;padding:9px 12px;font-family:'Inter',sans-serif;font-size:0.875rem;color:var(--navy);outline:none;transition:border-color 0.2s;resize:none;overflow:hidden;min-height:38px;max-height:120px;line-height:1.5;}
+    .chat-input:focus{border-color:var(--navy);}
+    .chat-send{background:var(--amber);border:none;border-radius:8px;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity 0.2s;}
+    .chat-send:hover{opacity:0.85;}
+    .chat-send svg{width:16px;height:16px;}
+    @media(max-width:480px){.chat-widget{bottom:16px;right:16px;}.chat-panel{width:calc(100vw - 32px);}}
+  </style>
+  <div class="chat-widget" id="chatWidget">
+    <div class="chat-bubble" id="chatBubble">Questions about FrontFrame? Ask the AI assistant, or connect with Ed directly.</div>
+    <div class="chat-panel" id="chatPanel">
+      <div class="chat-header">
+        <div class="chat-avatar">Ed</div>
+        <div>
+          <div class="chat-header-name">FrontFrame Assistant</div>
+          <div class="chat-header-status">AI · Ed follows up personally</div>
+        </div>
+        <button class="chat-close" id="chatClose" aria-label="Close chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chatInput" placeholder="Ask a question&#8230;" autocomplete="off" rows="1"></textarea>
+        <button class="chat-send" id="chatSend" aria-label="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div style="font-size:0.72rem;color:#8A9BAE;padding:4px 16px 10px;line-height:1.4;">Don't share passwords, payment details, or sensitive personal information.</div>
+    </div>
+    <button class="chat-toggle" id="chatToggle" aria-label="Open chat with Ed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1E2D40" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </button>
+  </div>
+  <script src="/js/chat-widget.js" data-page="ai-assistant-needs-more-article"></script>
+
+  <!-- Collapsible footer: hidden while reading, reveals only at the true bottom of the page,
+       collapses again if the visitor scrolls back up. Progressive enhancement — see CSS notes. -->
+  <script>
+    (function () {
+      var footer = document.querySelector('footer');
+      var spacer = document.querySelector('.footer-spacer');
+      var chatWidget = document.getElementById('chatWidget');
+      if (!footer) return;
+
+      var THRESH = 16;
+      var ticking = false;
+
+      function syncHeight() {
+        var h = footer.offsetHeight;
+        document.documentElement.style.setProperty('--footer-h', h + 'px');
+      }
+
+      function check() {
+        var scrollY = window.scrollY || window.pageYOffset;
+        var viewport = window.innerHeight;
+        var full = document.documentElement.scrollHeight;
+        var atBottom = scrollY + viewport >= full - THRESH;
+        footer.classList.toggle('is-visible', atBottom);
+        if (chatWidget) chatWidget.classList.toggle('footer-open', atBottom);
+      }
+
+      function onScroll() {
+        if (!ticking) {
+          window.requestAnimationFrame(function () { check(); ticking = false; });
+          ticking = true;
+        }
+      }
+
+      syncHeight();
+      document.body.classList.add('js-collapsible-footer');
+      check();
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', function () { syncHeight(); check(); });
+    })();
+  </script>
+
+</body>
+</html>
