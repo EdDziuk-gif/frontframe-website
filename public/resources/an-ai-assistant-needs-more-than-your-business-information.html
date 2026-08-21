@@ -58,6 +58,23 @@
     .article-wrap {
       padding-top: 60px;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .article-footnote-space {
+      flex: 1 0 auto;
+      display: flex;
+      align-items: center;
+      padding: 16px 48px;
+    }
+    .article-footnote-space p {
+      max-width: 720px;
+      width: 100%;
+      margin: 0 auto;
+      font-size: 0.78rem;
+      color: var(--ink-light);
+      line-height: 1.6;
     }
 
     .article-header {
@@ -234,6 +251,7 @@
 
     @media (max-width: 680px) {
       .nav-inner, .header-inner, .body-inner, .footer-inner { padding-left: 20px; padding-right: 20px; }
+      .article-footnote-space { padding-left: 20px; padding-right: 20px; }
       .article-header { padding: 56px 0 48px; }
       .body-inner { padding-top: 48px; padding-bottom: 60px; }
       .pull-quote, .blueprint-callout { padding: 22px 22px; }
@@ -353,10 +371,13 @@
           <p class="callout-body">This is the default framework every client begins with — the rules above, in full, before anything gets customized to a specific business.</p>
           <a class="callout-link" href="/constitution">Read the Constitution →</a>
         </div>
-        <p style="font-size:0.78rem; color:var(--ink-light); line-height:1.6; margin-top:16px;">Though this piece speaks in terms of a business, FrontFrame builds the same Constitution for non-profits and government offices as well.</p>
 
       </div>
     </article>
+
+    <div class="article-footnote-space">
+      <p>Though this piece speaks in terms of a business, FrontFrame builds the same Constitution for non-profits and government offices as well.</p>
+    </div>
 
   </div><!-- /article-wrap -->
 
