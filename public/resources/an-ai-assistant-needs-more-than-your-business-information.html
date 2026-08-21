@@ -227,16 +227,18 @@
     .footer-right { font-size: 0.72rem; color: rgba(255,255,255,0.28); }
 
     /* Collapsible footer — progressive enhancement, only active once JS confirms it can run.
-       Without JS, .footer-spacer stays collapsed and the footer behaves exactly as before:
-       static, always visible, at the true end of the page. */
-    .footer-spacer { height: 0; }
-    body.js-collapsible-footer .footer-spacer { height: var(--footer-h, 84px); }
+       Without JS, the footer behaves exactly as before: static, always visible, in normal
+       flow. With JS, it starts collapsed and expands INTO normal flow (no fixed positioning,
+       no reserved spacer) once the reader scrolls the true end of the content into view — so
+       it can never detach from, or leave a gap before, whatever precedes it. */
     body.js-collapsible-footer footer {
-      position: fixed; left: 0; right: 0; bottom: 0; z-index: 250;
-      transform: translateY(100%);
-      transition: transform 0.35s ease;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
     }
-    body.js-collapsible-footer footer.is-visible { transform: translateY(0); }
+    body.js-collapsible-footer footer.is-visible {
+      max-height: var(--footer-h, 100px);
+    }
     .chat-widget { transition: transform 0.35s ease; }
     body.js-collapsible-footer .chat-widget.footer-open { transform: translateY(calc(-1 * var(--footer-h, 84px))); }
     @media (prefers-reduced-motion: reduce) {
@@ -375,7 +377,7 @@
 
   </div><!-- /article-wrap -->
 
-  <div class="footer-spacer" aria-hidden="true"></div>
+  <div class="footer-sentinel" aria-hidden="true"></div>
   <footer>
     <div class="footer-inner">
       <span class="footer-wordmark">FrontFrame</span>
@@ -442,44 +444,35 @@
   </div>
   <script src="/js/chat-widget.js" data-page="ai-assistant-needs-more-article"></script>
 
-  <!-- Collapsible footer: hidden while reading, reveals only at the true bottom of the page,
-       collapses again if the visitor scrolls back up. Progressive enhancement — see CSS notes. -->
+  <!-- Collapsible footer: hidden while reading, reveals once the true end of the content
+       (the sentinel below) scrolls into view, collapses again if the visitor scrolls back up.
+       Progressive enhancement — see CSS notes. Uses IntersectionObserver against a sentinel
+       rather than comparing scroll position to document height, because on a short page and a
+       tall viewport the document's height gets clamped to the viewport height, which made the
+       old scroll-math approach reveal the footer immediately instead of only at the true end. -->
   <script>
     (function () {
       var footer = document.querySelector('footer');
-      var spacer = document.querySelector('.footer-spacer');
+      var sentinel = document.querySelector('.footer-sentinel');
       var chatWidget = document.getElementById('chatWidget');
-      if (!footer) return;
+      if (!footer || !sentinel) return;
 
-      var THRESH = 16;
-      var ticking = false;
-
-      function syncHeight() {
-        var h = footer.offsetHeight;
-        document.documentElement.style.setProperty('--footer-h', h + 'px');
+      function setVisible(visible) {
+        footer.classList.toggle('is-visible', visible);
+        if (chatWidget) chatWidget.classList.toggle('footer-open', visible);
       }
 
-      function check() {
-        var scrollY = window.scrollY || window.pageYOffset;
-        var viewport = window.innerHeight;
-        var full = document.documentElement.scrollHeight;
-        var atBottom = scrollY + viewport >= full - THRESH;
-        footer.classList.toggle('is-visible', atBottom);
-        if (chatWidget) chatWidget.classList.toggle('footer-open', atBottom);
-      }
-
-      function onScroll() {
-        if (!ticking) {
-          window.requestAnimationFrame(function () { check(); ticking = false; });
-          ticking = true;
-        }
-      }
-
-      syncHeight();
+      document.documentElement.style.setProperty('--footer-h', footer.scrollHeight + 'px');
       document.body.classList.add('js-collapsible-footer');
-      check();
-      window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('resize', function () { syncHeight(); check(); });
+
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) { setVisible(entry.isIntersecting); });
+        }, { threshold: 0.99 });
+        io.observe(sentinel);
+      } else {
+        setVisible(true);
+      }
     })();
   </script>
 

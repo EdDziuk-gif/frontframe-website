@@ -22,15 +22,16 @@ Reference: the `.article-header` treatment in `public/resources/an-ai-assistant-
 
 ## Collapsible, reveal-at-bottom footer
 
-Pattern used on the essay and Constitution pages: the site footer stays hidden below the viewport while a visitor is reading, and slides into view only once they've scrolled to the true bottom of the page — collapsing again if they scroll back up.
+Pattern used on the essay and Constitution pages: the site footer stays collapsed while a visitor is reading, and expands into view only once they've scrolled the true end of the content into view — collapsing again if they scroll back up.
 
 Implementation notes:
-- It's progressive enhancement. The default (no-JS) state is the footer behaving exactly as a normal static footer — always visible, in normal flow. JS adds a `js-collapsible-footer` class to `<body>`, and only CSS scoped under that class turns the footer into the hide/reveal behavior. A page with this pattern must never be *worse* than a plain footer if JS fails to run.
-- A `.footer-spacer` element (sized to the footer's own measured height via a `--footer-h` CSS custom property, set in JS) reserves the footer's space in normal document flow, so the footer doesn't jump the page height around when it reveals, and doesn't overlap real content when it slides in.
-- The trigger is the page's own `window` scroll position reaching the true document bottom (within a small threshold), not any inner scrollable element. If a page has an internally-scrolling reading pane (see below), that inner scroll is separate from this check — don't try to gate the footer reveal on it.
+- It's progressive enhancement. The default (no-JS) state is the footer behaving exactly as a normal static footer — always visible, in normal flow. JS adds a `js-collapsible-footer` class to `<body>`, and only CSS scoped under that class turns the footer into the collapse/expand behavior. A page with this pattern must never be *worse* than a plain footer if JS fails to run.
+- The footer stays in **normal document flow** at all times — no `position: fixed`, no reserved spacer element. It's collapsed by default (`max-height: 0; overflow: hidden;`) and expands to its real height (measured via `footer.scrollHeight`, stored in a `--footer-h` custom property) when revealed. This was a fixed-position + spacer design originally; that broke whenever the page's real content was shorter than the viewport (a short article on a tall or portrait monitor), because the footer would detach from the content above it, leaving a visible gap between the spacer and the fixed-position footer. Keeping it in normal flow means it's always contiguous with whatever precedes it, on any screen.
+- The trigger is an `IntersectionObserver` watching a dedicated `<div class="footer-sentinel" aria-hidden="true"></div>` placed right after the real content, immediately before the footer — not a comparison of scroll position against `document.documentElement.scrollHeight`. That scroll-math approach has a trap: when a page's content is shorter than the viewport, the browser reports `scrollHeight` as clamped to the viewport height, so the "have we scrolled to the bottom" check comes back true immediately on load, before the visitor has scrolled at all. Watching a real sentinel element's visibility sidesteps that entirely.
+- If a page has an internally-scrolling reading pane (see below), the sentinel/footer still live outside it in normal page flow — reaching the end of that inner pane and revealing the footer are two different things; don't conflate them.
 - If the page has a floating chat widget anchored to the bottom corner, nudge it out of the way (`translateY`) at the same moment the footer reveals, so the two never overlap.
 
-Reference: the inline `<script>` and the `footer` / `.footer-spacer` / `.chat-widget.footer-open` CSS at the bottom of `public/constitution.html` and `public/resources/an-ai-assistant-needs-more-than-your-business-information.html` — copy both the CSS and the script as a unit.
+Reference: the inline `<script>` and the `footer` / `.footer-sentinel` / `.chat-widget.footer-open` CSS at the bottom of `public/constitution.html` and `public/resources/an-ai-assistant-needs-more-than-your-business-information.html` — copy both the CSS and the script as a unit.
 
 ---
 
