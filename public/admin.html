@@ -1422,6 +1422,9 @@
       <div class="page-header">
         <div class="page-title">Config</div>
         <div class="page-sub">Operational mode and feature flags</div>
+        <div id="config-disabled-warning" style="display:none;margin-top:8px;padding:8px 12px;background:#fdecea;color:#b3261e;border-radius:6px;font-size:.875rem;font-weight:600;">
+          &#x26A0;&#xFE0F; Bot assistant is OFF — visitors are receiving the static fallback message on every page.
+        </div>
       </div>
       <div class="card">
         <div class="card-body" id="config-body">
@@ -2798,10 +2801,11 @@ async function loadConfig() {
   const body = document.getElementById('config-body');
   body.innerHTML = `
     <div class="toggle-row">
-      <div><div class="toggle-label">Mode</div><div class="toggle-sub">live = prod agent; testing = testing layer injected</div></div>
-      <select id="cfg-mode" style="width:auto">
-        <option value="live"    ${config.mode==='live'?'selected':''}>live</option>
-        <option value="testing" ${config.mode==='testing'?'selected':''}>testing</option>
+      <div><div class="toggle-label">Mode</div><div class="toggle-sub">live = prod agent; testing = testing layer injected; disabled = kill switch, static fallback shown to all visitors</div></div>
+      <select id="cfg-mode" style="width:auto" onchange="onConfigModeChange()">
+        <option value="live"     ${config.mode==='live'?'selected':''}>live</option>
+        <option value="testing"  ${config.mode==='testing'?'selected':''}>testing</option>
+        <option value="disabled" ${config.mode==='disabled'?'selected':''}>disabled (kill switch)</option>
       </select>
     </div>
     <div class="toggle-row">
@@ -2816,9 +2820,16 @@ async function loadConfig() {
       <button class="btn btn-primary" onclick="saveConfig()">Save Config</button>
     </div>
   `;
+  onConfigModeChange();
 }
 
 function toggleCapture() { document.getElementById('cfg-capture').classList.toggle('on'); }
+
+function onConfigModeChange() {
+  const warning = document.getElementById('config-disabled-warning');
+  const mode    = document.getElementById('cfg-mode')?.value;
+  if (warning) warning.style.display = mode === 'disabled' ? 'block' : 'none';
+}
 
 async function saveConfig() {
   const mode            = document.getElementById('cfg-mode').value;
