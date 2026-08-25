@@ -2,6 +2,7 @@ import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
 import { ADMIN_EMAIL, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, RESEARCH_PATTERN, TESTING_LAYER, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
 import { getTodayOfficeHoursText } from "../shared/office-hours.js";
+import { RATE_LIMITED_MESSAGE, checkChatRateLimit } from "../shared/rate-limit.js";
 
 // § DOMAIN: chat
 // ════════════════════════════════════════════════════════════════════════════
@@ -24,6 +25,15 @@ async function handleChat(request, env, ctx, corsHeaders) {
   // lookups and the Anthropic call entirely. No redeploy needed to flip this.
   if (config.mode === "disabled") {
 	return jsonResponse({ response: BOT_DISABLED_MESSAGE, mode: config.mode }, 200, corsHeaders);
+  }
+
+  // ── Rate guard ────────────────────────────────────────────────────────────
+  // Caps calls into the Anthropic pipeline (2 calls/turn — reply + evaluator)
+  // before any Supabase content lookup happens. See shared/rate-limit.js for
+  // the limits and the reasoning — flagged as placeholders pending real traffic.
+  const rateLimit = await checkChatRateLimit(env, request);
+  if (!rateLimit.allowed) {
+	return jsonResponse({ response: RATE_LIMITED_MESSAGE, mode: config.mode }, 200, corsHeaders);
   }
 
   const promptRow           = await supabaseFetch(env, "system_prompt", `?page=eq.${encodeURIComponent(page)}&select=content`);

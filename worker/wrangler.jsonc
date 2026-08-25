@@ -5,20 +5,26 @@
   "main": "src/index.js",
   "compatibility_date": "2026-04-18",
   "observability": {
-    "enabled": true
+	"enabled": true
   },
   "upload_source_maps": true,
   "compatibility_flags": [
-    "nodejs_compat"
+	"nodejs_compat"
+  ],
+  "kv_namespaces": [
+	{
+	  "binding": "RATE_LIMIT_KV",
+	  "id": "56d1543c02504cf8acdd7909168404b8"
+	}
   ],
   "routes": [
-    {
-      "pattern": "api.frontframe.co",
-      "zone_name": "frontframe.co",
-      "custom_domain": true
-    }
+	{
+	  "pattern": "api.frontframe.co",
+	  "zone_name": "frontframe.co",
+	  "custom_domain": true
+	}
   ],
   "vars": {
-    "SUPABASE_URL": "https://ifjsepyzdnpmwyuytppr.supabase.co"
+	"SUPABASE_URL": "https://ifjsepyzdnpmwyuytppr.supabase.co"
   }
 }
