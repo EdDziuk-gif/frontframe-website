@@ -1,0 +1,25 @@
+{
+  "as_of": "2026-08-25",
+  "workbench_revision": "2",
+  "current_phase": "B",
+  "current_phase_name": "Schema",
+  "phase_a": {
+    "name": "Safety infrastructure",
+    "status": "accepted",
+    "completed": true,
+    "deployed": true,
+    "verified": true,
+    "build_record": "builds/phase-a-safety-infrastructure.html",
+    "deliverables": [
+      "Kill switch",
+      "KV-backed rate guard",
+      "resolve_gap visitor-facing copy and insertion point"
+    ],
+    "known_deferred_work": [
+      "Cloudflare dashboard Rate Limiting rule",
+      "Empirical tuning of provisional rate limits"
+    ]
+  },
+  "next_gate": "Phase B — Schema",
+  "note": "Phase A source record supersedes the Workbench's 2026-08-22 pre-execution status."
+}
