@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>FrontFrame Workbench</title>
+<style>
+:root{color-scheme:light dark;--bg:#f3f1eb;--paper:#fbfaf6;--paper2:#eeece5;--ink:#22231f;--muted:#69695f;--line:#d5d0c5;--accent:#345c4a;--navy:#1E2D40;--amber:#F5A623}
+@media(prefers-color-scheme:dark){:root{--bg:#111312;--paper:#1a1d1b;--paper2:#222622;--ink:#ecece7;--muted:#a9ada5;--line:#343835;--accent:#91bca5}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
+.shell{max-width:980px;margin:auto;padding:28px 18px 60px}
+.brand{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--navy);font-weight:800}
+@media(prefers-color-scheme:dark){.brand{color:var(--amber)}}
+h1,h2{font-family:Georgia,"Times New Roman",serif}
+h1{font-size:clamp(36px,6vw,60px);line-height:1.02;font-weight:500;letter-spacing:-.03em;margin:8px 0 12px}
+.deck{max-width:720px;color:var(--muted);font-size:16px;margin:0 0 26px}
+.section{margin-top:28px}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:10px}
+.section h2{font-size:24px;font-weight:500;margin:0}
+.note{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{display:block;text-decoration:none;color:inherit;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;min-height:150px}
+.card:hover{border-color:var(--accent)}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:750}
+.card h3{font:500 23px/1.15 Georgia,"Times New Roman",serif;margin:8px 0 8px}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.status{display:inline-block;margin-top:14px;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--paper2);font-size:11px;font-weight:700}
+.empty{background:var(--paper);border:1px dashed var(--line);border-radius:14px;padding:18px;color:var(--muted);font-size:14px}
+.footer{margin-top:34px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:12px}
+@media(max-width:680px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="shell">
+<div class="brand">FrontFrame · Workbench</div>
+<h1>Build Index</h1>
+<p class="deck">A landing point for FrontFrame's own architecture and, over time, client builds. Returning here and reopening a build creates the same natural refresh pattern used by the Bible Study index.</p>
+
+<section class="section">
+  <div class="section-head"><h2>FrontFrame</h2><span class="note">Internal system</span></div>
+  <div class="grid">
+    <a class="card" href="agentic-system.html">
+      <div class="eyebrow">Architecture</div>
+      <h3>Agentic System</h3>
+      <p>Current system model, authority boundaries, agents, implementation state, and accepted decision record.</p>
+      <span class="status">Phase B · Schema</span>
+    </a>
+    <a class="card" href="builds/phase-a-safety-infrastructure.html">
+      <div class="eyebrow">Accepted build record</div>
+      <h3>Phase A · Safety Infrastructure</h3>
+      <p>Kill switch, KV-backed rate guard, resolve-gap insertion point, production verification, and carry-forward work.</p>
+      <span class="status">Accepted · 2026-08-25</span>
+    </a>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Client Builds</h2><span class="note">Cross-reference layer</span></div>
+  <div class="empty">No client build indexes have been added yet. This section is reserved for one card per client, with each card able to link to that client's blueprint, decisions, implementation phases, build records, and current state.</div>
+</section>
+
+<div class="footer">Workbench source records remain canonical. This landing page is the navigation and refresh point across FrontFrame and client builds.</div>
+</main>
+</body>
+</html>
