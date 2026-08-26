@@ -12,6 +12,18 @@ import { RATE_LIMITED_MESSAGE, checkChatRateLimit } from "../shared/rate-limit.j
 const BOT_DISABLED_MESSAGE =
   `Our assistant is temporarily unavailable. For anything urgent, reach us directly at ${ADMIN_EMAIL}.`;
 
+// Per the architecture doc (§12.7): a sub-threshold candidate answer cannot be
+// surfaced to the inquirer on the system's own authority. This is the copy for
+// that branch — a below-lower-threshold Scoring Agent result. NOT wired to
+// anything yet; the Scoring Agent and Scoring Consumer Agent don't exist in
+// code (Phase D), and there are no threshold values configured anywhere —
+// confirmed nothing exists in /admin, the worker, or the schema as of this
+// writing. This constant exists so the copy is ready when that wiring happens.
+// Draft copy — Ed's edit, not final.
+const RESOLVE_GAP_MESSAGE =
+  "I don't have a reliable answer to that yet. Want to leave your contact info? " +
+  `Ed will follow up personally once we have a solid answer. You can also reach him directly at ed@frontframe.co.`;
+
 async function handleChat(request, env, ctx, corsHeaders) {
   const body = await request.json();
   const { page, message, history = [], session_id = null } = body;
@@ -36,8 +48,21 @@ async function handleChat(request, env, ctx, corsHeaders) {
 	return jsonResponse({ response: RATE_LIMITED_MESSAGE, mode: config.mode }, 200, corsHeaders);
   }
 
-  const promptRow           = await supabaseFetch(env, "system_prompt", `?page=eq.${encodeURIComponent(page)}&select=content`);
-  const systemPromptContent = promptRow?.[0]?.content ?? "";
+  // ── System prompt: shared core (page="all") + page-specific block ───────
+  // Same global-row + page-row merge already used in operations.js's admin
+  // preview path (fetch both, join with a blank line between). Previously
+  // this route only fetched the page-specific row — the "all" row existed
+  // in operations.js's read path but was never joined into what visitors
+  // actually talk to. This wires it in here too, so the two paths (live
+  // chat, admin preview) build the prompt the same way.
+  const [pageRow, globalRow] = await Promise.all([
+	supabaseFetch(env, "system_prompt", `?page=eq.${encodeURIComponent(page)}&select=content`),
+	supabaseFetch(env, "system_prompt", `?page=eq.all&select=content`),
+  ]);
+  const pagePromptContent   = pageRow?.[0]?.content ?? "";
+  const globalPromptContent = globalRow?.[0]?.content ?? "";
+  const systemPromptContent = [globalPromptContent, pagePromptContent].filter(Boolean).join("\n\n");
+
   const qaPairs             = await supabaseFetch(env, "qa_pairs",
 	`?select=question,answer&or=(page.eq.all,page.eq.${encodeURIComponent(page)})&order=created_at.asc`);
 
@@ -211,6 +236,24 @@ No other text.`,
 	})());
   }
 
+  // ── Future: resolve_gap insertion point (Phase D) ────────────────────────
+  // Once the Scoring Agent and Scoring Consumer Agent exist, the three-tier
+  // logic from §12.7 belongs here, before the response is returned to the
+  // visitor:
+  //   - score < lower threshold  → return RESOLVE_GAP_MESSAGE instead of
+  //     `response` (visitor is told no reliable answer exists yet, invited
+  //     to leave contact info — this could reuse the existing "research"
+  //     lead-capture path below, the same _research marker / leads table /
+  //     SMS-to-Ed flow already used for research requests, rather than a
+  //     new mechanism).
+  //   - lower ≤ score < upper    → return `response` with a limited-
+  //     confidence acknowledgement appended, plus the same contact-info
+  //     invitation.
+  //   - score ≥ upper threshold  → return `response` as-is (current behavior).
+  // No threshold values exist in config, /admin, or the schema today — this
+  // is intentionally left as a comment, not a stubbed conditional, so there's
+  // no dead code implying scoring is partially wired.
+
   return jsonResponse({ response, mode: config.mode }, 200, corsHeaders);
 }
 
@@ -229,4 +272,4 @@ async function captureSession(env, sessionId, page, newTurns) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { handleChat, captureSession };
+export { handleChat, captureSession, RESOLVE_GAP_MESSAGE };
