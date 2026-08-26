@@ -169,7 +169,7 @@ async function sendDueDiligence(request, env, userJwt, corsHeaders) {
 // ════════════════════════════════════════════════════════════════════════════
 
 async function getSystemPrompt(env, page, userJwt, corsHeaders) {
-  const validPages = ["home","intake","discovery","yours","admin","proposal","resources"];
+  const validPages = ["all","home","intake","discovery","yours","admin","proposal","resources"];
   if (!validPages.includes(page))
     return jsonResponse({ error: `Invalid page. Must be one of: ${validPages.join(", ")}` }, 400, corsHeaders);
   const rows = await supabaseFetch(env, "system_prompt", `?page=eq.${encodeURIComponent(page)}&select=page,content`, userJwt);
@@ -178,7 +178,7 @@ async function getSystemPrompt(env, page, userJwt, corsHeaders) {
 }
 
 async function updateSystemPrompt(request, env, page, userJwt, corsHeaders) {
-  const validPages = ["home","intake","discovery","yours","admin","proposal","resources"];
+  const validPages = ["all","home","intake","discovery","yours","admin","proposal","resources"];
   if (!validPages.includes(page))
     return jsonResponse({ error: `Invalid page. Must be one of: ${validPages.join(", ")}` }, 400, corsHeaders);
   const { content } = await request.json();
