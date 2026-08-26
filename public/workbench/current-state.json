@@ -1,8 +1,8 @@
 {
-  "as_of": "2026-08-25",
+  "as_of": "2026-08-26",
   "workbench_revision": "2",
   "current_phase": "B",
-  "current_phase_name": "Schema",
+  "current_phase_name": "Schema verification",
   "phase_a": {
     "name": "Safety infrastructure",
     "status": "accepted",
@@ -20,6 +20,35 @@
       "Empirical tuning of provisional rate limits"
     ]
   },
-  "next_gate": "Phase B — Schema",
-  "note": "Phase A source record supersedes the Workbench's 2026-08-22 pre-execution status."
+  "phase_b": {
+    "name": "Schema",
+    "status": "implementation reported; verification pending",
+    "completed": false,
+    "build_record": "builds/phase-b-schema-verification.html",
+    "verification_required": [
+      "Review phase_b_lifecycle_ddl.sql",
+      "Query required tables, columns, constraints, and relationships",
+      "Confirm how people represents workers, owners/operators, and delegates",
+      "Record Ed's acceptance after evidence is reviewed"
+    ]
+  },
+  "phase_c": {
+    "name": "Seed content",
+    "status": "draft prompt prepared; blocked by Phase B verification and source inspection",
+    "resolved_inputs": [
+      "Constitution provisions 1–10 supplied",
+      "Adopting the Constitution excluded from operating seed",
+      "No organizational-knowledge corpus exists"
+    ],
+    "open_inputs": [
+      "Current system prompt and Charter 2 relationship",
+      "Minimum authority and participant seed rows required by the verified DDL",
+      "Safe repeat and narrowly targeted reversal method derived from the DDL"
+    ]
+  },
+  "open_decisions": [
+    "Whether a limited-confidence response requires official affirm/decline acceptance or recording"
+  ],
+  "next_gate": "Verify and accept Phase B before authorizing Phase C execution",
+  "note": "Phase B is no longer described as merely eligible to begin; implementation is reported, but completion remains evidence-gated."
 }
