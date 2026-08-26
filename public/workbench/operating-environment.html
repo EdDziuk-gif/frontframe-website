@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>FrontFrame Working Environment | Workbench</title>
+<style>
+:root{color-scheme:light dark;--bg:#f3f1eb;--paper:#fbfaf6;--paper2:#eeece5;--ink:#22231f;--muted:#69695f;--line:#d5d0c5;--accent:#345c4a;--navy:#1E2D40;--amber:#F5A623;--warn:#8b6237}
+@media(prefers-color-scheme:dark){:root{--bg:#111312;--paper:#1a1d1b;--paper2:#222622;--ink:#ecece7;--muted:#a9ada5;--line:#343835;--accent:#91bca5;--warn:#d3aa77}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.6}.shell{max-width:980px;margin:auto;padding:24px 18px 64px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:22px}.top a{color:inherit;text-decoration:none}.brand{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--navy);font-weight:800}@media(prefers-color-scheme:dark){.brand{color:var(--amber)}}h1,h2,h3{font-family:Georgia,"Times New Roman",serif}h1{font-size:clamp(34px,5vw,54px);line-height:1.05;font-weight:500;letter-spacing:-.03em;margin:8px 0 10px}.deck{color:var(--muted);max-width:780px;margin:0 0 18px}.meta{font-size:12px;color:var(--muted);padding-bottom:18px;border-bottom:1px solid var(--line)}.nav{display:flex;flex-wrap:wrap;gap:7px;margin:18px 0}.nav a{font-size:12px;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:999px;padding:5px 9px;background:var(--paper)}article{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px;margin:14px 0}h2{font-size:25px;font-weight:500;margin:0 0 10px}h3{font-size:18px;margin:18px 0 7px}p{margin:0 0 12px}ul,ol{margin:7px 0 14px;padding-left:23px}li{margin:5px 0}pre{overflow:auto;background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:13px;font-size:13px;line-height:1.45}code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.callout{border-left:4px solid var(--accent);padding:10px 13px;background:var(--paper2);border-radius:8px}.warning{border-left-color:var(--warn)}.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.links a{font-size:12px;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:999px;padding:5px 9px;background:var(--paper2)}.footer{margin-top:28px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<main class="shell">
+<div class="top"><div class="brand">FrontFrame · Workbench</div><a href="home.html">← Workbench Index</a></div>
+<h1>FrontFrame Working Environment</h1>
+<p class="deck">Practical, tested reference for anyone working in a terminal session on the FrontFrame codebase: actual repository layout, deployment paths, git hooks, troubleshooting, terminal behavior, secrets, and working rules. This environment informs the Site Assistant build because it defines how source changes become deployed behavior and how production state is verified.</p>
+<div class="meta"><strong>Canonical local file:</strong> <code>~/Development_Assets/FrontFrame_Website_CoWork/frontframe-site/WORKING_ENVIRONMENT.md</code> · Verified against the actual filesystem and commands · 2026-08-25</div>
+<nav class="nav"><a href="#layout">Repo layout</a><a href="#deploy">Deploying</a><a href="#hooks">Git hooks</a><a href="#git">Git problems</a><a href="#terminal">Terminal</a><a href="#secrets">Secrets</a><a href="#rules">Working rules</a></nav>
+
+<article id="layout"><h2>1 · Repo layout — verify before touching anything</h2><p><strong>One GitHub repo, two deployables.</strong></p><pre><code>frontframe-site/                       ← GitHub repo root (EdDziuk-gif/frontframe-website)
+├── public/                            ← Cloudflare Pages serves this. Deploys via git push.
+│   └── admin.html, index.html, etc.
+├── functions/                         ← Cloudflare Pages Functions (password gate middleware)
+└── worker/                            ← Cloudflare Worker, api.frontframe.co. NOT a separate
+    ├── wrangler.jsonc                    repo — tracked in this same git repo, but deployed
+    ├── src/                              with a completely separate command. git push does
+    │   ├── index.js                      NOT deploy the worker.
+    │   ├── router.js
+    │   ├── middleware/auth.js
+    │   ├── routes/*.js
+    │   └── shared/*.js
+    └── test/router.contract.test.js</code></pre><p>Older documentation describing the Worker as a separate <code>frontframe-worker</code> folder backed only by Time Machine is out of date. As of this reference, <code>worker/</code> is a tracked subdirectory of <code>frontframe-site</code>, pushed to the same GitHub remote.</p><pre><code>cd ~/Development_Assets/FrontFrame_Website_CoWork/frontframe-site
+git ls-files worker | head
+git remote -v</code></pre><p class="callout warning">If a future session finds a genuinely separate <code>frontframe-worker</code> folder, stop and flag the conflict rather than guessing which copy is current.</p></article>
+
+<article id="deploy"><h2>2 · Deploying — two independent commands</h2><h3>Site: <code>public/</code> and <code>functions/</code></h3><p>Cloudflare Pages deploys from git. Use the repository script rather than raw add/commit/push.</p><pre><code>cd ~/Development_Assets/FrontFrame_Website_CoWork/frontframe-site
+./deploy.sh "Description of change"</code></pre><p><code>deploy.sh</code> removes a stale <code>.git/HEAD.lock</code> if present, verifies the working copy, stages, commits, and pushes. Cloudflare Pages then auto-builds. After 1–2 minutes, verify production with a unique string from the change.</p><pre><code>curl -s https://frontframe.co/admin | grep "&lt;some unique string from your change&gt;"</code></pre><h3>Worker: <code>worker/</code></h3><p>The Worker deploy is completely separate from git push.</p><pre><code>cd ~/Development_Assets/FrontFrame_Website_CoWork/frontframe-site/worker
+npx wrangler deploy --config wrangler.jsonc</code></pre><p><strong>Git push does not deploy the Worker.</strong> Worker changes must both be deployed with Wrangler and committed/pushed so production and the repo do not silently drift apart.</p><h3>Do not use <code>--no-bundle</code></h3><p>The historic <code>--no-bundle</code> command currently causes a Wrangler module-resolution failure on this project. Dry-run inspection showed only <code>index.js</code> being written with the flag, versus a complete ~110KB bundle without it. Deploy without <code>--no-bundle</code> until the underlying Cloudflare issue is root-caused.</p></article>
+
+<article id="hooks"><h2>3 · Git hooks — expected behavior</h2><ul><li><strong>Commit subject ≤ 72 characters.</strong> Use a short first <code>-m</code> and a second <code>-m</code> for the body when needed.</li><li><strong>Interactive commit messages require a blank line after the subject.</strong> Supplying <code>-m</code> is more reliable in terminal sessions where the editor may misbehave.</li><li><strong>Worker changes run tests automatically.</strong> Staging anything under <code>worker/</code> triggers Vitest; a failing test blocks the commit.</li><li><strong>New files without matching tests</strong> may prompt for <code>YES</code>; this is a reminder rather than a test gate.</li><li><strong>Push-time messages are reminders.</strong> Public changes announce the Pages build; Worker changes remind you that push does not deploy the Worker.</li></ul><pre><code>git commit -m "Short subject under 72 chars" -m "Longer explanation goes here."</code></pre></article>
+
+<article id="git"><h2>4 · Diagnosing git problems — verify before assuming corruption</h2><ol><li><strong><code>fatal: bad object &lt;sha&gt;</code></strong>: run <code>git fetch origin</code>, then <code>git fsck --full</code>. Dangling objects are ordinary debris; missing or broken objects are the real problem.</li><li><strong><code>main -&gt; main (fetch first)</code></strong>: local is behind remote. Inspect what changed, then merge explicitly with <code>git pull --no-rebase origin main</code>.</li><li><strong>Divergent branches warning</strong>: use <code>--no-rebase</code> for that pull rather than setting a global preference unless Ed requests one.</li><li><strong>Lock warnings from concurrent sessions</strong>: do not infer damage. Verify with <code>git fsck --full</code>; <code>deploy.sh</code> handles stale lock cleanup for its own runs.</li></ol><pre><code>git fetch origin
+git fsck --full
+
+git log &lt;your-last-known-sha&gt;..origin/main --stat
+git pull --no-rebase origin main</code></pre></article>
+
+<article id="terminal"><h2>5 · Terminal and editor quirks</h2><ul><li>If <code>git commit</code> cannot open <code>vi</code>, supply the commit message directly with <code>-m</code>.</li><li>If a pasted multi-line block gets stuck at a <code>quote&gt;</code> prompt, press Ctrl+C, return to a normal prompt, and rerun commands one at a time.</li><li>Always confirm the working directory before destructive or deploy-related commands.</li></ul><pre><code>pwd</code></pre></article>
+
+<article id="secrets"><h2>6 · Secrets and environment</h2><p>The Anthropic API key is a Worker secret (<code>env.ANTHROPIC_API_KEY</code>), not a repo file. If chat reports an invalid API key, rotate the secret rather than changing code.</p><pre><code>cd ~/Development_Assets/FrontFrame_Website_CoWork/frontframe-site/worker
+npx wrangler secret put ANTHROPIC_API_KEY --config wrangler.jsonc</code></pre><p><code>SUPABASE_URL</code> is a non-secret var in <code>wrangler.jsonc</code>. <code>SUPABASE_SERVICE_ROLE_KEY</code> is also a Worker secret.</p><p><code>wrangler tail</code> is the fastest path to the real runtime exception behind the visitor-facing generic error.</p><pre><code>cd ~/Development_Assets/FrontFrame_Website_CoWork/frontframe-site/worker
+npx wrangler tail</code></pre></article>
+
+<article id="rules"><h2>7 · General working rules</h2><ul><li><strong>Read the file before editing it.</strong> Never edit from memory or an old copy.</li><li><strong>Complete files only.</strong> No partial patches or “insert this somewhere” instructions.</li><li><strong>grep for a unique string before staging</strong> to verify the edit landed in the intended file.</li><li><strong>GitHub is the source of truth.</strong> Never deploy the site directly from the Cloudflare Pages dashboard.</li><li><strong>Do not assume — verify.</strong> Repo location, Worker location, tracked state, schema constraints, and error meanings have all been wrong in prior assumptions and corrected by direct inspection.</li></ul><p class="callout"><strong>Operational principle:</strong> one command that confirms a fact is preferable to a paragraph that assumes it.</p><div class="links"><a href="agentic-system.html">Agentic System</a><a href="builds/phase-a-safety-infrastructure.html">Phase A build record</a><a href="home.html">Workbench Index</a></div></article>
+
+<div class="footer">This Workbench page is a comprehension layer. The local <code>WORKING_ENVIRONMENT.md</code> and verified repository/production state remain the operative evidence when they disagree with older documentation.</div>
+</main>
+</body>
+</html>
