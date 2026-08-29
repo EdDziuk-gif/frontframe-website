@@ -3,6 +3,7 @@ import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, sup
 import { ADMIN_EMAIL, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, RESEARCH_PATTERN, TESTING_LAYER, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
 import { getTodayOfficeHoursText } from "../shared/office-hours.js";
 import { RATE_LIMITED_MESSAGE, checkChatRateLimit } from "../shared/rate-limit.js";
+import { LIMITED_CONFIDENCE_HEDGE, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
 
 // § DOMAIN: chat
 // ════════════════════════════════════════════════════════════════════════════
@@ -12,13 +13,8 @@ import { RATE_LIMITED_MESSAGE, checkChatRateLimit } from "../shared/rate-limit.j
 const BOT_DISABLED_MESSAGE =
   `Our assistant is temporarily unavailable. For anything urgent, reach us directly at ${ADMIN_EMAIL}.`;
 
-// Per the architecture doc (§12.7): a sub-threshold candidate answer cannot be
-// surfaced to the inquirer on the system's own authority. This is the copy for
-// that branch — a below-lower-threshold Scoring Agent result. NOT wired to
-// anything yet; the Scoring Agent and Scoring Consumer Agent don't exist in
-// code (Phase D), and there are no threshold values configured anywhere —
-// confirmed nothing exists in /admin, the worker, or the schema as of this
-// writing. This constant exists so the copy is ready when that wiring happens.
+// Per the architecture and REQ-SCA-06, a sub-threshold candidate answer cannot
+// be surfaced to the inquirer on the system's own authority.
 // Draft copy — Ed's edit, not final.
 const RESOLVE_GAP_MESSAGE =
   "I don't have a reliable answer to that yet. Want to leave your contact info? " +
@@ -34,15 +30,15 @@ async function handleChat(request, env, ctx, corsHeaders) {
 
   // ── Kill switch ───────────────────────────────────────────────────────────
   // When mode = "disabled" (set via /admin → Config), skip Supabase content
-  // lookups and the Anthropic call entirely. No redeploy needed to flip this.
+  // lookups and Anthropic calls entirely. No redeploy needed to flip this.
   if (config.mode === "disabled") {
 	return jsonResponse({ response: BOT_DISABLED_MESSAGE, mode: config.mode }, 200, corsHeaders);
   }
 
   // ── Rate guard ────────────────────────────────────────────────────────────
-  // Caps calls into the Anthropic pipeline (2 calls/turn — reply + evaluator)
-  // before any Supabase content lookup happens. See shared/rate-limit.js for
-  // the limits and the reasoning — flagged as placeholders pending real traffic.
+  // Caps requests into the Anthropic pipeline before any content lookup.
+  // Phase D adds the Scoring Agent call, so a normal turn now makes the main
+  // reply + scoring call, plus the existing async evaluator when session_id exists.
   const rateLimit = await checkChatRateLimit(env, request);
   if (!rateLimit.allowed) {
 	return jsonResponse({ response: RATE_LIMITED_MESSAGE, mode: config.mode }, 200, corsHeaders);
@@ -164,7 +160,69 @@ async function handleChat(request, env, ctx, corsHeaders) {
 	);
   }
 
+  // ── Phase D: Scoring Agent + deterministic Scoring Consumer ──────────────
+  // The candidate answer is scored before visitor delivery. The scoring call
+  // receives only the literal question and candidate answer. SCA then applies
+  // live threshold_config values deterministically.
+  let scoringLifecycle = null;
+  let hedgeShown = false;
+  try {
+	scoringLifecycle = await createScoringLifecycle(env, {
+	  question: message,
+	  answer: response,
+	  askedBy: session_id,
+	  source: "visitor_chat",
+	});
+
+	if (scoringLifecycle.route === "resolve_gap") {
+	  // The candidate remains in lifecycle records for human handling, but the
+	  // system does not surface it to the visitor on its own authority.
+	  response = RESOLVE_GAP_MESSAGE;
+	} else if (scoringLifecycle.route === "respond_limited") {
+	  // Decision 0018: deliver the candidate with a confidence hedge; no
+	  // mandatory affirm/decline gate.
+	  hedgeShown = true;
+	  response = LIMITED_CONFIDENCE_HEDGE + response;
+	}
+  } catch (e) {
+	// Infrastructure/model failure is not permission to surface an unscored
+	// candidate. Fail closed at the same human-resolution boundary.
+	console.error("Phase D scoring pipeline failed:", e);
+	response = RESOLVE_GAP_MESSAGE;
+	ctx.waitUntil(
+	  supabasePost(env, "defects", {
+		area: "agentic_scoring",
+		description: `Phase D scoring pipeline failed: ${e?.message ?? "unknown error"}`,
+		severity: "high",
+		disposition: "retain",
+		build_version: config.build_version ?? "unknown",
+		stage_gate: config.stage_gate ?? "build",
+	  }).catch((err) => console.error("scoring defect write failed:", err))
+	);
+  }
+
+  if (scoringLifecycle?.routeId) {
+	try {
+	  await recordDeliveredResponse(env, scoringLifecycle.routeId, response, hedgeShown);
+	} catch (e) {
+	  // Routing succeeded, so do not change the visitor's already-determined
+	  // route merely because response evidence failed to persist. Log the defect.
+	  console.error("Phase D response persistence failed:", e);
+	  ctx.waitUntil(
+		supabasePost(env, "defects", {
+		  area: "agentic_scoring",
+		  description: `Phase D response persistence failed: ${e?.message ?? "unknown error"}`,
+		  severity: "high",
+		  disposition: "retain",
+		  build_version: config.build_version ?? "unknown",
+		  stage_gate: config.stage_gate ?? "build",
+		}).catch((err) => console.error("response persistence defect write failed:", err))
+	  );
+	}
+  }
+
   // ── Session capture ──────────────────────────────────────────────────────
+  // Capture the response actually delivered after Phase D routing.
   if (config.capture_enabled && session_id) {
 	const turn = [{ role: "user", content: message }, { role: "assistant", content: response }];
 	ctx.waitUntil(captureSession(env, session_id, page, turn).catch((e) => console.error("session capture failed:", e)));
@@ -235,24 +293,6 @@ No other text.`,
 	  } catch { /* evaluator errors never interrupt visitor response */ }
 	})());
   }
-
-  // ── Future: resolve_gap insertion point (Phase D) ────────────────────────
-  // Once the Scoring Agent and Scoring Consumer Agent exist, the three-tier
-  // logic from §12.7 belongs here, before the response is returned to the
-  // visitor:
-  //   - score < lower threshold  → return RESOLVE_GAP_MESSAGE instead of
-  //     `response` (visitor is told no reliable answer exists yet, invited
-  //     to leave contact info — this could reuse the existing "research"
-  //     lead-capture path below, the same _research marker / leads table /
-  //     SMS-to-Ed flow already used for research requests, rather than a
-  //     new mechanism).
-  //   - lower ≤ score < upper    → return `response` with a limited-
-  //     confidence acknowledgement appended, plus the same contact-info
-  //     invitation.
-  //   - score ≥ upper threshold  → return `response` as-is (current behavior).
-  // No threshold values exist in config, /admin, or the schema today — this
-  // is intentionally left as a comment, not a stubbed conditional, so there's
-  // no dead code implying scoring is partially wired.
 
   return jsonResponse({ response, mode: config.mode }, 200, corsHeaders);
 }

@@ -2,9 +2,10 @@ import { hashIp } from "./runtime.js";
 
 // ════════════════════════════════════════════════════════════════════════════
 // § DOMAIN: rate guard
-// Protects the /chat pipeline (2 Anthropic calls per turn — main reply +
-// async quality evaluator) from a traffic spike or abuse pattern generating
-// an unexpected bill before Ed notices. Backed by a KV namespace (RATE_LIMIT_KV).
+// Protects the /chat pipeline (Phase D: 2 Anthropic calls on every completed
+// turn — main reply + Scoring Agent — plus the async quality evaluator when a
+// session_id is present) from a traffic spike or abuse pattern generating an
+// unexpected bill before Ed notices. Backed by a KV namespace (RATE_LIMIT_KV).
 //
 // PLACEHOLDER LIMITS — flagged per Phase A instructions, not based on real
 // traffic data. As of 2026-08-24, /chat has effectively zero visitor traffic.
