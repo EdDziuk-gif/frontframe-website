@@ -129,11 +129,26 @@ export async function createScoringLifecycle(env, {
   const routeId = routeRows?.[0]?.id;
   if (!routeId) throw new Error("Failed to persist route");
 
+  let gapResolutionRequestId = null;
+  if (route === "resolve_gap") {
+    // REQ-SCA-06: forward the unresolved candidate into the manual KGR queue.
+    // authorized_by/authorized_at remain null until an Operator or authorized
+    // Delegate affirmatively authorizes gap-resolution work to begin.
+    const requestRows = await supabasePost(env, "gap_resolution_requests", {
+      route_id: routeId,
+      question_id: questionId,
+      candidate_answer_id: candidateAnswerId,
+    });
+    gapResolutionRequestId = requestRows?.[0]?.id ?? null;
+    if (!gapResolutionRequestId) throw new Error("Failed to persist gap-resolution request");
+  }
+
   return {
     questionId,
     candidateAnswerId,
     scoreId,
     routeId,
+    gapResolutionRequestId,
     score: scoring.score,
     rationale: scoring.rationale,
     route,
