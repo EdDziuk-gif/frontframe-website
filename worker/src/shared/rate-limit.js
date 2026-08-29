@@ -60,7 +60,7 @@ export async function checkChatRateLimit(env, request) {
 	env, `chat_global:${hourBucket}`, GLOBAL_LIMIT_PER_HOUR, 7200);
   if (!globalResult.allowed) return { allowed: false, reason: "global" };
 
-  return { allowed: true, count: globalResult.count };
+  return { allowed: true };
 }
 
 
