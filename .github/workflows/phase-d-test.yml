@@ -33,3 +33,5 @@ jobs:
           node --check src/shared/rate-limit.js
       - name: Run worker tests
         run: npm test -- --run
+      - name: Build Worker without deploying
+        run: npx wrangler deploy --dry-run --outdir /tmp/frontframe-phase-d-worker
