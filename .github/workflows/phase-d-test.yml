@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - phase-d-scoring-wiring-2026-08-29
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
