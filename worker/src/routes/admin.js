@@ -20,6 +20,7 @@ export const ADMIN_ROUTES = [
   route("PUT", "/admin/bookings/:id", (req, env, _ctx, ch, p) => handlers.updateBookingAdmin(req, env, p.id, ch)),
   route("GET", "/admin/config", envOnly(handlers.getConfig)),
   route("POST", "/admin/config", noParams(handlers.updateConfig)),
+  route("POST", "/admin/phase-e/chat", (req, env, ctx, ch) => handlers.handleChat(req, env, ctx, ch, "phase_e_test")),
   route("GET", "/admin/defects", envOnly(handlers.getDefects)),
   route("POST", "/admin/defects", noParams(handlers.createDefect)),
   route("PATCH", "/admin/defects/:id", param(handlers.updateDefect)),

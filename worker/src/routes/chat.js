@@ -20,7 +20,7 @@ const RESOLVE_GAP_MESSAGE =
   "I don't have a reliable answer to that yet. Want to leave your contact info? " +
   `Ed will follow up personally once we have a solid answer. You can also reach him directly at ed@frontframe.co.`;
 
-async function handleChat(request, env, ctx, corsHeaders) {
+async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat") {
   const body = await request.json();
   const { page, message, history = [], session_id = null } = body;
   if (!page || !message) return jsonResponse({ error: "page and message are required" }, 400, corsHeaders);
@@ -171,7 +171,7 @@ async function handleChat(request, env, ctx, corsHeaders) {
 	  question: message,
 	  answer: response,
 	  askedBy: session_id,
-	  source: "visitor_chat",
+	  source,
 	});
 
 	if (scoringLifecycle.route === "resolve_gap") {

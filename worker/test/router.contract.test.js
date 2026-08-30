@@ -3,14 +3,15 @@ import { describe, expect, it } from "vitest";
 import { ADMIN_EXTRA_PROTECTED_PATHS, isProtectedRoute } from "../src/middleware/auth.js";
 import { ROUTES } from "../src/index.js";
 import { matchRoute } from "../src/router.js";
+import { handlers } from "../src/routes/registry.js";
 
 const manifest = ROUTES.map(({ method, path }) => `${method} ${path}`).join("\n");
 
 describe("Worker route contract", () => {
-  it("preserves the approved 92-route manifest and declaration order", () => {
-    expect(ROUTES).toHaveLength(92);
+  it("preserves the approved 93-route manifest and declaration order", () => {
+    expect(ROUTES).toHaveLength(93);
     expect(createHash("sha256").update(manifest).digest("hex"))
-      .toBe("bc9837a5504ab51a3c537d95cc9b6298ec211ee1deb3c5c0224d08c00c5b3af7");
+      .toBe("a9e8db147fce2f693ea1524979d9d34e7fabc8f80b258d0d31f9a6afdbc661da");
   });
 
   it("keeps literal sub-routes ahead of their parameterized fallbacks", () => {
@@ -26,6 +27,33 @@ describe("Worker route contract", () => {
 
     expect(matchRoute(ROUTES, "DELETE", "/admin/review-queue/bulk")?.route.path)
       .toBe("/admin/review-queue/bulk");
+  });
+
+  it("binds Phase E source at the protected route boundary", async () => {
+    const originalHandleChat = handlers.handleChat;
+    const calls = [];
+    handlers.handleChat = (...args) => {
+      calls.push(args);
+      return Promise.resolve({ ok: true });
+    };
+
+    try {
+      const publicHit = matchRoute(ROUTES, "POST", "/chat");
+      const phaseEHit = matchRoute(ROUTES, "POST", "/admin/phase-e/chat");
+
+      expect(publicHit?.route.path).toBe("/chat");
+      expect(phaseEHit?.route.path).toBe("/admin/phase-e/chat");
+      expect(isProtectedRoute(phaseEHit.route.path)).toBe(true);
+
+      await publicHit.route.handler("request", "env", "ctx", "cors", publicHit.params);
+      await phaseEHit.route.handler("request", "env", "ctx", "cors", phaseEHit.params);
+
+      expect(calls).toHaveLength(2);
+      expect(calls[0][4]).toBeUndefined();
+      expect(calls[1][4]).toBe("phase_e_test");
+    } finally {
+      handlers.handleChat = originalHandleChat;
+    }
   });
 });
 
