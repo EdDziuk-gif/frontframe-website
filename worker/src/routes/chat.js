@@ -1,9 +1,9 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, RESEARCH_PATTERN, TESTING_LAYER, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
+import { ADMIN_EMAIL, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
 import { getTodayOfficeHoursText } from "../shared/office-hours.js";
 import { RATE_LIMITED_MESSAGE, checkChatRateLimit } from "../shared/rate-limit.js";
-import { LIMITED_CONFIDENCE_HEDGE, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
+import { LIMITED_CONFIDENCE_HEDGE, createKnowledgeGapLifecycle, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
 
 // § DOMAIN: chat
 // ════════════════════════════════════════════════════════════════════════════
@@ -63,6 +63,7 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
 	`?select=question,answer&or=(page.eq.all,page.eq.${encodeURIComponent(page)})&order=created_at.asc`);
 
   let combinedPrompt = buildSystemPrompt(systemPromptContent, qaPairs);
+  combinedPrompt += KNOWLEDGE_GAP_INSTRUCTION;
   if (config.mode === "testing") combinedPrompt += TESTING_LAYER;
 
   const hoursText = await getTodayOfficeHoursText(env);
@@ -160,45 +161,105 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
 	);
   }
 
+  // ── Knowledge-gap detection (Generation-Boundary Spike, Phase E) ─────────
+  // The generation call may flag that this answer depends on a FrontFrame
+  // fact absent from the supplied operational corpus (system_prompt +
+  // qa_pairs). That is an eligibility-boundary failure, not a low SCR
+  // appropriateness score, so SCR must never see this candidate. A marker
+  // that looks intended but does not parse fails closed rather than falling
+  // through to normal scoring — see spec: Generation-Boundary Spike.
+  const gapMatch = response.match(KNOWLEDGE_GAP_PATTERN);
+  let knowledgeGapMissing = null;
+  let knowledgeGapMalformed = false;
+
+  if (gapMatch) {
+	try {
+	  const parsedGap = JSON.parse(gapMatch[0]);
+	  if (parsedGap?._knowledge_gap === true) {
+		knowledgeGapMissing = typeof parsedGap.missing === "string" && parsedGap.missing.trim()
+		  ? parsedGap.missing.trim()
+		  : "(not specified)";
+		response = response.replace(KNOWLEDGE_GAP_PATTERN, "").trim();
+	  } else {
+		knowledgeGapMalformed = true;
+	  }
+	} catch {
+	  knowledgeGapMalformed = true;
+	}
+  } else if (response.slice(-300).includes("_knowledge_gap")) {
+	// The model appears to have attempted the marker near the end of its
+	// reply but it did not match the expected shape closely enough to parse.
+	// Restricted to the tail of the response so an unrelated mid-reply
+	// mention (e.g. quoted or discussed in prose) is not mistaken for a
+	// failed marker attempt.
+	knowledgeGapMalformed = true;
+  }
+
   // ── Phase D: Scoring Agent + deterministic Scoring Consumer ──────────────
   // The candidate answer is scored before visitor delivery. The scoring call
   // receives only the literal question and candidate answer. SCA then applies
-  // live threshold_config values deterministically.
+  // live threshold_config values deterministically. Bypassed entirely for a
+  // confirmed or malformed knowledge-gap candidate — see block above.
   let scoringLifecycle = null;
   let hedgeShown = false;
-  try {
-	scoringLifecycle = await createScoringLifecycle(env, {
-	  question: message,
-	  answer: response,
-	  askedBy: session_id,
-	  source,
-	});
 
-	if (scoringLifecycle.route === "resolve_gap") {
-	  // The candidate remains in lifecycle records for human handling, but the
-	  // system does not surface it to the visitor on its own authority.
-	  response = RESOLVE_GAP_MESSAGE;
-	} else if (scoringLifecycle.route === "respond_limited") {
-	  // Decision 0018: deliver the candidate with a confidence hedge; no
-	  // mandatory affirm/decline gate.
-	  hedgeShown = true;
-	  response = LIMITED_CONFIDENCE_HEDGE + response;
-	}
-  } catch (e) {
-	// Infrastructure/model failure is not permission to surface an unscored
-	// candidate. Fail closed at the same human-resolution boundary.
-	console.error("Phase D scoring pipeline failed:", e);
+  if (knowledgeGapMalformed) {
+	const rawCandidate = response;
+	console.error("Malformed knowledge-gap marker — withholding candidate:", rawCandidate.slice(0, 200));
 	response = RESOLVE_GAP_MESSAGE;
 	ctx.waitUntil(
 	  supabasePost(env, "defects", {
 		area: "agentic_scoring",
-		description: `Phase D scoring pipeline failed: ${e?.message ?? "unknown error"}`,
+		description: `Malformed knowledge-gap marker - candidate withheld, SCR not invoked. Raw: ${rawCandidate.slice(0, 200)}`,
 		severity: "high",
 		disposition: "retain",
 		build_version: config.build_version ?? "unknown",
 		stage_gate: config.stage_gate ?? "build",
-	  }).catch((err) => console.error("scoring defect write failed:", err))
+	  }).catch((err) => console.error("knowledge-gap defect write failed:", err))
 	);
+  } else {
+	try {
+	  scoringLifecycle = knowledgeGapMissing !== null
+		? await createKnowledgeGapLifecycle(env, {
+			question: message,
+			answer: response.trim() ? response : "(No partial answer \u2014 full knowledge gap.)",
+			missing: knowledgeGapMissing,
+			askedBy: session_id,
+			source,
+		  })
+		: await createScoringLifecycle(env, {
+			question: message,
+			answer: response,
+			askedBy: session_id,
+			source,
+		  });
+
+	  if (scoringLifecycle.route === "resolve_gap") {
+		// The candidate remains in lifecycle records for human handling, but the
+		// system does not surface it to the visitor on its own authority.
+		response = RESOLVE_GAP_MESSAGE;
+	  } else if (scoringLifecycle.route === "respond_limited") {
+		// Decision 0018: deliver the candidate with a confidence hedge; no
+		// mandatory affirm/decline gate.
+		hedgeShown = true;
+		response = LIMITED_CONFIDENCE_HEDGE + response;
+	  }
+	} catch (e) {
+	  // Infrastructure/model failure is not permission to surface an unscored
+	  // candidate. Fail closed at the same human-resolution boundary.
+	  console.error("Phase D scoring pipeline failed:", e);
+	  response = RESOLVE_GAP_MESSAGE;
+	  ctx.waitUntil(
+		supabasePost(env, "defects", {
+		  area: "agentic_scoring",
+		  description: `Phase D scoring pipeline failed: ${e?.message ?? "unknown error"}`,
+		  severity: "high",
+		  disposition: "retain",
+		  build_version: config.build_version ?? "unknown",
+		  stage_gate: config.stage_gate ?? "build",
+		}).catch((err) => console.error("scoring defect write failed:", err))
+	  );
+	}
   }
 
   if (scoringLifecycle?.routeId) {

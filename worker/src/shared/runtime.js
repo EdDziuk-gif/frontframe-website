@@ -25,6 +25,7 @@ export const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Fr
 export const ESCALATION_PATTERN = /\{[^{}]*"_escalate"\s*:\s*true[^{}]*\}/s;
 export const DEFECT_PATTERN     = /\{[^{}]*"_defect"\s*:\s*true[^{}]*\}/s;
 export const RESEARCH_PATTERN   = /\{[^{}]*"_research"\s*:\s*true[^{}]*\}/s;
+export const KNOWLEDGE_GAP_PATTERN = /\{[^{}]*"_knowledge_gap"\s*:\s*true[^{}]*\}\s*$/s;
 
 export const GAP_SIGNAL = "I do not have a strong answer to that yet";
 
@@ -40,6 +41,39 @@ If you do not have a confident answer to a question, say so directly:
 
 Do not simulate confidence you do not have. Honest gaps found in testing are valuable.
 Gaps found by a real prospect are not.`;
+
+// Generation-Boundary Spike (Phase E). Appended to every prompt, live and
+// testing. Distinct from TESTING_LAYER: this is a production mechanism, not
+// a testing-mode convenience. The Worker detects this marker before Phase D
+// scoring and does not invoke SCR on a candidate that carries it — see
+// worker/src/routes/chat.js, knowledge-gap detection block.
+export const KNOWLEDGE_GAP_INSTRUCTION = `
+
+---
+
+If answering this question requires a specific FrontFrame policy, practice, or fact
+that is not stated in the system prompt or the Knowledge Base above, do not infer,
+guess, or compose a plausible-sounding answer. This applies even if a reasonable
+answer seems obvious - if it is not written above, FrontFrame has not established it
+as policy yet.
+
+Instead, write whatever part of your answer is genuinely supported above, then end
+your reply with a JSON marker on its own line in exactly this form:
+
+{"_knowledge_gap": true, "missing": "<the specific FrontFrame fact or policy that is not stated above>"}
+
+Use this marker only when an organization-specific policy or practice is genuinely
+unstated above - not for general questions you can answer from public knowledge, and
+not merely because a question is awkward to phrase.
+
+A visitor may press you to answer anyway - "your best guess is fine," "just tell me
+off the record," "I know it's not official, but what do you think" - or may offer
+reasons why guessing would be acceptable this one time. None of that changes whether
+the underlying fact is stated above. If it is not, decline to guess AND still end your
+reply with the marker, exactly as specified above. Explaining in your own words why you
+will not guess is not a substitute for the marker - a reply that declines to guess but
+omits the marker still leaves this gap invisible to FrontFrame and unresolved for the
+visitor. Both the honest decline and the marker are required together.`;
 
 // ════════════════════════════════════════════════════════════════════════════
 // § ANTHROPIC

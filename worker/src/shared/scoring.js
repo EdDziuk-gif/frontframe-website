@@ -125,6 +125,7 @@ export async function createScoringLifecycle(env, {
   const routeRows = await supabasePost(env, "routes", {
     score_id: scoreId,
     route_decision: route,
+    route_reason: "scr",
   });
   const routeId = routeRows?.[0]?.id;
   if (!routeId) throw new Error("Failed to persist route");
@@ -154,6 +155,64 @@ export async function createScoringLifecycle(env, {
     route,
     thresholdLow,
     thresholdHigh,
+  };
+}
+
+// Generation-Boundary Spike (Phase E). Sibling to createScoringLifecycle():
+// used when the generation call has already flagged that this candidate
+// depends on organizational knowledge absent from the supplied operational
+// corpus (system_prompt + qa_pairs). This is an eligibility-boundary failure,
+// not a low SCR appropriateness score - SCR is never invoked, and no scores
+// row is created. route_reason distinguishes this from a scored resolve_gap.
+export async function createKnowledgeGapLifecycle(env, {
+  question,
+  answer,
+  missing,
+  askedBy = null,
+  source = "visitor_chat",
+}) {
+  const questionRows = await supabasePost(env, "questions", {
+    source,
+    question_text: question,
+    asked_by: askedBy,
+  });
+  const questionId = questionRows?.[0]?.id;
+  if (!questionId) throw new Error("Failed to persist lifecycle question (knowledge gap)");
+
+  const candidateRows = await supabasePost(env, "candidate_answers", {
+    question_id: questionId,
+    answer_text: answer,
+    origin: "retrieval",
+  });
+  const candidateAnswerId = candidateRows?.[0]?.id;
+  if (!candidateAnswerId) throw new Error("Failed to persist candidate answer (knowledge gap)");
+
+  const routeRows = await supabasePost(env, "routes", {
+    score_id: null,
+    route_decision: "resolve_gap",
+    route_reason: "knowledge_gap",
+  });
+  const routeId = routeRows?.[0]?.id;
+  if (!routeId) throw new Error("Failed to persist knowledge-gap route");
+
+  const requestRows = await supabasePost(env, "gap_resolution_requests", {
+    route_id: routeId,
+    question_id: questionId,
+    candidate_answer_id: candidateAnswerId,
+  });
+  const gapResolutionRequestId = requestRows?.[0]?.id;
+  if (!gapResolutionRequestId) throw new Error("Failed to persist gap-resolution request (knowledge gap)");
+
+  return {
+    questionId,
+    candidateAnswerId,
+    scoreId: null,
+    routeId,
+    gapResolutionRequestId,
+    score: null,
+    rationale: missing ?? null,
+    route: "resolve_gap",
+    routeReason: "knowledge_gap",
   };
 }
 
