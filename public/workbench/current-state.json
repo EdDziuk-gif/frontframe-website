@@ -1,8 +1,8 @@
 {
-  "as_of": "2026-08-26",
-  "workbench_revision": "2",
-  "current_phase": "B",
-  "current_phase_name": "Schema verification",
+  "as_of": "2026-08-31",
+  "workbench_revision": "3",
+  "current_phase": "E",
+  "current_phase_name": "Live operation and generation-boundary spike",
   "phase_a": {
     "name": "Safety infrastructure",
     "status": "accepted",
@@ -22,33 +22,51 @@
   },
   "phase_b": {
     "name": "Schema",
-    "status": "implementation reported; verification pending",
-    "completed": false,
+    "status": "complete and conformant for the current build",
+    "completed": true,
     "build_record": "builds/phase-b-schema-verification.html",
-    "verification_required": [
-      "Review phase_b_lifecycle_ddl.sql",
-      "Query required tables, columns, constraints, and relationships",
-      "Confirm how people represents workers, owners/operators, and delegates",
-      "Record Ed's acceptance after evidence is reviewed"
+    "verification_completed": [
+      "Lifecycle schema and authority relationships verified in production",
+      "Constitution persistence restored and independently verified",
+      "Thresholds confirmed at 0.40 and 0.90"
     ]
   },
   "phase_c": {
     "name": "Seed content",
-    "status": "draft prompt prepared; blocked by Phase B verification and source inspection",
+    "status": "complete; no additional seed work required",
     "resolved_inputs": [
       "Constitution provisions 1–10 supplied",
       "Adopting the Constitution excluded from operating seed",
       "No organizational-knowledge corpus exists"
     ],
-    "open_inputs": [
-      "Current system prompt and Charter 2 relationship",
-      "Minimum authority and participant seed rows required by the verified DDL",
-      "Safe repeat and narrowly targeted reversal method derived from the DDL"
-    ]
+    "open_inputs": []
+  },
+  "phase_d": {
+    "name": "Agent wiring",
+    "status": "complete, deployed, and production-verified",
+    "completed": true,
+    "deliverables": ["SCR appropriateness scoring", "Deterministic SCA routing", "Lifecycle persistence and gap-resolution request creation"]
+  },
+  "phase_e": {
+    "name": "Go live",
+    "status": "active; generation-boundary defect identified",
+    "generation_boundary_spike": {
+      "design": "closed",
+      "implementation": "not started",
+      "operational_corpus": "system_prompt + qa_pairs",
+      "promulgation": "authorized insertion into the operational corpus",
+      "provenance_ledger": "promulgated_knowledge",
+      "boundary": "KNOWLEDGE_GAP marker before SCR/SCA",
+      "knowledge_gap_route": "resolve_gap without SCR or a scores row",
+      "schema": "routes.score_id nullable; route_reason distinguishes scr and knowledge_gap",
+      "partial_delivery": "deferred"
+    },
+    "acceptance_tests": ["Primary domain-policy reproduction", "Zero coverage", "Full coverage", "Compound partly covered", "Malformed marker fail-closed", "Adversarial pressure", "Schema-level lifecycle truthfulness"]
   },
   "open_decisions": [
-    "Whether a limited-confidence response requires official affirm/decline acceptance or recording"
+    "Whether compound-test evidence justifies partial delivery",
+    "Whether a demonstrated need justifies provenance/history retrieval"
   ],
-  "next_gate": "Verify and accept Phase B before authorizing Phase C execution",
-  "note": "Phase B is no longer described as merely eligible to begin; implementation is reported, but completion remains evidence-gated."
+  "next_gate": "Implement and verify the closed Generation-Boundary Spike without changing SCR/SCA",
+  "note": "Canonical Markdown and accepted decisions remain authoritative. This Workbench data is a comprehension-layer reflection; the spike is designed but not implemented."
 }
