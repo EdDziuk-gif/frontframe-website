@@ -1,6 +1,6 @@
 {
-  "as_of": "2026-08-31",
-  "workbench_revision": "3",
+  "as_of": "2026-09-03",
+  "workbench_revision": "10",
   "current_phase": "E",
   "current_phase_name": "Live operation and generation-boundary spike",
   "phase_a": {
@@ -49,24 +49,41 @@
   },
   "phase_e": {
     "name": "Go live",
-    "status": "active; generation-boundary defect identified",
+    "status": "complete, deployed, and production-verified",
     "generation_boundary_spike": {
       "design": "closed",
-      "implementation": "not started",
+      "implementation": "complete in commit 479ed90; deployed and confirmed",
       "operational_corpus": "system_prompt + qa_pairs",
       "promulgation": "authorized insertion into the operational corpus",
       "provenance_ledger": "promulgated_knowledge",
       "boundary": "KNOWLEDGE_GAP marker before SCR/SCA",
       "knowledge_gap_route": "resolve_gap without SCR or a scores row",
-      "schema": "routes.score_id nullable; route_reason distinguishes scr and knowledge_gap",
-      "partial_delivery": "deferred"
+      "schema": "already live: routes.score_id nullable; route_reason distinguishes scr and knowledge_gap; existing rows backfilled to scr",
+      "malformed_marker": "fails closed; answer withheld; defect-only auditability; no lifecycle rows",
+      "partial_delivery": "implemented per subpart; supported parts delivered, withheld parts represented truthfully, one final contact invitation",
+      "adversarial_reliability": "13 consecutive trials passed across three phrasings; accepted probabilistically; larger-sample validation deferred",
+      "deployment": "Knowledge-gap foundation 479ed90; constitutional eligibility and compound handling 12b7c53; queue visibility and admin UI a235b12; Worker and site confirmed live",
+      "constitutional_boundary": "separate bounded classification before generation and SCR; constitutional candidates route scorelessly for human determination",
+      "corpus_protection": "Q&A mutation routes require authorized administration",
+      "gap_queue": "SMS visibility plus protected admin list/delete; resolution remains manual",
+      "closure_gate": []
     },
     "acceptance_tests": ["Primary domain-policy reproduction", "Zero coverage", "Full coverage", "Compound partly covered", "Malformed marker fail-closed", "Adversarial pressure", "Schema-level lifecycle truthfulness"]
   },
   "open_decisions": [
-    "Whether compound-test evidence justifies partial delivery",
+    "Whether 13 consecutive adversarial trials should later be supplemented by a larger predeclared sample",
     "Whether a demonstrated need justifies provenance/history retrieval"
   ],
-  "next_gate": "Implement and verify the closed Generation-Boundary Spike without changing SCR/SCA",
-  "note": "Canonical Markdown and accepted decisions remain authoritative. This Workbench data is a comprehension-layer reflection; the spike is designed but not implemented."
+  "constitutional_conformity": {
+    "status": "implemented and production-verified",
+    "runtime_authority": "Current constitution_provisions inform a separate constitutional eligibility check before generation and SCR",
+    "boundary": "Constitutional candidates bypass answer generation and SCR and require human determination",
+    "classification_rule": "Applying an existing recorded delegation is operational; creating, changing, contesting, or determining delegation authority is constitutional"
+  },
+  "phase_f": {
+    "status": "ready for design negotiation; not implemented",
+    "working_boundary": "Professional-tier governed client maintenance, commissioning, and basic CRM; scope remains under negotiation"
+  },
+  "next_gate": "Agree the bounded Professional-tier Phase F scope before implementation",
+  "note": "Phase E is closed. Canonical Markdown, accepted decisions, and verified production evidence remain authoritative."
 }
