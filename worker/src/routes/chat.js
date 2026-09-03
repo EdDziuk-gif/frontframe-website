@@ -42,6 +42,18 @@ const WITHHELD_KNOWLEDGE_GAP_NOTE =
 const WITHHELD_CONSTITUTIONAL_NOTE =
   "that part touches FrontFrame's own governance, which isn't mine to decide";
 
+// Phase E gap-resolution-queue visibility: a lightweight SMS alert whenever a
+// gap_resolution_requests row is created, so an unresolved visitor question
+// doesn't sit unseen. Best-effort — never blocks or fails the visitor reply.
+async function alertGapResolutionQueue(env, ctx, page, question, reason) {
+  ctx.waitUntil(
+    sendSms(env,
+      `FrontFrame gap queue\nReason: ${reason}\nPage: ${page}\n` +
+      `Question: ${question.slice(0, 200)}`
+    ).catch((e) => console.error("gap-resolution-queue alert failed:", e))
+  );
+}
+
 // Phase E completion, item C. Cheap, purely syntactic prefilter run before
 // ever spending a model call on decomposition — most single-question turns
 // never reach the Anthropic call below. Intentionally permissive (a false
@@ -135,6 +147,9 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
           stage_gate: config.stage_gate ?? "build",
         }).catch((err) => console.error("eligibility defect write failed:", err))
       );
+    }
+    if (scoringLifecycle?.gapResolutionRequestId) {
+      await alertGapResolutionQueue(env, ctx, page, message, "constitutional_candidate");
     }
     return {
       response: CONSTITUTIONAL_HOLD_MESSAGE,
@@ -321,6 +336,10 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
         response = RESOLVE_GAP_MESSAGE;
         isWithheld = true;
         withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
+        if (scoringLifecycle?.gapResolutionRequestId) {
+          await alertGapResolutionQueue(env, ctx, page, message,
+            knowledgeGapMissing !== null ? "knowledge_gap" : "scr_low_confidence");
+        }
       } else if (scoringLifecycle.route === "respond_limited") {
         // Decision 0018: deliver the candidate with a confidence hedge; no
         // mandatory affirm/decline gate.

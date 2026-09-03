@@ -87,4 +87,6 @@ export const ADMIN_ROUTES = [
   route("GET", "/admin/review-queue", noParams(handlers.getReviewQueue)),
   route("PATCH", "/admin/review-queue/:id", param(handlers.updateReviewQueue)),
   route("DELETE", "/admin/review-queue/:id", envParam(handlers.deleteReviewQueue)),
+  route("GET", "/admin/gap-resolution-requests", envOnly(handlers.getGapResolutionRequests)),
+  route("DELETE", "/admin/gap-resolution-requests/:id", envParam(handlers.deleteGapResolutionRequest)),
 ];

@@ -8,10 +8,10 @@ import { handlers } from "../src/routes/registry.js";
 const manifest = ROUTES.map(({ method, path }) => `${method} ${path}`).join("\n");
 
 describe("Worker route contract", () => {
-  it("preserves the approved 93-route manifest and declaration order", () => {
-    expect(ROUTES).toHaveLength(93);
+  it("preserves the approved 95-route manifest and declaration order", () => {
+    expect(ROUTES).toHaveLength(95);
     expect(createHash("sha256").update(manifest).digest("hex"))
-      .toBe("a9e8db147fce2f693ea1524979d9d34e7fabc8f80b258d0d31f9a6afdbc661da");
+      .toBe("b904ca354810d961deac3e7b0478f0e31e811e129352a76ab44fe3187a48b6ce");
   });
 
   it("keeps literal sub-routes ahead of their parameterized fallbacks", () => {

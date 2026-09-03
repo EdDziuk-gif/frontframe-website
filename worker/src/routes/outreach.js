@@ -154,5 +154,30 @@ async function bulkDeleteReviewQueue(request, env, userJwt, corsHeaders) {
 
 
 // ════════════════════════════════════════════════════════════════════════════
+// § DOMAIN: gap-resolution-requests
+// ════════════════════════════════════════════════════════════════════════════
 
-export { getOutreachProspects, createOutreachProspect, updateOutreachProspect, sendOutreachContract, getOutreachTouches, createOutreachTouch, getReviewQueue, updateReviewQueue, deleteReviewQueue, bulkDeleteReviewQueue };
+// Minimal visibility + cleanup for the KGR intake queue (Decision 0023: KGR
+// itself stays manual until real cases establish its mechanics - this is
+// NOT resolution automation, just making the existing queue visible and
+// letting an off-the-wall/test entry be removed from it). Deleting a row
+// here only removes it from the queue; it does not touch the underlying
+// questions/candidate_answers/routes/scores audit trail, same as
+// deleteReviewQueue above leaves review_queue's source data untouched.
+async function getGapResolutionRequests(env, userJwt, corsHeaders) {
+  if (!userJwt) return jsonResponse({ error: "Unauthorized" }, 401, corsHeaders);
+  const rows = await supabaseFetch(env, "gap_resolution_requests",
+    "?select=id,requested_at,authorized_by,authorized_at,questions(question_text,source),candidate_answers(answer_text),routes(route_reason,route_decision)&order=requested_at.desc",
+    userJwt);
+  return jsonResponse(rows ?? [], 200, corsHeaders);
+}
+
+async function deleteGapResolutionRequest(env, id, userJwt, corsHeaders) {
+  await supabaseDelete(env, "gap_resolution_requests", id, userJwt);
+  return jsonResponse({ deleted: id }, 200, corsHeaders);
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+
+export { getOutreachProspects, createOutreachProspect, updateOutreachProspect, sendOutreachContract, getOutreachTouches, createOutreachTouch, getReviewQueue, updateReviewQueue, deleteReviewQueue, bulkDeleteReviewQueue, getGapResolutionRequests, deleteGapResolutionRequest };

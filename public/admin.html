@@ -447,6 +447,7 @@
       <button class="nav-item" data-tab="system-prompt" onclick="switchTab('system-prompt')">&#x1F9E0; System Prompt</button>
       <button class="nav-item" data-tab="defects"       onclick="switchTab('defects')">&#x1F41B; Defects <span class="nav-badge hidden" id="badge-defects">0</span></button>
       <button class="nav-item" data-tab="feedback"      onclick="switchTab('feedback')">&#x1F4DD; Feedback <span class="nav-badge hidden" id="badge-feedback">0</span></button>
+      <button class="nav-item" data-tab="gap-queue"    onclick="switchTab('gap-queue')">&#x2753; Unresolved Questions <span class="nav-badge hidden" id="badge-gap-queue">0</span></button>
       <button class="nav-item" data-tab="solutions"     onclick="switchTab('solutions')">&#x1F4A1; Solutions</button>
       <button class="nav-item" data-tab="subscriptions" onclick="switchTab('subscriptions')">&#x1F4F1; Subscriptions</button>
       <button class="nav-item" data-tab="office-hours"  onclick="switchTab('office-hours')">&#x1F550; Office Hours</button>
@@ -711,6 +712,26 @@
           <table>
             <thead id="rq-thead"></thead>
             <tbody id="rq-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gap Resolution Queue -->
+    <div class="tab-panel" id="tab-gap-queue">
+      <div class="page-header">
+        <div class="page-title">Unresolved Questions</div>
+        <div class="page-sub">Real visitor questions the assistant withheld — constitutional-authority questions and knowledge gaps the corpus can't answer. Nothing here is answered automatically; delete off-topic or test entries.</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Queue</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadGapQueue()">&#x21BA;</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Visitor Question</th><th>Candidate Answer</th><th>Reason</th><th>Requested</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="gap-queue-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1699,6 +1720,7 @@ let defects       = [];
 let feedback      = [];
 let reviewQueue   = [];
 let rqView        = 'candidate';
+let gapQueue      = [];
 let subscriptions = [];
 let mktLog        = [];
 let problems      = [];
@@ -1840,6 +1862,7 @@ function switchTab(tab) {
     case 'system-prompt': loadPromptForPage().catch(e => toast('Prompt: ' + e.message, 'error')); break;
     case 'defects':       loadDefects().catch(e => toast('Defects: ' + e.message, 'error')); break;
     case 'feedback':      loadFeedback().catch(e => toast('Feedback: ' + e.message, 'error')); break;
+    case 'gap-queue':      loadGapQueue().catch(e => toast('Gap Queue: ' + e.message, 'error')); break;
     case 'solutions':     loadSolutions().catch(e => toast('Solutions: ' + e.message, 'error')); break;
     case 'subscriptions': loadSubscriptions().catch(e => toast('Subscriptions: ' + e.message, 'error')); break;
     case 'office-hours':  loadOfficeHours().catch(e => toast('Office Hours: ' + e.message, 'error')); break;
@@ -2944,6 +2967,44 @@ async function deleteQueueRecord(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
+// Gap Resolution Queue
+
+async function loadGapQueue() {
+  try { gapQueue = await api('GET', '/admin/gap-resolution-requests'); } catch (e) { toast('Failed to load gap queue: ' + e.message, 'error'); return; }
+  renderGapQueue();
+  updateBadges();
+}
+
+function renderGapQueue() {
+  const tbody = document.getElementById('gap-queue-tbody');
+  if (!tbody) return;
+  if (!gapQueue.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No unresolved questions</div></td></tr>`; return; }
+  tbody.innerHTML = gapQueue.map(r => {
+    const q      = esc(r.questions?.question_text ?? '—');
+    const a      = esc((r.candidate_answers?.answer_text ?? '—').slice(0, 140));
+    const reason = esc(r.routes?.route_reason ?? '—');
+    const status = r.authorized_at ? '<span class="badge badge-promoted">Authorized</span>' : '<span class="badge badge-open">Open</span>';
+    return `<tr>
+      <td style="max-width:260px">${q}</td>
+      <td style="max-width:280px;color:var(--gray)">${a}</td>
+      <td>${reason}</td>
+      <td>${fmtDate(r.requested_at)}</td>
+      <td>${status}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="deleteGapQueueRecord('${r.id}')">Delete</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function deleteGapQueueRecord(id) {
+  try {
+    await api('DELETE', `/admin/gap-resolution-requests/${id}`);
+    gapQueue = gapQueue.filter(r => r.id !== id);
+    renderGapQueue();
+    updateBadges();
+    toast('Deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
 // Badges
 
 function updateBadges() {
@@ -2955,6 +3016,8 @@ function updateBadges() {
   const openFeedback   = feedback.filter(f => !f.promoted).length;
   const queueCandidates = reviewQueue.filter(r => r.status === 'candidate').length;
   setBadge('badge-feedback', openFeedback + queueCandidates);
+  const openGapQueue = gapQueue.filter(r => !r.authorized_at).length;
+  setBadge('badge-gap-queue', openGapQueue);
 }
 
 function setBadge(id, count) {
