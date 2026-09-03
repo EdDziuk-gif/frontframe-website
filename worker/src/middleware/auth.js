@@ -8,6 +8,8 @@ export const ADMIN_EXTRA_PROTECTED_PATHS = new Set([
   "/api/office-hours/overrides/:date",
   "/api/rd-log",
   "/api/rd-log/:id",
+  "/qa",
+  "/qa/:id",
 ]);
 
 export function extractJwt(request) {

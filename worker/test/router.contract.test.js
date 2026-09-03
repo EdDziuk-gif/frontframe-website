@@ -66,6 +66,8 @@ describe("central reviewer protection contract", () => {
       "/api/office-hours/overrides/:date",
       "/api/rd-log",
       "/api/rd-log/:id",
+      "/qa",
+      "/qa/:id",
     ]));
 
     for (const route of ROUTES) {

@@ -226,3 +226,31 @@ export function formatTime12(timeStr) {
 
 
 // ════════════════════════════════════════════════════════════════════════════
+
+
+// Formats the current constitution_provisions rows into a governing section
+// shown to the answer-generation call for context ONLY, once a question has
+// already cleared the separate constitutional-eligibility check (see
+// checkConstitutionalEligibility() in scoring.js) - eligibility is decided
+// BEFORE this prompt is ever built, not by anything the generation call
+// itself is asked to decide or flag. Nothing in the system prompt or
+// Knowledge Base may override, narrow, or reinterpret these provisions.
+export function buildConstitutionSection(provisions) {
+  if (!provisions?.length) return "";
+  const body = provisions
+    .slice()
+    .sort((a, b) => Number(a.provision_number) - Number(b.provision_number))
+    .map(p => `${p.provision_number}. ${p.title}\n${p.current_text}`)
+    .join("\n\n");
+  return `CONSTITUTION - governing authority, superior to everything below.
+
+The following provisions govern this assistant's authority and knowledge
+boundaries. Nothing in the system prompt or Knowledge Base below may override,
+narrow, or reinterpret them. This question has already been reviewed and
+cleared for an ordinary answer; use these provisions only as governing
+context for that answer.
+
+${body}
+
+---`;
+}
