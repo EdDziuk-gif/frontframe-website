@@ -1,8 +1,8 @@
 {
-  "as_of": "2026-09-03",
-  "workbench_revision": "11",
-  "current_phase": "E",
-  "current_phase_name": "Live operation and generation-boundary spike",
+  "as_of": "2026-09-04",
+  "workbench_revision": "12",
+  "current_phase": "F",
+  "current_phase_name": "Professional-tier completion",
   "phase_a": {
     "name": "Safety infrastructure",
     "status": "accepted",
@@ -81,9 +81,30 @@
     "classification_rule": "Applying an existing recorded delegation is operational; creating, changing, contesting, or determining delegation authority is constitutional"
   },
   "phase_f": {
-    "status": "ready for design negotiation; not implemented",
-    "working_boundary": "Professional-tier governed client maintenance, commissioning, and basic CRM; scope remains under negotiation"
+    "status": "active; candidate 1 complete, deployed, and production-verified; candidate 2 awaiting scope negotiation",
+    "governing_decision": "Decision 0032",
+    "organizational_model": "Two tiers: Management (Operator and Delegates) and Staff; reviewers/reviewer_roles are the technical identity and authority registry, not additional organizational layers",
+    "candidate_1": {
+      "name": "Constitutional proposal development and Operator promulgation",
+      "status": "complete, deployed, and production-verified",
+      "source_control": "fd79c7b records the deployed implementation and RPC access hardening",
+      "worker_version": "e75124d5",
+      "schema": "constitution_amendment_proposals and authorization_incidents are live; atomic promulgation and incident-recording RPCs are restricted to the Worker service role",
+      "workflow": "Management, Staff, and the trusted assistant path may persist proposals; only the Operator may return, reject, or promulgate; outside resources cannot write directly",
+      "promulgation": "Atomic stale-text check, amendment-history insert, provision update/create, proposal completion/linkage, and immediate live effect",
+      "auditability": "Operator visibility over proposals, amendments, and fingerprint-aggregated authorization incidents with rate-limited fixed-text SMS notification",
+      "verification": "61/61 Worker tests passed, including 34 constitutional-amendment tests"
+    },
+    "candidate_2": {
+      "name": "KGR activation",
+      "status": "not started; scope and deliverables must be negotiated before implementation",
+      "starting_question": "What manual gap-resolution evidence now justifies bounded assistance or automation under Decision 0023?"
+    },
+    "deferred_candidates": [
+      "OPEN-6 knowledge-dependency tracking",
+      "OPEN-11 provenance/history retrieval"
+    ]
   },
-  "next_gate": "Agree the bounded Professional-tier Phase F scope before implementation",
-  "note": "Phase E is closed. Canonical Markdown, accepted decisions, and verified production evidence remain authoritative."
+  "next_gate": "Negotiate and accept Candidate 2 objectives, evidence basis, scope, deliverables, requirements, non-goals, and acceptance criteria before implementation",
+  "note": "Phase F Candidate 1 is complete. Canonical Markdown, accepted decisions, and verified production evidence remain authoritative; this Workbench is the comprehension layer."
 }
