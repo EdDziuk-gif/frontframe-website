@@ -448,6 +448,8 @@
       <button class="nav-item" data-tab="defects"       onclick="switchTab('defects')">&#x1F41B; Defects <span class="nav-badge hidden" id="badge-defects">0</span></button>
       <button class="nav-item" data-tab="feedback"      onclick="switchTab('feedback')">&#x1F4DD; Feedback <span class="nav-badge hidden" id="badge-feedback">0</span></button>
       <button class="nav-item" data-tab="gap-queue"    onclick="switchTab('gap-queue')">&#x2753; Unresolved Questions <span class="nav-badge hidden" id="badge-gap-queue">0</span></button>
+      <button class="nav-item" data-tab="constitution" onclick="switchTab('constitution')">&#x1F4DC; Constitution <span class="nav-badge hidden" id="badge-constitution">0</span></button>
+      <button class="nav-item" data-tab="auth-incidents" onclick="switchTab('auth-incidents')">&#x26A0;&#xFE0F; Auth Incidents <span class="nav-badge hidden" id="badge-auth-incidents">0</span></button>
       <button class="nav-item" data-tab="solutions"     onclick="switchTab('solutions')">&#x1F4A1; Solutions</button>
       <button class="nav-item" data-tab="subscriptions" onclick="switchTab('subscriptions')">&#x1F4F1; Subscriptions</button>
       <button class="nav-item" data-tab="office-hours"  onclick="switchTab('office-hours')">&#x1F550; Office Hours</button>
@@ -732,6 +734,80 @@
           <table>
             <thead><tr><th>Visitor Question</th><th>Candidate Answer</th><th>Reason</th><th>Requested</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="gap-queue-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Constitution -->
+    <div class="tab-panel" id="tab-constitution">
+      <div class="page-header">
+        <div class="page-title">Constitutional Amendment Proposals</div>
+        <div class="page-sub">Pre-promulgation working objects. Lifecycle: draft &rarr; pending_review &rarr; promulgated / rejected / returned &rarr; draft. Only Operators may promulgate, reject, or return.</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Proposals</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select id="proposal-status-filter" onchange="renderProposals()" style="font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);">
+              <option value="">All statuses</option>
+              <option value="draft">Draft</option>
+              <option value="pending_review">Pending Review</option>
+              <option value="returned">Returned</option>
+              <option value="rejected">Rejected</option>
+              <option value="promulgated">Promulgated</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="loadConstitution()">&#x21BA;</button>
+            <button class="btn btn-primary btn-sm" onclick="openProposalModal()">+ New Proposal</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Constitutional Matter</th><th>Provision</th><th>Source</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="proposals-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-header">
+          <div class="card-title">Promulgated Amendments</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadConstitution()">&#x21BA;</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Provision</th><th>Problem Statement</th><th>Promulgated</th></tr></thead>
+            <tbody id="amendments-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-header">
+          <div class="card-title">Active Provisions</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Number</th><th>Title</th><th>Current Text</th><th>Last Updated</th></tr></thead>
+            <tbody id="provisions-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth Incidents -->
+    <div class="tab-panel" id="tab-auth-incidents">
+      <div class="page-header">
+        <div class="page-title">Authorization Incidents</div>
+        <div class="page-sub">Denied privileged amendment actions. Same-fingerprint open/reviewed incidents are aggregated. Resolve after investigation.</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Incidents</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadAuthIncidents()">&#x21BA;</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Actor</th><th>Action</th><th>Target</th><th>Reason</th><th>Count</th><th>Status</th><th>Last Occurred</th><th>Actions</th></tr></thead>
+            <tbody id="auth-incidents-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1721,6 +1797,10 @@ let feedback      = [];
 let reviewQueue   = [];
 let rqView        = 'candidate';
 let gapQueue      = [];
+let proposals     = [];
+let amendments    = [];
+let provisions    = [];
+let authIncidents = [];
 let subscriptions = [];
 let mktLog        = [];
 let problems      = [];
@@ -1863,6 +1943,8 @@ function switchTab(tab) {
     case 'defects':       loadDefects().catch(e => toast('Defects: ' + e.message, 'error')); break;
     case 'feedback':      loadFeedback().catch(e => toast('Feedback: ' + e.message, 'error')); break;
     case 'gap-queue':      loadGapQueue().catch(e => toast('Gap Queue: ' + e.message, 'error')); break;
+    case 'constitution':   loadConstitution().catch(e => toast('Constitution: ' + e.message, 'error')); break;
+    case 'auth-incidents': loadAuthIncidents().catch(e => toast('Auth Incidents: ' + e.message, 'error')); break;
     case 'solutions':     loadSolutions().catch(e => toast('Solutions: ' + e.message, 'error')); break;
     case 'subscriptions': loadSubscriptions().catch(e => toast('Subscriptions: ' + e.message, 'error')); break;
     case 'office-hours':  loadOfficeHours().catch(e => toast('Office Hours: ' + e.message, 'error')); break;
@@ -3005,6 +3087,309 @@ async function deleteGapQueueRecord(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
+// Constitution
+
+const PROPOSAL_STATUS_COLORS = {
+  draft: '#6b7280',
+  pending_review: '#d97706',
+  returned: '#7c3aed',
+  rejected: '#dc2626',
+  promulgated: '#16a34a',
+};
+
+async function loadConstitution() {
+  try {
+    [proposals, amendments, provisions] = await Promise.all([
+      api('GET', '/admin/constitution/proposals'),
+      api('GET', '/admin/constitution/amendments'),
+      api('GET', '/admin/constitution/provisions'),
+    ]);
+  } catch (e) { toast('Failed to load constitution data: ' + e.message, 'error'); return; }
+  renderProposals();
+  renderAmendments();
+  renderProvisions();
+  updateBadges();
+}
+
+function renderProposals() {
+  const tbody = document.getElementById('proposals-tbody');
+  if (!tbody) return;
+  const filter = document.getElementById('proposal-status-filter')?.value ?? '';
+  const rows = filter ? proposals.filter(p => p.status === filter) : proposals;
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">No proposals</div></td></tr>`; return; }
+  tbody.innerHTML = rows.map(p => {
+    const color = PROPOSAL_STATUS_COLORS[p.status] ?? '#6b7280';
+    return `<tr>
+      <td>${p.id}</td>
+      <td style="max-width:240px;white-space:normal;">${esc(p.constitutional_matter)}</td>
+      <td>${esc(p.affected_provision_number ?? '—')}</td>
+      <td>${esc(p.source_type)}</td>
+      <td><span style="color:${color};font-weight:600;">${esc(p.status)}</span></td>
+      <td>${fmtDate(p.created_at)}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="openProposalDetail(${p.id})">View</button>
+        ${p.status === 'draft' || p.status === 'returned'
+          ? `<button class="btn btn-ghost btn-sm" onclick="submitProposal(${p.id})">Submit</button>`
+          : ''}
+        ${p.status === 'pending_review'
+          ? `<button class="btn btn-ghost btn-sm" onclick="returnProposal(${p.id})">Return</button>
+             <button class="btn btn-ghost btn-sm" onclick="rejectProposal(${p.id})">Reject</button>
+             <button class="btn btn-primary btn-sm" onclick="promulgateProposal(${p.id})">Promulgate</button>`
+          : ''}
+        ${p.status === 'returned'
+          ? `<button class="btn btn-ghost btn-sm" onclick="reopenProposal(${p.id})">Reopen</button>`
+          : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAmendments() {
+  const tbody = document.getElementById('amendments-tbody');
+  if (!tbody) return;
+  if (!amendments.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No amendments yet</div></td></tr>`; return; }
+  tbody.innerHTML = amendments.map(a => `<tr>
+    <td>${a.id}</td>
+    <td>${esc(a.provision_number ?? '—')}</td>
+    <td style="max-width:300px;white-space:normal;">${esc(a.problem_statement)}</td>
+    <td>${fmtDate(a.promulgated_at)}</td>
+  </tr>`).join('');
+}
+
+function renderProvisions() {
+  const tbody = document.getElementById('provisions-tbody');
+  if (!tbody) return;
+  if (!provisions.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No provisions</div></td></tr>`; return; }
+  tbody.innerHTML = provisions.map(p => `<tr>
+    <td>${esc(p.provision_number ?? '—')}</td>
+    <td>${esc(p.title ?? '—')}</td>
+    <td style="max-width:400px;white-space:pre-wrap;font-size:12px;">${esc(p.current_text)}</td>
+    <td>${fmtDate(p.updated_at)}</td>
+  </tr>`).join('');
+}
+
+// Proposal detail modal (read-only for now)
+function openProposalDetail(id) {
+  const p = proposals.find(x => x.id === id);
+  if (!p) return;
+  const lines = [
+    ['Status', p.status],
+    ['Source Type', p.source_type],
+    ['Constitutional Matter', p.constitutional_matter],
+    ['Factual Context', p.factual_context],
+    ['Material Assumptions', p.material_assumptions],
+    ['Proposed Decision', p.proposed_decision],
+    ['Affected Provision', p.affected_provision_number ?? '—'],
+    ['Proposed Provision Title', p.proposed_provision_title ?? '—'],
+    ['Expected Preceding Text', p.expected_preceding_text ?? '—'],
+    ['Proposed Resulting Text', p.proposed_resulting_text],
+    ['Interactions with Other Provisions', p.interactions_with_other_provisions],
+    ['No Conflict Explanation', p.no_conflict_explanation],
+    ['Review Notes', p.review_notes ?? '—'],
+    ['Created', fmtDate(p.created_at)],
+  ];
+  const body = lines.map(([k, v]) =>
+    `<div style="margin-bottom:12px;"><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:2px;">${esc(k)}</div><div style="white-space:pre-wrap;font-size:13px;">${esc(String(v))}</div></div>`
+  ).join('');
+  showSimpleModal(`Proposal #${id}`, body);
+}
+
+function showSimpleModal(title, bodyHtml) {
+  let modal = document.getElementById('simple-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'simple-modal';
+    modal.className = 'modal-backdrop';
+    modal.innerHTML = `<div class="modal" style="max-width:640px;max-height:80vh;overflow-y:auto;">
+      <div class="modal-header"><div class="modal-title" id="simple-modal-title"></div><button class="modal-close" onclick="closeModal('simple-modal')">&times;</button></div>
+      <div class="modal-body" id="simple-modal-body"></div>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+  }
+  document.getElementById('simple-modal-title').textContent = title;
+  document.getElementById('simple-modal-body').innerHTML = bodyHtml;
+  modal.classList.add('open');
+}
+
+let proposalModalData = {};
+
+function openProposalModal(id) {
+  proposalModalData = {};
+  let modal = document.getElementById('proposal-create-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'proposal-create-modal';
+    modal.className = 'modal-backdrop';
+    modal.innerHTML = `<div class="modal" style="max-width:600px;max-height:85vh;overflow-y:auto;">
+      <div class="modal-header"><div class="modal-title">New Amendment Proposal</div><button class="modal-close" onclick="closeModal('proposal-create-modal')">&times;</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>Constitutional Matter *</label><textarea id="pm-matter" rows="3" style="width:100%;"></textarea></div>
+        <div class="form-group"><label>Factual Context *</label><textarea id="pm-factual" rows="3" style="width:100%;"></textarea></div>
+        <div class="form-group"><label>Material Assumptions *</label><textarea id="pm-assumptions" rows="2" style="width:100%;"></textarea></div>
+        <div class="form-group"><label>Proposed Decision *</label><textarea id="pm-decision" rows="2" style="width:100%;"></textarea></div>
+        <div class="form-group"><label>Proposed Resulting Text *</label><textarea id="pm-resulting" rows="4" style="width:100%;"></textarea></div>
+        <div class="form-group"><label>Interactions with Other Provisions *</label><textarea id="pm-interactions" rows="2" style="width:100%;"></textarea></div>
+        <div class="form-group"><label>No Conflict Explanation *</label><textarea id="pm-noconflict" rows="2" style="width:100%;"></textarea></div>
+        <div class="form-group"><label>Source Type *</label>
+          <select id="pm-source" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);">
+            <option value="Staff">Staff</option><option value="Operator">Operator</option><option value="Delegate">Delegate</option>
+            <option value="assistant">assistant</option><option value="outside_resource">outside_resource</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Affected Provision Number</label><input id="pm-provision" type="text" style="width:100%;"></div>
+        <div class="form-group"><label>Proposed Provision Title</label><input id="pm-title" type="text" style="width:100%;"></div>
+        <div class="form-group"><label>Expected Preceding Text</label><textarea id="pm-preceding" rows="3" style="width:100%;"></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('proposal-create-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewProposal()">Create Draft</button>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+  }
+  ['pm-matter','pm-factual','pm-assumptions','pm-decision','pm-resulting','pm-interactions','pm-noconflict','pm-provision','pm-title','pm-preceding'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  modal.classList.add('open');
+}
+
+async function saveNewProposal() {
+  const body = {
+    constitutional_matter:              document.getElementById('pm-matter').value.trim(),
+    factual_context:                    document.getElementById('pm-factual').value.trim(),
+    material_assumptions:               document.getElementById('pm-assumptions').value.trim(),
+    proposed_decision:                  document.getElementById('pm-decision').value.trim(),
+    proposed_resulting_text:            document.getElementById('pm-resulting').value.trim(),
+    interactions_with_other_provisions: document.getElementById('pm-interactions').value.trim(),
+    no_conflict_explanation:            document.getElementById('pm-noconflict').value.trim(),
+    source_type:                        document.getElementById('pm-source').value,
+    affected_provision_number:          document.getElementById('pm-provision').value.trim() || null,
+    proposed_provision_title:           document.getElementById('pm-title').value.trim() || null,
+    expected_preceding_text:            document.getElementById('pm-preceding').value.trim() || null,
+  };
+  try {
+    const created = await api('POST', '/admin/constitution/proposals', body);
+    proposals = [created, ...proposals];
+    renderProposals();
+    updateBadges();
+    closeModal('proposal-create-modal');
+    toast('Proposal created.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function submitProposal(id) {
+  try {
+    const updated = await api('POST', `/admin/constitution/proposals/${id}/submit`, {});
+    proposals = proposals.map(p => p.id === id ? updated : p);
+    renderProposals();
+    updateBadges();
+    toast('Submitted for review.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function reopenProposal(id) {
+  try {
+    const updated = await api('POST', `/admin/constitution/proposals/${id}/reopen`, {});
+    proposals = proposals.map(p => p.id === id ? updated : p);
+    renderProposals();
+    updateBadges();
+    toast('Proposal reopened to draft.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function returnProposal(id) {
+  const notes = prompt('Return notes (required):');
+  if (!notes) return;
+  try {
+    const updated = await api('POST', `/admin/constitution/proposals/${id}/return`, { review_notes: notes });
+    proposals = proposals.map(p => p.id === id ? updated : p);
+    renderProposals();
+    updateBadges();
+    toast('Proposal returned.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function rejectProposal(id) {
+  const notes = prompt('Rejection notes (required):');
+  if (!notes) return;
+  try {
+    const updated = await api('POST', `/admin/constitution/proposals/${id}/reject`, { review_notes: notes });
+    proposals = proposals.map(p => p.id === id ? updated : p);
+    renderProposals();
+    updateBadges();
+    toast('Proposal rejected.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function promulgateProposal(id) {
+  if (!confirm(`Promulgate proposal #${id}? This will create a constitutional amendment and update the live provision. This action cannot be undone.`)) return;
+  try {
+    await api('POST', `/admin/constitution/proposals/${id}/promulgate`, {});
+    await loadConstitution();
+    toast('Proposal promulgated. Amendment created.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// Authorization Incidents
+
+async function loadAuthIncidents() {
+  try { authIncidents = await api('GET', '/admin/authorization-incidents'); } catch (e) { toast('Failed to load incidents: ' + e.message, 'error'); return; }
+  renderAuthIncidents();
+  updateBadges();
+}
+
+function renderAuthIncidents() {
+  const tbody = document.getElementById('auth-incidents-tbody');
+  if (!tbody) return;
+  if (!authIncidents.length) { tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">No incidents</div></td></tr>`; return; }
+  tbody.innerHTML = authIncidents.map(i => {
+    const color = i.status === 'open' ? '#dc2626' : i.status === 'reviewed' ? '#d97706' : '#16a34a';
+    return `<tr>
+      <td>${i.id}</td>
+      <td style="font-size:12px;">${esc(i.acting_identity_text ?? '—')}</td>
+      <td>${esc(i.attempted_action)}</td>
+      <td style="font-size:12px;max-width:180px;white-space:normal;">${esc(i.target_object)}</td>
+      <td style="font-size:12px;max-width:180px;white-space:normal;">${esc(i.denial_reason)}</td>
+      <td>${i.occurrence_count}</td>
+      <td><span style="color:${color};font-weight:600;">${esc(i.status)}</span></td>
+      <td>${fmtDate(i.last_occurred_at)}</td>
+      <td>
+        ${i.status !== 'resolved'
+          ? `<button class="btn btn-ghost btn-sm" onclick="updateIncidentStatus(${i.id},'reviewed')">Mark Reviewed</button>
+             <button class="btn btn-ghost btn-sm" onclick="resolveIncident(${i.id})">Resolve</button>`
+          : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function updateIncidentStatus(id, status) {
+  try {
+    const updated = await api('PATCH', `/admin/authorization-incidents/${id}`, { status });
+    authIncidents = authIncidents.map(i => i.id === id ? updated : i);
+    renderAuthIncidents();
+    updateBadges();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function resolveIncident(id) {
+  const notes = prompt('Resolution notes (optional):');
+  try {
+    const updated = await api('PATCH', `/admin/authorization-incidents/${id}`, {
+      status: 'resolved',
+      resolution_notes: notes || null,
+      resolved_at: new Date().toISOString(),
+    });
+    authIncidents = authIncidents.map(i => i.id === id ? updated : i);
+    renderAuthIncidents();
+    updateBadges();
+    toast('Incident resolved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
 // Badges
 
 function updateBadges() {
@@ -3018,6 +3403,10 @@ function updateBadges() {
   setBadge('badge-feedback', openFeedback + queueCandidates);
   const openGapQueue = gapQueue.filter(r => !r.authorized_at).length;
   setBadge('badge-gap-queue', openGapQueue);
+  const pendingProposals = proposals.filter(p => p.status === 'pending_review').length;
+  setBadge('badge-constitution', pendingProposals);
+  const openIncidents = authIncidents.filter(i => i.status === 'open').length;
+  setBadge('badge-auth-incidents', openIncidents);
 }
 
 function setBadge(id, count) {

@@ -8,10 +8,10 @@ import { handlers } from "../src/routes/registry.js";
 const manifest = ROUTES.map(({ method, path }) => `${method} ${path}`).join("\n");
 
 describe("Worker route contract", () => {
-  it("preserves the approved 95-route manifest and declaration order", () => {
-    expect(ROUTES).toHaveLength(95);
+  it("preserves the approved 108-route manifest and declaration order", () => {
+    expect(ROUTES).toHaveLength(108);
     expect(createHash("sha256").update(manifest).digest("hex"))
-      .toBe("b904ca354810d961deac3e7b0478f0e31e811e129352a76ab44fe3187a48b6ce");
+      .toBe("3d411029d862adf3971b8045107d9f467c087b7976ef4f3983e2bcee4017811c");
   });
 
   it("keeps literal sub-routes ahead of their parameterized fallbacks", () => {
@@ -24,6 +24,9 @@ describe("Worker route contract", () => {
       .toBeLessThan(position("PATCH", "/admin/subscriptions/:id"));
     expect(position("DELETE", "/admin/review-queue/bulk"))
       .toBeLessThan(position("DELETE", "/admin/review-queue/:id"));
+
+    expect(position("GET", "/admin/constitution/proposals"))
+      .toBeLessThan(position("GET", "/admin/constitution/proposals/:id"));
 
     expect(matchRoute(ROUTES, "DELETE", "/admin/review-queue/bulk")?.route.path)
       .toBe("/admin/review-queue/bulk");

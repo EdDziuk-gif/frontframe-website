@@ -9,6 +9,8 @@ const noParams = (handler) => withJwt((req, env, _ctx, ch, _params, jwt) => hand
 const param = (handler, key = "id") => withJwt((req, env, _ctx, ch, params, jwt) => handler(req, env, params[key], jwt, ch));
 const envOnly = (handler) => withJwt((req, env, _ctx, ch, _params, jwt) => handler(env, jwt, ch));
 const envParam = (handler, key = "id") => withJwt((req, env, _ctx, ch, params, jwt) => handler(env, params[key], jwt, ch));
+// ctxParam passes ctx through for handlers that need waitUntil (e.g. Operator-only constitution actions).
+const ctxParam = (handler, key = "id") => withJwt((req, env, ctx, ch, params, jwt) => handler(req, env, ctx, params[key], jwt, ch));
 
 // This is appended after PUBLIC_ROUTES. Keep route order, especially literal
 // sub-routes before their parameterized variants, exactly as deployed.
@@ -89,4 +91,18 @@ export const ADMIN_ROUTES = [
   route("DELETE", "/admin/review-queue/:id", envParam(handlers.deleteReviewQueue)),
   route("GET", "/admin/gap-resolution-requests", envOnly(handlers.getGapResolutionRequests)),
   route("DELETE", "/admin/gap-resolution-requests/:id", envParam(handlers.deleteGapResolutionRequest)),
+  // Phase F candidate 1: constitutional amendment proposals
+  route("GET",   "/admin/constitution/proposals",                   envOnly(handlers.listProposals)),
+  route("POST",  "/admin/constitution/proposals",                   noParams(handlers.createProposal)),
+  route("GET",   "/admin/constitution/proposals/:id",               envParam(handlers.getProposal)),
+  route("PATCH", "/admin/constitution/proposals/:id",               param(handlers.updateProposal)),
+  route("POST",  "/admin/constitution/proposals/:id/submit",        param(handlers.submitProposal)),
+  route("POST",  "/admin/constitution/proposals/:id/reopen",        param(handlers.reopenProposal)),
+  route("POST",  "/admin/constitution/proposals/:id/return",        ctxParam(handlers.returnProposal)),
+  route("POST",  "/admin/constitution/proposals/:id/reject",        ctxParam(handlers.rejectProposal)),
+  route("POST",  "/admin/constitution/proposals/:id/promulgate",    ctxParam(handlers.promulgateProposal)),
+  route("GET",   "/admin/constitution/amendments",                  envOnly(handlers.listAmendments)),
+  route("GET",   "/admin/constitution/provisions",                  envOnly(handlers.listProvisions)),
+  route("GET",   "/admin/authorization-incidents",                  envOnly(handlers.listAuthorizationIncidents)),
+  route("PATCH", "/admin/authorization-incidents/:id",              param(handlers.updateAuthorizationIncident)),
 ];
