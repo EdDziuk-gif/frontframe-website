@@ -11,6 +11,10 @@ const envOnly = (handler) => withJwt((req, env, _ctx, ch, _params, jwt) => handl
 const envParam = (handler, key = "id") => withJwt((req, env, _ctx, ch, params, jwt) => handler(env, params[key], jwt, ch));
 // ctxParam passes ctx through for handlers that need waitUntil (e.g. Operator-only constitution actions).
 const ctxParam = (handler, key = "id") => withJwt((req, env, ctx, ch, params, jwt) => handler(req, env, ctx, params[key], jwt, ch));
+// twoParams: for a route with two path params (e.g. /:id/hypotheses/:hid).
+// request is passed through since these handlers read a JSON body.
+const twoParams = (handler, key1 = "id", key2 = "hid") =>
+  withJwt((req, env, _ctx, ch, params, jwt) => handler(req, env, params[key1], params[key2], jwt, ch));
 
 // This is appended after PUBLIC_ROUTES. Keep route order, especially literal
 // sub-routes before their parameterized variants, exactly as deployed.
@@ -92,6 +96,17 @@ export const ADMIN_ROUTES = [
   route("GET", "/admin/gap-resolution-requests", envOnly(handlers.getGapResolutionRequests)),
   route("DELETE", "/admin/gap-resolution-requests/:id", envParam(handlers.deleteGapResolutionRequest)),
   route("PATCH", "/admin/gap-resolution-requests/:id/authorize", param(handlers.authorizeGapResolutionRequest)),
+
+  // Phase F Candidate 2, Increment 2: KGR case development record.
+  route("POST",  "/admin/kgr-cases",                            noParams(handlers.createKgrCase)),
+  route("GET",   "/admin/kgr-cases",                             envOnly(handlers.listKgrCases)),
+  route("GET",   "/admin/kgr-cases/:id",                        envParam(handlers.getKgrCase)),
+  route("PATCH", "/admin/kgr-cases/:id",                          param(handlers.updateKgrCase)),
+  route("POST",  "/admin/kgr-cases/:id/hypotheses",               param(handlers.addHypothesis)),
+  route("PATCH", "/admin/kgr-cases/:id/hypotheses/:hid",     twoParams(handlers.updateHypothesis)),
+  route("PATCH", "/admin/kgr-cases/:id/ready",                 envParam(handlers.readyKgrCase)),
+  route("PATCH", "/admin/kgr-cases/:id/escalate",              envParam(handlers.escalateKgrCase)),
+  route("POST",  "/admin/kgr-cases/:id/develop",               envParam(handlers.developKgrCase)),
   // Phase F candidate 1: constitutional amendment proposals
   route("GET",   "/admin/constitution/proposals",                   envOnly(handlers.listProposals)),
   route("POST",  "/admin/constitution/proposals",                   noParams(handlers.createProposal)),

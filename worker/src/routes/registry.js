@@ -11,6 +11,7 @@ import * as rd_log from "./rd-log.js";
 import * as outreach from "./outreach.js";
 import * as webhooks from "./webhooks.js";
 import * as constitution from "./constitution.js";
+import * as kgr from "./kgr.js";
 
 export const handlers = {
   ...auth,
@@ -26,4 +27,5 @@ export const handlers = {
   ...outreach,
   ...webhooks,
   ...constitution,
+  ...kgr,
 };

@@ -448,6 +448,7 @@
       <button class="nav-item" data-tab="defects"       onclick="switchTab('defects')">&#x1F41B; Defects <span class="nav-badge hidden" id="badge-defects">0</span></button>
       <button class="nav-item" data-tab="feedback"      onclick="switchTab('feedback')">&#x1F4DD; Feedback <span class="nav-badge hidden" id="badge-feedback">0</span></button>
       <button class="nav-item" data-tab="gap-queue"    onclick="switchTab('gap-queue')">&#x2753; Unresolved Questions <span class="nav-badge hidden" id="badge-gap-queue">0</span></button>
+      <button class="nav-item" data-tab="kgr-cases"    onclick="switchTab('kgr-cases')">&#x1F9EA; KGR Cases <span class="nav-badge hidden" id="badge-kgr-cases">0</span></button>
       <button class="nav-item" data-tab="constitution" onclick="switchTab('constitution')">&#x1F4DC; Constitution <span class="nav-badge hidden" id="badge-constitution">0</span></button>
       <button class="nav-item" data-tab="auth-incidents" onclick="switchTab('auth-incidents')">&#x26A0;&#xFE0F; Auth Incidents <span class="nav-badge hidden" id="badge-auth-incidents">0</span></button>
       <button class="nav-item" data-tab="solutions"     onclick="switchTab('solutions')">&#x1F4A1; Solutions</button>
@@ -734,6 +735,26 @@
           <table>
             <thead><tr><th>Visitor Question</th><th>Candidate Answer</th><th>Reason</th><th>Requested</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="gap-queue-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- KGR Cases -->
+    <div class="tab-panel" id="tab-kgr-cases">
+      <div class="page-header">
+        <div class="page-title">KGR Cases</div>
+        <div class="page-sub">Working case files for authorized knowledge-gap questions: research notes, hypotheses, and their disposition. A case must reach zero untested hypotheses with at least one accepted before it is ready for decision, or be escalated as a constitutional-authority question.</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Cases</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadKgrCases()">&#x21BA;</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Question</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="kgr-cases-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1782,6 +1803,39 @@
 
 <div id="toast"></div>
 
+<div class="modal-backdrop" id="kgr-case-modal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <div class="modal-title" id="kgr-case-modal-title">KGR Case</div>
+      <button class="modal-close" onclick="closeModal('kgr-case-modal')">&#x00D7;</button>
+    </div>
+    <div style="padding:20px">
+      <div id="kgr-case-question" style="font-size:13px;color:var(--gray);margin-bottom:12px"></div>
+      <div id="kgr-case-status-row" style="margin-bottom:14px"></div>
+
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Research Notes</label>
+      <textarea id="kgr-case-notes" rows="4" style="width:100%;box-sizing:border-box;padding:8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit"></textarea>
+      <div style="margin-top:6px;margin-bottom:16px">
+        <button class="btn btn-sm" id="kgr-case-notes-save" onclick="saveKgrCaseNotes()">Save Notes</button>
+      </div>
+
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Hypotheses</label>
+      <div id="kgr-hypotheses-list" style="margin-bottom:10px"></div>
+      <div id="kgr-add-hypothesis-row" style="display:flex;gap:6px;margin-bottom:16px">
+        <input type="text" id="kgr-new-hypothesis" placeholder="New hypothesis..." style="flex:1;padding:7px 8px;border:1.5px solid var(--border);border-radius:6px">
+        <button class="btn btn-sm" onclick="addKgrHypothesis()">Add</button>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <button class="btn btn-ghost btn-sm" id="kgr-develop-btn" onclick="developKgrCase()">&#x1F916; Develop with Assistant</button>
+        <div id="kgr-develop-output" style="display:none;margin-top:10px;padding:10px;background:var(--offwhite);border:1.5px solid var(--border);border-radius:6px;font-size:13px;white-space:pre-wrap"></div>
+      </div>
+
+      <div id="kgr-case-actions" style="display:flex;gap:8px;border-top:1px solid var(--border);padding-top:14px"></div>
+    </div>
+  </div>
+</div>
+
 <script src="/js/config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/js/supabase-client.js"></script>
@@ -1943,6 +1997,7 @@ function switchTab(tab) {
     case 'defects':       loadDefects().catch(e => toast('Defects: ' + e.message, 'error')); break;
     case 'feedback':      loadFeedback().catch(e => toast('Feedback: ' + e.message, 'error')); break;
     case 'gap-queue':      loadGapQueue().catch(e => toast('Gap Queue: ' + e.message, 'error')); break;
+    case 'kgr-cases':      loadKgrCases().catch(e => toast('KGR Cases: ' + e.message, 'error')); break;
     case 'constitution':   loadConstitution().catch(e => toast('Constitution: ' + e.message, 'error')); break;
     case 'auth-incidents': loadAuthIncidents().catch(e => toast('Auth Incidents: ' + e.message, 'error')); break;
     case 'solutions':     loadSolutions().catch(e => toast('Solutions: ' + e.message, 'error')); break;
@@ -3068,13 +3123,14 @@ function renderGapQueue() {
     const status = r.authorized_at ? '<span class="badge badge-promoted">Authorized</span>' : '<span class="badge badge-open">Open</span>';
     const scope  = r.permitted_scope ? `<div style="font-size:12px;color:var(--gray);margin-top:2px">Scope: ${esc(r.permitted_scope)}</div>` : '';
     const authorizeBtn = r.authorized_at ? '' : `<button class="btn btn-xs" onclick="authorizeGapQueueRecord('${r.id}')">Authorize</button> `;
+    const startCaseBtn = r.authorized_at ? `<button class="btn btn-xs" onclick="startKgrCase(${r.id})">Start Case</button> ` : '';
     return `<tr>
       <td style="max-width:260px">${q}</td>
       <td style="max-width:280px;color:var(--gray)">${a}</td>
       <td>${reason}</td>
       <td>${fmtDate(r.requested_at)}</td>
       <td>${status}${scope}</td>
-      <td>${authorizeBtn}<button class="btn btn-danger btn-xs" onclick="deleteGapQueueRecord('${r.id}')">Delete</button></td>
+      <td>${authorizeBtn}${startCaseBtn}<button class="btn btn-danger btn-xs" onclick="deleteGapQueueRecord('${r.id}')">Delete</button></td>
     </tr>`;
   }).join('');
 }
@@ -3111,6 +3167,178 @@ async function authorizeGapQueueRecord(id) {
     await loadGapQueue();
     toast('Authorized.');
   } catch (e) { toast(e.message, 'error'); }
+}
+
+// Phase F Candidate 2, Increment 2: KGR case development record.
+// List/detail/mutate a case's research notes and hypotheses. /develop makes
+// exactly one model call and writes nothing - the reviewer decides whether
+// to record what it returns, via addKgrHypothesis, themselves.
+
+let kgrCases = [];
+let currentKgrCaseId = null;
+
+const KGR_STATUS_BADGE = { in_development: 'badge-open', ready_for_decision: 'badge-promoted', escalated: 'badge-high' };
+const KGR_HYP_BADGE    = { untested: 'badge-open', accepted: 'badge-promoted', falsified: 'badge-closed' };
+
+async function loadKgrCases() {
+  try { kgrCases = await api('GET', '/admin/kgr-cases'); } catch (e) { toast('Failed to load KGR cases: ' + e.message, 'error'); return; }
+  renderKgrCases();
+}
+
+function renderKgrCases() {
+  const tbody = document.getElementById('kgr-cases-tbody');
+  if (!tbody) return;
+  if (!kgrCases.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No KGR cases yet</div></td></tr>`; return; }
+  tbody.innerHTML = kgrCases.map(c => {
+    const q = esc(c.gap_resolution_requests?.questions?.question_text ?? `Request #${c.gap_resolution_request_id}`);
+    const badgeClass = KGR_STATUS_BADGE[c.status] || 'badge-open';
+    return `<tr>
+      <td style="max-width:320px">${q}</td>
+      <td><span class="badge ${badgeClass}">${esc(c.status)}</span></td>
+      <td>${fmtDate(c.created_at)}</td>
+      <td><button class="btn btn-xs" onclick="openKgrCaseModal(${c.id})">View</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// Called from the Unresolved Questions tab on an already-authorized row.
+// UNIQUE constraint on gap_resolution_request_id makes a repeat click a
+// safe no-op (409, existing case untouched) rather than a duplicate.
+async function startKgrCase(gapRequestId) {
+  try {
+    const c = await api('POST', '/admin/kgr-cases', { gap_resolution_request_id: gapRequestId });
+    toast('KGR case opened.');
+    switchTab('kgr-cases');
+    await loadKgrCases();
+    openKgrCaseModal(c.id);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function openKgrCaseModal(id) {
+  currentKgrCaseId = id;
+  let c;
+  try { c = await api('GET', `/admin/kgr-cases/${id}`); } catch (e) { toast(e.message, 'error'); return; }
+  renderKgrCaseModal(c);
+  document.getElementById('kgr-case-modal').classList.add('open');
+}
+
+function renderKgrCaseModal(c) {
+  const q = c.gap_resolution_requests?.questions?.question_text ?? `Request #${c.gap_resolution_request_id}`;
+  document.getElementById('kgr-case-modal-title').textContent = `Case #${c.id}`;
+  document.getElementById('kgr-case-question').textContent = q;
+  const frozen = c.status !== 'in_development';
+  const badgeClass = KGR_STATUS_BADGE[c.status] || 'badge-open';
+  let statusRow = `<span class="badge ${badgeClass}">${esc(c.status)}</span>`;
+  if (c.status === 'escalated' && c.escalation_reason) {
+    statusRow += `<div style="font-size:12px;color:var(--gray);margin-top:6px">Escalation reason: ${esc(c.escalation_reason)}</div>`;
+  }
+  document.getElementById('kgr-case-status-row').innerHTML = statusRow;
+
+  const notesEl = document.getElementById('kgr-case-notes');
+  notesEl.value = c.research_notes || '';
+  notesEl.disabled = frozen;
+  document.getElementById('kgr-case-notes-save').disabled = frozen;
+
+  const hyps = c.hypotheses || [];
+  document.getElementById('kgr-hypotheses-list').innerHTML = hyps.length ? hyps.map(h => {
+    const hb = KGR_HYP_BADGE[h.status] || 'badge-open';
+    const notes = h.test_notes ? `<div style="font-size:12px;color:var(--gray);margin-top:2px">${esc(h.test_notes)}</div>` : '';
+    const actions = (!frozen && h.status === 'untested')
+      ? `<button class="btn btn-xs" onclick="updateKgrHypothesis(${h.id},'accepted')">Accept</button> <button class="btn btn-xs btn-danger" onclick="updateKgrHypothesis(${h.id},'falsified')">Falsify</button>`
+      : '';
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div style="flex:1">${esc(h.description)} <span class="badge ${hb}">${esc(h.status)}</span></div>
+        <div>${actions}</div>
+      </div>
+      ${notes}
+    </div>`;
+  }).join('') : '<div class="empty-state">No hypotheses yet</div>';
+
+  document.getElementById('kgr-add-hypothesis-row').style.display = frozen ? 'none' : 'flex';
+  document.getElementById('kgr-new-hypothesis').value = '';
+  document.getElementById('kgr-develop-btn').disabled = frozen;
+  document.getElementById('kgr-develop-output').style.display = 'none';
+
+  const untestedCount = hyps.filter(h => h.status === 'untested').length;
+  const acceptedCount = hyps.filter(h => h.status === 'accepted').length;
+  const canReady = !frozen && untestedCount === 0 && acceptedCount >= 1;
+  let actionsHtml = '';
+  if (!frozen) {
+    actionsHtml += `<button class="btn btn-sm" ${canReady ? '' : 'disabled'} onclick="readyKgrCase()">Mark Ready for Decision</button>`;
+    actionsHtml += `<button class="btn btn-ghost btn-sm" onclick="escalateKgrCase()">Escalate (Constitutional)</button>`;
+  }
+  document.getElementById('kgr-case-actions').innerHTML = actionsHtml;
+}
+
+async function saveKgrCaseNotes() {
+  if (!currentKgrCaseId) return;
+  const notes = document.getElementById('kgr-case-notes').value;
+  try {
+    await api('PATCH', `/admin/kgr-cases/${currentKgrCaseId}`, { research_notes: notes });
+    toast('Notes saved.');
+    await loadKgrCases();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function addKgrHypothesis() {
+  if (!currentKgrCaseId) return;
+  const description = document.getElementById('kgr-new-hypothesis').value.trim();
+  if (!description) return;
+  try {
+    await api('POST', `/admin/kgr-cases/${currentKgrCaseId}/hypotheses`, { description });
+    const c = await api('GET', `/admin/kgr-cases/${currentKgrCaseId}`);
+    renderKgrCaseModal(c);
+    await loadKgrCases();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function updateKgrHypothesis(hypothesisId, status) {
+  const test_notes = prompt(status === 'falsified' ? 'Why was this hypothesis falsified? Optional.' : 'Test notes (why accepted)? Optional.');
+  if (test_notes === null) return; // cancelled
+  try {
+    await api('PATCH', `/admin/kgr-cases/${currentKgrCaseId}/hypotheses/${hypothesisId}`, { status, test_notes: test_notes || null });
+    const c = await api('GET', `/admin/kgr-cases/${currentKgrCaseId}`);
+    renderKgrCaseModal(c);
+    await loadKgrCases();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function readyKgrCase() {
+  try {
+    await api('PATCH', `/admin/kgr-cases/${currentKgrCaseId}/ready`);
+    toast('Case marked ready for decision.');
+    const c = await api('GET', `/admin/kgr-cases/${currentKgrCaseId}`);
+    renderKgrCaseModal(c);
+    await loadKgrCases();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function escalateKgrCase() {
+  try {
+    const result = await api('PATCH', `/admin/kgr-cases/${currentKgrCaseId}/escalate`);
+    toast(result.escalated ? 'Case escalated.' : 'Not a constitutional-authority candidate - no change made.');
+    const c = await api('GET', `/admin/kgr-cases/${currentKgrCaseId}`);
+    renderKgrCaseModal(c);
+    await loadKgrCases();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function developKgrCase() {
+  if (!currentKgrCaseId) return;
+  const btn = document.getElementById('kgr-develop-btn');
+  btn.disabled = true;
+  const out = document.getElementById('kgr-develop-output');
+  out.style.display = 'block';
+  out.textContent = 'Thinking…';
+  try {
+    const result = await api('POST', `/admin/kgr-cases/${currentKgrCaseId}/develop`);
+    out.textContent = result.response || JSON.stringify(result);
+  } catch (e) {
+    out.textContent = 'Error: ' + e.message;
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // Constitution
