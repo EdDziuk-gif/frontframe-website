@@ -38,7 +38,7 @@ async function requireCaseAuthority(env, userJwt, allowedRoles, corsHeaders) {
 
 async function fetchCase(env, id) {
   const rows = await supabaseFetch(env, "kgr_cases",
-    `?id=eq.${id}&select=id,gap_resolution_request_id,status,research_notes,escalation_reason,created_by,created_at,updated_at`);
+    `?id=eq.${id}&select=id,gap_resolution_request_id,status,research_notes,escalation_reason,created_by,created_at,updated_at,gap_resolution_requests(questions(question_text))`);
   return rows?.[0] ?? null;
 }
 

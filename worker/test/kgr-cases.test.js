@@ -417,4 +417,25 @@ describe("case history reconstruction", () => {
     expect(body.hypotheses).toHaveLength(2);
     expect(body.hypotheses.map((h) => h.status)).toEqual(["falsified", "accepted"]);
   });
+
+  // Regression: fetchCase()'s select originally omitted the embedded
+  // question, so the case detail view always fell back to a bare
+  // "Request #N" label instead of the actual visitor question (caught
+  // during live verification of Increment 2).
+  it("getKgrCase includes the origin question via the embedded select", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{
+        id: 7, status: "in_development", research_notes: null, escalation_reason: null,
+        gap_resolution_requests: { questions: { question_text: "Does FrontFrame offer an SLA?" } },
+      }])
+      .mockResolvedValueOnce([]);
+
+    const res = await getKgrCase(ENV, "7", "admin-jwt", CH);
+    const body = await res.json();
+    expect(body.gap_resolution_requests?.questions?.question_text).toBe("Does FrontFrame offer an SLA?");
+
+    const [, , query] = supabaseFetchMock.mock.calls[2]; // after mockAuth's two reviewer lookups
+    expect(query).toContain("gap_resolution_requests(questions(question_text))");
+  });
 });
