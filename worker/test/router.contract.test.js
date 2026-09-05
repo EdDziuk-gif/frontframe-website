@@ -9,9 +9,9 @@ const manifest = ROUTES.map(({ method, path }) => `${method} ${path}`).join("\n"
 
 describe("Worker route contract", () => {
   it("preserves the approved 108-route manifest and declaration order", () => {
-    expect(ROUTES).toHaveLength(118);
+    expect(ROUTES).toHaveLength(119);
     expect(createHash("sha256").update(manifest).digest("hex"))
-      .toBe("fe2c94aadfd046bed69ec7209b449382b4a529a286bf7d076737d2df31febff7");
+      .toBe("5653a81953dc7657f66ba37f3f3d072b9898bdf22fa5cdbed2cb1999472f5f21");
   });
 
   it("keeps literal sub-routes ahead of their parameterized fallbacks", () => {

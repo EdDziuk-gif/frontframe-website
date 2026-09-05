@@ -1831,6 +1831,21 @@
         <div id="kgr-develop-output" style="display:none;margin-top:10px;padding:10px;background:var(--offwhite);border:1.5px solid var(--border);border-radius:6px;font-size:13px;white-space:pre-wrap"></div>
       </div>
 
+      <div id="kgr-resolution-section" style="display:none;margin-bottom:16px;border-top:1px solid var(--border);padding-top:14px">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px">Resolution Statement</label>
+        <div id="kgr-resolution-prepare" style="display:none">
+          <div style="font-size:12px;color:var(--gray);margin-bottom:10px">
+            Each accepted hypothesis below is prefilled from its own description as a convenience only.
+            Edit the presented content as needed - the text saved here is scored and stored exactly as
+            written, never rewritten by the server. This step does not select, sign off, or promulgate
+            anything; it prepares the record for Management's later review.
+          </div>
+          <div id="kgr-resolution-candidates-form"></div>
+          <button class="btn btn-sm" id="kgr-prepare-resolution-btn" onclick="prepareKgrResolutionStatement()">Prepare Resolution Statement</button>
+        </div>
+        <div id="kgr-resolution-readonly" style="display:none"></div>
+      </div>
+
       <div id="kgr-case-actions" style="display:flex;gap:8px;border-top:1px solid var(--border);padding-top:14px"></div>
     </div>
   </div>
@@ -3269,6 +3284,82 @@ function renderKgrCaseModal(c) {
     actionsHtml += `<button class="btn btn-ghost btn-sm" onclick="escalateKgrCase()">Escalate (Constitutional)</button>`;
   }
   document.getElementById('kgr-case-actions').innerHTML = actionsHtml;
+
+  renderKgrResolutionSection(c);
+}
+
+function renderKgrResolutionSection(c) {
+  const section = document.getElementById('kgr-resolution-section');
+  const prepareBox = document.getElementById('kgr-resolution-prepare');
+  const readonlyBox = document.getElementById('kgr-resolution-readonly');
+
+  if (c.status !== 'ready_for_decision' && !c.resolution_statement) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+
+  if (c.resolution_statement) {
+    prepareBox.style.display = 'none';
+    readonlyBox.style.display = 'block';
+    const rs = c.resolution_statement;
+    const candidates = rs.kgr_resolution_candidates || [];
+    readonlyBox.innerHTML = `
+      <div style="font-size:12px;color:var(--gray);margin-bottom:10px">Prepared ${new Date(rs.created_at).toLocaleString()}. Read-only - no selection or sign-off exists in this view.</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Problem Statement</div>
+      <div style="margin-bottom:12px;padding:8px;background:var(--offwhite);border-radius:6px;font-size:13px">${esc(rs.problem_statement)}</div>
+      ${candidates.map(cd => `
+        <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:13px;margin-bottom:4px">${esc(cd.presented_content)}</div>
+          <div style="font-size:12px;color:var(--gray)">Score: ${esc(String(cd.score))} - ${esc(cd.rationale)}</div>
+        </div>
+      `).join('') || '<div class="empty-state">No candidates</div>'}
+    `;
+    return;
+  }
+
+  // No statement yet - offer the prepare form when the case is ready.
+  readonlyBox.style.display = 'none';
+  if (c.status !== 'ready_for_decision') {
+    prepareBox.style.display = 'none';
+    return;
+  }
+  prepareBox.style.display = 'block';
+  const accepted = (c.hypotheses || []).filter(h => h.status === 'accepted');
+  document.getElementById('kgr-resolution-candidates-form').innerHTML = accepted.length
+    ? accepted.map(h => `
+        <div style="margin-bottom:10px">
+          <div style="font-size:12px;color:var(--gray);margin-bottom:2px">Hypothesis #${h.id}</div>
+          <textarea class="kgr-resolution-candidate-input" data-hypothesis-id="${h.id}" rows="2" style="width:100%;box-sizing:border-box;padding:7px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit">${esc(h.description)}</textarea>
+        </div>
+      `).join('')
+    : '<div class="empty-state">No accepted hypotheses to present</div>';
+  document.getElementById('kgr-prepare-resolution-btn').disabled = accepted.length === 0;
+}
+
+async function prepareKgrResolutionStatement() {
+  if (!currentKgrCaseId) return;
+  const inputs = document.querySelectorAll('.kgr-resolution-candidate-input');
+  const candidates = Array.from(inputs).map(el => ({
+    hypothesis_id: Number(el.dataset.hypothesisId),
+    presented_content: el.value.trim(),
+  }));
+  if (candidates.some(c => !c.presented_content)) {
+    toast('Presented content is required for every candidate.', 'error');
+    return;
+  }
+  const btn = document.getElementById('kgr-prepare-resolution-btn');
+  btn.disabled = true;
+  try {
+    await api('POST', `/admin/kgr-cases/${currentKgrCaseId}/prepare-resolution`, { candidates });
+    toast('Resolution statement prepared.');
+    const c = await api('GET', `/admin/kgr-cases/${currentKgrCaseId}`);
+    renderKgrCaseModal(c);
+    await loadKgrCases();
+  } catch (e) {
+    toast(e.message, 'error');
+    btn.disabled = false;
+  }
 }
 
 async function saveKgrCaseNotes() {

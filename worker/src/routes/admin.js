@@ -107,6 +107,7 @@ export const ADMIN_ROUTES = [
   route("PATCH", "/admin/kgr-cases/:id/ready",                 envParam(handlers.readyKgrCase)),
   route("PATCH", "/admin/kgr-cases/:id/escalate",              envParam(handlers.escalateKgrCase)),
   route("POST",  "/admin/kgr-cases/:id/develop",               envParam(handlers.developKgrCase)),
+  route("POST",  "/admin/kgr-cases/:id/prepare-resolution",      param(handlers.prepareResolutionStatement)),
   // Phase F candidate 1: constitutional amendment proposals
   route("GET",   "/admin/constitution/proposals",                   envOnly(handlers.listProposals)),
   route("POST",  "/admin/constitution/proposals",                   noParams(handlers.createProposal)),

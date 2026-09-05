@@ -1,7 +1,7 @@
 import { jsonResponse } from "../shared/http.js";
-import { supabaseFetch, supabasePost, supabasePatch } from "../shared/supabase.js";
+import { supabaseFetch, supabasePost, supabasePatch, supabaseRpc } from "../shared/supabase.js";
 import { callAnthropic, buildConstitutionSection } from "../shared/runtime.js";
-import { checkConstitutionalEligibility } from "../shared/scoring.js";
+import { checkConstitutionalEligibility, scoreCandidateAnswer } from "../shared/scoring.js";
 import { getReviewerAuthority } from "./constitution.js";
 
 // § DOMAIN: kgr-cases (Phase F Candidate 2, Increment 2)
@@ -45,6 +45,13 @@ async function fetchCase(env, id) {
 async function fetchHypotheses(env, caseId) {
   return (await supabaseFetch(env, "kgr_hypotheses",
     `?kgr_case_id=eq.${caseId}&select=id,description,status,test_notes,created_by,created_at,updated_at&order=created_at.asc`)) ?? [];
+}
+
+// Phase F Candidate 2, Increment 3 — resolution statement preparation.
+async function fetchResolutionStatement(env, caseId) {
+  const rows = await supabaseFetch(env, "kgr_resolution_statements",
+    `?kgr_case_id=eq.${caseId}&select=id,kgr_case_id,problem_statement,prepared_by,created_at,kgr_resolution_candidates(id,kgr_hypothesis_id,presented_content,score,rationale)`);
+  return rows?.[0] ?? null;
 }
 
 // ── Case creation and reads ─────────────────────────────────────────────────
@@ -99,7 +106,8 @@ async function getKgrCase(env, id, userJwt, corsHeaders) {
   const kgrCase = await fetchCase(env, id);
   if (!kgrCase) return jsonResponse({ error: "Not found" }, 404, corsHeaders);
   const hypotheses = await fetchHypotheses(env, id);
-  return jsonResponse({ ...kgrCase, hypotheses }, 200, corsHeaders);
+  const resolutionStatement = await fetchResolutionStatement(env, id);
+  return jsonResponse({ ...kgrCase, hypotheses, resolution_statement: resolutionStatement }, 200, corsHeaders);
 }
 
 // ── Case development (Management or Staff) ──────────────────────────────────
@@ -245,6 +253,117 @@ async function escalateKgrCase(env, id, userJwt, corsHeaders) {
   return jsonResponse({ escalated: true, case: updated }, 200, corsHeaders);
 }
 
+// ── Resolution statement preparation (Management or Staff) ────────────────
+//
+// Turns a ready_for_decision case into a durable resolution statement: the
+// original question, each accepted hypothesis's explicitly-submitted
+// presented content, its appropriateness score + rationale (via the
+// existing scoreCandidateAnswer(), unmodified), and the server-derived
+// preparer. Does not select, sign off, or promulgate - that is later,
+// separately-approved scope.
+async function prepareResolutionStatement(request, env, id, userJwt, corsHeaders) {
+  const auth = await requireCaseAuthority(env, userJwt, CASE_DEVELOPMENT_ROLES, corsHeaders);
+  if (!auth.ok) return auth.response;
+
+  const kgrCase = await fetchCase(env, id);
+  if (!kgrCase) return jsonResponse({ error: "Case not found" }, 404, corsHeaders);
+  if (kgrCase.status !== "ready_for_decision")
+    return jsonResponse(
+      { error: `Case must be 'ready_for_decision' to prepare a resolution statement (is '${kgrCase.status}')` },
+      409,
+      corsHeaders
+    );
+
+  // Idempotent: a completed repeat request returns the existing statement
+  // without rescoring - no model call happens on this path.
+  const existingStatement = await fetchResolutionStatement(env, id);
+  if (existingStatement)
+    return jsonResponse(
+      { error: "A resolution statement already exists for this case", resolution_statement: existingStatement },
+      409,
+      corsHeaders
+    );
+
+  const body = await request.json().catch(() => ({}));
+  const submitted = Array.isArray(body.candidates) ? body.candidates : null;
+  if (!submitted || !submitted.length)
+    return jsonResponse({ error: "candidates (non-empty array) is required" }, 400, corsHeaders);
+
+  const hypotheses = await fetchHypotheses(env, id);
+  const acceptedIds = hypotheses.filter((h) => h.status === "accepted").map((h) => h.id);
+  const acceptedIdSet = new Set(acceptedIds);
+
+  const submittedIds = submitted.map((c) => Number(c.hypothesis_id));
+  const submittedIdSet = new Set(submittedIds);
+  if (submittedIdSet.size !== submittedIds.length)
+    return jsonResponse({ error: "candidates contains a duplicate hypothesis_id" }, 400, corsHeaders);
+  if (
+    submittedIdSet.size !== acceptedIdSet.size ||
+    ![...acceptedIdSet].every((aid) => submittedIdSet.has(aid))
+  )
+    return jsonResponse(
+      { error: "candidates must include exactly the case's accepted hypotheses - no more, no fewer, none falsified or untested" },
+      400,
+      corsHeaders
+    );
+
+  for (const c of submitted) {
+    if (typeof c.presented_content !== "string" || !c.presented_content.trim())
+      return jsonResponse({ error: "presented_content (non-blank) is required for every candidate" }, 400, corsHeaders);
+  }
+
+  const problemStatement =
+    kgrCase.gap_resolution_requests?.questions?.question_text ?? `Request #${kgrCase.gap_resolution_request_id}`;
+
+  // Score every candidate in memory first. If any call fails, nothing has
+  // been written yet, so there is nothing to roll back.
+  const scoredCandidates = [];
+  for (const c of submitted) {
+    const hypothesisId = Number(c.hypothesis_id);
+    const presentedContent = c.presented_content.trim();
+    let result;
+    try {
+      result = await scoreCandidateAnswer(env, problemStatement, presentedContent);
+    } catch (e) {
+      return jsonResponse({ error: `Scoring failed for hypothesis ${hypothesisId}: ${e.message}` }, 502, corsHeaders);
+    }
+    scoredCandidates.push({
+      hypothesis_id: hypothesisId,
+      presented_content: presentedContent,
+      score: result.score,
+      rationale: result.rationale,
+    });
+  }
+
+  // Persist the statement and every candidate in one atomic transaction
+  // (save_kgr_resolution_statement, migration 006). The UNIQUE constraint on
+  // kgr_resolution_statements.kgr_case_id is what actually prevents two
+  // simultaneous requests from both succeeding; a losing concurrent request
+  // gets a unique_violation here, which is treated the same as the ordinary
+  // idempotent-repeat case above - the winner's statement is returned, not
+  // a raw error.
+  try {
+    await supabaseRpc(env, "save_kgr_resolution_statement", {
+      p_case_id: Number(id),
+      p_problem_statement: problemStatement,
+      p_prepared_by: auth.authority.id,
+      p_candidates: scoredCandidates,
+    });
+  } catch (e) {
+    const raceLoserStatement = await fetchResolutionStatement(env, id);
+    if (raceLoserStatement)
+      return jsonResponse(
+        { error: "A resolution statement already exists for this case", resolution_statement: raceLoserStatement },
+        409,
+        corsHeaders
+      );
+    throw e;
+  }
+
+  const saved = await fetchResolutionStatement(env, id);
+  return jsonResponse(saved, 200, corsHeaders);
+}
+
 // ── Model assistance: exactly one explicit call, writes nothing ────────────
 
 async function developKgrCase(env, id, userJwt, corsHeaders) {
@@ -281,4 +400,5 @@ async function developKgrCase(env, id, userJwt, corsHeaders) {
 export {
   createKgrCase, listKgrCases, getKgrCase, updateKgrCase,
   addHypothesis, updateHypothesis, readyKgrCase, escalateKgrCase, developKgrCase,
+  prepareResolutionStatement,
 };
