@@ -3294,10 +3294,14 @@ async function addKgrHypothesis() {
 }
 
 async function updateKgrHypothesis(hypothesisId, status) {
-  const test_notes = prompt(status === 'falsified' ? 'Why was this hypothesis falsified? Optional.' : 'Test notes (why accepted)? Optional.');
+  const promptText = status === 'falsified'
+    ? 'Why was this hypothesis falsified? Required. If a replacement hypothesis supersedes it, name that replacement here so the relationship stays traceable.'
+    : 'Test notes (why accepted)? Required.';
+  const test_notes = prompt(promptText);
   if (test_notes === null) return; // cancelled
+  if (!test_notes.trim()) { toast('Test notes are required.', 'error'); return; }
   try {
-    await api('PATCH', `/admin/kgr-cases/${currentKgrCaseId}/hypotheses/${hypothesisId}`, { status, test_notes: test_notes || null });
+    await api('PATCH', `/admin/kgr-cases/${currentKgrCaseId}/hypotheses/${hypothesisId}`, { status, test_notes: test_notes.trim() });
     const c = await api('GET', `/admin/kgr-cases/${currentKgrCaseId}`);
     renderKgrCaseModal(c);
     await loadKgrCases();

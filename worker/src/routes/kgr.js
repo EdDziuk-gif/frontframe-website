@@ -159,6 +159,19 @@ async function updateHypothesis(request, env, id, hid, userJwt, corsHeaders) {
   if (!["falsified", "accepted"].includes(body.status))
     return jsonResponse({ error: "status must be 'falsified' or 'accepted'" }, 400, corsHeaders);
 
+  // Test/disposition notes are mandatory on a disposition, not optional
+  // color: they are the only record of why a hypothesis was accepted or
+  // falsified, and - when a hypothesis is being replaced by a better one -
+  // the only place that traceably names the replacement (there is no
+  // separate "replaced" status; replacing means falsifying the old
+  // hypothesis with notes identifying the new one, then adding it).
+  if (typeof body.test_notes !== "string" || !body.test_notes.trim())
+    return jsonResponse(
+      { error: `test_notes (non-blank) is required when marking a hypothesis '${body.status}' - if this replaces the hypothesis, name the replacement in the notes` },
+      400,
+      corsHeaders
+    );
+
   const hypRows = await supabaseFetch(env, "kgr_hypotheses", `?id=eq.${hid}&kgr_case_id=eq.${id}&select=id,status`);
   const hyp = hypRows?.[0];
   if (!hyp) return jsonResponse({ error: "Hypothesis not found on this case" }, 404, corsHeaders);
@@ -167,7 +180,7 @@ async function updateHypothesis(request, env, id, hid, userJwt, corsHeaders) {
 
   const updated = await supabasePatch(env, "kgr_hypotheses", hid, {
     status: body.status,
-    test_notes: typeof body.test_notes === "string" ? body.test_notes : null,
+    test_notes: body.test_notes.trim(),
     updated_at: new Date().toISOString(),
   });
   return jsonResponse(updated, 200, corsHeaders);

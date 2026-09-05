@@ -197,12 +197,28 @@ describe("updateHypothesis", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects accepting a hypothesis with no test_notes", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]); // fetchCase
+    const res = await updateHypothesis(mockRequest({ status: "accepted" }), ENV, "7", "100", "admin-jwt", CH);
+    expect(res.status).toBe(400);
+    expect(supabasePatchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects falsifying a hypothesis with blank/whitespace-only test_notes", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]); // fetchCase
+    const res = await updateHypothesis(mockRequest({ status: "falsified", test_notes: "   " }), ENV, "7", "100", "admin-jwt", CH);
+    expect(res.status).toBe(400);
+    expect(supabasePatchMock).not.toHaveBeenCalled();
+  });
+
   it("rejects changing a hypothesis that is already disposed (not untested)", async () => {
     mockAuth();
     supabaseFetchMock
       .mockResolvedValueOnce([{ id: 7, status: "in_development" }]) // fetchCase
       .mockResolvedValueOnce([{ id: 100, status: "accepted" }]);    // hypothesis lookup
-    const res = await updateHypothesis(mockRequest({ status: "falsified" }), ENV, "7", "100", "admin-jwt", CH);
+    const res = await updateHypothesis(mockRequest({ status: "falsified", test_notes: "No longer relevant." }), ENV, "7", "100", "admin-jwt", CH);
     expect(res.status).toBe(409);
     expect(supabasePatchMock).not.toHaveBeenCalled();
   });
@@ -218,6 +234,35 @@ describe("updateHypothesis", () => {
     expect(res.status).toBe(200);
     expect(supabasePatchMock).toHaveBeenCalledWith(ENV, "kgr_hypotheses", "100", expect.objectContaining({
       status: "accepted", test_notes: "Confirmed via docs.",
+    }));
+  });
+
+  it("trims test_notes before storing", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "in_development" }])
+      .mockResolvedValueOnce([{ id: 100, status: "untested" }]);
+    supabasePatchMock.mockResolvedValueOnce([{ id: 100, status: "falsified" }]);
+
+    const res = await updateHypothesis(mockRequest({ status: "falsified", test_notes: "  Superseded by hypothesis: revised timeline theory.  " }), ENV, "7", "100", "admin-jwt", CH);
+    expect(res.status).toBe(200);
+    expect(supabasePatchMock).toHaveBeenCalledWith(ENV, "kgr_hypotheses", "100", expect.objectContaining({
+      status: "falsified", test_notes: "Superseded by hypothesis: revised timeline theory.",
+    }));
+  });
+
+  it("records a replacement's identity in the falsifying notes when a hypothesis is superseded (traceability is by note content, not a schema link)", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "in_development" }])
+      .mockResolvedValueOnce([{ id: 100, status: "untested" }]);
+    supabasePatchMock.mockResolvedValueOnce([{ id: 100, status: "falsified" }]);
+
+    const replacementNote = 'Replaced by hypothesis #103 ("revised timeline theory") - original scope was too narrow.';
+    const res = await updateHypothesis(mockRequest({ status: "falsified", test_notes: replacementNote }), ENV, "7", "100", "admin-jwt", CH);
+    expect(res.status).toBe(200);
+    expect(supabasePatchMock).toHaveBeenCalledWith(ENV, "kgr_hypotheses", "100", expect.objectContaining({
+      test_notes: replacementNote,
     }));
   });
 });
