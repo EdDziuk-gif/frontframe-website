@@ -91,6 +91,7 @@ export const ADMIN_ROUTES = [
   route("DELETE", "/admin/review-queue/:id", envParam(handlers.deleteReviewQueue)),
   route("GET", "/admin/gap-resolution-requests", envOnly(handlers.getGapResolutionRequests)),
   route("DELETE", "/admin/gap-resolution-requests/:id", envParam(handlers.deleteGapResolutionRequest)),
+  route("PATCH", "/admin/gap-resolution-requests/:id/authorize", param(handlers.authorizeGapResolutionRequest)),
   // Phase F candidate 1: constitutional amendment proposals
   route("GET",   "/admin/constitution/proposals",                   envOnly(handlers.listProposals)),
   route("POST",  "/admin/constitution/proposals",                   noParams(handlers.createProposal)),

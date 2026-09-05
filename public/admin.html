@@ -3066,13 +3066,15 @@ function renderGapQueue() {
     const a      = esc((r.candidate_answers?.answer_text ?? '—').slice(0, 140));
     const reason = esc(r.routes?.route_reason ?? '—');
     const status = r.authorized_at ? '<span class="badge badge-promoted">Authorized</span>' : '<span class="badge badge-open">Open</span>';
+    const scope  = r.permitted_scope ? `<div style="font-size:12px;color:var(--gray);margin-top:2px">Scope: ${esc(r.permitted_scope)}</div>` : '';
+    const authorizeBtn = r.authorized_at ? '' : `<button class="btn btn-xs" onclick="authorizeGapQueueRecord('${r.id}')">Authorize</button> `;
     return `<tr>
       <td style="max-width:260px">${q}</td>
       <td style="max-width:280px;color:var(--gray)">${a}</td>
       <td>${reason}</td>
       <td>${fmtDate(r.requested_at)}</td>
-      <td>${status}</td>
-      <td><button class="btn btn-danger btn-xs" onclick="deleteGapQueueRecord('${r.id}')">Delete</button></td>
+      <td>${status}${scope}</td>
+      <td>${authorizeBtn}<button class="btn btn-danger btn-xs" onclick="deleteGapQueueRecord('${r.id}')">Delete</button></td>
     </tr>`;
   }).join('');
 }
@@ -3084,6 +3086,24 @@ async function deleteGapQueueRecord(id) {
     renderGapQueue();
     updateBadges();
     toast('Deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// Phase F Candidate 2, Increment 1: authorization gate only. Sets
+// authorized_by (server-derived from the authenticated reviewer) and
+// authorized_at, plus an optional permitted_scope note. Does not start
+// research, call a model, notify anyone, or write anything past this
+// queue row. Management-gated server-side (frontframe_admin); this button
+// is shown to any admin-tab user but the server rejects a Staff caller.
+async function authorizeGapQueueRecord(id) {
+  const scope = prompt('Permitted scope (what is being authorized)? Optional.');
+  if (scope === null) return; // cancelled
+  try {
+    const updated = await api('PATCH', `/admin/gap-resolution-requests/${id}/authorize`, { permitted_scope: scope || null });
+    gapQueue = gapQueue.map(r => r.id === id ? { ...r, ...updated[0] } : r);
+    renderGapQueue();
+    updateBadges();
+    toast('Authorized.');
   } catch (e) { toast(e.message, 'error'); }
 }
 

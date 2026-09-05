@@ -1,6 +1,7 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
 import { ADMIN_EMAIL } from "../shared/runtime.js";
+import { getReviewerAuthority } from "./constitution.js";
 
 // § DOMAIN: outreach
 // ════════════════════════════════════════════════════════════════════════════
@@ -177,7 +178,40 @@ async function deleteGapResolutionRequest(env, id, userJwt, corsHeaders) {
   return jsonResponse({ deleted: id }, 200, corsHeaders);
 }
 
+// Increment 1 of Phase F Candidate 2 (KGR activation). Authorization gate
+// only - no research, model call, notification, resolution, or
+// promulgation is triggered here. Management-gated (frontframe_admin:
+// Operator or Delegate, per the two-tier organizational model - Staff
+// cannot authorize KGR work). authorized_by is always derived from the
+// authenticated reviewer, never accepted from the request body, mirroring
+// the submitted_by fix from Phase F Candidate 1. Re-authorization of an
+// already-authorized row is rejected - authorization is a one-time,
+// one-way transition, not an editable field.
+async function authorizeGapResolutionRequest(request, env, id, userJwt, corsHeaders) {
+  const authority = await getReviewerAuthority(env, userJwt);
+  if (!authority) return jsonResponse({ error: "Unauthorized" }, 401, corsHeaders);
+  if (authority.role !== "frontframe_admin")
+    return jsonResponse({ error: "Management authority required" }, 403, corsHeaders);
+
+  const existingRows = await supabaseFetch(env, "gap_resolution_requests",
+    `?id=eq.${id}&select=id,authorized_at`);
+  const existing = existingRows?.[0];
+  if (!existing) return jsonResponse({ error: "Not found" }, 404, corsHeaders);
+  if (existing.authorized_at)
+    return jsonResponse({ error: "Already authorized" }, 409, corsHeaders);
+
+  const body = await request.json().catch(() => ({}));
+  const permittedScope = typeof body.permitted_scope === "string" ? body.permitted_scope : null;
+
+  const updated = await supabasePatch(env, "gap_resolution_requests", id, {
+    authorized_by: authority.id,
+    authorized_at: new Date().toISOString(),
+    permitted_scope: permittedScope,
+  });
+  return jsonResponse(updated, 200, corsHeaders);
+}
+
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { getOutreachProspects, createOutreachProspect, updateOutreachProspect, sendOutreachContract, getOutreachTouches, createOutreachTouch, getReviewQueue, updateReviewQueue, deleteReviewQueue, bulkDeleteReviewQueue, getGapResolutionRequests, deleteGapResolutionRequest };
+export { getOutreachProspects, createOutreachProspect, updateOutreachProspect, sendOutreachContract, getOutreachTouches, createOutreachTouch, getReviewQueue, updateReviewQueue, deleteReviewQueue, bulkDeleteReviewQueue, getGapResolutionRequests, deleteGapResolutionRequest, authorizeGapResolutionRequest };
