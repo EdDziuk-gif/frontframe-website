@@ -758,6 +758,18 @@
           </table>
         </div>
       </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-header">
+          <div class="card-title">Falsified Hypotheses</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadFalsifiedHypotheses()">&#x21BA;</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Originating Question</th><th>Hypothesis</th><th>Test Notes</th><th>Case</th><th>Actions</th></tr></thead>
+            <tbody id="kgr-falsified-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- Constitution -->
@@ -2012,7 +2024,8 @@ function switchTab(tab) {
     case 'defects':       loadDefects().catch(e => toast('Defects: ' + e.message, 'error')); break;
     case 'feedback':      loadFeedback().catch(e => toast('Feedback: ' + e.message, 'error')); break;
     case 'gap-queue':      loadGapQueue().catch(e => toast('Gap Queue: ' + e.message, 'error')); break;
-    case 'kgr-cases':      loadKgrCases().catch(e => toast('KGR Cases: ' + e.message, 'error')); break;
+    case 'kgr-cases':      loadKgrCases().catch(e => toast('KGR Cases: ' + e.message, 'error'));
+                           loadFalsifiedHypotheses().catch(e => toast('Falsified hypotheses: ' + e.message, 'error')); break;
     case 'constitution':   loadConstitution().catch(e => toast('Constitution: ' + e.message, 'error')); break;
     case 'auth-incidents': loadAuthIncidents().catch(e => toast('Auth Incidents: ' + e.message, 'error')); break;
     case 'solutions':     loadSolutions().catch(e => toast('Solutions: ' + e.message, 'error')); break;
@@ -3304,16 +3317,36 @@ function renderKgrResolutionSection(c) {
     readonlyBox.style.display = 'block';
     const rs = c.resolution_statement;
     const candidates = rs.kgr_resolution_candidates || [];
-    readonlyBox.innerHTML = `
-      <div style="font-size:12px;color:var(--gray);margin-bottom:10px">Prepared ${new Date(rs.created_at).toLocaleString()}. Read-only - no selection or sign-off exists in this view.</div>
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Problem Statement</div>
-      <div style="margin-bottom:12px;padding:8px;background:var(--offwhite);border-radius:6px;font-size:13px">${esc(rs.problem_statement)}</div>
-      ${candidates.map(cd => `
+    // No client-side reviewer-role signal exists anywhere in this admin UI
+    // (grepped: no session/JWT decode, no stored role) - every other
+    // Management-only action here (escalate, ready, promulgate) renders
+    // unconditionally and relies on the server's 403 to enforce authority,
+    // so sign-off buttons follow that same established precedent rather
+    // than inventing a new client-side gate.
+    const isManagement = true;
+    let decisionHtml;
+    if (rs.signed_off_at) {
+      const selected = candidates.find(cd => cd.id === rs.selected_candidate_id);
+      decisionHtml = `
+        <div style="margin-bottom:12px;padding:8px;background:var(--offwhite);border-radius:6px;font-size:13px">
+          <div style="font-weight:600;margin-bottom:4px">Signed off ${new Date(rs.signed_off_at).toLocaleString()} by reviewer ${esc(rs.signed_off_by)}</div>
+          ${selected ? `<div style="margin-top:4px">${esc(selected.presented_content)}</div>` : ''}
+          <div style="font-size:12px;color:var(--gray);margin-top:6px">Unselected alternatives and their hypotheses were pruned at sign-off.</div>
+        </div>`;
+    } else {
+      decisionHtml = candidates.map(cd => `
         <div style="padding:8px 0;border-bottom:1px solid var(--border)">
           <div style="font-size:13px;margin-bottom:4px">${esc(cd.presented_content)}</div>
           <div style="font-size:12px;color:var(--gray)">Score: ${esc(String(cd.score))} - ${esc(cd.rationale)}</div>
+          ${isManagement ? `<button class="btn btn-xs" style="margin-top:6px" onclick="signOffKgrResolution(${cd.id})">Select and Sign Off</button>` : ''}
         </div>
-      `).join('') || '<div class="empty-state">No candidates</div>'}
+      `).join('') || '<div class="empty-state">No candidates</div>';
+    }
+    readonlyBox.innerHTML = `
+      <div style="font-size:12px;color:var(--gray);margin-bottom:10px">Prepared ${new Date(rs.created_at).toLocaleString()}.${rs.signed_off_at ? '' : ' Read-only - no selection or sign-off has been made yet.'}</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Problem Statement</div>
+      <div style="margin-bottom:12px;padding:8px;background:var(--offwhite);border-radius:6px;font-size:13px">${esc(rs.problem_statement)}</div>
+      ${decisionHtml}
     `;
     return;
   }
@@ -3360,6 +3393,58 @@ async function prepareKgrResolutionStatement() {
     toast(e.message, 'error');
     btn.disabled = false;
   }
+}
+
+async function signOffKgrResolution(candidateId) {
+  if (!currentKgrCaseId) return;
+  if (!confirm('Sign off this resolution? This is irreversible and will delete the unselected alternatives and their hypotheses.')) return;
+  try {
+    await api('POST', `/admin/kgr-cases/${currentKgrCaseId}/sign-off`, { candidate_id: candidateId });
+    toast('Resolution signed off.');
+    const c = await api('GET', `/admin/kgr-cases/${currentKgrCaseId}`);
+    renderKgrCaseModal(c);
+    await loadKgrCases();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+// Falsified-hypothesis review: cases where a hypothesis was ruled out.
+// Deleting one here only prunes the hypothesis row itself - it never
+// touches the sign-off/prune transaction (sign_off_kgr_resolution).
+let kgrFalsifiedHypotheses = [];
+
+async function loadFalsifiedHypotheses() {
+  try { kgrFalsifiedHypotheses = await api('GET', '/admin/kgr-hypotheses/falsified'); }
+  catch (e) { toast('Failed to load falsified hypotheses: ' + e.message, 'error'); return; }
+  renderFalsifiedHypotheses();
+}
+
+function renderFalsifiedHypotheses() {
+  const tbody = document.getElementById('kgr-falsified-tbody');
+  if (!tbody) return;
+  if (!kgrFalsifiedHypotheses.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No falsified hypotheses</div></td></tr>`; return; }
+  tbody.innerHTML = kgrFalsifiedHypotheses.map(h => {
+    const q = esc(h.kgr_cases?.gap_resolution_requests?.questions?.question_text ?? `Case #${h.kgr_case_id}`);
+    return `<tr>
+      <td style="max-width:260px">${q}</td>
+      <td style="max-width:260px">${esc(h.description)}</td>
+      <td style="max-width:200px">${esc(h.test_notes || '')}</td>
+      <td><button class="btn btn-xs" onclick="openKgrCaseModal(${h.kgr_case_id})">View Case</button></td>
+      <td><button class="btn btn-xs btn-danger" onclick="deleteFalsifiedHypothesis(${h.id})">Delete</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function deleteFalsifiedHypothesis(id) {
+  const h = kgrFalsifiedHypotheses.find(x => x.id === id);
+  const label = h ? h.description : `hypothesis #${id}`;
+  if (!confirm(`Permanently delete this falsified hypothesis? "${label}"`)) return;
+  try {
+    await api('DELETE', `/admin/kgr-hypotheses/${id}`);
+    toast('Hypothesis deleted.');
+    await loadFalsifiedHypotheses();
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 async function saveKgrCaseNotes() {

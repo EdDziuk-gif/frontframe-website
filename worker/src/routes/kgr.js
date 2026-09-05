@@ -1,5 +1,5 @@
 import { jsonResponse } from "../shared/http.js";
-import { supabaseFetch, supabasePost, supabasePatch, supabaseRpc } from "../shared/supabase.js";
+import { supabaseFetch, supabasePost, supabasePatch, supabaseDelete, supabaseRpc } from "../shared/supabase.js";
 import { callAnthropic, buildConstitutionSection } from "../shared/runtime.js";
 import { checkConstitutionalEligibility, scoreCandidateAnswer } from "../shared/scoring.js";
 import { getReviewerAuthority } from "./constitution.js";
@@ -50,7 +50,7 @@ async function fetchHypotheses(env, caseId) {
 // Phase F Candidate 2, Increment 3 — resolution statement preparation.
 async function fetchResolutionStatement(env, caseId) {
   const rows = await supabaseFetch(env, "kgr_resolution_statements",
-    `?kgr_case_id=eq.${caseId}&select=id,kgr_case_id,problem_statement,prepared_by,created_at,kgr_resolution_candidates(id,kgr_hypothesis_id,presented_content,score,rationale)`);
+    `?kgr_case_id=eq.${caseId}&select=id,kgr_case_id,problem_statement,prepared_by,created_at,selected_candidate_id,signed_off_by,signed_off_at,qa_pair_id,kgr_resolution_candidates(id,kgr_hypothesis_id,presented_content,score,rationale)`);
   return rows?.[0] ?? null;
 }
 
@@ -397,8 +397,120 @@ async function developKgrCase(env, id, userJwt, corsHeaders) {
   return jsonResponse({ response: responseText }, 200, corsHeaders);
 }
 
+
+// ── Sign-off (Management only) ──────────────────────────────────────────────
+//
+// Selects one candidate from a prepared resolution statement, records the
+// decision, prunes the unselected candidates and their now-unused
+// hypotheses, and publishes the selected candidate's content as a new
+// qa_pairs row - all in one atomic transaction (sign_off_kgr_resolution,
+// migration 007). Mirrors escalateKgrCase's exact pattern for building the
+// constitution section and calling checkConstitutionalEligibility: the
+// same provisions fetch, the same buildConstitutionSection() call, the same
+// result.constitutionalCandidate field, the same result.issue field.
+async function signOffKgrResolution(request, env, id, userJwt, corsHeaders) {
+  const auth = await requireCaseAuthority(env, userJwt, CASE_MANAGEMENT_ONLY_ROLES, corsHeaders);
+  if (!auth.ok) return auth.response;
+
+  const kgrCase = await fetchCase(env, id);
+  if (!kgrCase) return jsonResponse({ error: "Case not found" }, 404, corsHeaders);
+  if (kgrCase.status !== "ready_for_decision")
+    return jsonResponse(
+      { error: `Case must be 'ready_for_decision' to sign off a resolution (is '${kgrCase.status}')` },
+      409,
+      corsHeaders
+    );
+
+  const resolutionStatement = await fetchResolutionStatement(env, id);
+  if (!resolutionStatement)
+    return jsonResponse({ error: "No resolution statement exists for this case" }, 404, corsHeaders);
+  if (resolutionStatement.signed_off_at)
+    return jsonResponse(
+      { error: "This resolution statement has already been signed off", resolution_statement: resolutionStatement },
+      409,
+      corsHeaders
+    );
+
+  const body = await request.json().catch(() => ({}));
+  const candidateId = body.candidate_id;
+  const candidates = resolutionStatement.kgr_resolution_candidates ?? [];
+  const selectedCandidate = candidates.find((c) => c.id === candidateId);
+  if (candidateId === undefined || candidateId === null || !selectedCandidate)
+    return jsonResponse({ error: "candidate_id must be one of this statement's candidates" }, 400, corsHeaders);
+
+  const caseText = [resolutionStatement.problem_statement, selectedCandidate.presented_content]
+    .filter(Boolean).join("\n\n");
+
+  const provisions = await supabaseFetch(env, "constitution_provisions",
+    "?select=provision_number,title,current_text&order=provision_number.asc");
+  const constitutionSection = buildConstitutionSection(provisions);
+
+  const eligibility = await checkConstitutionalEligibility(env, constitutionSection, caseText);
+  if (eligibility.constitutionalCandidate)
+    return jsonResponse(
+      {
+        error:
+          "This resolution appears to raise a constitutional question and cannot be signed off operationally. FrontFrame's KGR escalation path only applies before a case reaches this stage, so no automated next step exists here - bring this case to the Operator directly for constitutional review.",
+        issue: eligibility.issue,
+      },
+      409,
+      corsHeaders
+    );
+
+  try {
+    await supabaseRpc(env, "sign_off_kgr_resolution", {
+      p_statement_id: resolutionStatement.id,
+      p_candidate_id: candidateId,
+      p_signed_off_by: auth.authority.id,
+    });
+  } catch (e) {
+    if (String(e.message).includes("already signed off")) {
+      const raceLoserStatement = await fetchResolutionStatement(env, id);
+      return jsonResponse(
+        { error: "This resolution statement has already been signed off", resolution_statement: raceLoserStatement },
+        409,
+        corsHeaders
+      );
+    }
+    throw e;
+  }
+
+  const finalCase = await fetchCase(env, id);
+  const hypotheses = await fetchHypotheses(env, id);
+  const finalStatement = await fetchResolutionStatement(env, id);
+  return jsonResponse({ ...finalCase, hypotheses, resolution_statement: finalStatement }, 200, corsHeaders);
+}
+
+// ── Falsified-hypothesis review (pruning outside the sign-off transaction) ──
+
+async function listFalsifiedHypotheses(request, env, userJwt, corsHeaders) {
+  const auth = await requireCaseAuthority(env, userJwt, CASE_DEVELOPMENT_ROLES, corsHeaders);
+  if (!auth.ok) return auth.response;
+  const rows = await supabaseFetch(env, "kgr_hypotheses",
+    "?status=eq.falsified&select=id,description,test_notes,created_at,kgr_case_id,kgr_cases(gap_resolution_requests(questions(question_text)))&order=created_at.desc");
+  return jsonResponse(rows ?? [], 200, corsHeaders);
+}
+
+async function deleteFalsifiedHypothesis(env, id, userJwt, corsHeaders) {
+  const auth = await requireCaseAuthority(env, userJwt, CASE_MANAGEMENT_ONLY_ROLES, corsHeaders);
+  if (!auth.ok) return auth.response;
+
+  const rows = await supabaseFetch(env, "kgr_hypotheses", `?id=eq.${id}&select=id,status`);
+  const hyp = rows?.[0];
+  if (!hyp) return jsonResponse({ error: "Not found" }, 404, corsHeaders);
+  if (hyp.status !== "falsified")
+    return jsonResponse(
+      { error: `Only falsified hypotheses can be pruned this way (status is '${hyp.status}')` },
+      409,
+      corsHeaders
+    );
+
+  await supabaseDelete(env, "kgr_hypotheses", id);
+  return jsonResponse({ deleted: id }, 200, corsHeaders);
+}
+
 export {
   createKgrCase, listKgrCases, getKgrCase, updateKgrCase,
   addHypothesis, updateHypothesis, readyKgrCase, escalateKgrCase, developKgrCase,
-  prepareResolutionStatement,
+  prepareResolutionStatement, signOffKgrResolution, listFalsifiedHypotheses, deleteFalsifiedHypothesis,
 };

@@ -12,6 +12,8 @@ const supabaseRpcMock   = vi.fn();
 const callAnthropicMock = vi.fn();
 const checkEligibilityMock = vi.fn();
 
+const supabaseDeleteMock = vi.fn();
+
 vi.mock("../src/shared/supabase.js", () => ({
   supabaseFetch: (...a) => supabaseFetchMock(...a),
   supabasePost:  (...a) => supabasePostMock(...a),
@@ -19,7 +21,7 @@ vi.mock("../src/shared/supabase.js", () => ({
   supabasePatchByField: vi.fn(),
   supabaseRpc:   (...a) => supabaseRpcMock(...a),
   supabaseUpsert: vi.fn(),
-  supabaseDelete: vi.fn(),
+  supabaseDelete: (...a) => supabaseDeleteMock(...a),
   supabaseHeaders: () => ({}),
 }));
 
@@ -46,7 +48,7 @@ global.fetch = vi.fn();
 const {
   createKgrCase, listKgrCases, getKgrCase, updateKgrCase,
   addHypothesis, updateHypothesis, readyKgrCase, escalateKgrCase, developKgrCase,
-  prepareResolutionStatement,
+  prepareResolutionStatement, signOffKgrResolution, listFalsifiedHypotheses, deleteFalsifiedHypothesis,
 } = await import("../src/routes/kgr.js");
 
 const CH = {};
@@ -683,5 +685,288 @@ describe("prepareResolutionStatement", () => {
     const body = await res.json();
     expect(body.resolution_statement.id).toBe(55);
     expect(body.resolution_statement.kgr_resolution_candidates[0].presented_content).toBe("Answer A");
+  });
+});
+
+// ── Phase F Candidate 2, Increment 4 — sign-off ─────────────────────────
+// Scope: selecting one prepared candidate, recording the decision, pruning
+// unselected candidates/hypotheses, and publishing to qa_pairs - all inside
+// sign_off_kgr_resolution (migration 007). No promulgation/notification
+// path beyond writing qa_pairs is exercised here.
+
+function baseStatement(overrides = {}) {
+  return {
+    id: 55,
+    kgr_case_id: 7,
+    problem_statement: "Does FrontFrame offer an SLA?",
+    prepared_by: "rev-uuid",
+    signed_off_at: null,
+    signed_off_by: null,
+    selected_candidate_id: null,
+    qa_pair_id: null,
+    kgr_resolution_candidates: [
+      { id: 1, kgr_hypothesis_id: 100, presented_content: "Answer A", score: 0.8, rationale: "Directly responsive." },
+      { id: 2, kgr_hypothesis_id: 101, presented_content: "Answer B", score: 0.3, rationale: "Off-topic." },
+    ],
+    ...overrides,
+  };
+}
+
+describe("signOffKgrResolution", () => {
+  it("rejects an unauthenticated caller before any write", async () => {
+    global.fetch.mockResolvedValueOnce({ ok: false });
+    const res = await signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "bad-jwt", CH);
+    expect(res.status).toBe(401);
+    expect(supabaseFetchMock).not.toHaveBeenCalled();
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects Staff (Management only), before any write", async () => {
+    mockAuth({ role: "frontframe_staff" });
+    const res = await signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "staff-jwt", CH);
+    expect(res.status).toBe(403);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("404s when the case does not exist", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([]); // fetchCase
+    const res = await signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(404);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("409s when the case is not ready_for_decision, naming the actual status", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]);
+    const res = await signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toContain("in_development");
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("404s when no resolution statement exists for the case", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }]) // fetchCase
+      .mockResolvedValueOnce([]); // fetchResolutionStatement - none
+    const res = await signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(404);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("409s with the existing decision record when already signed off", async () => {
+    mockAuth();
+    const signedStatement = baseStatement({ signed_off_at: "2026-09-05T00:00:00Z", signed_off_by: "rev-uuid", selected_candidate_id: 1 });
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }])
+      .mockResolvedValueOnce([signedStatement]);
+    const res = await signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.resolution_statement.id).toBe(55);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("400s when candidate_id is not one of this statement's candidates", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }])
+      .mockResolvedValueOnce([baseStatement()]);
+    const res = await signOffKgrResolution(mockRequest({ candidate_id: 999 }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(400);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("409s with the corrected message and issue field when constitutional eligibility is flagged, and makes no RPC call", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }]) // fetchCase
+      .mockResolvedValueOnce([baseStatement()]) // fetchResolutionStatement
+      .mockResolvedValueOnce([]); // constitution_provisions
+    checkEligibilityMock.mockResolvedValueOnce({
+      constitutionalCandidate: true,
+      issue: "Requires Operator determination of guarantee authority",
+    });
+
+    const res = await signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toBe(
+      "This resolution appears to raise a constitutional question and cannot be signed off operationally. FrontFrame's KGR escalation path only applies before a case reaches this stage, so no automated next step exists here - bring this case to the Operator directly for constitutional review."
+    );
+    expect(body.issue).toBe("Requires Operator determination of guarantee authority");
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("happy path: calls the RPC with the STATEMENT's id (not the case's URL id) and returns the getKgrCase shape", async () => {
+    mockAuth();
+    const finalStatement = baseStatement({
+      signed_off_at: "2026-09-05T00:00:00Z",
+      signed_off_by: "rev-uuid",
+      selected_candidate_id: 1,
+      qa_pair_id: "qa-uuid-1",
+      kgr_resolution_candidates: [
+        { id: 1, kgr_hypothesis_id: 100, presented_content: "Answer A", score: 0.8, rationale: "Directly responsive." },
+      ],
+    });
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", research_notes: null, escalation_reason: null }]) // fetchCase
+      .mockResolvedValueOnce([baseStatement()]) // fetchResolutionStatement
+      .mockResolvedValueOnce([]) // constitution_provisions
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", research_notes: null, escalation_reason: null }]) // re-fetch case
+      .mockResolvedValueOnce([{ id: 100, status: "accepted" }]) // re-fetch hypotheses
+      .mockResolvedValueOnce([finalStatement]); // re-fetch statement
+    checkEligibilityMock.mockResolvedValueOnce({ constitutionalCandidate: false, issue: null });
+    supabaseRpcMock.mockResolvedValueOnce([{ statement_id: 55, qa_pair_id: "qa-uuid-1" }]);
+
+    const res = await signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.resolution_statement.signed_off_at).toBe("2026-09-05T00:00:00Z");
+    expect(body.resolution_statement.qa_pair_id).toBe("qa-uuid-1");
+
+    expect(supabaseRpcMock).toHaveBeenCalledTimes(1);
+    const [, fnName, params] = supabaseRpcMock.mock.calls[0];
+    expect(fnName).toBe("sign_off_kgr_resolution");
+    // This is the exact regression this test guards against: the RPC must
+    // receive the resolution STATEMENT's own id (55), never the case's URL
+    // id ("7").
+    expect(params.p_statement_id).toBe(55);
+    expect(params.p_statement_id).not.toBe(7);
+    expect(params.p_candidate_id).toBe(1);
+    expect(params.p_signed_off_by).toBe("rev-uuid");
+  });
+
+  it("treats an 'already signed off' RPC error as a losing concurrent request: 409 with the re-fetched statement", async () => {
+    mockAuth();
+    const signedStatement = baseStatement({ signed_off_at: "2026-09-05T00:00:01Z", signed_off_by: "someone-else", selected_candidate_id: 2 });
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }])
+      .mockResolvedValueOnce([baseStatement()])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([signedStatement]); // re-fetch after the RPC error
+    checkEligibilityMock.mockResolvedValueOnce({ constitutionalCandidate: false, issue: null });
+    supabaseRpcMock.mockRejectedValueOnce(new Error("statement 55 is already signed off"));
+
+    const res = await signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.resolution_statement.selected_candidate_id).toBe(2);
+  });
+
+  it("re-throws any other RPC error rather than swallowing it", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }])
+      .mockResolvedValueOnce([baseStatement()])
+      .mockResolvedValueOnce([]);
+    checkEligibilityMock.mockResolvedValueOnce({ constitutionalCandidate: false, issue: null });
+    supabaseRpcMock.mockRejectedValueOnce(new Error("connection reset"));
+
+    await expect(
+      signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "admin-jwt", CH)
+    ).rejects.toThrow("connection reset");
+  });
+});
+
+// ── getKgrCase regression: resolution_statement embed carries the new columns ──
+
+describe("getKgrCase resolution_statement select (Increment 4 columns)", () => {
+  it("fetchResolutionStatement's select string includes the four new sign-off columns", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", research_notes: null, escalation_reason: null }])
+      .mockResolvedValueOnce([]) // hypotheses
+      .mockResolvedValueOnce([]); // resolution statement
+    await getKgrCase(ENV, "7", "admin-jwt", CH);
+    const stmtCall = supabaseFetchMock.mock.calls.find((c) => c[1] === "kgr_resolution_statements");
+    expect(stmtCall[2]).toContain("selected_candidate_id");
+    expect(stmtCall[2]).toContain("signed_off_by");
+    expect(stmtCall[2]).toContain("signed_off_at");
+    expect(stmtCall[2]).toContain("qa_pair_id");
+  });
+});
+
+// ── Falsified-hypothesis review ──────────────────────────────────────────
+
+describe("listFalsifiedHypotheses", () => {
+  it("rejects an unauthenticated caller", async () => {
+    global.fetch.mockResolvedValueOnce({ ok: false });
+    const res = await listFalsifiedHypotheses(mockRequest(), ENV, "bad-jwt", CH);
+    expect(res.status).toBe(401);
+    expect(supabaseFetchMock).not.toHaveBeenCalled();
+  });
+
+  it("Staff can call it (200)", async () => {
+    mockAuth({ role: "frontframe_staff" });
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 100, description: "H1", test_notes: "wrong", kgr_case_id: 7 }]);
+    const res = await listFalsifiedHypotheses(mockRequest(), ENV, "staff-jwt", CH);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveLength(1);
+  });
+
+  it("Management can call it too (200)", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([]);
+    const res = await listFalsifiedHypotheses(mockRequest(), ENV, "admin-jwt", CH);
+    expect(res.status).toBe(200);
+  });
+
+  it("queries status=eq.falsified and does not select research_notes", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([]);
+    await listFalsifiedHypotheses(mockRequest(), ENV, "admin-jwt", CH);
+    const [, table, query] = supabaseFetchMock.mock.calls[2];
+    expect(table).toBe("kgr_hypotheses");
+    expect(query).toContain("status=eq.falsified");
+    expect(query).not.toContain("research_notes");
+  });
+});
+
+describe("deleteFalsifiedHypothesis", () => {
+  it("rejects an unauthenticated caller", async () => {
+    global.fetch.mockResolvedValueOnce({ ok: false });
+    const res = await deleteFalsifiedHypothesis(ENV, "100", "bad-jwt", CH);
+    expect(res.status).toBe(401);
+    expect(supabaseDeleteMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects Staff (Management only)", async () => {
+    mockAuth({ role: "frontframe_staff" });
+    const res = await deleteFalsifiedHypothesis(ENV, "100", "staff-jwt", CH);
+    expect(res.status).toBe(403);
+    expect(supabaseDeleteMock).not.toHaveBeenCalled();
+  });
+
+  it("404s when the hypothesis does not exist", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([]);
+    const res = await deleteFalsifiedHypothesis(ENV, "100", "admin-jwt", CH);
+    expect(res.status).toBe(404);
+    expect(supabaseDeleteMock).not.toHaveBeenCalled();
+  });
+
+  it("409s naming the actual status when it is not falsified, and makes no delete call", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 100, status: "accepted" }]);
+    const res = await deleteFalsifiedHypothesis(ENV, "100", "admin-jwt", CH);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toContain("accepted");
+    expect(supabaseDeleteMock).not.toHaveBeenCalled();
+  });
+
+  it("Management can delete a falsified hypothesis (200)", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 100, status: "falsified" }]);
+    supabaseDeleteMock.mockResolvedValueOnce(undefined);
+    const res = await deleteFalsifiedHypothesis(ENV, "100", "admin-jwt", CH);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.deleted).toBe("100");
+    expect(supabaseDeleteMock).toHaveBeenCalledWith(ENV, "kgr_hypotheses", "100");
   });
 });
