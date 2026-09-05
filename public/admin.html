@@ -3079,12 +3079,20 @@ function renderGapQueue() {
   }).join('');
 }
 
+// Bugfix (found during Increment 1 live verification): row ids come back
+// from onclick="...('${r.id}')" as strings, but gapQueue rows carry
+// numeric ids from the API, so r.id !== id / r.id === id never matched
+// and the table silently failed to reflect a delete or authorize action
+// until the next manual tab reload. Reloading from the server after each
+// mutation fixes the type mismatch at the root (no local id comparison
+// left to get wrong) and is also the right behavior for a shared admin
+// queue - it reflects the current server state, including any change
+// another admin made in the same window, rather than a possibly-stale
+// local copy.
 async function deleteGapQueueRecord(id) {
   try {
     await api('DELETE', `/admin/gap-resolution-requests/${id}`);
-    gapQueue = gapQueue.filter(r => r.id !== id);
-    renderGapQueue();
-    updateBadges();
+    await loadGapQueue();
     toast('Deleted.');
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -3099,10 +3107,8 @@ async function authorizeGapQueueRecord(id) {
   const scope = prompt('Permitted scope (what is being authorized)? Optional.');
   if (scope === null) return; // cancelled
   try {
-    const updated = await api('PATCH', `/admin/gap-resolution-requests/${id}/authorize`, { permitted_scope: scope || null });
-    gapQueue = gapQueue.map(r => r.id === id ? { ...r, ...updated[0] } : r);
-    renderGapQueue();
-    updateBadges();
+    await api('PATCH', `/admin/gap-resolution-requests/${id}/authorize`, { permitted_scope: scope || null });
+    await loadGapQueue();
     toast('Authorized.');
   } catch (e) { toast(e.message, 'error'); }
 }
