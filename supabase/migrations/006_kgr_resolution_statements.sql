@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS kgr_resolution_candidates (
 );
 
 COMMENT ON TABLE kgr_resolution_candidates IS
-  'One row per accepted hypothesis presented in a kgr_resolution_statement. UNIQUE on kgr_hypothesis_id prevents the same accepted hypothesis appearing twice, across this or any other statement. presented_content is the reviewer-submitted text scored and stored exactly as given - the server never substitutes or rewrites it, even though the admin UI prefills it from the hypothesis's own description as a convenience. score/rationale are stored directly (not via a foreign key into the unrelated visitor-chat scores table) via scoreCandidateAnswer(), called once per candidate. A low score does not exclude a candidate from this table - no threshold/routing logic reads or writes here.';
+  'One row per accepted hypothesis presented in a kgr_resolution_statement. UNIQUE on kgr_hypothesis_id prevents the same accepted hypothesis appearing twice, across this or any other statement. presented_content is the reviewer-submitted text scored and stored exactly as given - the server never substitutes or rewrites it, even though the admin UI prefills it from the hypothesis''s own description as a convenience. score/rationale are stored directly (not via a foreign key into the unrelated visitor-chat scores table) via scoreCandidateAnswer(), called once per candidate. A low score does not exclude a candidate from this table - no threshold/routing logic reads or writes here.';
 
 CREATE INDEX IF NOT EXISTS idx_kgr_resolution_candidates_statement_id
   ON kgr_resolution_candidates(kgr_resolution_statement_id);
