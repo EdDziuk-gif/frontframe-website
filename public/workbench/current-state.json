@@ -1,6 +1,6 @@
 {
-  "as_of": "2026-09-04",
-  "workbench_revision": "12",
+  "as_of": "2026-09-05",
+  "workbench_revision": "13",
   "current_phase": "F",
   "current_phase_name": "Professional-tier completion",
   "phase_a": {
@@ -35,7 +35,7 @@
     "name": "Seed content",
     "status": "complete; no additional seed work required",
     "resolved_inputs": [
-      "Constitution provisions 1–10 supplied",
+      "Constitution provisions 1\u201310 supplied",
       "Adopting the Constitution excluded from operating seed",
       "No organizational-knowledge corpus exists"
     ],
@@ -45,7 +45,11 @@
     "name": "Agent wiring",
     "status": "complete, deployed, and production-verified",
     "completed": true,
-    "deliverables": ["SCR appropriateness scoring", "Deterministic SCA routing", "Lifecycle persistence and gap-resolution request creation"]
+    "deliverables": [
+      "SCR appropriateness scoring",
+      "Deterministic SCA routing",
+      "Lifecycle persistence and gap-resolution request creation"
+    ]
   },
   "phase_e": {
     "name": "Go live",
@@ -68,7 +72,15 @@
       "gap_queue": "SMS visibility plus protected admin list/delete; resolution remains manual",
       "closure_gate": []
     },
-    "acceptance_tests": ["Primary domain-policy reproduction", "Zero coverage", "Full coverage", "Compound partly covered", "Malformed marker fail-closed", "Adversarial pressure", "Schema-level lifecycle truthfulness"]
+    "acceptance_tests": [
+      "Primary domain-policy reproduction",
+      "Zero coverage",
+      "Full coverage",
+      "Compound partly covered",
+      "Malformed marker fail-closed",
+      "Adversarial pressure",
+      "Schema-level lifecycle truthfulness"
+    ]
   },
   "open_decisions": [
     "Whether 13 consecutive adversarial trials should later be supplemented by a larger predeclared sample",
@@ -81,30 +93,32 @@
     "classification_rule": "Applying an existing recorded delegation is operational; creating, changing, contesting, or determining delegation authority is constitutional"
   },
   "phase_f": {
-    "status": "active; candidate 1 complete, deployed, and production-verified; candidate 2 awaiting scope negotiation",
+    "status": "active; Candidate 1 implementation and correction reported complete; supporting post-fix verification evidence pending",
     "governing_decision": "Decision 0032",
     "organizational_model": "Two tiers: Management (Operator and Delegates) and Staff; reviewers/reviewer_roles are the technical identity and authority registry, not additional organizational layers",
     "candidate_1": {
       "name": "Constitutional proposal development and Operator promulgation",
-      "status": "complete, deployed, and production-verified",
-      "source_control": "fd79c7b records the deployed implementation and RPC access hardening",
+      "status": "Implementation/deployment and correction reported complete; supporting post-fix verification evidence pending reconciliation; closure not independently established.",
+      "source_control": "Earlier Workbench references fd79c7b; this reconciliation did not independently verify production code.",
       "worker_version": "e75124d5",
-      "schema": "constitution_amendment_proposals and authorization_incidents are live; atomic promulgation and incident-recording RPCs are restricted to the Worker service role",
+      "schema": "Reported live: constitution_amendment_proposals, authorization_incidents, and both RPCs; prior Workbench reports RPC service-role restriction.",
       "workflow": "Management, Staff, and the trusted assistant path may persist proposals; only the Operator may return, reject, or promulgate; outside resources cannot write directly",
       "promulgation": "Atomic stale-text check, amendment-history insert, provision update/create, proposal completion/linkage, and immediate live effect",
       "auditability": "Operator visibility over proposals, amendments, and fingerprint-aggregated authorization incidents with rate-limited fixed-text SMS notification",
-      "verification": "61/61 Worker tests passed, including 34 constitutional-amendment tests"
+      "verification": "Canonical records report 61/61 tests and independent verification; underlying post-fix results and full acceptance-criteria coverage were not located in the inspected vault.",
+      "attribution": "source_type records content origin independently; submitted_by is established server-side from authenticated/trusted identity, ignoring client assertions.",
+      "build_record": "builds/phase-f-candidate-1-evidence.html",
+      "canonical_evidence": "https://github.com/EdDziuk-gif/frontframe-obsidian-vault/blob/main/FrontFrame%20Agentic%20System%20%E2%80%94%20Phase%20F%20Candidate%201%20Implementation%20Evidence%202026-09-05.md"
     },
     "candidate_2": {
       "name": "KGR activation",
-      "status": "not started; scope and deliverables must be negotiated before implementation",
-      "starting_question": "What manual gap-resolution evidence now justifies bounded assistance or automation under Decision 0023?"
+      "status": "next bounded development unit; not started; no scope or implementation authorization added by this reconciliation"
     },
     "deferred_candidates": [
       "OPEN-6 knowledge-dependency tracking",
       "OPEN-11 provenance/history retrieval"
     ]
   },
-  "next_gate": "Negotiate and accept Candidate 2 objectives, evidence basis, scope, deliverables, requirements, non-goals, and acceptance criteria before implementation",
-  "note": "Phase F Candidate 1 is complete. Canonical Markdown, accepted decisions, and verified production evidence remain authoritative; this Workbench is the comprehension layer."
+  "next_gate": "Reconcile Candidate 1 supporting post-fix verification evidence before independent closure. Candidate 2 \u2014 KGR activation \u2014 remains the next bounded unit; this reconciliation does not design or authorize it.",
+  "note": "Canonical Markdown and accepted decisions govern. Candidate 1 implementation/deployment and correction are reported complete; independent closure is not established from the inspected vault evidence."
 }
