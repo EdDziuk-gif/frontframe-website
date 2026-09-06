@@ -1,6 +1,6 @@
 {
-  "as_of": "2026-09-05",
-  "workbench_revision": "13",
+  "as_of": "2026-09-06",
+  "workbench_revision": "14",
   "current_phase": "F",
   "current_phase_name": "Professional-tier completion",
   "phase_a": {
@@ -35,7 +35,7 @@
     "name": "Seed content",
     "status": "complete; no additional seed work required",
     "resolved_inputs": [
-      "Constitution provisions 1\u201310 supplied",
+      "Constitution provisions 1–10 supplied",
       "Adopting the Constitution excluded from operating seed",
       "No organizational-knowledge corpus exists"
     ],
@@ -93,7 +93,7 @@
     "classification_rule": "Applying an existing recorded delegation is operational; creating, changing, contesting, or determining delegation authority is constitutional"
   },
   "phase_f": {
-    "status": "active; Candidate 1 implementation and correction reported complete; supporting post-fix verification evidence pending",
+    "status": "Candidate 2 Increment 4 closed, deployed, and live-verified; Candidate 1 evidence remains separately recorded",
     "governing_decision": "Decision 0032",
     "organizational_model": "Two tiers: Management (Operator and Delegates) and Staff; reviewers/reviewer_roles are the technical identity and authority registry, not additional organizational layers",
     "candidate_1": {
@@ -112,13 +112,28 @@
     },
     "candidate_2": {
       "name": "KGR activation",
-      "status": "next bounded development unit; not started; no scope or implementation authorization added by this reconciliation"
+      "status": "Increments 1–3 accepted complete; Increment 4 closed, deployed, and live-verified",
+      "governing_retention_decision": "Decision 0033",
+      "commits": [
+        "c3ac7ce",
+        "dffdee9",
+        "821f705",
+        "38136c6"
+      ],
+      "worker_tests": "132/132",
+      "canonical_evidence": "https://github.com/EdDziuk-gif/frontframe-obsidian-vault/blob/main/FrontFrame%20Agentic%20System%20%E2%80%94%20Phase%20F%20Candidate%202%20Increment%204%20Closure%20Evidence%202026-09-06.md",
+      "reference_case": "Case #1 / hypothesis #1 / statement #1 retained unsigned and unpublished",
+      "follow_ups": [
+        "Migration 006 EXECUTE-grant cleanup",
+        "Manual Operator review for constitutional issues detected at sign-off",
+        "Whether to adopt a standing live-schema smoke test"
+      ]
     },
     "deferred_candidates": [
       "OPEN-6 knowledge-dependency tracking",
       "OPEN-11 provenance/history retrieval"
     ]
   },
-  "next_gate": "Reconcile Candidate 1 supporting post-fix verification evidence before independent closure. Candidate 2 \u2014 KGR activation \u2014 remains the next bounded unit; this reconciliation does not design or authorize it.",
-  "note": "Canonical Markdown and accepted decisions govern. Candidate 1 implementation/deployment and correction are reported complete; independent closure is not established from the inspected vault evidence."
+  "next_gate": "No deployment pending under Increment 4 closure. Select the next bounded task from operational needs; do not reset or adopt case #1 without authorization.",
+  "note": "Canonical Markdown and accepted decisions govern. Increment 4 closure and production verification are accepted from the report supplied by Ed; they are not reopened here."
 }
