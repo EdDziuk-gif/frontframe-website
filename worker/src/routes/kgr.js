@@ -50,7 +50,7 @@ async function fetchHypotheses(env, caseId) {
 // Phase F Candidate 2, Increment 3 — resolution statement preparation.
 async function fetchResolutionStatement(env, caseId) {
   const rows = await supabaseFetch(env, "kgr_resolution_statements",
-    `?kgr_case_id=eq.${caseId}&select=id,kgr_case_id,problem_statement,prepared_by,created_at,selected_candidate_id,signed_off_by,signed_off_at,qa_pair_id,kgr_resolution_candidates(id,kgr_hypothesis_id,presented_content,score,rationale)`);
+    `?kgr_case_id=eq.${caseId}&select=id,kgr_case_id,problem_statement,prepared_by,created_at,selected_candidate_id,signed_off_by,signed_off_at,qa_pair_id,kgr_resolution_candidates!kgr_resolution_candidates_kgr_resolution_statement_id_fkey(id,kgr_hypothesis_id,presented_content,score,rationale)`);
   return rows?.[0] ?? null;
 }
 
