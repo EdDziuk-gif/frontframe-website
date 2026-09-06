@@ -5,48 +5,81 @@ import { sendSms } from "../shared/runtime.js";
 // § DOMAIN: notify
 // ════════════════════════════════════════════════════════════════════════════
 
-async function handleNotify(request, env, ctx, corsHeaders) {
-  const body = await request.json();
-  const { session_id = null, name, contact, method, summary = "", source } = body;
-  if (!name || !contact || !method || !source)
-    return jsonResponse({ error: "name, contact, method, and source are required" }, 400, corsHeaders);
+// Infer a contact method when the caller didn't state one: "@" -> email,
+// otherwise assume a phone number and default to a call. Keeps a usable
+// contact submission from being dropped just because "method" was omitted
+// (Defect 2: visitor gave name + email but no stated preference).
+function inferContactMethod(method, contact) {
+  if (method === "phone" || method === "text" || method === "email") return method;
+  return String(contact ?? "").includes("@") ? "email" : "phone";
+}
 
-  const isEmail   = contact.includes("@");
-  const leadPayload = {
-    name, email: isEmail ? contact : null, phone: isEmail ? null : contact,
-    notes: summary, source, status: "new",
-  };
+// Shared contact-handoff capture: one lead row, one lead_alert row, one SMS.
+// Called from the /notify route (widget-driven) and from the chat worker's
+// server-side [COLLECTED] handling. De-dupes on session_id within a short
+// window so the two paths cannot double-book the same visitor.
+async function captureContactHandoff(env, ctx, {
+  session_id = null, name, contact, method, zip = "", timezone = "",
+  summary = "", source = "agent",
+}) {
+  const resolvedMethod = inferContactMethod(method, contact);
+
+  if (session_id) {
+    try {
+      const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      const existing = await supabaseFetch(env, "lead_alerts",
+        `?session_id=eq.${encodeURIComponent(session_id)}&triggered_at=gte.${encodeURIComponent(since)}&select=alert_id&limit=1`);
+      if (existing?.length) return { deduped: true, alertId: existing[0].alert_id, leadId: null };
+    } catch (e) { console.error("handoff dedupe check failed (continuing):", e); }
+  }
+
+  const isEmail = String(contact ?? "").includes("@");
+  const geo = [zip && `Zip: ${zip}`, timezone && `TZ: ${timezone}`].filter(Boolean).join("  ");
+  const notes = [summary, geo].filter(Boolean).join("\n");
 
   let leadId = null;
   try {
-    const leadRows = await supabasePost(env, "leads", leadPayload);
+    const leadRows = await supabasePost(env, "leads", {
+      name, email: isEmail ? contact : null, phone: isEmail ? null : contact,
+      notes, source, status: "new",
+    });
     leadId = leadRows?.[0]?.id ?? null;
-  } catch (e) { console.error("notify lead write failed:", e); }
+  } catch (e) { console.error("handoff lead write failed:", e); }
 
-  const alertPayload = {
-    session_id, page: source, prospect_name: name, trigger_reason: summary,
-    current_site: null, status: "new", sms_sent: false, sms_status: null, lead_id: leadId,
-  };
-
-  const methodLabel = method === "phone" ? "Phone call" : method === "text" ? "Text" : "Email";
-  const smsMessage  =
-    `FrontFrame contact request\nName: ${name}\nReach by: ${methodLabel}\nContact: ${contact}\nSource: ${source}\n` +
+  const methodLabel = resolvedMethod === "phone" ? "Phone call" : resolvedMethod === "text" ? "Text" : "Email";
+  const smsMessage =
+    `FrontFrame contact request\nName: ${name}\nReach by: ${methodLabel}\nContact: ${contact}\n` +
+    (geo ? `${geo}\n` : "") + `Source: ${source}\n` +
     (summary ? `Summary: ${summary.slice(0, 200)}` : "");
 
-  ctx.waitUntil(
-    supabasePost(env, "lead_alerts", alertPayload)
-      .then(async (alertRows) => {
-        const alertId   = alertRows?.[0]?.alert_id ?? null;
-        const smsResult = await sendSms(env, smsMessage);
-        if (alertId) {
-          await supabasePatchByField(env, "lead_alerts", "alert_id", alertId,
-            { sms_sent: smsResult.success, sms_status: smsResult.status })
-            .catch((e) => console.error("notify alert sms update failed:", e));
-        }
-      })
-      .catch((e) => console.error("notify lead_alert write failed:", e))
-  );
+  const alertPromise = supabasePost(env, "lead_alerts", {
+    session_id, page: source, prospect_name: name, trigger_reason: summary,
+    current_site: null, status: "new", sms_sent: false, sms_status: null, lead_id: leadId,
+  })
+    .then(async (alertRows) => {
+      const alertId = alertRows?.[0]?.alert_id ?? null;
+      const smsResult = await sendSms(env, smsMessage);
+      if (alertId) {
+        await supabasePatchByField(env, "lead_alerts", "alert_id", alertId,
+          { sms_sent: smsResult.success, sms_status: smsResult.status })
+          .catch((e) => console.error("handoff alert sms update failed:", e));
+      }
+      return alertId;
+    })
+    .catch((e) => { console.error("handoff lead_alert write failed:", e); return null; });
 
+  if (ctx?.waitUntil) ctx.waitUntil(alertPromise);
+  else await alertPromise;
+  return { deduped: false, leadId };
+}
+
+async function handleNotify(request, env, ctx, corsHeaders) {
+  const body = await request.json();
+  const { session_id = null, name, contact, method, zip = "", timezone = "", summary = "", source } = body;
+  if (!name || !contact || !source)
+    return jsonResponse({ error: "name, contact, and source are required" }, 400, corsHeaders);
+
+  await captureContactHandoff(env, ctx, { session_id, name, contact, method, zip, timezone, summary, source });
   return jsonResponse({ received: true }, 200, corsHeaders);
 }
 
@@ -211,4 +244,4 @@ async function updateBookingAdmin(request, env, id, corsHeaders) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { handleNotify, verifyTurnstile, handleInquiry, getBlackout, dateInBlackout, handleSchedule, getBlackoutAdmin, createBlackoutAdmin, deleteBlackoutAdmin, getBookingsAdmin, updateBookingAdmin };
+export { handleNotify, captureContactHandoff, inferContactMethod, verifyTurnstile, handleInquiry, getBlackout, dateInBlackout, handleSchedule, getBlackoutAdmin, createBlackoutAdmin, deleteBlackoutAdmin, getBookingsAdmin, updateBookingAdmin };

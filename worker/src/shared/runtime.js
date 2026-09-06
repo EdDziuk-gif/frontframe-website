@@ -26,6 +26,13 @@ export const ESCALATION_PATTERN = /\{[^{}]*"_escalate"\s*:\s*true[^{}]*\}/s;
 export const DEFECT_PATTERN     = /\{[^{}]*"_defect"\s*:\s*true[^{}]*\}/s;
 export const RESEARCH_PATTERN   = /\{[^{}]*"_research"\s*:\s*true[^{}]*\}/s;
 export const KNOWLEDGE_GAP_PATTERN = /\{[^{}]*"_knowledge_gap"\s*:\s*true[^{}]*\}\s*$/s;
+// The structured contact-handoff marker from the system prompt's HANDOFF block:
+// [COLLECTED:{"name":...,"method":...,"contact":...,"zip":...,"timezone":...,"summary":...}]
+// Captured group 1 is the JSON object. Handled server-side in chat.js (Defect 2 fix)
+// so a resolve_gap route can never discard it; the client also parses it defensively.
+// Greedy to the last "}" so a brace inside the free-text summary doesn't truncate
+// the capture — the marker is always the final thing in the reply.
+export const COLLECTED_PATTERN = /\[COLLECTED:\s*(\{[\s\S]*\})\s*\]/;
 
 export const GAP_SIGNAL = "I do not have a strong answer to that yet";
 
@@ -103,6 +110,17 @@ export function buildSystemPrompt(systemPromptContent, qaPairs) {
   if (qaPairs?.length)
     prompt += `\n\n---\n\nKnowledge Base:\n\n${qaPairs.map(r => `Q: ${r.question}\nA: ${r.answer}`).join("\n\n")}`;
   return prompt;
+}
+
+// PostgREST query for the Q&A pairs that may inform a visitor-facing answer.
+// Only promulgated pairs (status='implemented') are eligible: draft, under_review,
+// and redundant rows are retained for editorial review but must never reach
+// generation. The status filter and the page OR-filter are ANDed by PostgREST.
+export function buildQaPairsQuery(page) {
+  return `?select=question,answer` +
+    `&status=eq.implemented` +
+    `&or=(page.eq.all,page.eq.${encodeURIComponent(page)})` +
+    `&order=created_at.asc`;
 }
 
 // § DOMAIN: sms (Surge)

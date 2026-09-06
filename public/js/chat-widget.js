@@ -106,20 +106,38 @@
     try { return JSON.parse(m[1]); } catch (e) { return null; }
   }
 
+  function showHandoffConfirmation() {
+    setTimeout(function () {
+      addMessage(CONFIRM_MSG, 'confirmed');
+      if (SHOW_PRIVACY_NOTE) {
+        var privacyNote = document.createElement('div');
+        privacyNote.style.cssText = 'font-size:0.72rem;color:#8A9BAE;padding:2px 14px 8px;';
+        privacyNote.innerHTML = 'Contact info stored by FrontFrame. <a href="/about#privacy" style="color:#8A9BAE;text-decoration:underline;">Privacy policy</a>';
+        messages.appendChild(privacyNote);
+        messages.scrollTop = messages.scrollHeight;
+      }
+      input.disabled = true; sendBtn.disabled = true; input.placeholder = PLACEHOLDER_AFTER;
+    }, 600);
+  }
+
   async function notifyEd(contactData) {
     if (handoffDone) return; handoffDone = true;
     var transcript = history.filter(function (m) { return m.role === 'user' || m.role === 'assistant'; })
       .map(function (m) { return (m.role === 'user' ? 'Visitor' : 'Assistant') + ': ' + m.content; }).join('\n');
     try {
-      await fetch(WORKER_URL + '/notify', {
+      var r = await fetch(WORKER_URL + '/notify', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           session_id: sessionId, name: contactData.name || '',
           contact: contactData.contact || '', method: contactData.method || '',
+          zip: contactData.zip || '', timezone: contactData.timezone || '',
           summary: contactData.summary || '', transcript: transcript, source: SOURCE
         }),
       });
-    } catch (e) {}
+      if (!r.ok) throw new Error('notify ' + r.status);
+    } catch (e) {
+      addMessage("I've noted that — if you don't hear back soon, reach Ed directly at ed@frontframe.co.", 'agent');
+    }
   }
 
   async function sendMessage(text) {
@@ -133,21 +151,22 @@
       });
       var data = await res.json(); removeTyping();
       var reply = data.response || 'Sorry, something went wrong.';
+
+      // Server-side handoff capture (Defect 2): the worker stripped the
+      // [COLLECTED] marker and recorded the lead itself. Show the confirmation
+      // UX but do NOT call /notify — the worker already did, de-duped.
+      if (HANDOFF_ENABLED && data.handoff) {
+        if (reply) { addMessage(reply, 'agent'); history.push({ role: 'assistant', content: reply }); }
+        handoffDone = true;
+        showHandoffConfirmation();
+        return;
+      }
+
       var collected = HANDOFF_ENABLED ? parseCollected(reply) : null;
       if (collected) {
         var clean = reply.replace(/\[COLLECTED:[\s\S]*?\]/, '').trim();
         if (clean) { addMessage(clean, 'agent'); history.push({ role: 'assistant', content: clean }); }
-        setTimeout(function () {
-          addMessage(CONFIRM_MSG, 'confirmed');
-          if (SHOW_PRIVACY_NOTE) {
-            var privacyNote = document.createElement('div');
-            privacyNote.style.cssText = 'font-size:0.72rem;color:#8A9BAE;padding:2px 14px 8px;';
-            privacyNote.innerHTML = 'Contact info stored by FrontFrame. <a href="/about#privacy" style="color:#8A9BAE;text-decoration:underline;">Privacy policy</a>';
-            messages.appendChild(privacyNote);
-            messages.scrollTop = messages.scrollHeight;
-          }
-          input.disabled = true; sendBtn.disabled = true; input.placeholder = PLACEHOLDER_AFTER;
-        }, 600);
+        showHandoffConfirmation();
         await notifyEd(collected); return;
       }
       addMessage(reply, 'agent'); history.push({ role: 'assistant', content: reply });

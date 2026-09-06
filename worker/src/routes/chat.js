@@ -1,6 +1,10 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
+import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
+// Shared contact-handoff capture (lead + lead_alert + SMS, de-duped on session_id).
+// Lives next to /notify in intake.js; imported here so a [COLLECTED] marker is
+// captured server-side and can never be discarded by a resolve_gap route (Defect 2).
+import { captureContactHandoff } from "./intake.js";
 import { getTodayOfficeHoursText } from "../shared/office-hours.js";
 import { RATE_LIMITED_MESSAGE, checkChatRateLimit } from "../shared/rate-limit.js";
 import { LIMITED_CONFIDENCE_HEDGE, checkConstitutionalEligibility, createConstitutionalCandidateLifecycle, createKnowledgeGapLifecycle, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
@@ -41,6 +45,25 @@ const WITHHELD_KNOWLEDGE_GAP_NOTE =
   "I don't have a reliable answer to that part yet";
 const WITHHELD_CONSTITUTIONAL_NOTE =
   "that part touches FrontFrame's own governance, which isn't mine to decide";
+
+// Defect 2: are we inside the "I can't answer that — leave your contact info"
+// sub-flow? True if a withhold message appears anywhere in the recent history
+// the client sent (it sends roughly the last five turns). The sub-flow spans
+// several turns — invite, "yes", name, zip, ... — not just the turn right after
+// the invite, so this looks across the window rather than only at the last
+// assistant turn. Once there, the visitor's follow-ups are contact-collection
+// dialogue, not answers to be scored: SCR has no jurisdiction and its
+// resolve_gap output would discard the model's real reply.
+function inContactCollectSubflow(history) {
+  if (!Array.isArray(history)) return false;
+  return history.some((m) => {
+    if (m?.role !== "assistant") return false;
+    const t = String(m.content ?? "").trim();
+    return t === RESOLVE_GAP_MESSAGE
+        || t === CONSTITUTIONAL_HOLD_MESSAGE
+        || t.includes("leave your contact info on the part(s) I couldn't answer");
+  });
+}
 
 // Phase E gap-resolution-queue visibility: a lightweight SMS alert whenever a
 // gap_resolution_requests row is created, so an unresolved visitor question
@@ -253,6 +276,37 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     );
   }
 
+  // ── Contact-handoff detection ([COLLECTED] marker) ─────────────────────
+  // Defect 2: captured server-side so a resolve_gap route can never discard
+  // it. A completed handoff is not a scored answer — strip the marker, record
+  // the lead (de-duped on session_id against the client's own /notify call),
+  // and bypass Phase D for this turn.
+  let handoffCaptured = false;
+  const collectedMatch = response.match(COLLECTED_PATTERN);
+  if (collectedMatch) {
+    response = response.replace(COLLECTED_PATTERN, "").trim();
+    let collected = {};
+    try { collected = JSON.parse(collectedMatch[1]); } catch { collected = {}; }
+    if (collected && (collected.name || collected.contact)) {
+      handoffCaptured = true;
+      ctx.waitUntil(
+        captureContactHandoff(env, ctx, {
+          session_id,
+          name:     collected.name     ?? "Visitor",
+          contact:  collected.contact  ?? "",
+          method:   collected.method   ?? "",
+          zip:      collected.zip      ?? "",
+          timezone: collected.timezone ?? "",
+          summary:  collected.summary  ?? "",
+          source:   "agent",
+        }).catch((e) => console.error("server-side contact handoff failed:", e))
+      );
+    }
+    if (!response) {
+      response = `Got it — Ed will follow up personally. You can also reach him directly at ${ADMIN_EMAIL}.`;
+    }
+  }
+
   // ── Knowledge-gap detection (Generation-Boundary Spike, Phase E) ─────────
   // Distinct boundary from the constitutional-eligibility review above: this
   // catches an ordinary missing organizational FACT (system_prompt/qa_pairs
@@ -289,15 +343,30 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
   // The candidate answer is scored before visitor delivery. The scoring call
   // receives only the literal question and candidate answer. SCA then applies
   // live threshold_config values deterministically. Bypassed entirely for a
-  // confirmed or malformed knowledge-gap marker — see block above. (A
-  // constitutional candidate never reaches this point at all — see the
-  // eligibility check at the top of this function.)
+  // confirmed or malformed knowledge-gap marker — see block above — and for a
+  // handoff / contact-collection turn (Defect 2). (A constitutional candidate
+  // never reaches this point at all — see the eligibility check at the top.)
   let scoringLifecycle = null;
   let hedgeShown = false;
   let isWithheld = false;
   let withheldNote = null;
 
-  if (knowledgeGapMalformed) {
+  const isHandoffTurn = handoffCaptured || Boolean(escMatch);
+  const isCollectDialogue = !isHandoffTurn
+    && inContactCollectSubflow(history)
+    && knowledgeGapMissing === null
+    && !knowledgeGapMalformed
+    && rawReply.length <= 600;
+
+  if (isHandoffTurn || isCollectDialogue) {
+    // Defect 2: a handoff turn ([COLLECTED] captured above, or an escalation
+    // marker), or contact-collection dialogue inside the withhold sub-flow
+    // ("what's your zip?", "got it"). Not a scored answer — deliver the model's
+    // own reply as-is, no Phase D. A renewed attempt to answer the original
+    // question still carries the knowledge-gap marker and is handled by the
+    // branches below, so it cannot reach here.
+    isWithheld = false;
+  } else if (knowledgeGapMalformed) {
     const rawCandidate = response;
     console.error("Malformed knowledge-gap marker — withholding candidate:", rawCandidate.slice(0, 200));
     response = RESOLVE_GAP_MESSAGE;
@@ -366,7 +435,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     }
   }
 
-  return { response, routeId: scoringLifecycle?.routeId ?? null, hedgeShown, isWithheld, withheldNote };
+  return { response, routeId: scoringLifecycle?.routeId ?? null, hedgeShown, isWithheld, withheldNote, handoff: handoffCaptured };
 }
 
 // Assembles the per-subpart results of a decomposed compound question into
@@ -427,8 +496,7 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   const globalPromptContent = globalRow?.[0]?.content ?? "";
   const systemPromptContent = [globalPromptContent, pagePromptContent].filter(Boolean).join("\n\n");
 
-  const qaPairs             = await supabaseFetch(env, "qa_pairs",
-	`?select=question,answer&or=(page.eq.all,page.eq.${encodeURIComponent(page)})&order=created_at.asc`);
+  const qaPairs             = await supabaseFetch(env, "qa_pairs", buildQaPairsQuery(page));
 
   // ── Phase E completion, item A ───────────────────────────────────────────
   // constitutionSection is used two ways, and they must not be confused:
@@ -463,12 +531,14 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   let response;
   let primaryRouteId = null;
   let primaryHedgeShown = false;
+  let handoffCaptured = false;
 
   if (!subparts) {
 	const turn = await handleSingleTurn(env, ctx, config, constitutionSection, combinedPrompt, message, history, page, session_id, source);
 	response = turn.response;
 	primaryRouteId = turn.routeId;
 	primaryHedgeShown = turn.hedgeShown;
+	handoffCaptured = Boolean(turn.handoff);
   } else {
 	const turnResults = [];
 	for (const subpart of subparts) {
@@ -484,6 +554,7 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
 	// own full lifecycle row independently above.
 	primaryRouteId = turnResults[0]?.routeId ?? null;
 	primaryHedgeShown = turnResults.some((t) => t.hedgeShown);
+	handoffCaptured = turnResults.some((t) => t.handoff);
 	for (const t of turnResults) {
 	  if (t.routeId) {
 		try {
@@ -588,7 +659,7 @@ No other text.`,
 	})());
   }
 
-  return jsonResponse({ response, mode: config.mode }, 200, corsHeaders);
+  return jsonResponse({ response, mode: config.mode, handoff: handoffCaptured }, 200, corsHeaders);
 }
 
 async function captureSession(env, sessionId, page, newTurns) {

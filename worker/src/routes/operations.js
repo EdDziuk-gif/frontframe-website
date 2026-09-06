@@ -95,6 +95,9 @@ async function checkFeedbackConflicts(request, env, userJwt, corsHeaders) {
   }
 
   const systemPromptContent = [globalPrompt, pagePrompt].filter(Boolean).join("\n\n") || "(none)";
+  // Intentionally NOT filtered to status='implemented' (unlike buildQaPairsQuery
+  // for live generation): a conflict check on a proposed pair must also see
+  // draft / under_review rows so it can catch a clash against pending content.
   const pairsQuery = page === "all" ? `?page=eq.all&select=question,answer` : `?or=(page.eq.all,page.eq.${page})&select=question,answer`;
   const pairs      = await supabaseFetch(env, "qa_pairs", pairsQuery, userJwt) || [];
   const pagesChecked   = page === "all" ? ["all"] : ["all", page];
