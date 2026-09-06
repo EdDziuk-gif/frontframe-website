@@ -620,12 +620,36 @@
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Pairs</div>
-          <button class="btn btn-primary btn-sm" onclick="openQaModal()">+ Add Pair</button>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="card-title">Pairs <span id="qa-count" class="text-gray" style="font-weight:400"></span></div>
+            <button class="btn btn-primary btn-sm" onclick="openQaModal()">+ Add Pair</button>
+          </div>
+          <div class="filter-bar">
+            <input type="text" id="qa-filter" placeholder="Search id, question, answer&#x2026;" oninput="renderQa()">
+            <select id="qa-page-filter" onchange="renderQa()">
+              <option value="">All pages</option>
+              <option value="all">all</option>
+              <option value="home">home</option>
+              <option value="intake">intake</option>
+              <option value="discovery">discovery</option>
+              <option value="yours">yours</option>
+              <option value="resources">resources</option>
+            </select>
+            <select id="qa-status-filter" onchange="renderQa()">
+              <option value="">All statuses</option>
+              <option value="implemented">implemented</option>
+              <option value="under_review">under_review</option>
+              <option value="redundant">redundant</option>
+            </select>
+            <select id="qa-jump" onchange="qaJump(this)">
+              <option value="">Jump to pair&#x2026;</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="loadQa()" title="Reload">&#x21BA;</button>
+          </div>
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Question</th><th>Answer</th><th>Page</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Question</th><th>Answer</th><th>Page</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="qa-tbody"></tbody>
           </table>
         </div>
@@ -2289,15 +2313,58 @@ async function deleteAlert(alertId) {
 
 async function loadQa() {
   try { qaPairs = await api('GET', '/qa'); } catch (e) { toast('Failed to load Q&A: ' + e.message, 'error'); return; }
+  populateQaJump();
   renderQa();
+}
+
+function populateQaJump() {
+  const sel = document.getElementById('qa-jump');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Jump to pair\u2026</option>' +
+    [...qaPairs]
+      .sort((a, b) => (a.page ?? '').localeCompare(b.page ?? '') || (a.question ?? '').localeCompare(b.question ?? ''))
+      .map(p => `<option value="${esc(p.id)}">${esc((p.id ?? '').slice(0, 8))} \u00b7 ${esc(p.page ?? 'all')} \u00b7 ${esc((p.question ?? '').slice(0, 60))}</option>`)
+      .join('');
+}
+
+function qaJump(sel) {
+  const id = sel.value;
+  sel.value = '';
+  if (id) openQaModal(id);
+}
+
+function copyQaId(id) {
+  if (navigator.clipboard) navigator.clipboard.writeText(id).then(() => toast('ID copied: ' + id), () => toast(id, 'error'));
+  else toast(id);
 }
 
 function renderQa() {
   const tbody = document.getElementById('qa-tbody');
-  if (!qaPairs.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No pairs yet</div></td></tr>`; return; }
+  const filter     = (document.getElementById('qa-filter')?.value ?? '').trim().toLowerCase();
+  const pageFilt   = document.getElementById('qa-page-filter')?.value ?? '';
+  const statusFilt = document.getElementById('qa-status-filter')?.value ?? '';
+  const filtered = qaPairs.filter(p => {
+    const matchPage   = !pageFilt   || (p.page ?? 'all') === pageFilt;
+    const matchStatus = !statusFilt || p.status === statusFilt;
+    const matchText   = !filter ||
+      (p.id ?? '').toLowerCase().includes(filter) ||
+      (p.question ?? '').toLowerCase().includes(filter) ||
+      (p.answer ?? '').toLowerCase().includes(filter);
+    return matchPage && matchStatus && matchText;
+  });
+
+  const count = document.getElementById('qa-count');
+  if (count) count.textContent = filtered.length === qaPairs.length
+    ? `(${qaPairs.length})`
+    : `(${filtered.length} of ${qaPairs.length})`;
+
+  if (!qaPairs.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No pairs yet</div></td></tr>`; return; }
+  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No matching pairs</div></td></tr>`; return; }
+
   const statusClass = { implemented: 'badge-active', under_review: 'badge-open', redundant: 'badge-closed', dismissed: 'badge-closed' };
-  tbody.innerHTML = qaPairs.map(p => `
+  tbody.innerHTML = filtered.map(p => `
     <tr>
+      <td><button class="btn btn-ghost btn-xs mono" title="${esc(p.id ?? '')} \u2014 click to copy" onclick="copyQaId('${p.id}')">${esc((p.id ?? '').slice(0, 8))}</button></td>
       <td style="max-width:220px">${esc(p.question)}</td>
       <td style="max-width:300px;color:var(--gray)">${esc(p.answer?.slice(0,120))}${p.answer?.length>120?'\u2026':''}</td>
       <td><span class="badge badge-new">${esc(p.page ?? 'all')}</span></td>
@@ -2341,6 +2408,7 @@ async function saveQaPair() {
       if (newPair) qaPairs.push(newPair);
     }
     closeModal('qa-modal');
+    populateQaJump();
     renderQa();
     toast('Saved.');
   } catch (e) { toast(e.message, 'error'); }
@@ -2351,6 +2419,7 @@ async function deleteQaPair(id) {
   try {
     await api('DELETE', `/qa/${id}`);
     qaPairs = qaPairs.filter(p => p.id !== id);
+    populateQaJump();
     renderQa();
     toast('Deleted.');
   } catch (e) { toast(e.message, 'error'); }
