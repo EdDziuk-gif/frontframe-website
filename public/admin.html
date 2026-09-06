@@ -1990,16 +1990,25 @@ function showLogin() {
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('app-shell').classList.add('hidden');
 }
+// currentReviewerRole is this admin panel's one source of truth for "am I
+// Management or Staff" client-side - populated here from the same
+// /admin/reviewers lookup already used for dev_access, matched by session
+// email. It is a UI convenience only (which controls render); the server
+// independently re-checks authority on every mutating call regardless of
+// what this variable says.
+let currentReviewerRole = null;
+
 async function showAdmin() {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-shell').classList.remove('hidden');
-  // Check dev_access for sidebar link
+  // Check dev_access for sidebar link, and record this reviewer's role.
   try {
     const reviewerList = await api('GET', '/admin/reviewers');
     const userEmail = session?.user?.email ?? '';
     const me = reviewerList.find(r => r.email === userEmail);
     const devLink = document.getElementById('dev-tools-link');
     if (devLink) devLink.style.display = (me?.dev_access === true) ? '' : 'none';
+    currentReviewerRole = me?.role ?? null;
   } catch { /* non-fatal */ }
   switchTab('pipeline');
 }
@@ -3317,13 +3326,7 @@ function renderKgrResolutionSection(c) {
     readonlyBox.style.display = 'block';
     const rs = c.resolution_statement;
     const candidates = rs.kgr_resolution_candidates || [];
-    // No client-side reviewer-role signal exists anywhere in this admin UI
-    // (grepped: no session/JWT decode, no stored role) - every other
-    // Management-only action here (escalate, ready, promulgate) renders
-    // unconditionally and relies on the server's 403 to enforce authority,
-    // so sign-off buttons follow that same established precedent rather
-    // than inventing a new client-side gate.
-    const isManagement = true;
+    const isManagement = currentReviewerRole === 'frontframe_admin';
     let decisionHtml;
     if (rs.signed_off_at) {
       const selected = candidates.find(cd => cd.id === rs.selected_candidate_id);
@@ -3426,12 +3429,13 @@ function renderFalsifiedHypotheses() {
   if (!kgrFalsifiedHypotheses.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No falsified hypotheses</div></td></tr>`; return; }
   tbody.innerHTML = kgrFalsifiedHypotheses.map(h => {
     const q = esc(h.kgr_cases?.gap_resolution_requests?.questions?.question_text ?? `Case #${h.kgr_case_id}`);
+    const isManagement = currentReviewerRole === 'frontframe_admin';
     return `<tr>
       <td style="max-width:260px">${q}</td>
       <td style="max-width:260px">${esc(h.description)}</td>
       <td style="max-width:200px">${esc(h.test_notes || '')}</td>
       <td><button class="btn btn-xs" onclick="openKgrCaseModal(${h.kgr_case_id})">View Case</button></td>
-      <td><button class="btn btn-xs btn-danger" onclick="deleteFalsifiedHypothesis(${h.id})">Delete</button></td>
+      <td>${isManagement ? `<button class="btn btn-xs btn-danger" onclick="deleteFalsifiedHypothesis(${h.id})">Delete</button>` : ''}</td>
     </tr>`;
   }).join('');
 }
