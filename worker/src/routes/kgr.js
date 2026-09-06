@@ -472,6 +472,22 @@ async function signOffKgrResolution(request, env, id, userJwt, corsHeaders) {
         corsHeaders
       );
     }
+    // Any other RPC error (e.g. "candidate % does not belong to statement %",
+    // which the RPC's own candidate-existence check throws when a losing
+    // concurrent sign-off's candidate was pruned by the winner before this
+    // call began) may still mean the same thing as "already signed off":
+    // someone else won this race. Re-fetch and check rather than assuming -
+    // if the statement is now signed off, treat this identically to the
+    // already-signed-off race-loser case above. If it is NOT signed off,
+    // this is a genuine unrelated error and must not be swallowed.
+    const raceCheckStatement = await fetchResolutionStatement(env, id);
+    if (raceCheckStatement?.signed_off_at) {
+      return jsonResponse(
+        { error: "This resolution statement has already been signed off", resolution_statement: raceCheckStatement },
+        409,
+        corsHeaders
+      );
+    }
     throw e;
   }
 

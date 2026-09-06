@@ -856,6 +856,31 @@ describe("signOffKgrResolution", () => {
     expect(body.resolution_statement.selected_candidate_id).toBe(2);
   });
 
+  it("treats a 'candidate does not belong to statement' RPC error as a losing concurrent request when the re-fetch shows someone else already won: 409 with the winning decision", async () => {
+    // This is the late-loser timing from the concurrency test: the RPC's own
+    // candidate-existence check throws a different message than "already
+    // signed off" because the winner's transaction had already pruned this
+    // candidate's row before this call's RPC began - but the underlying
+    // situation (someone else already completed sign-off) is identical, and
+    // must produce the same clean 409, not a re-thrown/502'd error.
+    mockAuth();
+    const signedStatement = baseStatement({ signed_off_at: "2026-09-05T00:00:01Z", signed_off_by: "someone-else", selected_candidate_id: 2 });
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }])
+      .mockResolvedValueOnce([baseStatement()])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([signedStatement]); // re-fetch after the RPC error
+    checkEligibilityMock.mockResolvedValueOnce({ constitutionalCandidate: false, issue: null });
+    supabaseRpcMock.mockRejectedValueOnce(new Error("candidate 1 does not belong to statement 55"));
+
+    const res = await signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toBe("This resolution statement has already been signed off");
+    expect(body.resolution_statement.selected_candidate_id).toBe(2);
+    expect(body.resolution_statement.signed_off_by).toBe("someone-else");
+  });
+
   it("re-throws any other RPC error rather than swallowing it", async () => {
     mockAuth();
     supabaseFetchMock
@@ -868,6 +893,21 @@ describe("signOffKgrResolution", () => {
     await expect(
       signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "admin-jwt", CH)
     ).rejects.toThrow("connection reset");
+  });
+
+  it("re-throws a non-'already signed off' RPC error even after re-fetch, when the re-fetched statement is NOT signed off (no false-positive swallowing)", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }])
+      .mockResolvedValueOnce([baseStatement()])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([baseStatement()]); // re-fetch: still not signed off - genuine unrelated error
+    checkEligibilityMock.mockResolvedValueOnce({ constitutionalCandidate: false, issue: null });
+    supabaseRpcMock.mockRejectedValueOnce(new Error("candidate 1 does not belong to statement 55"));
+
+    await expect(
+      signOffKgrResolution(mockRequest({ candidate_id: 1 }), ENV, "7", "admin-jwt", CH)
+    ).rejects.toThrow("candidate 1 does not belong to statement 55");
   });
 });
 
