@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your FrontFrame Proposal</title>
+  <meta name="description" content="Review your FrontFrame proposal and send your feedback." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/brand.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--offwhite);
+      color: var(--navy);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    h1, h2, h3, label, legend { font-family: 'DM Sans', system-ui, sans-serif; font-weight: 700; }
+    a { color: var(--navy); }
+
+    nav {
+      background: var(--navy);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+    }
+    .nav-wordmark {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 1.4rem;
+      color: var(--white);
+      letter-spacing: -0.01em;
+    }
+    nav a { color: var(--white); }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+    }
+
+    .muted { color: var(--gray); }
+    .center { text-align: center; }
+
+    .doc-header { margin-bottom: 8px; }
+    .doc-header h1 { font-size: 1.9rem; line-height: 1.2; }
+    .doc-meta { color: var(--gray); font-size: 0.9rem; margin-top: 6px; }
+    .intro { margin: 20px 0 32px; }
+
+    .status-note {
+      background: #FFF7E8;
+      border: 1px solid var(--amber);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      margin-bottom: 28px;
+    }
+
+    .section {
+      background: var(--white);
+      border: 1px solid #E4E0D8;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .section h2 { font-size: 1.15rem; margin-bottom: 12px; }
+    .section-content { white-space: pre-wrap; margin-bottom: 18px; }
+
+    .section-controls { border-top: 1px solid #EEEBE4; padding-top: 16px; }
+    .flag-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 0.92rem; }
+    .flag-row input { width: 16px; height: 16px; accent-color: var(--amber); }
+    .flag-row label { font-weight: 400; font-family: 'Inter', sans-serif; cursor: pointer; }
+
+    textarea {
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      color: var(--navy);
+      background: var(--offwhite);
+      border: 1px solid #DDD8CE;
+      border-radius: 8px;
+      padding: 10px 12px;
+      resize: vertical;
+      min-height: 64px;
+    }
+    textarea:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
+
+    .overall {
+      background: var(--white);
+      border: 1px solid #E4E0D8;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 32px;
+    }
+    .overall legend { font-size: 1.1rem; margin-bottom: 14px; }
+    .choice { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; cursor: pointer; }
+    .choice input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--amber); }
+    .choice span { font-family: 'Inter', sans-serif; }
+    .choice .lead { font-weight: 500; display: block; }
+    .choice .sub { color: var(--gray); font-size: 0.88rem; }
+    .overall textarea { margin-top: 16px; }
+
+    button {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--navy);
+      background: var(--amber);
+      border: none;
+      border-radius: 8px;
+      padding: 14px 28px;
+      cursor: pointer;
+      margin-top: 24px;
+    }
+    button:disabled { opacity: 0.55; cursor: default; }
+
+    .form-error { color: #B4231F; font-size: 0.9rem; margin-top: 12px; }
+
+    .state-box { padding: 64px 8px; }
+    .state-box h1 { font-size: 1.5rem; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <nav><a href="/"><span class="nav-wordmark">FrontFrame</span></a></nav>
+
+  <main>
+    <div id="loading" class="state-box center muted">Loading your proposal…</div>
+
+    <div id="error" class="state-box center" hidden>
+      <h1 id="error-title">This link isn't working</h1>
+      <p class="muted" id="error-body"></p>
+    </div>
+
+    <div id="review" hidden>
+      <div class="doc-header">
+        <h1>Proposal for <span id="prospect-name"></span></h1>
+        <div class="doc-meta">FrontFrame · Version <span id="version"></span></div>
+      </div>
+      <div id="status-note" class="status-note" hidden></div>
+      <p class="intro">Read through each section below. Flag anything you'd like changed and leave a note.
+        When you're done, choose an overall response at the bottom and send it to Ed.</p>
+
+      <div id="sections"></div>
+
+      <fieldset class="overall">
+        <legend>Your overall response</legend>
+        <label class="choice">
+          <input type="radio" name="overall" value="ready">
+          <span><span class="lead">Ready to move forward</span><span class="sub">This looks right. Let's proceed.</span></span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="overall" value="questions">
+          <span><span class="lead">I have questions</span><span class="sub">A few things I want to talk through first.</span></span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="overall" value="changes">
+          <span><span class="lead">I'm requesting changes</span><span class="sub">Some sections need revision before I can approve.</span></span>
+        </label>
+        <textarea id="overall-comment" placeholder="Anything else you want Ed to know (optional)"></textarea>
+      </fieldset>
+
+      <button id="submit-btn" type="button">Send my review</button>
+      <div id="submit-error" class="form-error" hidden></div>
+    </div>
+
+    <div id="submitted" class="state-box center" hidden>
+      <h1>Thanks — Ed has your review.</h1>
+      <p class="muted">He'll follow up with you directly. You can close this page.</p>
+    </div>
+  </main>
+
+  <script src="/js/config.js"></script>
+  <script>
+    (function () {
+      var WORKER = window.WORKER_URL || 'https://api.frontframe.co';
+      var $ = function (id) { return document.getElementById(id); };
+      var token = new URLSearchParams(location.search).get('token');
+      var proposalId = null;
+      var sections = [];
+
+      function show(id) {
+        ['loading', 'error', 'review', 'submitted'].forEach(function (s) { $(s).hidden = (s !== id); });
+      }
+      function fail(title, body) {
+        $('error-title').textContent = title;
+        $('error-body').textContent = body;
+        show('error');
+      }
+
+      if (!token) {
+        fail('This link is missing its access token',
+             'Use the full link Ed sent you, or reply to his message and he’ll resend it.');
+        return;
+      }
+
+      function esc(s) { return String(s == null ? '' : s); }
+
+      function renderSections() {
+        var wrap = $('sections');
+        wrap.innerHTML = '';
+        sections
+          .slice()
+          .sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); })
+          .forEach(function (sec) {
+            var el = document.createElement('div');
+            el.className = 'section';
+
+            var h = document.createElement('h2');
+            h.textContent = esc(sec.title);
+            el.appendChild(h);
+
+            var body = document.createElement('div');
+            body.className = 'section-content';
+            body.textContent = esc(sec.content);
+            el.appendChild(body);
+
+            var controls = document.createElement('div');
+            controls.className = 'section-controls';
+
+            var flagRow = document.createElement('div');
+            flagRow.className = 'flag-row';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.id = 'flag-' + sec.section_id;
+            var lab = document.createElement('label');
+            lab.setAttribute('for', cb.id);
+            lab.textContent = 'Flag this section for changes';
+            flagRow.appendChild(cb);
+            flagRow.appendChild(lab);
+            controls.appendChild(flagRow);
+
+            var ta = document.createElement('textarea');
+            ta.id = 'comment-' + sec.section_id;
+            ta.placeholder = 'Comment on this section (optional)';
+            controls.appendChild(ta);
+
+            el.appendChild(controls);
+            wrap.appendChild(el);
+          });
+      }
+
+      function load() {
+        fetch(WORKER + '/proposal?token=' + encodeURIComponent(token))
+          .then(function (res) {
+            if (res.status === 404) { fail('This proposal link isn’t valid', 'Check the link Ed sent you, or reply to his message for a new one.'); return null; }
+            if (res.status === 410) { fail('This proposal link has expired', 'Reply to Ed and he’ll send you a fresh link.'); return null; }
+            if (!res.ok) { fail('Something went wrong', 'We couldn’t load this proposal just now. Please try again in a moment.'); return null; }
+            return res.json();
+          })
+          .then(function (data) {
+            if (!data) return;
+            proposalId = data.proposal_id;
+            sections = Array.isArray(data.sections) ? data.sections : [];
+            $('prospect-name').textContent = esc(data.prospect_name) || 'you';
+            $('version').textContent = esc(data.version) || '1';
+            if (data.status === 'under_review') {
+              var n = $('status-note');
+              n.hidden = false;
+              n.textContent = 'You’ve already sent a review for this proposal. Sending again will replace it.';
+            }
+            renderSections();
+            show('review');
+          })
+          .catch(function () {
+            fail('Something went wrong', 'We couldn’t load this proposal just now. Please check your connection and try again.');
+          });
+      }
+
+      $('submit-btn').addEventListener('click', function () {
+        var chosen = document.querySelector('input[name="overall"]:checked');
+        var err = $('submit-error');
+        if (!chosen) {
+          err.hidden = false;
+          err.textContent = 'Please choose an overall response before sending.';
+          return;
+        }
+        err.hidden = true;
+        var btn = $('submit-btn');
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+
+        var section_responses = sections.map(function (sec) {
+          return {
+            section_id: sec.section_id,
+            comment: ($('comment-' + sec.section_id) || {}).value || '',
+            flagged: !!($('flag-' + sec.section_id) || {}).checked
+          };
+        });
+
+        fetch(WORKER + '/proposal/review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: token,
+            proposal_id: proposalId,
+            overall_status: chosen.value,
+            overall_comment: $('overall-comment').value || '',
+            section_responses: section_responses
+          })
+        })
+          .then(function (res) {
+            if (!res.ok) throw new Error('bad status ' + res.status);
+            show('submitted');
+          })
+          .catch(function () {
+            btn.disabled = false;
+            btn.textContent = 'Send my review';
+            err.hidden = false;
+            err.textContent = 'Couldn’t send your review. Please try again.';
+          });
+      });
+
+      load();
+    })();
+  </script>
+</body>
+</html>

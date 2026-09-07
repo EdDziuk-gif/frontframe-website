@@ -54,7 +54,7 @@ async function deleteQaPair(env, id, corsHeaders) {
 // § DOMAIN: proposal
 // ════════════════════════════════════════════════════════════════════════════
 
-async function getProposal(request, env, corsHeaders) {
+async function getClientProposal(request, env, corsHeaders) {
   const token = new URL(request.url).searchParams.get("token");
   if (!token) return jsonResponse({ error: "token is required" }, 400, corsHeaders);
 
@@ -195,4 +195,4 @@ async function handleRssProxy(request, corsHeaders) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { getQaPairs, createQaPair, updateQaPair, deleteQaPair, getProposal, submitProposalReview, getPodcastEpisodes, adminGetPodcastEpisodes, createPodcastEpisode, updatePodcastEpisode, deletePodcastEpisode, handleRssProxy };
+export { getQaPairs, createQaPair, updateQaPair, deleteQaPair, getClientProposal, submitProposalReview, getPodcastEpisodes, adminGetPodcastEpisodes, createPodcastEpisode, updatePodcastEpisode, deletePodcastEpisode, handleRssProxy };
