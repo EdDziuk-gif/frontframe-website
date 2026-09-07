@@ -4315,7 +4315,7 @@ CREATE TABLE public.qa_pairs (
     source text DEFAULT 'seed'::text NOT NULL,
     page text DEFAULT 'all'::text NOT NULL,
     status text DEFAULT 'under_review'::text NOT NULL,
-    CONSTRAINT qa_pairs_source_check CHECK ((source = ANY (ARRAY['seed'::text, 'testing'::text, 'live'::text]))),
+    CONSTRAINT qa_pairs_source_check CHECK ((source = ANY (ARRAY['seed'::text, 'testing'::text, 'live'::text, 'kgr'::text]))),
     CONSTRAINT qa_pairs_status_check CHECK ((status = ANY (ARRAY['under_review'::text, 'redundant'::text, 'implemented'::text])))
 );
 
