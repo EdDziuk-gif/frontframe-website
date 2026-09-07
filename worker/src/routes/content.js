@@ -5,15 +5,33 @@ import { hashIp, sendSms } from "../shared/runtime.js";
 // § DOMAIN: qa
 // ════════════════════════════════════════════════════════════════════════════
 
+// qa_pairs.status has a DB CHECK constraint; page has no constraint but a
+// typo silently means the pair is never served. Validate both here so a bad
+// value returns an actionable 400 instead of an opaque PostgREST 500
+// (Defect 2f57a6b5 / the "Failed to fetch" on saving status=dismissed).
+const QA_STATUSES = new Set(["under_review", "redundant", "implemented"]);
+const QA_PAGES = new Set(["all", "home", "yours", "discovery", "intake", "resources", "admin", "ADVISOR", "proposal"]);
+
+function badQaField(field, value, allowed, corsHeaders) {
+  return jsonResponse(
+    { error: `Invalid ${field} "${value}" (allowed: ${[...allowed].join(", ")})` },
+    400, corsHeaders,
+  );
+}
+
 async function getQaPairs(env, corsHeaders) {
   return jsonResponse(await supabaseFetch(env, "qa_pairs",
     "?select=id,question,answer,page,status,source,created_at&order=created_at.asc"), 200, corsHeaders);
 }
 
 async function createQaPair(request, env, corsHeaders) {
-  const { question, answer, page = "all" } = await request.json();
+  const { question, answer, page = "all", status } = await request.json();
   if (!question || !answer) return jsonResponse({ error: "question and answer are required" }, 400, corsHeaders);
-  return jsonResponse(await supabasePost(env, "qa_pairs", { question, answer, page }), 201, corsHeaders);
+  if (!QA_PAGES.has(page)) return badQaField("page", page, QA_PAGES, corsHeaders);
+  if (status !== undefined && !QA_STATUSES.has(status)) return badQaField("status", status, QA_STATUSES, corsHeaders);
+  const row = { question, answer, page };
+  if (status !== undefined) row.status = status;
+  return jsonResponse(await supabasePost(env, "qa_pairs", row), 201, corsHeaders);
 }
 
 async function updateQaPair(request, env, id, corsHeaders) {
@@ -21,6 +39,8 @@ async function updateQaPair(request, env, id, corsHeaders) {
   const updates = {};
   ["question","answer","page","status"].forEach(k => { if (body[k] !== undefined) updates[k] = body[k]; });
   if (!Object.keys(updates).length) return jsonResponse({ error: "No fields to update" }, 400, corsHeaders);
+  if (updates.page !== undefined && !QA_PAGES.has(updates.page)) return badQaField("page", updates.page, QA_PAGES, corsHeaders);
+  if (updates.status !== undefined && !QA_STATUSES.has(updates.status)) return badQaField("status", updates.status, QA_STATUSES, corsHeaders);
   return jsonResponse(await supabasePatch(env, "qa_pairs", id, updates), 200, corsHeaders);
 }
 

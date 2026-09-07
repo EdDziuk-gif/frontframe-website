@@ -1647,7 +1647,6 @@
         <option value="implemented">implemented</option>
         <option value="under_review">under_review</option>
         <option value="redundant">redundant</option>
-        <option value="dismissed">dismissed</option>
       </select>
     </div>
     <div class="modal-footer">
@@ -2361,7 +2360,7 @@ function renderQa() {
   if (!qaPairs.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No pairs yet</div></td></tr>`; return; }
   if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No matching pairs</div></td></tr>`; return; }
 
-  const statusClass = { implemented: 'badge-active', under_review: 'badge-open', redundant: 'badge-closed', dismissed: 'badge-closed' };
+  const statusClass = { implemented: 'badge-active', under_review: 'badge-open', redundant: 'badge-closed' };
   tbody.innerHTML = filtered.map(p => `
     <tr>
       <td><button class="btn btn-ghost btn-xs mono" title="${esc(p.id ?? '')} \u2014 click to copy" onclick="copyQaId('${p.id}')">${esc((p.id ?? '').slice(0, 8))}</button></td>

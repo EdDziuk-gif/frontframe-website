@@ -22,6 +22,19 @@ async function updateConfig(request, env, userJwt, corsHeaders) {
 // § DOMAIN: defects
 // ════════════════════════════════════════════════════════════════════════════
 
+// defects CHECK constraints. A value outside these makes PostgREST 500;
+// validate up front and 400 with the allowed set (Defect 2f57a6b5).
+const DEFECT_AREAS = new Set(["bot", "ui", "content", "form", "payment", "contract", "other"]);
+const DEFECT_SEVERITIES = new Set(["blocking", "major", "minor", "cosmetic"]);
+const DEFECT_DISPOSITIONS = new Set(["retain", "delete"]);
+const DEFECT_STATUSES = new Set(["open", "in_review", "resolved", "deferred"]);
+
+function badDefectField(field, value, allowed, corsHeaders) {
+  return jsonResponse(
+    { error: `Invalid ${field} "${value}" (allowed: ${[...allowed].join(", ")})` }, 400, corsHeaders,
+  );
+}
+
 async function getDefects(env, userJwt, corsHeaders) {
   return jsonResponse(await supabaseFetch(env, "defects", "?select=*&order=created_at.desc", userJwt), 200, corsHeaders);
 }
@@ -30,6 +43,9 @@ async function createDefect(request, env, userJwt, corsHeaders) {
   const { area, description, severity, disposition = "retain" } = await request.json();
   if (!area || !description || !severity)
     return jsonResponse({ error: "area, description, and severity are required" }, 400, corsHeaders);
+  if (!DEFECT_AREAS.has(area)) return badDefectField("area", area, DEFECT_AREAS, corsHeaders);
+  if (!DEFECT_SEVERITIES.has(severity)) return badDefectField("severity", severity, DEFECT_SEVERITIES, corsHeaders);
+  if (!DEFECT_DISPOSITIONS.has(disposition)) return badDefectField("disposition", disposition, DEFECT_DISPOSITIONS, corsHeaders);
   const config = (await supabaseFetch(env, "config", "?id=eq.1&select=build_version,stage_gate"))?.[0] ?? {};
   return jsonResponse(await supabasePost(env, "defects", {
     area, description, severity, disposition,
@@ -42,6 +58,10 @@ async function updateDefect(request, env, id, userJwt, corsHeaders) {
   const updates = {};
   ["status","resolver_id","severity","disposition","description","area"].forEach(k => { if (body[k] !== undefined) updates[k] = body[k]; });
   if (!Object.keys(updates).length) return jsonResponse({ error: "No valid fields to update" }, 400, corsHeaders);
+  if (updates.area !== undefined && !DEFECT_AREAS.has(updates.area)) return badDefectField("area", updates.area, DEFECT_AREAS, corsHeaders);
+  if (updates.severity !== undefined && !DEFECT_SEVERITIES.has(updates.severity)) return badDefectField("severity", updates.severity, DEFECT_SEVERITIES, corsHeaders);
+  if (updates.disposition !== undefined && !DEFECT_DISPOSITIONS.has(updates.disposition)) return badDefectField("disposition", updates.disposition, DEFECT_DISPOSITIONS, corsHeaders);
+  if (updates.status !== undefined && !DEFECT_STATUSES.has(updates.status)) return badDefectField("status", updates.status, DEFECT_STATUSES, corsHeaders);
   return jsonResponse(await supabasePatch(env, "defects", id, updates, userJwt), 200, corsHeaders);
 }
 
