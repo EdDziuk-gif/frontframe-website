@@ -65,6 +65,29 @@ function inContactCollectSubflow(history) {
   });
 }
 
+// The defects table's area/severity/disposition CHECK constraints. Values
+// outside these are silently rejected by Postgres, so every write must land
+// inside them.
+const DEFECT_AREAS = new Set(["bot", "ui", "content", "form", "payment", "contract", "other"]);
+const DEFECT_SEVERITIES = new Set(["blocking", "major", "minor", "cosmetic"]);
+const coerceDefectArea = (a) => (DEFECT_AREAS.has(a) ? a : "bot");
+const coerceDefectSeverity = (s) => (DEFECT_SEVERITIES.has(s) ? s : "minor");
+
+// Agentic-pipeline self-reported defect, mapped to the allowed enums:
+// area "bot", severity "major", with an [agentic] tag on the description so
+// they stay filterable. These previously used area:"agentic_scoring" /
+// severity:"high", which the constraint rejects — every such write was lost.
+function agenticDefect(config, description) {
+  return {
+    area: "bot",
+    severity: "major",
+    description: `[agentic] ${description}`,
+    disposition: "retain",
+    build_version: config.build_version ?? "unknown",
+    stage_gate: config.stage_gate ?? "build",
+  };
+}
+
 // Phase E gap-resolution-queue visibility: a lightweight SMS alert whenever a
 // gap_resolution_requests row is created, so an unresolved visitor question
 // doesn't sit unseen. Best-effort — never blocks or fails the visitor reply.
@@ -149,26 +172,16 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     } catch (e) {
       console.error("Phase E constitutional-candidate lifecycle failed:", e);
       ctx.waitUntil(
-        supabasePost(env, "defects", {
-          area: "agentic_scoring",
-          description: `Constitutional-candidate lifecycle failed: ${e?.message ?? "unknown error"}`,
-          severity: "high",
-          disposition: "retain",
-          build_version: config.build_version ?? "unknown",
-          stage_gate: config.stage_gate ?? "build",
-        }).catch((err) => console.error("constitutional defect write failed:", err))
+        supabasePost(env, "defects", agenticDefect(config,
+          `Constitutional-candidate lifecycle failed: ${e?.message ?? "unknown error"}`))
+          .catch((err) => console.error("constitutional defect write failed:", err))
       );
     }
     if (eligibility.eligibilityCheckFailed) {
       ctx.waitUntil(
-        supabasePost(env, "defects", {
-          area: "agentic_scoring",
-          description: `Constitutional eligibility check failed - failed closed, no generation, no SCR. Question: ${message.slice(0, 200)}`,
-          severity: "high",
-          disposition: "retain",
-          build_version: config.build_version ?? "unknown",
-          stage_gate: config.stage_gate ?? "build",
-        }).catch((err) => console.error("eligibility defect write failed:", err))
+        supabasePost(env, "defects", agenticDefect(config,
+          `Constitutional eligibility check failed - failed closed, no generation, no SCR. Question: ${message.slice(0, 200)}`))
+          .catch((err) => console.error("eligibility defect write failed:", err))
       );
     }
     if (scoringLifecycle?.gapResolutionRequestId) {
@@ -234,14 +247,15 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     try {
       const parsed = JSON.parse(defMatch[0]);
       defectPayload = {
-        area: parsed.area ?? "conversation", description: parsed.description ?? "(no description)",
-        severity: parsed.severity ?? "low", disposition: parsed.disposition ?? "retain",
+        area: coerceDefectArea(parsed.area), description: parsed.description ?? "(no description)",
+        severity: coerceDefectSeverity(parsed.severity),
+        disposition: parsed.disposition === "delete" ? "delete" : "retain",
         build_version: config.build_version ?? "unknown", stage_gate: config.stage_gate ?? "build",
       };
     } catch {
       defectPayload = {
-        area: "conversation", description: "Marker unparsed. Raw: " + defMatch[0].slice(0, 200),
-        severity: "low", disposition: "retain",
+        area: "bot", description: "Marker unparsed. Raw: " + defMatch[0].slice(0, 200),
+        severity: "minor", disposition: "retain",
         build_version: config.build_version ?? "unknown", stage_gate: config.stage_gate ?? "build",
       };
     }
@@ -373,14 +387,9 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     isWithheld = true;
     withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
     ctx.waitUntil(
-      supabasePost(env, "defects", {
-        area: "agentic_scoring",
-        description: `Malformed knowledge-gap marker - candidate withheld, SCR not invoked. Raw: ${rawCandidate.slice(0, 200)}`,
-        severity: "high",
-        disposition: "retain",
-        build_version: config.build_version ?? "unknown",
-        stage_gate: config.stage_gate ?? "build",
-      }).catch((err) => console.error("marker defect write failed:", err))
+      supabasePost(env, "defects", agenticDefect(config,
+        `Malformed knowledge-gap marker - candidate withheld, SCR not invoked. Raw: ${rawCandidate.slice(0, 200)}`))
+        .catch((err) => console.error("marker defect write failed:", err))
     );
   } else {
     try {
@@ -423,14 +432,9 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
       isWithheld = true;
       withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
       ctx.waitUntil(
-        supabasePost(env, "defects", {
-          area: "agentic_scoring",
-          description: `Phase D scoring pipeline failed: ${e?.message ?? "unknown error"}`,
-          severity: "high",
-          disposition: "retain",
-          build_version: config.build_version ?? "unknown",
-          stage_gate: config.stage_gate ?? "build",
-        }).catch((err) => console.error("scoring defect write failed:", err))
+        supabasePost(env, "defects", agenticDefect(config,
+          `Phase D scoring pipeline failed: ${e?.message ?? "unknown error"}`))
+          .catch((err) => console.error("scoring defect write failed:", err))
       );
     }
   }
@@ -574,14 +578,9 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
 	  // route merely because response evidence failed to persist. Log the defect.
 	  console.error("Phase D response persistence failed:", e);
 	  ctx.waitUntil(
-		supabasePost(env, "defects", {
-		  area: "agentic_scoring",
-		  description: `Phase D response persistence failed: ${e?.message ?? "unknown error"}`,
-		  severity: "high",
-		  disposition: "retain",
-		  build_version: config.build_version ?? "unknown",
-		  stage_gate: config.stage_gate ?? "build",
-		}).catch((err) => console.error("response persistence defect write failed:", err))
+		supabasePost(env, "defects", agenticDefect(config,
+		  `Phase D response persistence failed: ${e?.message ?? "unknown error"}`))
+		  .catch((err) => console.error("response persistence defect write failed:", err))
 	  );
 	}
   }
@@ -677,4 +676,4 @@ async function captureSession(env, sessionId, page, newTurns) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { handleChat, handleSingleTurn, captureSession, RESOLVE_GAP_MESSAGE, CONSTITUTIONAL_HOLD_MESSAGE };
+export { handleChat, handleSingleTurn, captureSession, RESOLVE_GAP_MESSAGE, CONSTITUTIONAL_HOLD_MESSAGE, agenticDefect, coerceDefectArea, coerceDefectSeverity };
