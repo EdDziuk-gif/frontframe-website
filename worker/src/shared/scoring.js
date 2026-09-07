@@ -216,6 +216,169 @@ export async function createKnowledgeGapLifecycle(env, {
   };
 }
 
+// Defect 95ebc11f. When the generation call marks its answer {"_kb_grounded": true}
+// - the substance is drawn from promulgated material - the answer is verified for
+// FIDELITY to that material instead of being sent to appropriateness scoring (which
+// has no corpus and structurally under-scores promulgated content). Reuses the live
+// threshold_config for routing. Promulgated content is authoritative; the §8
+// challenge path, not the scoring agent, is where a delivered answer is disputed.
+const GROUNDING_SYSTEM_PROMPT = `You are the FrontFrame Grounding Verifier.
+
+You are given SOURCE (FrontFrame's promulgated, established written material) and an
+ANSWER a visitor would receive. Score how fully the ANSWER is supported by the SOURCE.
+
+Rules:
+- Every factual claim, figure, price, scope statement, policy, or commitment in the
+  ANSWER must be present in, or directly entailed by, the SOURCE.
+- Rephrasing and synthesis across multiple SOURCE passages is expected and fine.
+- Lower the score only for: claims the SOURCE does not support, statements that
+  contradict the SOURCE, or omissions that change the meaning of what the SOURCE says.
+- Do not judge whether the ANSWER is a good answer to any question - only whether it
+  is faithful to the SOURCE.
+- Set "source_conflict" to true only when the SOURCE itself contains statements that
+  contradict each other on a point this ANSWER depends on - never merely because the
+  ANSWER departs from the SOURCE.
+- Return exactly one JSON object and no other text.
+
+Output schema:
+{"score":0.00,"rationale":"One sentence.","source_conflict":false}
+
+score is a number from 0.00 through 1.00. rationale is exactly one sentence.`;
+
+export function parseGroundingResult(raw) {
+  const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    throw new Error("Grounding Verifier returned invalid JSON");
+  }
+  const score = Number(parsed?.score);
+  const rationale = typeof parsed?.rationale === "string" ? parsed.rationale.trim() : "";
+  if (!Number.isFinite(score) || score < 0 || score > 1) {
+    throw new Error("Grounding Verifier returned an invalid score");
+  }
+  if (!rationale) throw new Error("Grounding Verifier returned no rationale");
+  return { score, rationale, sourceConflict: parsed?.source_conflict === true };
+}
+
+export async function verifyGroundedAnswer(env, answer, corpus) {
+  const raw = await callAnthropic(env, GROUNDING_SYSTEM_PROMPT, [
+    { role: "user", content: `SOURCE:\n${corpus ?? "(none supplied)"}\n\nANSWER:\n${answer}` },
+  ]);
+  return parseGroundingResult(raw);
+}
+
+// One turn through grounding verification. Persists exactly one questions +
+// candidate_answers row. Outcomes:
+//   - verified grounded  -> routes(route_reason='kb_grounded'); deliver
+//   - SOURCE self-conflict -> routes(resolve_gap, 'source_conflict') + KGR row;
+//                             caller withholds and files a content defect
+//   - over-claim / verifier unavailable -> re-score via SCR on the same
+//     candidate answer, routes(route_reason='scr_fallthrough'); caller may also
+//     log an [agentic] defect. Both score rows are kept for the audit trail.
+export async function createGroundingLifecycle(env, {
+  question,
+  answer,
+  corpus,
+  askedBy = null,
+  source = "visitor_chat",
+}) {
+  const questionRows = await supabasePost(env, "questions", {
+    source, question_text: question, asked_by: askedBy,
+  });
+  const questionId = questionRows?.[0]?.id;
+  if (!questionId) throw new Error("Failed to persist lifecycle question (grounding)");
+
+  const candidateRows = await supabasePost(env, "candidate_answers", {
+    question_id: questionId, answer_text: answer, origin: "retrieval",
+  });
+  const candidateAnswerId = candidateRows?.[0]?.id;
+  if (!candidateAnswerId) throw new Error("Failed to persist candidate answer (grounding)");
+
+  const { thresholdLow, thresholdHigh } = await getActiveThresholds(env);
+
+  let grounding = null;
+  let groundingError = null;
+  try {
+    grounding = await verifyGroundedAnswer(env, answer, corpus);
+  } catch (e) {
+    groundingError = e?.message ?? "grounding verification failed";
+  }
+
+  if (grounding) {
+    const gScoreRows = await supabasePost(env, "scores", {
+      candidate_answer_id: candidateAnswerId,
+      score_value: grounding.score,
+      rationale: `[grounding] ${grounding.rationale}`,
+    });
+    const groundingScoreId = gScoreRows?.[0]?.id ?? null;
+
+    if (grounding.sourceConflict) {
+      const routeRows = await supabasePost(env, "routes", {
+        score_id: groundingScoreId, route_decision: "resolve_gap", route_reason: "source_conflict",
+      });
+      const routeId = routeRows?.[0]?.id ?? null;
+      let gapResolutionRequestId = null;
+      if (routeId) {
+        const rr = await supabasePost(env, "gap_resolution_requests", {
+          route_id: routeId, question_id: questionId, candidate_answer_id: candidateAnswerId,
+        }).catch(() => null);
+        gapResolutionRequestId = rr?.[0]?.id ?? null;
+      }
+      return {
+        questionId, candidateAnswerId, scoreId: groundingScoreId, routeId, gapResolutionRequestId,
+        route: "source_conflict", routeReason: "source_conflict",
+        score: grounding.score, rationale: grounding.rationale,
+        groundingScore: grounding.score, groundingRationale: grounding.rationale, sourceConflict: true,
+      };
+    }
+
+    const groundingRoute = routeScore(grounding.score, thresholdLow, thresholdHigh);
+    if (groundingRoute !== "resolve_gap") {
+      const routeRows = await supabasePost(env, "routes", {
+        score_id: groundingScoreId, route_decision: groundingRoute, route_reason: "kb_grounded",
+      });
+      const routeId = routeRows?.[0]?.id;
+      if (!routeId) throw new Error("Failed to persist grounding route");
+      return {
+        questionId, candidateAnswerId, scoreId: groundingScoreId, routeId,
+        route: groundingRoute, routeReason: "kb_grounded",
+        score: grounding.score, rationale: grounding.rationale,
+        groundingScore: grounding.score, sourceConflict: false,
+      };
+    }
+  }
+
+  // Over-claim (grounding score below the floor) or verifier unavailable:
+  // fall through to ordinary appropriateness scoring on the same candidate answer.
+  const scr = await scoreCandidateAnswer(env, question, answer);
+  const scrScoreRows = await supabasePost(env, "scores", {
+    candidate_answer_id: candidateAnswerId, score_value: scr.score, rationale: scr.rationale,
+  });
+  const scrScoreId = scrScoreRows?.[0]?.id ?? null;
+  const scrRoute = routeScore(scr.score, thresholdLow, thresholdHigh);
+  const routeRows = await supabasePost(env, "routes", {
+    score_id: scrScoreId, route_decision: scrRoute, route_reason: "scr_fallthrough",
+  });
+  const routeId = routeRows?.[0]?.id ?? null;
+  let gapResolutionRequestId = null;
+  if (scrRoute === "resolve_gap" && routeId) {
+    const rr = await supabasePost(env, "gap_resolution_requests", {
+      route_id: routeId, question_id: questionId, candidate_answer_id: candidateAnswerId,
+    }).catch(() => null);
+    gapResolutionRequestId = rr?.[0]?.id ?? null;
+  }
+  return {
+    questionId, candidateAnswerId, scoreId: scrScoreId, routeId, gapResolutionRequestId,
+    route: scrRoute, routeReason: "scr_fallthrough",
+    score: scr.score, rationale: scr.rationale,
+    groundingScore: grounding ? grounding.score : null,
+    groundingRationale: grounding ? grounding.rationale : groundingError,
+    groundingFailed: true, sourceConflict: false,
+  };
+}
+
 // Phase E completion, item B. A bounded, prior classification step - run
 // BEFORE any candidate answer is generated from the operational corpus and
 // BEFORE SCR ever runs. This function only decides eligibility; it never

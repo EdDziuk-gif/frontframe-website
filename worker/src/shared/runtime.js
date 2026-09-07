@@ -26,6 +26,12 @@ export const ESCALATION_PATTERN = /\{[^{}]*"_escalate"\s*:\s*true[^{}]*\}/s;
 export const DEFECT_PATTERN     = /\{[^{}]*"_defect"\s*:\s*true[^{}]*\}/s;
 export const RESEARCH_PATTERN   = /\{[^{}]*"_research"\s*:\s*true[^{}]*\}/s;
 export const KNOWLEDGE_GAP_PATTERN = /\{[^{}]*"_knowledge_gap"\s*:\s*true[^{}]*\}\s*$/s;
+// The model's own claim that its answer's substance is drawn from promulgated
+// material (system_prompt + implemented qa_pairs). Detected before SCR: a
+// grounded answer is verified against the corpus rather than scored for
+// appropriateness with no context (Defect 95ebc11f). End-anchored like the
+// knowledge-gap marker.
+export const KB_GROUNDED_PATTERN = /\{[^{}]*"_kb_grounded"\s*:\s*true[^{}]*\}\s*$/s;
 // The structured contact-handoff marker from the system prompt's HANDOFF block:
 // [COLLECTED:{"name":...,"method":...,"contact":...,"zip":...,"timezone":...,"summary":...}]
 // Captured group 1 is the JSON object. Handled server-side in chat.js (Defect 2 fix)
@@ -81,6 +87,27 @@ reply with the marker, exactly as specified above. Explaining in your own words 
 will not guess is not a substitute for the marker - a reply that declines to guess but
 omits the marker still leaves this gap invisible to FrontFrame and unresolved for the
 visitor. Both the honest decline and the marker are required together.`;
+
+// Companion to KNOWLEDGE_GAP_INSTRUCTION. When the answer IS supported by the
+// material above, the model says so; the Worker then verifies that claim
+// against the promulgated corpus instead of sending it to appropriateness
+// scoring (Defect 95ebc11f). Appended to every prompt.
+export const KB_GROUNDED_INSTRUCTION = `
+
+---
+
+If the substance of your answer - its facts, figures, pricing, scope, policy, or
+commitments - is drawn from the system prompt or the Knowledge Base above (one
+entry or several combined), end your reply with a marker on its own line, in
+exactly this form:
+
+{"_kb_grounded": true}
+
+This asserts that the answer is supported by FrontFrame's established, written
+material and will be checked against it. Do not use it for answers you built from
+general knowledge or your own inference, for partial answers, or when you are not
+sure the material above covers the question - in that case use the knowledge-gap
+marker instead. Never emit both markers in the same reply.`;
 
 // ════════════════════════════════════════════════════════════════════════════
 // § ANTHROPIC

@@ -1,13 +1,13 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
+import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
 // Shared contact-handoff capture (lead + lead_alert + SMS, de-duped on session_id).
 // Lives next to /notify in intake.js; imported here so a [COLLECTED] marker is
 // captured server-side and can never be discarded by a resolve_gap route (Defect 2).
 import { captureContactHandoff } from "./intake.js";
 import { getTodayOfficeHoursText } from "../shared/office-hours.js";
 import { RATE_LIMITED_MESSAGE, checkChatRateLimit } from "../shared/rate-limit.js";
-import { LIMITED_CONFIDENCE_HEDGE, checkConstitutionalEligibility, createConstitutionalCandidateLifecycle, createKnowledgeGapLifecycle, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
+import { LIMITED_CONFIDENCE_HEDGE, checkConstitutionalEligibility, createConstitutionalCandidateLifecycle, createGroundingLifecycle, createKnowledgeGapLifecycle, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
 
 // § DOMAIN: chat
 // ════════════════════════════════════════════════════════════════════════════
@@ -152,7 +152,7 @@ Return exactly one JSON object and no other text, in exactly this form:
 // Phase D/E routing. Shared by both the ordinary single-question path and
 // each subpart of a decomposed compound question, so the two paths can never
 // drift apart on how a candidate is judged eligible for delivery.
-async function handleSingleTurn(env, ctx, config, constitutionSection, combinedPrompt, message, history, page, session_id, source) {
+async function handleSingleTurn(env, ctx, config, constitutionSection, combinedPrompt, message, history, page, session_id, source, promulgatedCorpus) {
   // ── Constitutional eligibility review (Phase E completion, item B) ───────
   // Runs before anything else. On a genuine constitutional candidate, or on
   // an eligibility-check failure (fails closed), no candidate answer is ever
@@ -353,6 +353,19 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     knowledgeGapMalformed = true;
   }
 
+  // ── KB-grounded marker (Defect 95ebc11f) ───────────────────────────────
+  // The generation call claims its answer's substance is drawn from the
+  // promulgated corpus. When present — and not overridden by a knowledge-gap
+  // marker — the answer is verified for fidelity to that corpus instead of
+  // being sent to appropriateness scoring, which has no corpus and
+  // structurally under-scores promulgated content.
+  let kbGrounded = false;
+  const kbMatch = response.match(KB_GROUNDED_PATTERN);
+  if (kbMatch) {
+    kbGrounded = true;
+    response = response.replace(KB_GROUNDED_PATTERN, "").trim();
+  }
+
   // ── Phase D: Scoring Agent + deterministic Scoring Consumer ──────────────
   // The candidate answer is scored before visitor delivery. The scoring call
   // receives only the literal question and candidate answer. SCA then applies
@@ -380,6 +393,78 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     // question still carries the knowledge-gap marker and is handled by the
     // branches below, so it cannot reach here.
     isWithheld = false;
+  } else if (kbGrounded && knowledgeGapMissing === null && !knowledgeGapMalformed) {
+    // Defect 95ebc11f: the answer claims to be drawn from promulgated material.
+    // Verify fidelity to the corpus instead of scoring appropriateness.
+    try {
+      scoringLifecycle = await createGroundingLifecycle(env, {
+        question: message,
+        answer: response,
+        corpus: promulgatedCorpus,
+        askedBy: session_id,
+        source,
+      });
+      const gRoute = scoringLifecycle.route;
+
+      if (gRoute === "source_conflict") {
+        // The promulgated corpus contradicts itself on this answer's substance.
+        // Withhold, alert, and file a content defect naming the conflict.
+        response = RESOLVE_GAP_MESSAGE;
+        isWithheld = true;
+        withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
+        ctx.waitUntil(
+          supabasePost(env, "defects", {
+            area: "content",
+            severity: "major",
+            disposition: "retain",
+            description: `[corpus-conflict] Promulgated material contradicts itself on an answered point. ${scoringLifecycle.groundingRationale ?? ""}`.slice(0, 1000),
+            build_version: config.build_version ?? "unknown",
+            stage_gate: config.stage_gate ?? "build",
+          }).catch((err) => console.error("corpus-conflict defect write failed:", err))
+        );
+        if (scoringLifecycle?.gapResolutionRequestId) {
+          await alertGapResolutionQueue(env, ctx, page, message, "source_conflict");
+        }
+      } else if (gRoute === "resolve_gap") {
+        // Grounding below the floor and the SCR fall-through also withheld.
+        response = RESOLVE_GAP_MESSAGE;
+        isWithheld = true;
+        withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
+        if (scoringLifecycle?.groundingFailed) {
+          ctx.waitUntil(
+            supabasePost(env, "defects", agenticDefect(config,
+              `_kb_grounded claim failed grounding verification (score ${scoringLifecycle.groundingScore}); SCR fall-through withheld. ${scoringLifecycle.groundingRationale ?? ""}`))
+              .catch((err) => console.error("kb-grounded defect write failed:", err))
+          );
+        }
+        if (scoringLifecycle?.gapResolutionRequestId) {
+          await alertGapResolutionQueue(env, ctx, page, message, "scr_low_confidence");
+        }
+      } else {
+        // Delivered — verified grounded, or the SCR fall-through cleared it.
+        if (scoringLifecycle?.groundingFailed) {
+          ctx.waitUntil(
+            supabasePost(env, "defects", agenticDefect(config,
+              `_kb_grounded claim failed grounding verification (score ${scoringLifecycle.groundingScore}); SCR fall-through delivered as ${gRoute}. ${scoringLifecycle.groundingRationale ?? ""}`))
+              .catch((err) => console.error("kb-grounded defect write failed:", err))
+          );
+        }
+        if (gRoute === "respond_limited") {
+          hedgeShown = true;
+          response = LIMITED_CONFIDENCE_HEDGE + response;
+        }
+      }
+    } catch (e) {
+      console.error("Grounding pipeline failed:", e);
+      response = RESOLVE_GAP_MESSAGE;
+      isWithheld = true;
+      withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
+      ctx.waitUntil(
+        supabasePost(env, "defects", agenticDefect(config,
+          `Grounding pipeline failed: ${e?.message ?? "unknown error"}`))
+          .catch((err) => console.error("grounding defect write failed:", err))
+      );
+    }
   } else if (knowledgeGapMalformed) {
     const rawCandidate = response;
     console.error("Malformed knowledge-gap marker — withholding candidate:", rawCandidate.slice(0, 200));
@@ -515,11 +600,17 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   // (system_prompt + qa_pairs), never merged into or overridden by it. SCR's
   // own input contract is unaffected: SCR still receives only the literal
   // QUESTION + candidate ANSWER, never this prompt.
+  // The promulgated operational corpus (system_prompt + implemented qa_pairs, per
+  // buildQaPairsQuery). Reused as the SOURCE for grounding verification when the
+  // generation call marks its answer _kb_grounded (Defect 95ebc11f).
+  const promulgatedCorpus = buildSystemPrompt(systemPromptContent, qaPairs);
+
   const constitutionSection = buildConstitutionSection(constitutionRows);
   let combinedPrompt = constitutionSection
-	? constitutionSection + "\n\n" + buildSystemPrompt(systemPromptContent, qaPairs)
-	: buildSystemPrompt(systemPromptContent, qaPairs);
+	? constitutionSection + "\n\n" + promulgatedCorpus
+	: promulgatedCorpus;
   combinedPrompt += KNOWLEDGE_GAP_INSTRUCTION;
+  combinedPrompt += KB_GROUNDED_INSTRUCTION;
   if (config.mode === "testing") combinedPrompt += TESTING_LAYER;
 
   const hoursText = await getTodayOfficeHoursText(env);
@@ -538,7 +629,7 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   let handoffCaptured = false;
 
   if (!subparts) {
-	const turn = await handleSingleTurn(env, ctx, config, constitutionSection, combinedPrompt, message, history, page, session_id, source);
+	const turn = await handleSingleTurn(env, ctx, config, constitutionSection, combinedPrompt, message, history, page, session_id, source, promulgatedCorpus);
 	response = turn.response;
 	primaryRouteId = turn.routeId;
 	primaryHedgeShown = turn.hedgeShown;
@@ -550,7 +641,7 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
 	  // write (questions/candidate_answers/scores/routes rows), and keeping
 	  // them sequential keeps that bookkeeping simple and avoids concurrent
 	  // writes racing against the same session/rate-limit state.
-	  turnResults.push(await handleSingleTurn(env, ctx, config, constitutionSection, combinedPrompt, subpart, history, page, session_id, source));
+	  turnResults.push(await handleSingleTurn(env, ctx, config, constitutionSection, combinedPrompt, subpart, history, page, session_id, source, promulgatedCorpus));
 	}
 	response = assembleCompoundReply(turnResults);
 	// For session-capture/delivered-response bookkeeping below, treat the
