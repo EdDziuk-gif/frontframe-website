@@ -55,6 +55,9 @@ const CH = {};
 const ENV = {
   SUPABASE_URL: "https://example.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "service-key",
+  // The KGR mutation gate (kgr.js) fails closed without this binding; a stub
+  // that reports "not paused" is the normal path.
+  RATE_LIMIT_KV: { get: async () => null },
 };
 
 function mockRequest(body = {}) {
@@ -79,7 +82,10 @@ function mockInvalidJwt() {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  // resetAllMocks (not clearAllMocks) so a test's unconsumed mockResolvedValueOnce
+  // values do not leak into the next test - handlers that call an RPC where an
+  // older revision read a table consume a different number of queued mocks.
+  vi.resetAllMocks();
 });
 
 // ── createKgrCase ────────────────────────────────────────────────────────
@@ -152,23 +158,25 @@ describe("createKgrCase", () => {
 
 // ── development: Staff-permitted ────────────────────────────────────────
 
+// Increment 5 (migration 013): research-note and hypothesis writes go through
+// guarded RPCs (update_kgr_research_notes / add_kgr_hypothesis) that lock the
+// case row and recheck in_development inside the transaction.
 describe("Staff may develop an existing authorized case", () => {
-  it("allows Staff to update research_notes", async () => {
+  it("allows Staff to update research_notes via the guarded RPC", async () => {
     mockAuth({ role: "frontframe_staff", id: "staff-uuid" });
-    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]); // fetchCase
-    supabasePatchMock.mockResolvedValueOnce([{ id: 7 }]);
+    supabaseRpcMock.mockResolvedValueOnce([{ id: 7, research_notes: "Found the CDN vendor page." }]);
 
     const res = await updateKgrCase(mockRequest({ research_notes: "Found the CDN vendor page." }), ENV, "7", "staff-jwt", CH);
     expect(res.status).toBe(200);
-    expect(supabasePatchMock).toHaveBeenCalledWith(ENV, "kgr_cases", "7", expect.objectContaining({
-      research_notes: "Found the CDN vendor page.",
-    }));
+    const [, fnName, params] = supabaseRpcMock.mock.calls[0];
+    expect(fnName).toBe("update_kgr_research_notes");
+    expect(params.p_case_id).toBe(7);
+    expect(params.p_notes).toBe("Found the CDN vendor page.");
   });
 
   it("allows Staff to add a hypothesis, created_by derived server-side", async () => {
     mockAuth({ role: "frontframe_staff", id: "staff-uuid" });
-    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]); // fetchCase
-    supabasePostMock.mockResolvedValueOnce([{ id: 100 }]);
+    supabaseRpcMock.mockResolvedValueOnce([{ id: 100, status: "untested" }]);
 
     const res = await addHypothesis(
       mockRequest({ description: "No formal SLA exists.", created_by: "attacker-uuid" }),
@@ -176,146 +184,138 @@ describe("Staff may develop an existing authorized case", () => {
     );
 
     expect(res.status).toBe(200);
-    const [, table, payload] = supabasePostMock.mock.calls[0];
-    expect(table).toBe("kgr_hypotheses");
-    expect(payload.created_by).toBe("staff-uuid");
-    expect(payload.status).toBe("untested");
+    const [, fnName, params] = supabaseRpcMock.mock.calls[0];
+    expect(fnName).toBe("add_kgr_hypothesis");
+    expect(params.p_created_by).toBe("staff-uuid"); // server-derived, never body-supplied
+    expect(params.p_description).toBe("No formal SLA exists.");
   });
 
-  it("rejects edits to a frozen (non-in_development) case", async () => {
+  it("rejects edits to a frozen (non-in_development) case (RPC raises)", async () => {
     mockAuth({ role: "frontframe_staff" });
-    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }]);
+    supabaseRpcMock.mockRejectedValueOnce(new Error("case 7 is ready_for_decision and is frozen"));
     const res = await updateKgrCase(mockRequest({ research_notes: "too late" }), ENV, "7", "staff-jwt", CH);
     expect(res.status).toBe(409);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
   });
 });
 
 // ── hypothesis disposition ──────────────────────────────────────────────
 
+// Increment 5 (migration 013): disposition goes through the guarded
+// dispose_kgr_hypothesis RPC. The handler still validates status/test_notes
+// shape up front; the case-freeze, on-this-case, and still-untested checks are
+// the RPC's, atomically.
 describe("updateHypothesis", () => {
-  it("rejects a status other than falsified/accepted", async () => {
+  it("rejects a status other than falsified/accepted, before the RPC", async () => {
     mockAuth();
-    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]); // fetchCase
     const res = await updateHypothesis(mockRequest({ status: "untested" }), ENV, "7", "100", "admin-jwt", CH);
     expect(res.status).toBe(400);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
-  it("rejects accepting a hypothesis with no test_notes", async () => {
+  it("rejects accepting a hypothesis with no test_notes, before the RPC", async () => {
     mockAuth();
-    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]); // fetchCase
     const res = await updateHypothesis(mockRequest({ status: "accepted" }), ENV, "7", "100", "admin-jwt", CH);
     expect(res.status).toBe(400);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
-  it("rejects falsifying a hypothesis with blank/whitespace-only test_notes", async () => {
+  it("rejects falsifying with blank/whitespace-only test_notes, before the RPC", async () => {
     mockAuth();
-    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]); // fetchCase
     const res = await updateHypothesis(mockRequest({ status: "falsified", test_notes: "   " }), ENV, "7", "100", "admin-jwt", CH);
     expect(res.status).toBe(400);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
-  it("rejects changing a hypothesis that is already disposed (not untested)", async () => {
+  it("maps the RPC's already-disposed rejection to 409", async () => {
     mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "in_development" }]) // fetchCase
-      .mockResolvedValueOnce([{ id: 100, status: "accepted" }]);    // hypothesis lookup
+    supabaseRpcMock.mockRejectedValueOnce(new Error("hypothesis 100 is already accepted and cannot be changed again"));
     const res = await updateHypothesis(mockRequest({ status: "falsified", test_notes: "No longer relevant." }), ENV, "7", "100", "admin-jwt", CH);
     expect(res.status).toBe(409);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
   });
 
-  it("accepts a valid disposition from untested", async () => {
+  it("maps the RPC's not-on-case rejection to 404", async () => {
     mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "in_development" }])
-      .mockResolvedValueOnce([{ id: 100, status: "untested" }]);
-    supabasePatchMock.mockResolvedValueOnce([{ id: 100, status: "accepted" }]);
+    supabaseRpcMock.mockRejectedValueOnce(new Error("hypothesis 100 is not on case 7"));
+    const res = await updateHypothesis(mockRequest({ status: "accepted", test_notes: "x" }), ENV, "7", "100", "admin-jwt", CH);
+    expect(res.status).toBe(404);
+  });
 
-    const res = await updateHypothesis(mockRequest({ status: "accepted", test_notes: "Confirmed via docs." }), ENV, "7", "100", "admin-jwt", CH);
+  it("dispatches a valid disposition to dispose_kgr_hypothesis with trimmed notes", async () => {
+    mockAuth();
+    supabaseRpcMock.mockResolvedValueOnce([{ id: 100, status: "falsified", test_notes: "Superseded by hypothesis: revised timeline theory." }]);
+
+    const res = await updateHypothesis(
+      mockRequest({ status: "falsified", test_notes: "  Superseded by hypothesis: revised timeline theory.  " }),
+      ENV, "7", "100", "admin-jwt", CH
+    );
     expect(res.status).toBe(200);
-    expect(supabasePatchMock).toHaveBeenCalledWith(ENV, "kgr_hypotheses", "100", expect.objectContaining({
-      status: "accepted", test_notes: "Confirmed via docs.",
-    }));
+    const [, fnName, params] = supabaseRpcMock.mock.calls[0];
+    expect(fnName).toBe("dispose_kgr_hypothesis");
+    expect(params.p_case_id).toBe(7);
+    expect(params.p_hypothesis_id).toBe(100);
+    expect(params.p_status).toBe("falsified");
+    expect(params.p_test_notes).toBe("Superseded by hypothesis: revised timeline theory."); // trimmed
   });
 
-  it("trims test_notes before storing", async () => {
+  it("passes a replacement-identity note through verbatim", async () => {
     mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "in_development" }])
-      .mockResolvedValueOnce([{ id: 100, status: "untested" }]);
-    supabasePatchMock.mockResolvedValueOnce([{ id: 100, status: "falsified" }]);
-
-    const res = await updateHypothesis(mockRequest({ status: "falsified", test_notes: "  Superseded by hypothesis: revised timeline theory.  " }), ENV, "7", "100", "admin-jwt", CH);
-    expect(res.status).toBe(200);
-    expect(supabasePatchMock).toHaveBeenCalledWith(ENV, "kgr_hypotheses", "100", expect.objectContaining({
-      status: "falsified", test_notes: "Superseded by hypothesis: revised timeline theory.",
-    }));
-  });
-
-  it("records a replacement's identity in the falsifying notes when a hypothesis is superseded (traceability is by note content, not a schema link)", async () => {
-    mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "in_development" }])
-      .mockResolvedValueOnce([{ id: 100, status: "untested" }]);
-    supabasePatchMock.mockResolvedValueOnce([{ id: 100, status: "falsified" }]);
-
+    supabaseRpcMock.mockResolvedValueOnce([{ id: 100, status: "falsified" }]);
     const replacementNote = 'Replaced by hypothesis #103 ("revised timeline theory") - original scope was too narrow.';
     const res = await updateHypothesis(mockRequest({ status: "falsified", test_notes: replacementNote }), ENV, "7", "100", "admin-jwt", CH);
     expect(res.status).toBe(200);
-    expect(supabasePatchMock).toHaveBeenCalledWith(ENV, "kgr_hypotheses", "100", expect.objectContaining({
-      test_notes: replacementNote,
-    }));
+    expect(supabaseRpcMock.mock.calls[0][2].p_test_notes).toBe(replacementNote);
   });
 });
 
 // ── readiness gate ───────────────────────────────────────────────────────
 
+// Increment 5: readiness is the guarded ready_kgr_case RPC (migration 011) -
+// it serializes on the case row and enforces zero untested hypotheses, at
+// least one accepted, AND at least one active contributed solution for every
+// accepted hypothesis. The handler surfaces every guard failure as a 409.
 describe("readyKgrCase", () => {
-  it("rejects with zero hypotheses", async () => {
-    mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "in_development" }]) // fetchCase
-      .mockResolvedValueOnce([]);                                   // hypotheses
-    const res = await readyKgrCase(ENV, "7", "admin-jwt", CH);
-    expect(res.status).toBe(409);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
+  it("does not call the RPC for an unauthenticated caller", async () => {
+    mockInvalidJwt();
+    const res = await readyKgrCase(ENV, "7", "bad-jwt", CH);
+    expect(res.status).toBe(401);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
-  it("rejects with an untested hypothesis present, even alongside an accepted one", async () => {
+  it("404s when the case does not exist, before the RPC", async () => {
     mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "in_development" }])
-      .mockResolvedValueOnce([{ status: "accepted" }, { status: "untested" }]);
+    supabaseFetchMock.mockResolvedValueOnce([]); // fetchCase
     const res = await readyKgrCase(ENV, "7", "admin-jwt", CH);
-    expect(res.status).toBe(409);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
+    expect(res.status).toBe(404);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
-  it("rejects when all hypotheses are falsified (no accepted)", async () => {
+  it("passes a guard failure from ready_kgr_case through as a clean 409", async () => {
     mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "in_development" }])
-      .mockResolvedValueOnce([{ status: "falsified" }, { status: "falsified" }]);
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]); // fetchCase
+    supabaseRpcMock.mockRejectedValueOnce(
+      new Error("Supabase RPC ready_kgr_case failed: case 7 has 1 accepted hypothesis(es) with no active contributed solution")
+    );
     const res = await readyKgrCase(ENV, "7", "admin-jwt", CH);
     expect(res.status).toBe(409);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
+    const body = await res.json();
+    expect(body.error).toContain("no active contributed solution");
+    expect(body.error).not.toContain("Supabase RPC"); // wrapper stripped
   });
 
-  it("succeeds with zero untested and at least one accepted", async () => {
+  it("succeeds via ready_kgr_case and returns the updated case row", async () => {
     mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "in_development" }])
-      .mockResolvedValueOnce([{ status: "accepted" }, { status: "falsified" }]);
-    supabasePatchMock.mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }]);
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]); // fetchCase
+    supabaseRpcMock.mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }]);
 
     const res = await readyKgrCase(ENV, "7", "admin-jwt", CH);
     expect(res.status).toBe(200);
-    expect(supabasePatchMock).toHaveBeenCalledWith(ENV, "kgr_cases", "7", expect.objectContaining({
-      status: "ready_for_decision",
-    }));
+    const body = await res.json();
+    expect(body.status).toBe("ready_for_decision");
+
+    const [, fnName, params] = supabaseRpcMock.mock.calls[0];
+    expect(fnName).toBe("ready_kgr_case");
+    expect(params.p_case_id).toBe(7);
+    expect(supabasePatchMock).not.toHaveBeenCalled(); // no direct table write
   });
 });
 
@@ -337,39 +337,39 @@ describe("escalateKgrCase", () => {
     expect(supabasePatchMock).not.toHaveBeenCalled();
   });
 
-  it("escalates and preserves the reason when the eligibility check returns a candidate", async () => {
+  it("escalates via the guarded escalate_kgr_case RPC, carrying the issue as the reason", async () => {
     mockAuth();
     supabaseFetchMock
       .mockResolvedValueOnce([{ id: 7, status: "in_development", research_notes: "notes" }])
       .mockResolvedValueOnce([{ description: "Does FrontFrame have authority to guarantee X" }])
       .mockResolvedValueOnce([]);
     checkEligibilityMock.mockResolvedValueOnce({ constitutionalCandidate: true, issue: "Requires Operator determination of guarantee authority" });
-    supabasePatchMock.mockResolvedValueOnce([{ id: 7, status: "escalated" }]);
+    supabaseRpcMock.mockResolvedValueOnce([{ id: 7, status: "escalated", escalation_reason: "Requires Operator determination of guarantee authority" }]);
 
     const res = await escalateKgrCase(ENV, "7", "admin-jwt", CH);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.escalated).toBe(true);
-    expect(supabasePatchMock).toHaveBeenCalledWith(ENV, "kgr_cases", "7", expect.objectContaining({
-      status: "escalated",
-      escalation_reason: "Requires Operator determination of guarantee authority",
-    }));
+    const [, fnName, params] = supabaseRpcMock.mock.calls[0];
+    expect(fnName).toBe("escalate_kgr_case");
+    expect(params.p_case_id).toBe(7);
+    expect(params.p_reason).toBe("Requires Operator determination of guarantee authority");
   });
 
-  it("is terminal: an already-escalated case rejects a further escalate call", async () => {
+  it("is terminal: an already-escalated case rejects a further escalate call, before any model call", async () => {
     mockAuth();
     supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "escalated" }]);
     const res = await escalateKgrCase(ENV, "7", "admin-jwt", CH);
     expect(res.status).toBe(409);
     expect(checkEligibilityMock).not.toHaveBeenCalled();
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
-  it("an escalated case rejects further edits (evidence frozen)", async () => {
+  it("an escalated case rejects a research-note edit (the guarded RPC raises)", async () => {
     mockAuth();
-    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "escalated" }]);
+    supabaseRpcMock.mockRejectedValueOnce(new Error("case 7 is escalated and is frozen"));
     const res = await updateKgrCase(mockRequest({ research_notes: "x" }), ENV, "7", "admin-jwt", CH);
     expect(res.status).toBe(409);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
   });
 });
 
@@ -464,219 +464,123 @@ function scoreResponse(score, rationale) {
   return JSON.stringify({ score, rationale });
 }
 
+// New prepareResolutionStatement describe block (Increment 5: server-derived
+// freeze-and-snapshot via the prepare_kgr_resolution_statement RPC - no request
+// body, no client candidate array, no rescoring on prepare).
 describe("prepareResolutionStatement", () => {
   it("rejects an unauthorized caller before touching the case", async () => {
-    global.fetch.mockResolvedValueOnce({ ok: false });
-    const res = await prepareResolutionStatement(mockRequest({ candidates: [] }), ENV, "7", "bad-jwt", CH);
+    mockInvalidJwt();
+    const res = await prepareResolutionStatement(mockRequest({}), ENV, "7", "bad-jwt", CH);
     expect(res.status).toBe(401);
     expect(supabaseFetchMock).not.toHaveBeenCalled();
-    expect(callAnthropicMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects a case that is still in_development (409, no scoring call)", async () => {
-    mockAuth();
-    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]);
-    const res = await prepareResolutionStatement(mockRequest({ candidates: [] }), ENV, "7", "admin-jwt", CH);
-    expect(res.status).toBe(409);
-    expect(callAnthropicMock).not.toHaveBeenCalled();
     expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
-  it("rejects an escalated case (409, no scoring call)", async () => {
+  it("404s when the case does not exist", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([]); // fetchCase
+    const res = await prepareResolutionStatement(mockRequest({}), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(404);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a case that is still in_development (409, no RPC)", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development" }]);
+    const res = await prepareResolutionStatement(mockRequest({}), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(409);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an escalated case (409, no RPC)", async () => {
     mockAuth();
     supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "escalated" }]);
-    const res = await prepareResolutionStatement(mockRequest({ candidates: [] }), ENV, "7", "admin-jwt", CH);
+    const res = await prepareResolutionStatement(mockRequest({}), ENV, "7", "admin-jwt", CH);
     expect(res.status).toBe(409);
-    expect(callAnthropicMock).not.toHaveBeenCalled();
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
-  it("rejects candidates missing an accepted hypothesis", async () => {
+  it("returns the existing statement (409) on a repeat call, without calling the RPC", async () => {
     mockAuth();
     supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", gap_resolution_request_id: 1 }]) // fetchCase
-      .mockResolvedValueOnce([])  // fetchResolutionStatement - none yet
-      .mockResolvedValueOnce([
-        { id: 100, status: "accepted" },
-        { id: 101, status: "accepted" },
-      ]); // fetchHypotheses
-    const res = await prepareResolutionStatement(
-      mockRequest({ candidates: [{ hypothesis_id: 100, presented_content: "Answer A" }] }),
-      ENV, "7", "admin-jwt", CH
-    );
-    expect(res.status).toBe(400);
-    expect(callAnthropicMock).not.toHaveBeenCalled();
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }])           // fetchCase
+      .mockResolvedValueOnce([{ id: 55, kgr_case_id: 7, problem_statement: "Q?" }]); // existing statement
+    const res = await prepareResolutionStatement(mockRequest({}), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.resolution_statement.id).toBe(55);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
-  it("rejects candidates including an extra (non-accepted) hypothesis id", async () => {
+  it("server-derives the snapshot via prepare_kgr_resolution_statement and returns the persisted statement", async () => {
     mockAuth();
     supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", gap_resolution_request_id: 1 }])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        { id: 100, status: "accepted" },
-        { id: 101, status: "falsified" },
-      ]);
-    const res = await prepareResolutionStatement(
-      mockRequest({ candidates: [
-        { hypothesis_id: 100, presented_content: "Answer A" },
-        { hypothesis_id: 101, presented_content: "Answer B" },
-      ] }),
-      ENV, "7", "admin-jwt", CH
-    );
-    expect(res.status).toBe(400);
-    expect(callAnthropicMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects a duplicate hypothesis_id in candidates", async () => {
-    mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", gap_resolution_request_id: 1 }])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ id: 100, status: "accepted" }]);
-    const res = await prepareResolutionStatement(
-      mockRequest({ candidates: [
-        { hypothesis_id: 100, presented_content: "Answer A" },
-        { hypothesis_id: 100, presented_content: "Answer A again" },
-      ] }),
-      ENV, "7", "admin-jwt", CH
-    );
-    expect(res.status).toBe(400);
-    expect(callAnthropicMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects blank presented_content", async () => {
-    mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", gap_resolution_request_id: 1 }])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ id: 100, status: "accepted" }]);
-    const res = await prepareResolutionStatement(
-      mockRequest({ candidates: [{ hypothesis_id: 100, presented_content: "   " }] }),
-      ENV, "7", "admin-jwt", CH
-    );
-    expect(res.status).toBe(400);
-    expect(callAnthropicMock).not.toHaveBeenCalled();
-  });
-
-  it("scores every accepted candidate and saves them together via the RPC, tied to one problem_statement", async () => {
-    mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{
-        id: 7, status: "ready_for_decision", gap_resolution_request_id: 1,
-        gap_resolution_requests: { questions: { question_text: "Does FrontFrame offer an SLA?" } },
-      }]) // fetchCase
-      .mockResolvedValueOnce([])  // fetchResolutionStatement - none yet
-      .mockResolvedValueOnce([
-        { id: 100, status: "accepted" },
-        { id: 101, status: "accepted" },
-        { id: 102, status: "falsified" },
-      ]) // fetchHypotheses
-      .mockResolvedValueOnce([{  // final re-fetch of the saved statement
-        id: 55, kgr_case_id: 7, problem_statement: "Does FrontFrame offer an SLA?", prepared_by: "rev-uuid",
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }]) // fetchCase
+      .mockResolvedValueOnce([])                                        // no existing statement
+      .mockResolvedValueOnce([{                                         // final re-fetch
+        id: 55, kgr_case_id: 7, problem_statement: "Q?",
         kgr_resolution_candidates: [
-          { id: 1, kgr_hypothesis_id: 100, presented_content: "Answer A", score: 0.8, rationale: "Directly responsive." },
-          { id: 2, kgr_hypothesis_id: 101, presented_content: "Answer B", score: 0.3, rationale: "Off-topic." },
+          { id: 1, kgr_hypothesis_id: 100, presented_content: "A", score: 0.7, rationale: "r", submitted_by: "staff-a", origin: "human" },
+          { id: 2, kgr_hypothesis_id: 100, presented_content: "B", score: 0.2, rationale: "r", submitted_by: "staff-b", origin: "human" },
         ],
       }]);
-    callAnthropicMock
-      .mockResolvedValueOnce(scoreResponse(0.8, "Directly responsive."))
-      .mockResolvedValueOnce(scoreResponse(0.3, "Off-topic."));
     supabaseRpcMock.mockResolvedValueOnce(55);
 
-    const res = await prepareResolutionStatement(
-      mockRequest({ candidates: [
-        { hypothesis_id: 100, presented_content: "Answer A" },
-        { hypothesis_id: 101, presented_content: "Answer B" },
-      ] }),
-      ENV, "7", "admin-jwt", CH
-    );
+    const res = await prepareResolutionStatement(mockRequest({}), ENV, "7", "admin-jwt", CH);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.id).toBe(55);
+    // N:1 in the snapshot: two candidates share one hypothesis, and the
+    // low-scored one (0.2) is still present - no threshold gates it.
     expect(body.kgr_resolution_candidates).toHaveLength(2);
+    expect(body.kgr_resolution_candidates.every((c) => c.kgr_hypothesis_id === 100)).toBe(true);
+    expect(callAnthropicMock).not.toHaveBeenCalled(); // no rescoring on prepare
 
-    // The low-scored candidate (0.3) is still persisted - no threshold gates it.
     expect(supabaseRpcMock).toHaveBeenCalledTimes(1);
     const [, fnName, params] = supabaseRpcMock.mock.calls[0];
-    expect(fnName).toBe("save_kgr_resolution_statement");
-    expect(params.p_prepared_by).toBe("rev-uuid"); // server-derived, never caller-supplied
-    expect(params.p_problem_statement).toBe("Does FrontFrame offer an SLA?");
-    expect(params.p_candidates).toHaveLength(2);
-    expect(params.p_candidates.find((c) => c.hypothesis_id === 101).score).toBe(0.3);
+    expect(fnName).toBe("prepare_kgr_resolution_statement");
+    expect(params.p_case_id).toBe(7);
+    expect(params.p_prepared_by).toBe("rev-uuid");        // server-derived, never caller-supplied
+    expect(params).not.toHaveProperty("p_candidates");    // no client-supplied candidate array
+    expect(params).not.toHaveProperty("p_problem_statement");
   });
 
-  it("leaves nothing written when scoring fails partway through", async () => {
+  it("resolves a concurrent-race loss to a 409 with the winner's statement", async () => {
     mockAuth();
     supabaseFetchMock
-      .mockResolvedValueOnce([{
-        id: 7, status: "ready_for_decision", gap_resolution_request_id: 1,
-        gap_resolution_requests: { questions: { question_text: "Does FrontFrame offer an SLA?" } },
-      }])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        { id: 100, status: "accepted" },
-        { id: 101, status: "accepted" },
-      ]);
-    callAnthropicMock
-      .mockResolvedValueOnce(scoreResponse(0.8, "Directly responsive."))
-      .mockRejectedValueOnce(new Error("model unavailable"));
-
-    const res = await prepareResolutionStatement(
-      mockRequest({ candidates: [
-        { hypothesis_id: 100, presented_content: "Answer A" },
-        { hypothesis_id: 101, presented_content: "Answer B" },
-      ] }),
-      ENV, "7", "admin-jwt", CH
-    );
-    expect(res.status).toBe(502);
-    expect(supabaseRpcMock).not.toHaveBeenCalled();
-  });
-
-  it("returns the existing statement (409) on a repeat call, without rescoring", async () => {
-    mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", gap_resolution_request_id: 1 }]) // fetchCase
-      .mockResolvedValueOnce([{ id: 55, kgr_case_id: 7, problem_statement: "Does FrontFrame offer an SLA?" }]); // existing statement
-    const res = await prepareResolutionStatement(
-      mockRequest({ candidates: [{ hypothesis_id: 100, presented_content: "Answer A" }] }),
-      ENV, "7", "admin-jwt", CH
-    );
-    expect(res.status).toBe(409);
-    const body = await res.json();
-    expect(body.resolution_statement.id).toBe(55);
-    expect(callAnthropicMock).not.toHaveBeenCalled();
-    expect(supabaseRpcMock).not.toHaveBeenCalled();
-  });
-
-  it("handles a concurrent-race loss gracefully: the RPC's unique_violation resolves to a 409 with the winner's statement", async () => {
-    mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{
-        id: 7, status: "ready_for_decision", gap_resolution_request_id: 1,
-        gap_resolution_requests: { questions: { question_text: "Does FrontFrame offer an SLA?" } },
-      }])
-      .mockResolvedValueOnce([])  // no existing statement seen at check time
-      .mockResolvedValueOnce([{ id: 100, status: "accepted" }])
-      .mockResolvedValueOnce([{ id: 55, kgr_case_id: 7, problem_statement: "Does FrontFrame offer an SLA?" }]); // winner, found on re-fetch
-    callAnthropicMock.mockResolvedValueOnce(scoreResponse(0.8, "Directly responsive."));
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }])
+      .mockResolvedValueOnce([])                                                    // none at check time
+      .mockResolvedValueOnce([{ id: 55, kgr_case_id: 7, problem_statement: "Q?" }]); // winner on re-fetch
     supabaseRpcMock.mockRejectedValueOnce(new Error("duplicate key value violates unique constraint"));
 
-    const res = await prepareResolutionStatement(
-      mockRequest({ candidates: [{ hypothesis_id: 100, presented_content: "Answer A" }] }),
-      ENV, "7", "admin-jwt", CH
-    );
+    const res = await prepareResolutionStatement(mockRequest({}), ENV, "7", "admin-jwt", CH);
     expect(res.status).toBe(409);
     const body = await res.json();
     expect(body.resolution_statement.id).toBe(55);
   });
 
-  it("re-fetching the case after preparation returns the identical persisted statement", async () => {
+  it("surfaces a guard failure from the RPC as a 409 when there is no race winner", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision" }])
+      .mockResolvedValueOnce([])   // none at check time
+      .mockResolvedValueOnce([]);  // still none on re-fetch
+    supabaseRpcMock.mockRejectedValueOnce(new Error("Supabase RPC prepare_kgr_resolution_statement failed: case 7 has no active solutions to snapshot"));
+
+    const res = await prepareResolutionStatement(mockRequest({}), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toContain("no active solutions to snapshot");
+    expect(body.error).not.toContain("Supabase RPC");
+  });
+
+  it("re-fetching the case afterward returns the identical persisted statement", async () => {
     mockAuth();
     supabaseFetchMock
       .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", research_notes: null, escalation_reason: null }])
       .mockResolvedValueOnce([])  // hypotheses
       .mockResolvedValueOnce([{
-        id: 55, kgr_case_id: 7, problem_statement: "Does FrontFrame offer an SLA?",
+        id: 55, kgr_case_id: 7, problem_statement: "Q?",
         kgr_resolution_candidates: [
           { id: 1, kgr_hypothesis_id: 100, presented_content: "Answer A", score: 0.8, rationale: "Directly responsive." },
         ],

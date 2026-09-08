@@ -8,10 +8,12 @@ import { handlers } from "../src/routes/registry.js";
 const manifest = ROUTES.map(({ method, path }) => `${method} ${path}`).join("\n");
 
 describe("Worker route contract", () => {
-  it("preserves the approved 108-route manifest and declaration order", () => {
-    expect(ROUTES).toHaveLength(122);
+  it("preserves the approved route manifest and declaration order", () => {
+    // 124 routes: +2 for KGR Increment 5 (POST /admin/kgr-cases/:id/solutions,
+    // POST /admin/kgr-cases/:id/solutions/:sid/withdraw).
+    expect(ROUTES).toHaveLength(124);
     expect(createHash("sha256").update(manifest).digest("hex"))
-      .toBe("f3885dbdd094360a27304847f3e46f97369d87558daf277ff6bc944dcd492829");
+      .toBe("faa5eb3227612c192a082d1c99bf9c727301bd0757911a281dc15b3d407ddb53");
   });
 
   it("keeps literal sub-routes ahead of their parameterized fallbacks", () => {

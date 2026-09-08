@@ -1854,12 +1854,14 @@
         <button class="btn btn-sm" id="kgr-case-notes-save" onclick="saveKgrCaseNotes()">Save Notes</button>
       </div>
 
-      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Hypotheses</label>
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Hypotheses &amp; Contributed Solutions</label>
       <div id="kgr-hypotheses-list" style="margin-bottom:10px"></div>
       <div id="kgr-add-hypothesis-row" style="display:flex;gap:6px;margin-bottom:16px">
         <input type="text" id="kgr-new-hypothesis" placeholder="New hypothesis..." style="flex:1;padding:7px 8px;border:1.5px solid var(--border);border-radius:6px">
         <button class="btn btn-sm" onclick="addKgrHypothesis()">Add</button>
       </div>
+
+      <div id="kgr-withdrawn-solutions" style="display:none;margin-bottom:16px"></div>
 
       <div style="margin-bottom:16px">
         <button class="btn btn-ghost btn-sm" id="kgr-develop-btn" onclick="developKgrCase()">&#x1F916; Develop with Assistant</button>
@@ -1870,12 +1872,12 @@
         <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px">Resolution Statement</label>
         <div id="kgr-resolution-prepare" style="display:none">
           <div style="font-size:12px;color:var(--gray);margin-bottom:10px">
-            Each accepted hypothesis below is prefilled from its own description as a convenience only.
-            Edit the presented content as needed - the text saved here is scored and stored exactly as
-            written, never rewritten by the server. This step does not select, sign off, or promulgate
-            anything; it prepares the record for Management's later review.
+            Preparing freezes contributions and snapshots <strong>every active contributed solution</strong>
+            exactly as submitted - with its contributor, score, rationale and constitutional-screen context.
+            Nothing is re-scored, rewritten, or filtered here, and no solution is left out. This step does
+            not select, sign off, or promulgate anything.
           </div>
-          <div id="kgr-resolution-candidates-form"></div>
+          <div id="kgr-resolution-prepare-summary" style="font-size:13px;margin-bottom:10px"></div>
           <button class="btn btn-sm" id="kgr-prepare-resolution-btn" onclick="prepareKgrResolutionStatement()">Prepare Resolution Statement</button>
         </div>
         <div id="kgr-resolution-readonly" style="display:none"></div>
@@ -2021,6 +2023,7 @@ function showLogin() {
 // independently re-checks authority on every mutating call regardless of
 // what this variable says.
 let currentReviewerRole = null;
+let currentReviewerId = null;   // used to show a solution's Withdraw control to its own contributor
 
 async function showAdmin() {
   document.getElementById('login-screen').classList.add('hidden');
@@ -2033,6 +2036,7 @@ async function showAdmin() {
     const devLink = document.getElementById('dev-tools-link');
     if (devLink) devLink.style.display = (me?.dev_access === true) ? '' : 'none';
     currentReviewerRole = me?.role ?? null;
+    currentReviewerId = me?.id ?? null;
   } catch { /* non-fatal */ }
   switchTab('pipeline');
 }
@@ -3380,20 +3384,68 @@ function renderKgrCaseModal(c) {
   document.getElementById('kgr-case-notes-save').disabled = frozen;
 
   const hyps = c.hypotheses || [];
+  const activeSolutions = (c.solutions && c.solutions.active) || [];
+  const withdrawnSolutions = (c.solutions && c.solutions.withdrawn) || [];
+  const isManagement = currentReviewerRole === 'frontframe_admin';
+
+  const solutionCard = (s, showWithdraw) => {
+    const meta = `Contributed by ${esc(s.submitted_by)} &middot; ${esc(s.origin)} &middot; score ${esc(Number(s.score).toFixed(2))}`;
+    const rat = s.rationale ? `<div style="font-size:12px;color:var(--gray)">${esc(s.rationale)}</div>` : '';
+    const wd = showWithdraw
+      ? `<button class="btn btn-xs btn-danger" style="margin-top:4px" onclick="withdrawKgrSolutionUI(${s.id})">Withdraw</button>` : '';
+    return `<div style="margin-top:6px;padding:7px 8px;background:var(--offwhite);border-radius:6px">
+      <div style="font-size:13px;white-space:pre-wrap">${esc(s.proposed_content)}</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:3px">${meta}</div>
+      ${rat}${wd}
+    </div>`;
+  };
+
   document.getElementById('kgr-hypotheses-list').innerHTML = hyps.length ? hyps.map(h => {
     const hb = KGR_HYP_BADGE[h.status] || 'badge-open';
     const notes = h.test_notes ? `<div style="font-size:12px;color:var(--gray);margin-top:2px">${esc(h.test_notes)}</div>` : '';
     const actions = (!frozen && h.status === 'untested')
       ? `<button class="btn btn-xs" onclick="updateKgrHypothesis(${h.id},'accepted')">Accept</button> <button class="btn btn-xs btn-danger" onclick="updateKgrHypothesis(${h.id},'falsified')">Falsify</button>`
       : '';
+    let solBlock = '';
+    if (h.status === 'accepted') {
+      const sols = activeSolutions.filter(s => s.kgr_hypothesis_id === h.id);
+      solBlock += sols.map(s => solutionCard(s, !frozen && (isManagement || s.submitted_by === currentReviewerId))).join('');
+      if (!frozen) {
+        solBlock += `<div style="margin-top:8px">
+          <textarea id="kgr-sol-input-${h.id}" rows="2" placeholder="Contribute a proposed solution for this hypothesis..." style="width:100%;box-sizing:border-box;padding:7px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit"></textarea>
+          <div style="display:flex;gap:6px;margin-top:4px;align-items:center">
+            <select id="kgr-sol-origin-${h.id}" style="padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;font-size:12px">
+              <option value="human">Human</option>
+              <option value="assistant_assisted">Assistant-assisted</option>
+            </select>
+            <button class="btn btn-xs" onclick="submitKgrSolutionUI(${h.id})">Contribute</button>
+            <span style="font-size:11px;color:var(--gray)">Checked, then immutable.</span>
+          </div>
+        </div>`;
+      } else if (sols.length === 0) {
+        solBlock += `<div style="font-size:12px;color:var(--danger,#c0392b);margin-top:4px">No active contributed solution.</div>`;
+      }
+    }
     return `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
         <div style="flex:1">${esc(h.description)} <span class="badge ${hb}">${esc(h.status)}</span></div>
         <div>${actions}</div>
       </div>
-      ${notes}
+      ${notes}${solBlock}
     </div>`;
   }).join('') : '<div class="empty-state">No hypotheses yet</div>';
+
+  const wdBox = document.getElementById('kgr-withdrawn-solutions');
+  if (withdrawnSolutions.length) {
+    wdBox.style.display = 'block';
+    wdBox.innerHTML = `<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:4px">Withdrawn contributions (${withdrawnSolutions.length})</div>` +
+      withdrawnSolutions.map(s => `<div style="font-size:12px;color:var(--gray);padding:4px 0;border-bottom:1px dashed var(--border)">
+        <span style="text-decoration:line-through">${esc(s.proposed_content)}</span> &mdash; withdrawn by ${esc(s.withdrawn_by)}: ${esc(s.withdrawn_reason || '')}
+      </div>`).join('');
+  } else {
+    wdBox.style.display = 'none';
+    wdBox.innerHTML = '';
+  }
 
   document.getElementById('kgr-add-hypothesis-row').style.display = frozen ? 'none' : 'flex';
   document.getElementById('kgr-new-hypothesis').value = '';
@@ -3401,11 +3453,13 @@ function renderKgrCaseModal(c) {
   document.getElementById('kgr-develop-output').style.display = 'none';
 
   const untestedCount = hyps.filter(h => h.status === 'untested').length;
-  const acceptedCount = hyps.filter(h => h.status === 'accepted').length;
-  const canReady = !frozen && untestedCount === 0 && acceptedCount >= 1;
+  const acceptedHyps = hyps.filter(h => h.status === 'accepted');
+  const everyAcceptedCovered = acceptedHyps.every(h => activeSolutions.some(s => s.kgr_hypothesis_id === h.id));
+  const canReady = !frozen && untestedCount === 0 && acceptedHyps.length >= 1 && everyAcceptedCovered;
   let actionsHtml = '';
   if (!frozen) {
-    actionsHtml += `<button class="btn btn-sm" ${canReady ? '' : 'disabled'} onclick="readyKgrCase()">Mark Ready for Decision</button>`;
+    const readyTitle = everyAcceptedCovered ? '' : ' title="Every accepted hypothesis needs at least one active contributed solution first."';
+    actionsHtml += `<button class="btn btn-sm" ${canReady ? '' : 'disabled'}${readyTitle} onclick="readyKgrCase()">Mark Ready for Decision</button>`;
     actionsHtml += `<button class="btn btn-ghost btn-sm" onclick="escalateKgrCase()">Escalate (Constitutional)</button>`;
   }
   document.getElementById('kgr-case-actions').innerHTML = actionsHtml;
@@ -3437,16 +3491,20 @@ function renderKgrResolutionSection(c) {
         <div style="margin-bottom:12px;padding:8px;background:var(--offwhite);border-radius:6px;font-size:13px">
           <div style="font-weight:600;margin-bottom:4px">Signed off ${new Date(rs.signed_off_at).toLocaleString()} by reviewer ${esc(rs.signed_off_by)}</div>
           ${selected ? `<div style="margin-top:4px">${esc(selected.presented_content)}</div>` : ''}
-          <div style="font-size:12px;color:var(--gray);margin-top:6px">Unselected alternatives and their hypotheses were pruned at sign-off.</div>
+          <div style="font-size:12px;color:var(--gray);margin-top:6px">Unselected alternatives and any hypotheses no longer supporting the selection were pruned at sign-off; the winning hypothesis and any falsified hypotheses were kept.</div>
         </div>`;
     } else {
-      decisionHtml = candidates.map(cd => `
+      decisionHtml = candidates.map(cd => {
+        const prov = cd.submitted_by
+          ? `Contributed by ${esc(cd.submitted_by)} &middot; ${esc(cd.origin || 'n/a')}`
+          : 'Legacy candidate (pre-Increment 5, no contributor recorded)';
+        return `
         <div style="padding:8px 0;border-bottom:1px solid var(--border)">
-          <div style="font-size:13px;margin-bottom:4px">${esc(cd.presented_content)}</div>
-          <div style="font-size:12px;color:var(--gray)">Score: ${esc(String(cd.score))} - ${esc(cd.rationale)}</div>
+          <div style="font-size:13px;margin-bottom:4px;white-space:pre-wrap">${esc(cd.presented_content)}</div>
+          <div style="font-size:12px;color:var(--gray)">${prov} &middot; score ${esc(String(cd.score))} - ${esc(cd.rationale)}</div>
           ${isManagement ? `<button class="btn btn-xs" style="margin-top:6px" onclick="signOffKgrResolution(${cd.id})">Select and Sign Off</button>` : ''}
-        </div>
-      `).join('') || '<div class="empty-state">No candidates</div>';
+        </div>`;
+      }).join('') || '<div class="empty-state">No candidates</div>';
     }
     readonlyBox.innerHTML = `
       <div style="font-size:12px;color:var(--gray);margin-bottom:10px">Prepared ${new Date(rs.created_at).toLocaleString()}.${rs.signed_off_at ? '' : ' Read-only - no selection or sign-off has been made yet.'}</div>
@@ -3464,33 +3522,25 @@ function renderKgrResolutionSection(c) {
     return;
   }
   prepareBox.style.display = 'block';
+  const activeSolutions = (c.solutions && c.solutions.active) || [];
   const accepted = (c.hypotheses || []).filter(h => h.status === 'accepted');
-  document.getElementById('kgr-resolution-candidates-form').innerHTML = accepted.length
-    ? accepted.map(h => `
-        <div style="margin-bottom:10px">
-          <div style="font-size:12px;color:var(--gray);margin-bottom:2px">Hypothesis #${h.id}</div>
-          <textarea class="kgr-resolution-candidate-input" data-hypothesis-id="${h.id}" rows="2" style="width:100%;box-sizing:border-box;padding:7px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit">${esc(h.description)}</textarea>
-        </div>
-      `).join('')
-    : '<div class="empty-state">No accepted hypotheses to present</div>';
-  document.getElementById('kgr-prepare-resolution-btn').disabled = accepted.length === 0;
+  const perHyp = accepted.map(h => {
+    const n = activeSolutions.filter(s => s.kgr_hypothesis_id === h.id).length;
+    return `<div style="font-size:12px;color:var(--gray)">Hypothesis #${h.id}: ${n} active solution${n === 1 ? '' : 's'}</div>`;
+  }).join('');
+  document.getElementById('kgr-resolution-prepare-summary').innerHTML =
+    `<div style="font-weight:600;margin-bottom:4px">${activeSolutions.length} active contributed solution${activeSolutions.length === 1 ? '' : 's'} will be snapshotted</div>${perHyp}`;
+  document.getElementById('kgr-prepare-resolution-btn').disabled = activeSolutions.length === 0;
 }
 
 async function prepareKgrResolutionStatement() {
   if (!currentKgrCaseId) return;
-  const inputs = document.querySelectorAll('.kgr-resolution-candidate-input');
-  const candidates = Array.from(inputs).map(el => ({
-    hypothesis_id: Number(el.dataset.hypothesisId),
-    presented_content: el.value.trim(),
-  }));
-  if (candidates.some(c => !c.presented_content)) {
-    toast('Presented content is required for every candidate.', 'error');
-    return;
-  }
   const btn = document.getElementById('kgr-prepare-resolution-btn');
   btn.disabled = true;
   try {
-    await api('POST', `/admin/kgr-cases/${currentKgrCaseId}/prepare-resolution`, { candidates });
+    // Server-derived: the snapshot is taken from the case's active contributed
+    // solutions. No request body, no client-chosen subset, no re-scoring.
+    await api('POST', `/admin/kgr-cases/${currentKgrCaseId}/prepare-resolution`, {});
     toast('Resolution statement prepared.');
     const c = await api('GET', `/admin/kgr-cases/${currentKgrCaseId}`);
     renderKgrCaseModal(c);
@@ -3501,9 +3551,47 @@ async function prepareKgrResolutionStatement() {
   }
 }
 
+async function submitKgrSolutionUI(hypothesisId) {
+  if (!currentKgrCaseId) return;
+  const ta = document.getElementById('kgr-sol-input-' + hypothesisId);
+  const originSel = document.getElementById('kgr-sol-origin-' + hypothesisId);
+  const content = (ta?.value || '').trim();
+  if (!content) { toast('Enter a proposed solution first.', 'error'); return; }
+  // A client-generated key so a retried request resolves to one row, not two.
+  const submissionKey = (self.crypto?.randomUUID?.() || String(Date.now()) + Math.random());
+  try {
+    await api('POST', `/admin/kgr-cases/${currentKgrCaseId}/solutions`, {
+      hypothesis_id: hypothesisId,
+      proposed_content: content,
+      origin: originSel?.value || 'human',
+      submission_key: submissionKey,
+    });
+    toast('Solution contributed - checked and recorded.');
+    const c = await api('GET', `/admin/kgr-cases/${currentKgrCaseId}`);
+    renderKgrCaseModal(c);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function withdrawKgrSolutionUI(solutionId) {
+  if (!currentKgrCaseId) return;
+  const reason = prompt('Reason for withdrawing this contributed solution?');
+  if (reason === null) return;
+  if (!reason.trim()) { toast('A withdrawal reason is required.', 'error'); return; }
+  try {
+    await api('POST', `/admin/kgr-cases/${currentKgrCaseId}/solutions/${solutionId}/withdraw`, { reason: reason.trim() });
+    toast('Solution withdrawn.');
+    const c = await api('GET', `/admin/kgr-cases/${currentKgrCaseId}`);
+    renderKgrCaseModal(c);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
 async function signOffKgrResolution(candidateId) {
   if (!currentKgrCaseId) return;
-  if (!confirm('Sign off this resolution? This is irreversible and will delete the unselected alternatives and their hypotheses.')) return;
+  if (!confirm('Sign off this resolution? This is irreversible: it publishes the selected answer, and deletes the unselected snapshot alternatives, every contributed solution row for the case, and any accepted hypothesis that no longer supports the selection.')) return;
   try {
     await api('POST', `/admin/kgr-cases/${currentKgrCaseId}/sign-off`, { candidate_id: candidateId });
     toast('Resolution signed off.');

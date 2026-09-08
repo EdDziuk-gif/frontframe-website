@@ -104,6 +104,9 @@ export const ADMIN_ROUTES = [
   route("PATCH", "/admin/kgr-cases/:id",                          param(handlers.updateKgrCase)),
   route("POST",  "/admin/kgr-cases/:id/hypotheses",               param(handlers.addHypothesis)),
   route("PATCH", "/admin/kgr-cases/:id/hypotheses/:hid",     twoParams(handlers.updateHypothesis)),
+  // Increment 5: human-contributed candidate solutions.
+  route("POST",  "/admin/kgr-cases/:id/solutions",                param(handlers.submitKgrSolution)),
+  route("POST",  "/admin/kgr-cases/:id/solutions/:sid/withdraw", twoParams(handlers.withdrawKgrSolution, "id", "sid")),
   route("PATCH", "/admin/kgr-cases/:id/ready",                 envParam(handlers.readyKgrCase)),
   route("PATCH", "/admin/kgr-cases/:id/escalate",              envParam(handlers.escalateKgrCase)),
   route("POST",  "/admin/kgr-cases/:id/develop",               envParam(handlers.developKgrCase)),
