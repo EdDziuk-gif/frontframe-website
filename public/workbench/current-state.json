@@ -1,6 +1,6 @@
 {
-  "as_of": "2026-09-06",
-  "workbench_revision": "14",
+  "as_of": "2026-09-08",
+  "workbench_revision": "15",
   "current_phase": "F",
   "current_phase_name": "Professional-tier completion",
   "phase_a": {
@@ -93,7 +93,7 @@
     "classification_rule": "Applying an existing recorded delegation is operational; creating, changing, contesting, or determining delegation authority is constitutional"
   },
   "phase_f": {
-    "status": "Candidate 2 Increment 4 closed, deployed, and live-verified; Candidate 1 evidence remains separately recorded",
+    "status": "Candidate 2 Increment 5 implemented; final deployment evidence pending in supplied report; concurrency verification deferred",
     "governing_decision": "Decision 0032",
     "organizational_model": "Two tiers: Management (Operator and Delegates) and Staff; reviewers/reviewer_roles are the technical identity and authority registry, not additional organizational layers",
     "candidate_1": {
@@ -112,8 +112,8 @@
     },
     "candidate_2": {
       "name": "KGR activation",
-      "status": "Increments 1–3 accepted complete; Increment 4 closed, deployed, and live-verified",
-      "governing_retention_decision": "Decision 0033",
+      "status": "Increments 1–4 accepted complete; sign-off correction verified and closed; Increment 5 implemented, final deployment confirmation pending in supplied report",
+      "governing_retention_decision": "Decisions 0033 and 0035",
       "commits": [
         "c3ac7ce",
         "dffdee9",
@@ -124,16 +124,30 @@
       "canonical_evidence": "https://github.com/EdDziuk-gif/frontframe-obsidian-vault/blob/main/FrontFrame%20Agentic%20System%20%E2%80%94%20Phase%20F%20Candidate%202%20Increment%204%20Closure%20Evidence%202026-09-06.md",
       "reference_case": "Case #1 / hypothesis #1 / statement #1 retained unsigned and unpublished",
       "follow_ups": [
-        "Migration 006 EXECUTE-grant cleanup",
+        "Record final Increment 5 deployment and smoke-check evidence",
+        "Deferred independent-session PostgreSQL concurrency tests",
         "Manual Operator review for constitutional issues detected at sign-off",
         "Whether to adopt a standing live-schema smoke test"
-      ]
+      ],
+      "signoff_correction": {
+        "commit": "691d757",
+        "migration": "009",
+        "status": "verified and closed; not a separate increment"
+      },
+      "increment_5": {
+        "commit": "0fcdd2c",
+        "worker_tests_reported": "202 passing",
+        "isolated_database_assertions_reported": "150 Increment 5 + 42 migration-009 assertions",
+        "deployment_evidence": "Initial DB/Worker deployment reported; final migration-013/revised Worker/UI and smoke-check completion not established by supplied revision 2 report",
+        "concurrency": "Independent-session PostgreSQL tests deferred by Ed; not a deployment blocker",
+        "decision": "0035 accepted"
+      }
     },
     "deferred_candidates": [
       "OPEN-6 knowledge-dependency tracking",
       "OPEN-11 provenance/history retrieval"
     ]
   },
-  "next_gate": "No deployment pending under Increment 4 closure. Select the next bounded task from operational needs; do not reset or adopt case #1 without authorization.",
-  "note": "Canonical Markdown and accepted decisions govern. Increment 4 closure and production verification are accepted from the report supplied by Ed; they are not reopened here."
+  "next_gate": "Separate elevator-pitch and positioning conversation, then capability concurrence and bounded Standard/Professional definitions. Booking in both; territory/franchise excluded. No case reset or adoption authorized.",
+  "note": "Canonical Markdown and accepted decisions govern. Supplied implementation results are distinguished from deployment closure. Strategic direction does not expand current customer promises."
 }
