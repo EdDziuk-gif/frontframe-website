@@ -412,7 +412,9 @@ describe("case history reconstruction", () => {
       .mockResolvedValueOnce([
         { id: 100, description: "H1", status: "falsified", test_notes: "wrong" },
         { id: 101, description: "H2", status: "accepted", test_notes: "confirmed" },
-      ]);
+      ])
+      .mockResolvedValueOnce([])  // fetchResolutionStatement
+      .mockResolvedValueOnce([]); // fetchSolutions
 
     const res = await getKgrCase(ENV, "7", "admin-jwt", CH);
     expect(res.status).toBe(200);
@@ -420,6 +422,7 @@ describe("case history reconstruction", () => {
     expect(body.research_notes).toBe("notes");
     expect(body.hypotheses).toHaveLength(2);
     expect(body.hypotheses.map((h) => h.status)).toEqual(["falsified", "accepted"]);
+    expect(body.solutions).toEqual({ active: [], withdrawn: [] });
   });
 
   // Regression: fetchCase()'s select originally omitted the embedded
@@ -433,7 +436,9 @@ describe("case history reconstruction", () => {
         id: 7, status: "in_development", research_notes: null, escalation_reason: null,
         gap_resolution_requests: { questions: { question_text: "Does FrontFrame offer an SLA?" } },
       }])
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce([])  // hypotheses
+      .mockResolvedValueOnce([])  // fetchResolutionStatement
+      .mockResolvedValueOnce([]); // fetchSolutions
 
     const res = await getKgrCase(ENV, "7", "admin-jwt", CH);
     const body = await res.json();
@@ -448,7 +453,8 @@ describe("case history reconstruction", () => {
     supabaseFetchMock
       .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", research_notes: null, escalation_reason: null }])
       .mockResolvedValueOnce([])   // hypotheses
-      .mockResolvedValueOnce([]);  // fetchResolutionStatement - none saved
+      .mockResolvedValueOnce([])   // fetchResolutionStatement - none saved
+      .mockResolvedValueOnce([]);  // fetchSolutions
     const res = await getKgrCase(ENV, "7", "admin-jwt", CH);
     const body = await res.json();
     expect(body.resolution_statement).toBeNull();
@@ -822,14 +828,90 @@ describe("getKgrCase resolution_statement select (Increment 4 columns)", () => {
     mockAuth();
     supabaseFetchMock
       .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", research_notes: null, escalation_reason: null }])
-      .mockResolvedValueOnce([]) // hypotheses
-      .mockResolvedValueOnce([]); // resolution statement
+      .mockResolvedValueOnce([])  // hypotheses
+      .mockResolvedValueOnce([])  // resolution statement
+      .mockResolvedValueOnce([]); // fetchSolutions
     await getKgrCase(ENV, "7", "admin-jwt", CH);
     const stmtCall = supabaseFetchMock.mock.calls.find((c) => c[1] === "kgr_resolution_statements");
     expect(stmtCall[2]).toContain("selected_candidate_id");
     expect(stmtCall[2]).toContain("signed_off_by");
     expect(stmtCall[2]).toContain("signed_off_at");
     expect(stmtCall[2]).toContain("qa_pair_id");
+  });
+});
+
+// ── getKgrCase solutions (Increment 5) ──────────────────────────────────
+
+describe("getKgrCase solutions (Increment 5)", () => {
+  it("always includes solutions.active and solutions.withdrawn even when the table is empty", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "in_development", research_notes: null, escalation_reason: null }])
+      .mockResolvedValueOnce([])  // hypotheses
+      .mockResolvedValueOnce([])  // fetchResolutionStatement
+      .mockResolvedValueOnce([]); // fetchSolutions - no solutions yet
+    const res = await getKgrCase(ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.solutions).toEqual({ active: [], withdrawn: [] });
+  });
+
+  it("separates active and withdrawn solutions by status", async () => {
+    mockAuth();
+    const activeSolution = {
+      id: 1, kgr_hypothesis_id: 100, proposed_content: "Use caching", status: "active",
+      submitted_by: "rev-uuid", origin: "human", score: null, rationale: null,
+      constitutional_provisions_hash: null, problem_snapshot: null,
+      withdrawn_by: null, withdrawn_reason: null, withdrawn_at: null, created_at: "2026-01-01T00:00:00Z",
+    };
+    const withdrawnSolution = {
+      id: 2, kgr_hypothesis_id: 100, proposed_content: "Rebuild from scratch", status: "withdrawn",
+      submitted_by: "rev-uuid", origin: "human", score: null, rationale: null,
+      constitutional_provisions_hash: null, problem_snapshot: null,
+      withdrawn_by: "rev-uuid", withdrawn_reason: "Out of scope", withdrawn_at: "2026-01-02T00:00:00Z", created_at: "2026-01-01T00:01:00Z",
+    };
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "in_development", research_notes: null, escalation_reason: null }])
+      .mockResolvedValueOnce([])                         // hypotheses
+      .mockResolvedValueOnce([])                         // fetchResolutionStatement
+      .mockResolvedValueOnce([activeSolution, withdrawnSolution]); // fetchSolutions
+    const res = await getKgrCase(ENV, "7", "admin-jwt", CH);
+    const body = await res.json();
+    expect(body.solutions.active).toHaveLength(1);
+    expect(body.solutions.active[0].id).toBe(1);
+    expect(body.solutions.withdrawn).toHaveLength(1);
+    expect(body.solutions.withdrawn[0].id).toBe(2);
+  });
+
+  it("fetchSolutions queries kgr_candidate_solutions filtered by kgr_case_id", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "in_development", research_notes: null, escalation_reason: null }])
+      .mockResolvedValueOnce([])  // hypotheses
+      .mockResolvedValueOnce([])  // fetchResolutionStatement
+      .mockResolvedValueOnce([]); // fetchSolutions
+    await getKgrCase(ENV, "7", "admin-jwt", CH);
+    const solutionsCall = supabaseFetchMock.mock.calls.find((c) => c[1] === "kgr_candidate_solutions");
+    expect(solutionsCall).toBeDefined();
+    expect(solutionsCall[2]).toContain("kgr_case_id=eq.7");
+    expect(solutionsCall[2]).toContain("status");
+    expect(solutionsCall[2]).toContain("withdrawn_by");
+  });
+
+  it("fetchResolutionStatement select includes the five Increment 5 provenance columns", async () => {
+    mockAuth();
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ id: 7, status: "ready_for_decision", research_notes: null, escalation_reason: null }])
+      .mockResolvedValueOnce([])  // hypotheses
+      .mockResolvedValueOnce([])  // fetchResolutionStatement
+      .mockResolvedValueOnce([]); // fetchSolutions
+    await getKgrCase(ENV, "7", "admin-jwt", CH);
+    const stmtCall = supabaseFetchMock.mock.calls.find((c) => c[1] === "kgr_resolution_statements");
+    expect(stmtCall[2]).toContain("origin_solution_id");
+    expect(stmtCall[2]).toContain("submitted_by");
+    expect(stmtCall[2]).toContain("origin");
+    expect(stmtCall[2]).toContain("constitutional_provisions_hash");
+    expect(stmtCall[2]).toContain("problem_snapshot");
   });
 });
 
