@@ -616,13 +616,12 @@
     <div class="tab-panel" id="tab-qa">
       <div class="page-header">
         <div class="page-title">Q&amp;A Pairs</div>
-        <div class="page-sub">Knowledge base served to all agents</div>
+        <div class="page-sub">Promulgated knowledge base served to all agents. Read-only &mdash; every change goes through a KGR case and is published on sign-off.</div>
       </div>
       <div class="card">
         <div class="card-header">
           <div style="display:flex;align-items:center;gap:12px">
             <div class="card-title">Pairs <span id="qa-count" class="text-gray" style="font-weight:400"></span></div>
-            <button class="btn btn-primary btn-sm" onclick="openQaModal()">+ Add Pair</button>
           </div>
           <div class="filter-bar">
             <input type="text" id="qa-filter" placeholder="Search id, question, answer&#x2026;" oninput="renderQa()">
@@ -649,7 +648,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Question</th><th>Answer</th><th>Page</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Question</th><th>Answer</th><th>Page</th><th>Status</th></tr></thead>
             <tbody id="qa-tbody"></tbody>
           </table>
         </div>
@@ -660,11 +659,11 @@
     <div class="tab-panel" id="tab-system-prompt">
       <div class="page-header">
         <div class="page-title">System Prompt</div>
-        <div class="page-sub">Base instructions for each page agent</div>
+        <div class="page-sub">Promulgated base instructions for each page agent. Read-only &mdash; a page is revised only by signing off a KGR case that targets it.</div>
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Edit Prompt</div>
+          <div class="card-title">View Prompt</div>
           <select id="prompt-page-select" onchange="loadPromptForPage()">
             <option value="all">all (global)</option>
             <option value="home">home</option>
@@ -677,11 +676,8 @@
           </select>
         </div>
         <div class="card-body">
-          <textarea id="prompt-content" rows="18" placeholder="Enter system prompt content&#x2026;"></textarea>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn btn-primary" onclick="savePrompt()">Save Prompt</button>
-            <button class="btn btn-ghost"   onclick="loadPromptForPage()">Reset</button>
-          </div>
+          <pre id="prompt-content" style="white-space:pre-wrap;word-break:break-word;background:var(--bg-subtle,#f6f7f9);border:1.5px solid var(--border);border-radius:6px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5;max-height:60vh;overflow:auto;margin:0"></pre>
+          <div style="margin-top:10px;font-size:12px;color:var(--gray)">Read-only. A page revision is promulgated only by signing off a KGR case whose target is this page.</div>
         </div>
       </div>
     </div>
@@ -748,12 +744,17 @@
     <div class="tab-panel" id="tab-gap-queue">
       <div class="page-header">
         <div class="page-title">Unresolved Questions</div>
-        <div class="page-sub">Real visitor questions the assistant withheld — constitutional-authority questions and knowledge gaps the corpus can't answer. Nothing here is answered automatically; delete off-topic or test entries.</div>
+        <div class="page-sub">Real visitor questions the assistant withheld — knowledge gaps the corpus can't answer. Start Case (Staff or Management) authorizes the question and opens a KGR case; that case's sign-off is the only route into the corpus. Management can delete an off-topic or test entry only while it has no case and is not resolved.</div>
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Queue</div>
-          <button class="btn btn-ghost btn-sm" onclick="loadGapQueue()">&#x21BA;</button>
+          <div class="card-title">Queue <span id="gap-queue-count" class="text-gray" style="font-weight:400"></span></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="font-size:12px;color:var(--gray);display:flex;gap:5px;align-items:center">
+              <input type="checkbox" id="gap-queue-show-all" onchange="loadGapQueue()"> Show resolved &amp; escalated
+            </label>
+            <button class="btn btn-ghost btn-sm" onclick="loadGapQueue()">&#x21BA;</button>
+          </div>
         </div>
         <div class="table-wrap">
           <table>
@@ -761,6 +762,7 @@
             <tbody id="gap-queue-tbody"></tbody>
           </table>
         </div>
+        <div id="gap-queue-resolved" style="margin-top:16px"></div>
       </div>
     </div>
 
@@ -1621,41 +1623,6 @@
   </div>
 </div>
 
-<div class="modal-backdrop" id="qa-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="qa-modal-title">Add Q&amp;A Pair</div>
-      <button class="modal-close" onclick="closeModal('qa-modal')">&#x00D7;</button>
-    </div>
-    <input type="hidden" id="qa-modal-id">
-    <div class="form-group"><label>Question</label><input type="text" id="qa-question" placeholder="What does FrontFrame do?"></div>
-    <div class="form-group"><label>Answer</label><textarea id="qa-answer" rows="5" placeholder="FrontFrame builds&#x2026;"></textarea></div>
-    <div class="form-group">
-      <label>Page</label>
-      <select id="qa-page">
-        <option value="all">all (global)</option>
-        <option value="home">home</option>
-        <option value="intake">intake</option>
-        <option value="discovery">discovery</option>
-        <option value="yours">yours</option>
-        <option value="resources">resources</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Status</label>
-      <select id="qa-status">
-        <option value="implemented">implemented</option>
-        <option value="under_review">under_review</option>
-        <option value="redundant">redundant</option>
-      </select>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('qa-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveQaPair()">Save Pair</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-backdrop" id="defect-modal">
   <div class="modal">
     <div class="modal-header">
@@ -1848,6 +1815,9 @@
       <div id="kgr-case-question" style="font-size:13px;color:var(--gray);margin-bottom:12px"></div>
       <div id="kgr-case-status-row" style="margin-bottom:14px"></div>
 
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Resolution Target</label>
+      <div id="kgr-target-section" style="margin-bottom:16px"></div>
+
       <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Research Notes</label>
       <textarea id="kgr-case-notes" rows="4" style="width:100%;box-sizing:border-box;padding:8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit"></textarea>
       <div style="margin-top:6px;margin-bottom:16px">
@@ -1898,7 +1868,6 @@ let session       = null;
 let alerts        = [];
 let agreements    = [];
 let qaPairs       = [];
-let qaEditSnapshot = null;   // values of the row as loaded into the edit modal (Defect: stale re-submit)
 let defects       = [];
 let feedback      = [];
 let reviewQueue   = [];
@@ -2334,7 +2303,10 @@ function populateQaJump() {
 function qaJump(sel) {
   const id = sel.value;
   sel.value = '';
-  if (id) openQaModal(id);
+  if (!id) return;
+  const row = document.querySelector(`#qa-tbody button[data-qa-id="${id}"]`);
+  if (row) { row.closest('tr').scrollIntoView({ block: 'center', behavior: 'smooth' }); row.closest('tr').style.outline = '2px solid var(--accent,#4c8bf5)'; setTimeout(() => { row.closest('tr').style.outline = ''; }, 1500); }
+  else toast('That pair is filtered out of the current view.');
 }
 
 function copyQaId(id) {
@@ -2362,124 +2334,36 @@ function renderQa() {
     ? `(${qaPairs.length})`
     : `(${filtered.length} of ${qaPairs.length})`;
 
-  if (!qaPairs.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No pairs yet</div></td></tr>`; return; }
-  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No matching pairs</div></td></tr>`; return; }
+  if (!qaPairs.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No pairs yet</div></td></tr>`; return; }
+  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No matching pairs</div></td></tr>`; return; }
 
   const statusClass = { implemented: 'badge-active', under_review: 'badge-open', redundant: 'badge-closed' };
   tbody.innerHTML = filtered.map(p => `
     <tr>
-      <td><button class="btn btn-ghost btn-xs mono" title="${esc(p.id ?? '')} \u2014 click to copy" onclick="copyQaId('${p.id}')">${esc((p.id ?? '').slice(0, 8))}</button></td>
+      <td><button class="btn btn-ghost btn-xs mono" data-qa-id="${esc(p.id ?? '')}" title="${esc(p.id ?? '')} \u2014 click to copy" onclick="copyQaId('${p.id}')">${esc((p.id ?? '').slice(0, 8))}</button></td>
       <td style="max-width:220px">${esc(p.question)}</td>
       <td style="max-width:300px;color:var(--gray)">${esc(p.answer?.slice(0,120))}${p.answer?.length>120?'\u2026':''}</td>
       <td><span class="badge badge-new">${esc(p.page ?? 'all')}</span></td>
       <td><span class="badge ${statusClass[p.status] ?? 'badge-closed'}">${esc(p.status ?? '\u2014')}</span></td>
-      <td>
-        <div class="flex-row">
-          <button class="btn btn-ghost btn-xs" onclick="openQaModal('${p.id}')">Edit</button>
-          <button class="btn btn-danger btn-xs" onclick="deleteQaPair('${p.id}')">Del</button>
-        </div>
-      </td>
     </tr>
   `).join('');
 }
 
-function qaFields(src) {
-  return {
-    question: (src.question ?? '').trim(),
-    answer:   (src.answer ?? '').trim(),
-    page:     src.page ?? 'all',
-    status:   src.status ?? 'under_review',
-  };
-}
+// Q&A pairs are read-only in the admin. The promulgated corpus is written only
+// by KGR sign-off (migration 014 removed POST/PUT/DELETE /qa); there is no
+// add/edit/delete surface here any more.
 
-function openQaModal(id) {
-  const p = id ? qaPairs.find(q => q.id === id) : null;
-  document.getElementById('qa-modal-title').textContent = p ? 'Edit Q&A Pair' : 'Add Q&A Pair';
-  document.getElementById('qa-modal-id').value   = p?.id ?? '';
-  document.getElementById('qa-question').value   = p?.question ?? '';
-  document.getElementById('qa-answer').value     = p?.answer ?? '';
-  document.getElementById('qa-page').value       = p?.page ?? 'all';
-  document.getElementById('qa-status').value     = p?.status ?? 'under_review';
-  // Snapshot the row as loaded, so save sends only what actually changed and
-  // can detect a concurrent edit instead of re-writing every field blindly.
-  qaEditSnapshot = p ? qaFields(p) : null;
-  document.getElementById('qa-modal').classList.add('open');
-}
-
-async function saveQaPair() {
-  const id    = document.getElementById('qa-modal-id').value;
-  const modal = qaFields({
-    question: document.getElementById('qa-question').value,
-    answer:   document.getElementById('qa-answer').value,
-    page:     document.getElementById('qa-page').value,
-    status:   document.getElementById('qa-status').value,
-  });
-  if (!modal.question || !modal.answer) { toast('Question and answer are required.', 'error'); return; }
-  try {
-    if (id) {
-      const snap = qaEditSnapshot ?? {};
-      const changed = {};
-      ['question', 'answer', 'page', 'status'].forEach(k => { if (modal[k] !== snap[k]) changed[k] = modal[k]; });
-      if (!Object.keys(changed).length) { toast('No changes to save.'); closeModal('qa-modal'); return; }
-
-      // Concurrency guard: re-read the row; if it moved under us, abort so a
-      // stale single-field edit can't revert someone else's change.
-      const fresh = await api('GET', '/qa');
-      qaPairs = fresh;
-      const serverRow = fresh.find(p => p.id === id);
-      if (!serverRow) {
-        toast('That pair no longer exists — it was deleted elsewhere.', 'error');
-        closeModal('qa-modal'); populateQaJump(); renderQa(); return;
-      }
-      const serverSnap = qaFields(serverRow);
-      if (['question', 'answer', 'page', 'status'].some(k => serverSnap[k] !== snap[k])) {
-        toast('This pair changed elsewhere since you opened it. Your edit was not saved — reopen it and reapply.', 'error');
-        closeModal('qa-modal'); populateQaJump(); renderQa(); return;
-      }
-
-      await api('PUT', `/qa/${id}`, changed);
-      const idx = qaPairs.findIndex(p => p.id === id);
-      if (idx >= 0) qaPairs[idx] = { ...qaPairs[idx], ...changed };
-    } else {
-      const created = await api('POST', '/qa', modal);
-      const newPair = Array.isArray(created) ? created[0] : created;
-      if (newPair) qaPairs.push(newPair);
-    }
-    closeModal('qa-modal');
-    populateQaJump();
-    renderQa();
-    toast('Saved.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function deleteQaPair(id) {
-  if (!confirm('Delete this Q&A pair?')) return;
-  try {
-    await api('DELETE', `/qa/${id}`);
-    qaPairs = qaPairs.filter(p => p.id !== id);
-    populateQaJump();
-    renderQa();
-    toast('Deleted.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-// System Prompt
+// System Prompt — read-only viewer. A page revision is promulgated only by
+// signing off a KGR case whose resolution target is that page (migration 014
+// removed POST /admin/system-prompt/:page).
 
 async function loadPromptForPage() {
   const page = document.getElementById('prompt-page-select').value;
   try {
     const data = await api('GET', `/admin/system-prompt/${page}`);
-    document.getElementById('prompt-content').value = data.content ?? '';
+    document.getElementById('prompt-content').textContent =
+      (data.content ?? '').trim() || '(no prompt set for this page)';
   } catch (e) { toast('Failed to load prompt: ' + e.message, 'error'); }
-}
-
-async function savePrompt() {
-  const page    = document.getElementById('prompt-page-select').value;
-  const content = document.getElementById('prompt-content').value;
-  try {
-    await api('POST', `/admin/system-prompt/${page}`, { content });
-    toast('Prompt saved.');
-  } catch (e) { toast(e.message, 'error'); }
 }
 
 // Defects
@@ -3250,33 +3134,88 @@ async function deleteQueueRecord(id) {
 
 // Gap Resolution Queue
 
+// The actionable queue is `resolved_at IS NULL AND escalated_at IS NULL`.
+// "Show resolved & escalated" additionally pulls the archived rows (state=all,
+// filtered locally) into a collapsed section. Start Case is the authorization
+// point — it stamps authorized_at/authorized_by and opens the case atomically.
+function gapQueueCase(r) {
+  const k = Array.isArray(r.kgr_cases) ? r.kgr_cases[0] : r.kgr_cases;
+  return k && k.id ? k : null;
+}
+
 async function loadGapQueue() {
-  try { gapQueue = await api('GET', '/admin/gap-resolution-requests'); } catch (e) { toast('Failed to load gap queue: ' + e.message, 'error'); return; }
+  const showAll = !!document.getElementById('gap-queue-show-all')?.checked;
+  try {
+    gapQueue = await api('GET', '/admin/gap-resolution-requests?state=actionable');
+  } catch (e) { toast('Failed to load gap queue: ' + e.message, 'error'); return; }
+  let archived = null;
+  if (showAll) {
+    try {
+      const all = await api('GET', '/admin/gap-resolution-requests?state=all');
+      archived = all.filter(r => r.resolved_at || r.escalated_at);
+    } catch (e) { toast('Failed to load archived questions: ' + e.message, 'error'); }
+  }
   renderGapQueue();
+  renderGapQueueArchived(archived);
   updateBadges();
 }
 
 function renderGapQueue() {
   const tbody = document.getElementById('gap-queue-tbody');
   if (!tbody) return;
+  const count = document.getElementById('gap-queue-count');
+  if (count) count.textContent = gapQueue.length ? `(${gapQueue.length})` : '';
   if (!gapQueue.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No unresolved questions</div></td></tr>`; return; }
+  const isManagement = currentReviewerRole === 'frontframe_admin';
   tbody.innerHTML = gapQueue.map(r => {
     const q      = esc(r.questions?.question_text ?? '—');
     const a      = esc((r.candidate_answers?.answer_text ?? '—').slice(0, 140));
     const reason = esc(r.routes?.route_reason ?? '—');
-    const status = r.authorized_at ? '<span class="badge badge-promoted">Authorized</span>' : '<span class="badge badge-open">Open</span>';
-    const scope  = r.permitted_scope ? `<div style="font-size:12px;color:var(--gray);margin-top:2px">Scope: ${esc(r.permitted_scope)}</div>` : '';
-    const authorizeBtn = r.authorized_at ? '' : `<button class="btn btn-xs" onclick="authorizeGapQueueRecord('${r.id}')">Authorize</button> `;
-    const startCaseBtn = r.authorized_at ? `<button class="btn btn-xs" onclick="startKgrCase(${r.id})">Start Case</button> ` : '';
+    const companion = r.companion_of_request_id
+      ? `<div style="font-size:12px;color:var(--gray);margin-top:2px">Companion of request #${esc(String(r.companion_of_request_id))}</div>` : '';
+    const kase = gapQueueCase(r);
+    let status, actions;
+    if (kase) {
+      const badgeClass = KGR_STATUS_BADGE[kase.status] || 'badge-open';
+      status  = `<span class="badge ${badgeClass}">case ${esc(kase.status)}</span>`;
+      actions = `<button class="btn btn-xs" onclick="openKgrCaseModal(${kase.id})">Open Case</button>`;
+    } else {
+      status  = '<span class="badge badge-open">Open</span>';
+      actions = `<button class="btn btn-xs" onclick="startKgrCase(${r.id})">Start Case</button>`;
+      if (isManagement) actions += ` <button class="btn btn-danger btn-xs" onclick="deleteGapQueueRecord('${r.id}')">Delete</button>`;
+    }
     return `<tr>
-      <td style="max-width:260px">${q}</td>
+      <td style="max-width:260px">${q}${companion}</td>
       <td style="max-width:280px;color:var(--gray)">${a}</td>
       <td>${reason}</td>
       <td>${fmtDate(r.requested_at)}</td>
-      <td>${status}${scope}</td>
-      <td>${authorizeBtn}${startCaseBtn}<button class="btn btn-danger btn-xs" onclick="deleteGapQueueRecord('${r.id}')">Delete</button></td>
+      <td>${status}</td>
+      <td>${actions}</td>
     </tr>`;
   }).join('');
+}
+
+function renderGapQueueArchived(rows) {
+  const host = document.getElementById('gap-queue-resolved');
+  if (!host) return;
+  if (rows === null) { host.innerHTML = ''; return; }
+  if (!rows.length) { host.innerHTML = `<div style="font-size:12px;color:var(--gray)">No resolved or escalated questions.</div>`; return; }
+  const item = (r) => {
+    const q = esc(r.questions?.question_text ?? '—');
+    const kind = r.resolved_at
+      ? `<span class="badge badge-promoted">resolved</span> ${fmtDate(r.resolved_at)}`
+      : `<span class="badge badge-high">escalated</span> ${fmtDate(r.escalated_at)}`;
+    const target = r.resolved_qa_pair_id
+      ? `qa_pair <span class="mono">${esc(String(r.resolved_qa_pair_id).slice(0, 8))}</span>`
+      : (r.resolved_system_prompt_page ? `system_prompt page <span class="mono">${esc(r.resolved_system_prompt_page)}</span>` : '—');
+    const caseRef = r.resolved_kgr_case_id ? ` &middot; case #${esc(String(r.resolved_kgr_case_id))}` : '';
+    return `<div style="padding:6px 0;border-top:1px solid var(--border)">
+      <div style="font-size:13px">${q}</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:2px">${kind}${caseRef} &middot; ${target}</div>
+    </div>`;
+  };
+  host.innerHTML = `<details><summary style="cursor:pointer;font-size:13px;font-weight:600">Resolved &amp; escalated (${rows.length})</summary>
+    <div style="margin-top:6px">${rows.map(item).join('')}</div></details>`;
 }
 
 // Bugfix (found during Increment 1 live verification): row ids come back
@@ -3297,21 +3236,10 @@ async function deleteGapQueueRecord(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// Phase F Candidate 2, Increment 1: authorization gate only. Sets
-// authorized_by (server-derived from the authenticated reviewer) and
-// authorized_at, plus an optional permitted_scope note. Does not start
-// research, call a model, notify anyone, or write anything past this
-// queue row. Management-gated server-side (frontframe_admin); this button
-// is shown to any admin-tab user but the server rejects a Staff caller.
-async function authorizeGapQueueRecord(id) {
-  const scope = prompt('Permitted scope (what is being authorized)? Optional.');
-  if (scope === null) return; // cancelled
-  try {
-    await api('PATCH', `/admin/gap-resolution-requests/${id}/authorize`, { permitted_scope: scope || null });
-    await loadGapQueue();
-    toast('Authorized.');
-  } catch (e) { toast(e.message, 'error'); }
-}
+// Migration 014 removed the separate Authorize step: start_kgr_case (Start Case)
+// stamps authorized_at/authorized_by in the same transaction that opens the
+// case. Deletion is Management-only and the server 409s a linked/resolved/
+// escalated row — the button is only shown for an unlinked actionable row.
 
 // Phase F Candidate 2, Increment 2: KGR case development record.
 // List/detail/mutate a case's research notes and hypotheses. /develop makes
@@ -3377,6 +3305,8 @@ function renderKgrCaseModal(c) {
     statusRow += `<div style="font-size:12px;color:var(--gray);margin-top:6px">Escalation reason: ${esc(c.escalation_reason)}</div>`;
   }
   document.getElementById('kgr-case-status-row').innerHTML = statusRow;
+
+  renderKgrTargetSection(c);
 
   const notesEl = document.getElementById('kgr-case-notes');
   notesEl.value = c.research_notes || '';
@@ -3460,11 +3390,110 @@ function renderKgrCaseModal(c) {
   if (!frozen) {
     const readyTitle = everyAcceptedCovered ? '' : ' title="Every accepted hypothesis needs at least one active contributed solution first."';
     actionsHtml += `<button class="btn btn-sm" ${canReady ? '' : 'disabled'}${readyTitle} onclick="readyKgrCase()">Mark Ready for Decision</button>`;
+    actionsHtml += `<button class="btn btn-ghost btn-sm" onclick="openCompanionCaseUI()">Open companion case</button>`;
     actionsHtml += `<button class="btn btn-ghost btn-sm" onclick="escalateKgrCase()">Escalate (Constitutional)</button>`;
   }
   document.getElementById('kgr-case-actions').innerHTML = actionsHtml;
 
   renderKgrResolutionSection(c);
+}
+
+// ── Resolution target (plan §3.4 / §4.1i / §4.1j) ──────────────────────────
+// One target per case. Set only while in_development; frozen once the case
+// leaves development; read (never re-chosen) at sign-off.
+
+function kgrTargetSummary(c) {
+  if (c.resolution_target === 'system_prompt')
+    return `System-prompt page <span class="mono">${esc(c.target_system_prompt_page || '—')}</span>`;
+  if (c.supersedes_qa_pair_id)
+    return `Replaces qa_pair <span class="mono">${esc(String(c.supersedes_qa_pair_id).slice(0, 8))}</span>`;
+  return 'New answer (a new qa_pair)';
+}
+
+async function populateKgrTargetQaOptions(selectedId) {
+  const sel = document.getElementById('kgr-target-qa');
+  if (!sel) return;
+  if (!qaPairs.length) {
+    try { qaPairs = await api('GET', '/qa'); } catch (e) { /* leave list empty */ }
+  }
+  const impl = qaPairs.filter(p => p.status === 'implemented');
+  sel.innerHTML = impl.length
+    ? impl.map(p => `<option value="${esc(p.id)}" ${p.id === selectedId ? 'selected' : ''}>${esc(p.page || 'all')} · ${esc((p.question || '').slice(0, 70))}</option>`).join('')
+    : `<option value="">(no implemented pairs)</option>`;
+}
+
+function onKgrTargetKindChange() {
+  const kind = document.querySelector('input[name="kgr-target-kind"]:checked')?.value;
+  const rr = document.getElementById('kgr-target-replace-row');
+  const sr = document.getElementById('kgr-target-sp-row');
+  if (rr) rr.style.display = kind === 'replace' ? 'block' : 'none';
+  if (sr) sr.style.display = kind === 'system_prompt' ? 'block' : 'none';
+}
+
+function renderKgrTargetSection(c) {
+  const host = document.getElementById('kgr-target-section');
+  if (!host) return;
+  const frozen = c.status !== 'in_development';
+  const revNote = `<span style="font-size:12px;color:var(--gray)">revision ${esc(String(c.target_revision ?? 0))}</span>`;
+  if (frozen) {
+    host.innerHTML = `<div style="font-size:13px">${kgrTargetSummary(c)} &middot; ${revNote}</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:3px">Frozen &mdash; the target is read-only once the case leaves development.</div>`;
+    return;
+  }
+  const t = c.resolution_target === 'system_prompt' ? 'system_prompt' : (c.supersedes_qa_pair_id ? 'replace' : 'new');
+  const pages = ['all', 'home', 'intake', 'discovery', 'yours', 'admin', 'proposal', 'resources'];
+  host.innerHTML = `
+    <div style="font-size:13px;margin-bottom:6px">Current: <strong>${kgrTargetSummary(c)}</strong> &middot; ${revNote}</div>
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:13px">
+      <label><input type="radio" name="kgr-target-kind" value="new" ${t === 'new' ? 'checked' : ''} onchange="onKgrTargetKindChange()"> New answer</label>
+      <label><input type="radio" name="kgr-target-kind" value="replace" ${t === 'replace' ? 'checked' : ''} onchange="onKgrTargetKindChange()"> Replace an existing answer</label>
+      <div id="kgr-target-replace-row" style="display:${t === 'replace' ? 'block' : 'none'};margin-left:22px">
+        <select id="kgr-target-qa" style="width:100%;padding:6px;border:1.5px solid var(--border);border-radius:6px"></select>
+      </div>
+      <label><input type="radio" name="kgr-target-kind" value="system_prompt" ${t === 'system_prompt' ? 'checked' : ''} onchange="onKgrTargetKindChange()"> System-prompt page</label>
+      <div id="kgr-target-sp-row" style="display:${t === 'system_prompt' ? 'block' : 'none'};margin-left:22px">
+        <select id="kgr-target-sp" style="width:100%;padding:6px;border:1.5px solid var(--border);border-radius:6px">
+          ${pages.map(p => `<option value="${p}" ${c.target_system_prompt_page === p ? 'selected' : ''}>${p}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--danger,#c0392b);margin-top:6px">Switching between an answer target and a prompt target discards every contributed solution on this case.</div>
+    <button class="btn btn-sm" style="margin-top:8px" onclick="saveKgrCaseTarget()">Save Target</button>`;
+  populateKgrTargetQaOptions(c.supersedes_qa_pair_id);
+}
+
+async function saveKgrCaseTarget() {
+  if (!currentKgrCaseId) return;
+  const kind = document.querySelector('input[name="kgr-target-kind"]:checked')?.value;
+  let body;
+  if (kind === 'system_prompt') {
+    body = { resolution_target: 'system_prompt', target_system_prompt_page: document.getElementById('kgr-target-sp').value };
+  } else if (kind === 'replace') {
+    const qa = document.getElementById('kgr-target-qa').value;
+    if (!qa) { toast('Pick the answer this case replaces.', 'error'); return; }
+    body = { resolution_target: 'qa_pair', supersedes_qa_pair_id: qa };
+  } else {
+    body = { resolution_target: 'qa_pair', supersedes_qa_pair_id: null };
+  }
+  try {
+    const c = await api('PATCH', `/admin/kgr-cases/${currentKgrCaseId}/target`, body);
+    toast('Target updated.');
+    renderKgrCaseModal(c);
+    await loadKgrCases();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function openCompanionCaseUI() {
+  if (!currentKgrCaseId) return;
+  const text = prompt('Problem statement for the companion case (a second corpus target for this same problem):');
+  if (text === null) return;
+  if (!text.trim()) { toast('A problem statement is required.', 'error'); return; }
+  try {
+    const c = await api('POST', `/admin/kgr-cases/${currentKgrCaseId}/companion`, { problem_text: text.trim() });
+    toast('Companion case opened.');
+    await loadKgrCases();
+    openKgrCaseModal(c.id);
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 function renderKgrResolutionSection(c) {
@@ -3484,6 +3513,18 @@ function renderKgrResolutionSection(c) {
     const rs = c.resolution_statement;
     const candidates = rs.kgr_resolution_candidates || [];
     const isManagement = currentReviewerRole === 'frontframe_admin';
+
+    // Frozen target, shown to the signer (who only picks the winning candidate).
+    let targetLine = kgrTargetSummary(c);
+    if (c.resolution_target === 'qa_pair' && c.supersedes_qa_pair_id) {
+      const pred = qaPairs.find(p => p.id === c.supersedes_qa_pair_id);
+      if (pred) targetLine += ` &mdash; the new answer publishes on page <span class="mono">${esc(pred.page || 'all')}</span>`;
+    }
+    const sph = rs.system_prompt_history;
+    const adoptedPrompt = (rs.signed_off_at && c.resolution_target === 'system_prompt' && sph)
+      ? `<div style="font-size:13px;font-weight:600;margin:12px 0 4px">Adopted page content</div>
+         <pre style="white-space:pre-wrap;word-break:break-word;background:var(--offwhite);border:1.5px solid var(--border);border-radius:6px;padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;max-height:40vh;overflow:auto;margin:0">${esc(sph.adopted_content || '')}</pre>` : '';
+    const targetBanner = `<div style="font-size:12px;color:var(--gray);margin-bottom:10px;padding:7px 9px;background:var(--offwhite);border-radius:6px">Resolution target (frozen): ${targetLine}</div>${adoptedPrompt}`;
     let decisionHtml;
     if (rs.signed_off_at) {
       const selected = candidates.find(cd => cd.id === rs.selected_candidate_id);
@@ -3507,6 +3548,7 @@ function renderKgrResolutionSection(c) {
       }).join('') || '<div class="empty-state">No candidates</div>';
     }
     readonlyBox.innerHTML = `
+      ${targetBanner}
       <div style="font-size:12px;color:var(--gray);margin-bottom:10px">Prepared ${new Date(rs.created_at).toLocaleString()}.${rs.signed_off_at ? '' : ' Read-only - no selection or sign-off has been made yet.'}</div>
       <div style="font-size:13px;font-weight:600;margin-bottom:4px">Problem Statement</div>
       <div style="margin-bottom:12px;padding:8px;background:var(--offwhite);border-radius:6px;font-size:13px">${esc(rs.problem_statement)}</div>
@@ -4030,8 +4072,10 @@ function updateBadges() {
   const openFeedback   = feedback.filter(f => !f.promoted).length;
   const queueCandidates = reviewQueue.filter(r => r.status === 'candidate').length;
   setBadge('badge-feedback', openFeedback + queueCandidates);
-  const openGapQueue = gapQueue.filter(r => !r.authorized_at).length;
-  setBadge('badge-gap-queue', openGapQueue);
+  // gapQueue holds only actionable rows (resolved_at IS NULL AND escalated_at
+  // IS NULL). Rows with a case in progress are counted — they are open
+  // questions, just not startable — hence "open questions", not "to start".
+  setBadge('badge-gap-queue', gapQueue.length);
   const pendingProposals = proposals.filter(p => p.status === 'pending_review').length;
   setBadge('badge-constitution', pendingProposals);
   const openIncidents = authIncidents.filter(i => i.status === 'open').length;

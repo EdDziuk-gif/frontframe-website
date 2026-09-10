@@ -14,8 +14,10 @@ describe("Q&A corpus query for visitor generation", () => {
     expect(buildQaPairsQuery("home")).toContain("order=created_at.asc");
   });
 
-  it("only selects the fields generation needs", () => {
-    expect(buildQaPairsQuery("home")).toContain("select=question,answer");
+  it("selects the fields generation needs, plus id for the under-review caveat", () => {
+    // Migration 014: `id` is needed so chat.js can flag a pair an open KGR
+    // replacement case is reworking.
+    expect(buildQaPairsQuery("home")).toContain("select=id,question,answer");
   });
 
   it("URL-encodes the page value", () => {

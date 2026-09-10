@@ -49,6 +49,7 @@ const {
   createKgrCase, listKgrCases, getKgrCase, updateKgrCase,
   addHypothesis, updateHypothesis, readyKgrCase, escalateKgrCase, developKgrCase,
   prepareResolutionStatement, signOffKgrResolution, listFalsifiedHypotheses, deleteFalsifiedHypothesis,
+  setKgrCaseTarget, openCompanionCase,
 } = await import("../src/routes/kgr.js");
 
 const CH = {};
@@ -90,69 +91,61 @@ beforeEach(() => {
 
 // ── createKgrCase ────────────────────────────────────────────────────────
 
-describe("createKgrCase", () => {
+// Migration 014 / decision 0036: "Start Case" is Staff or Management, and the
+// whole thing (reject resolved/escalated/has-a-case, stamp authorized_*, insert
+// one case at the default target) is the start_kgr_case RPC — one transaction,
+// replacing the old read-then-write. The handler just maps RPC errors to codes.
+describe("createKgrCase (Start Case)", () => {
   it("rejects a missing/invalid JWT", async () => {
     mockInvalidJwt();
     const res = await createKgrCase(mockRequest({ gap_resolution_request_id: 1 }), ENV, "bad-jwt", CH);
     expect(res.status).toBe(401);
-    expect(supabasePostMock).not.toHaveBeenCalled();
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
-  it("rejects a Staff caller - case creation is Management-only", async () => {
+  it("rejects a missing gap_resolution_request_id (400)", async () => {
     mockAuth({ role: "frontframe_staff" });
-    const res = await createKgrCase(mockRequest({ gap_resolution_request_id: 1 }), ENV, "staff-jwt", CH);
-    expect(res.status).toBe(403);
-    expect(supabasePostMock).not.toHaveBeenCalled();
+    const res = await createKgrCase(mockRequest({}), ENV, "staff-jwt", CH);
+    expect(res.status).toBe(400);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
-  it("rejects when the parent intake row is not authorized", async () => {
-    mockAuth();
-    supabaseFetchMock.mockResolvedValueOnce([{ id: 1, authorized_at: null }]); // parent lookup
-    const res = await createKgrCase(mockRequest({ gap_resolution_request_id: 1 }), ENV, "admin-jwt", CH);
-    expect(res.status).toBe(403);
-    expect(supabasePostMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects when the parent intake row does not exist", async () => {
-    mockAuth();
-    supabaseFetchMock.mockResolvedValueOnce([]); // parent lookup
-    const res = await createKgrCase(mockRequest({ gap_resolution_request_id: 999 }), ENV, "admin-jwt", CH);
+  it("maps the RPC 'not found' to 404", async () => {
+    mockAuth({ role: "frontframe_staff" });
+    supabaseRpcMock.mockRejectedValueOnce(new Error("gap_resolution_requests row 999 not found"));
+    const res = await createKgrCase(mockRequest({ gap_resolution_request_id: 999 }), ENV, "staff-jwt", CH);
     expect(res.status).toBe(404);
   });
 
-  it("is idempotent: a second call for the same intake row returns 409 with the existing case, not a duplicate", async () => {
+  it("maps the RPC 'a case already exists' to 409", async () => {
     mockAuth();
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 1, authorized_at: "2026-09-05T00:00:00.000Z" }]) // parent lookup
-      .mockResolvedValueOnce([{ id: 42 }]) // existing kgr_cases lookup by gap_resolution_request_id
-      .mockResolvedValueOnce([{ id: 42, status: "in_development" }]); // fetchCase(42)
-
+    supabaseRpcMock.mockRejectedValueOnce(new Error("a case already exists for request 1"));
     const res = await createKgrCase(mockRequest({ gap_resolution_request_id: 1 }), ENV, "admin-jwt", CH);
     expect(res.status).toBe(409);
-    const body = await res.json();
-    expect(body.case.id).toBe(42);
-    expect(supabasePostMock).not.toHaveBeenCalled();
   });
 
-  it("creates a case for a Management caller on an authorized row, created_by derived server-side (never caller-supplied)", async () => {
-    mockAuth({ id: "delegate-uuid" });
-    supabaseFetchMock
-      .mockResolvedValueOnce([{ id: 1, authorized_at: "2026-09-05T00:00:00.000Z" }]) // parent lookup
-      .mockResolvedValueOnce([]) // no existing case
-      .mockResolvedValueOnce([{ id: 7, status: "in_development" }]); // fetchCase(7) after insert
-    supabasePostMock.mockResolvedValueOnce([{ id: 7 }]);
+  it("maps the RPC 'escalated' / 'already resolved' to 409", async () => {
+    mockAuth();
+    supabaseRpcMock.mockRejectedValueOnce(new Error("request 1 is escalated"));
+    const res = await createKgrCase(mockRequest({ gap_resolution_request_id: 1 }), ENV, "admin-jwt", CH);
+    expect(res.status).toBe(409);
+  });
+
+  it("a Staff caller starts the case; p_reviewer is server-derived, at the default target", async () => {
+    mockAuth({ id: "staff-uuid", role: "frontframe_staff" });
+    supabaseRpcMock.mockResolvedValueOnce([{ id: 7 }]);                    // start_kgr_case
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, status: "in_development", resolution_target: "qa_pair", target_revision: 0 }]); // fetchCase(7)
 
     const res = await createKgrCase(
-      mockRequest({ gap_resolution_request_id: 1, created_by: "attacker-uuid" }),
-      ENV, "admin-jwt", CH,
+      mockRequest({ gap_resolution_request_id: 1, created_by: "attacker-uuid", p_reviewer: "attacker-uuid" }),
+      ENV, "staff-jwt", CH,
     );
 
     expect(res.status).toBe(200);
-    const [, table, payload] = supabasePostMock.mock.calls[0];
-    expect(table).toBe("kgr_cases");
-    expect(payload.created_by).toBe("delegate-uuid");
-    expect(payload.gap_resolution_request_id).toBe(1);
-    expect(payload.status).toBe("in_development");
+    const [, fn, args] = supabaseRpcMock.mock.calls[0];
+    expect(fn).toBe("start_kgr_case");
+    expect(args.p_request_id).toBe(1);
+    expect(args.p_reviewer).toBe("staff-uuid");
   });
 });
 
@@ -994,5 +987,126 @@ describe("deleteFalsifiedHypothesis", () => {
     const body = await res.json();
     expect(body.deleted).toBe("100");
     expect(supabaseDeleteMock).toHaveBeenCalledWith(ENV, "kgr_hypotheses", "100");
+  });
+});
+
+// ── setKgrCaseTarget (migration 014 §4.1i) ────────────────────────────────
+// Thin wrapper over the set_kgr_case_target RPC. Staff or Management. The
+// handler validates resolution_target up front and maps RPC errors to codes;
+// combination validation and the target_revision bump live in the RPC.
+describe("setKgrCaseTarget", () => {
+  it("rejects a missing/invalid JWT before any RPC", async () => {
+    mockInvalidJwt();
+    const res = await setKgrCaseTarget(mockRequest({ resolution_target: "qa_pair" }), ENV, "7", "bad-jwt", CH);
+    expect(res.status).toBe(401);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an out-of-enum resolution_target (400) without calling the RPC", async () => {
+    mockAuth({ role: "frontframe_staff" });
+    const res = await setKgrCaseTarget(mockRequest({ resolution_target: "process" }), ENV, "7", "staff-jwt", CH);
+    expect(res.status).toBe(400);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("Staff sets a replacement target; args are server-derived and forwarded", async () => {
+    mockAuth({ id: "staff-uuid", role: "frontframe_staff" });
+    supabaseRpcMock.mockResolvedValueOnce([{ id: 7 }]);                       // set_kgr_case_target
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, resolution_target: "qa_pair", supersedes_qa_pair_id: "qa-1", target_revision: 3 }]); // fetchCase
+
+    const res = await setKgrCaseTarget(
+      mockRequest({ resolution_target: "qa_pair", supersedes_qa_pair_id: "qa-1", p_reviewer: "attacker" }),
+      ENV, "7", "staff-jwt", CH,
+    );
+    expect(res.status).toBe(200);
+    const [, fn, args] = supabaseRpcMock.mock.calls[0];
+    expect(fn).toBe("set_kgr_case_target");
+    expect(args).toMatchObject({
+      p_case_id: 7, p_target: "qa_pair", p_supersedes_qa_pair_id: "qa-1",
+      p_sp_page: null, p_reviewer: "staff-uuid",
+    });
+  });
+
+  it("passes a system_prompt page through as p_sp_page", async () => {
+    mockAuth({ id: "admin-uuid" });
+    supabaseRpcMock.mockResolvedValueOnce([{ id: 7 }]);
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 7, resolution_target: "system_prompt", target_system_prompt_page: "home" }]);
+    const res = await setKgrCaseTarget(
+      mockRequest({ resolution_target: "system_prompt", target_system_prompt_page: "home" }),
+      ENV, "7", "admin-jwt", CH,
+    );
+    expect(res.status).toBe(200);
+    const [, , args] = supabaseRpcMock.mock.calls[0];
+    expect(args.p_sp_page).toBe("home");
+    expect(args.p_supersedes_qa_pair_id).toBeNull();
+  });
+
+  it("maps the RPC 'in_development' guard to 409", async () => {
+    mockAuth();
+    supabaseRpcMock.mockRejectedValueOnce(new Error("case 7 is ready_for_decision - the target can only be changed while in_development"));
+    const res = await setKgrCaseTarget(mockRequest({ resolution_target: "qa_pair" }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(409);
+  });
+
+  it("maps an RPC 'not found' to 404", async () => {
+    mockAuth();
+    supabaseRpcMock.mockRejectedValueOnce(new Error("case 7 not found"));
+    const res = await setKgrCaseTarget(mockRequest({ resolution_target: "qa_pair" }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(404);
+  });
+});
+
+// ── openCompanionCase (migration 014 §4.1j) ──────────────────────────────
+// :id is the PARENT case; the handler reads its gap_resolution_request_id and
+// calls open_companion_case with that + the sub-problem text.
+describe("openCompanionCase", () => {
+  it("rejects a missing/invalid JWT before any read", async () => {
+    mockInvalidJwt();
+    const res = await openCompanionCase(mockRequest({ problem_text: "x" }), ENV, "7", "bad-jwt", CH);
+    expect(res.status).toBe(401);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("404s when the parent case does not exist", async () => {
+    mockAuth({ role: "frontframe_staff" });
+    supabaseFetchMock.mockResolvedValueOnce([]);   // parent case lookup
+    const res = await openCompanionCase(mockRequest({ problem_text: "sub-problem" }), ENV, "999", "staff-jwt", CH);
+    expect(res.status).toBe(404);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("400s a blank problem_text", async () => {
+    mockAuth({ role: "frontframe_staff" });
+    supabaseFetchMock.mockResolvedValueOnce([{ gap_resolution_request_id: 42 }]);
+    const res = await openCompanionCase(mockRequest({ problem_text: "   " }), ENV, "7", "staff-jwt", CH);
+    expect(res.status).toBe(400);
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
+  });
+
+  it("Staff opens a companion; p_parent_request_id is the parent's request, p_reviewer server-derived", async () => {
+    mockAuth({ id: "staff-uuid", role: "frontframe_staff" });
+    supabaseFetchMock
+      .mockResolvedValueOnce([{ gap_resolution_request_id: 42 }])            // parent case lookup
+      .mockResolvedValueOnce([{ id: 8, status: "in_development", resolution_target: "qa_pair", target_revision: 0 }]); // fetchCase(8)
+    supabaseRpcMock.mockResolvedValueOnce([{ request_id: 99, case_id: 8 }]); // open_companion_case
+
+    const res = await openCompanionCase(
+      mockRequest({ problem_text: "the second corpus target", p_reviewer: "attacker" }),
+      ENV, "7", "staff-jwt", CH,
+    );
+    expect(res.status).toBe(200);
+    const [, fn, args] = supabaseRpcMock.mock.calls[0];
+    expect(fn).toBe("open_companion_case");
+    expect(args).toMatchObject({
+      p_parent_request_id: 42, p_problem_text: "the second corpus target", p_reviewer: "staff-uuid",
+    });
+  });
+
+  it("maps the RPC 'no case' guard to 409", async () => {
+    mockAuth();
+    supabaseFetchMock.mockResolvedValueOnce([{ gap_resolution_request_id: 42 }]);
+    supabaseRpcMock.mockRejectedValueOnce(new Error("parent request 42 has no case - a companion hangs off a real case"));
+    const res = await openCompanionCase(mockRequest({ problem_text: "x" }), ENV, "7", "admin-jwt", CH);
+    expect(res.status).toBe(409);
   });
 });

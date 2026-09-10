@@ -9,7 +9,7 @@ export const ADMIN_EXTRA_PROTECTED_PATHS = new Set([
   "/api/rd-log",
   "/api/rd-log/:id",
   "/qa",
-  "/qa/:id",
+  // "/qa/:id" removed with the POST/PUT/DELETE /qa routes (migration 014).
 ]);
 
 export function extractJwt(request) {

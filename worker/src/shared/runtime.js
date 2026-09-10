@@ -144,7 +144,9 @@ export function buildSystemPrompt(systemPromptContent, qaPairs) {
 // and redundant rows are retained for editorial review but must never reach
 // generation. The status filter and the page OR-filter are ANDed by PostgREST.
 export function buildQaPairsQuery(page) {
-  return `?select=question,answer` +
+  // `id` is selected too (migration 014) so chat.js can flag a pair that an
+  // open KGR replacement case is reworking with an "under active review" caveat.
+  return `?select=id,question,answer` +
     `&status=eq.implemented` +
     `&or=(page.eq.all,page.eq.${encodeURIComponent(page)})` +
     `&order=created_at.asc`;

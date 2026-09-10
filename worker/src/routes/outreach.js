@@ -165,53 +165,59 @@ async function bulkDeleteReviewQueue(request, env, userJwt, corsHeaders) {
 // here only removes it from the queue; it does not touch the underlying
 // questions/candidate_answers/routes/scores audit trail, same as
 // deleteReviewQueue above leaves review_queue's source data untouched.
-async function getGapResolutionRequests(env, userJwt, corsHeaders) {
+// Migration 014: the queue read carries the closure/escalation stamps, the
+// companion link, and the linked case (id + status) so the UI can show
+// "Open Case" instead of a dead "Start Case". A `state` query value selects
+// the slice: absent/`actionable` = neither resolved nor escalated (default);
+// `resolved` = resolved history; `all` = everything (where an escalated
+// question is visible). Any other value is a 400.
+const GRQ_SELECT =
+  "id,requested_at,authorized_by,authorized_at," +
+  "resolved_at,resolved_kgr_case_id,resolved_qa_pair_id,resolved_system_prompt_page," +
+  "escalated_at,companion_of_request_id," +
+  "questions(question_text,source),candidate_answers(answer_text)," +
+  "routes(route_reason,route_decision)," +
+  "kgr_cases!kgr_cases_gap_resolution_request_id_fkey(id,status)";
+
+async function getGapResolutionRequests(request, env, userJwt, corsHeaders) {
   if (!userJwt) return jsonResponse({ error: "Unauthorized" }, 401, corsHeaders);
+  const state = new URL(request.url).searchParams.get("state") || "actionable";
+  let filter;
+  if (state === "actionable") filter = "&resolved_at=is.null&escalated_at=is.null&order=requested_at.desc";
+  else if (state === "resolved") filter = "&resolved_at=not.is.null&order=resolved_at.desc";
+  else if (state === "all") filter = "&order=requested_at.desc";
+  else return jsonResponse({ error: "state must be actionable, resolved, or all" }, 400, corsHeaders);
+
   const rows = await supabaseFetch(env, "gap_resolution_requests",
-    "?select=id,requested_at,authorized_by,authorized_at,questions(question_text,source),candidate_answers(answer_text),routes(route_reason,route_decision)&order=requested_at.desc",
-    userJwt);
+    `?select=${GRQ_SELECT}${filter}`, userJwt);
   return jsonResponse(rows ?? [], 200, corsHeaders);
 }
 
+// Decline an unresolved question. Migration 014: Management only, and only when
+// the request has no case and is not resolved/escalated. The FK from kgr_cases
+// still backs this at the DB level; the explicit checks give a clean 409.
 async function deleteGapResolutionRequest(env, id, userJwt, corsHeaders) {
-  await supabaseDelete(env, "gap_resolution_requests", id, userJwt);
-  return jsonResponse({ deleted: id }, 200, corsHeaders);
-}
-
-// Increment 1 of Phase F Candidate 2 (KGR activation). Authorization gate
-// only - no research, model call, notification, resolution, or
-// promulgation is triggered here. Management-gated (frontframe_admin:
-// Operator or Delegate, per the two-tier organizational model - Staff
-// cannot authorize KGR work). authorized_by is always derived from the
-// authenticated reviewer, never accepted from the request body, mirroring
-// the submitted_by fix from Phase F Candidate 1. Re-authorization of an
-// already-authorized row is rejected - authorization is a one-time,
-// one-way transition, not an editable field.
-async function authorizeGapResolutionRequest(request, env, id, userJwt, corsHeaders) {
   const authority = await getReviewerAuthority(env, userJwt);
   if (!authority) return jsonResponse({ error: "Unauthorized" }, 401, corsHeaders);
   if (authority.role !== "frontframe_admin")
     return jsonResponse({ error: "Management authority required" }, 403, corsHeaders);
 
-  const existingRows = await supabaseFetch(env, "gap_resolution_requests",
-    `?id=eq.${id}&select=id,authorized_at`);
-  const existing = existingRows?.[0];
-  if (!existing) return jsonResponse({ error: "Not found" }, 404, corsHeaders);
-  if (existing.authorized_at)
-    return jsonResponse({ error: "Already authorized" }, 409, corsHeaders);
+  const rows = await supabaseFetch(env, "gap_resolution_requests",
+    `?id=eq.${id}&select=id,resolved_at,escalated_at,kgr_cases!kgr_cases_gap_resolution_request_id_fkey(id)`);
+  const row = rows?.[0];
+  if (!row) return jsonResponse({ error: "Not found" }, 404, corsHeaders);
+  const hasCase = Array.isArray(row.kgr_cases) ? row.kgr_cases.length > 0 : Boolean(row.kgr_cases);
+  if (row.resolved_at || row.escalated_at || hasCase)
+    return jsonResponse({ error: "This question has a case or is resolved/escalated - it cannot be deleted." }, 409, corsHeaders);
 
-  const body = await request.json().catch(() => ({}));
-  const permittedScope = typeof body.permitted_scope === "string" ? body.permitted_scope : null;
-
-  const updated = await supabasePatch(env, "gap_resolution_requests", id, {
-    authorized_by: authority.id,
-    authorized_at: new Date().toISOString(),
-    permitted_scope: permittedScope,
-  });
-  return jsonResponse(updated, 200, corsHeaders);
+  await supabaseDelete(env, "gap_resolution_requests", id, userJwt);
+  return jsonResponse({ deleted: id }, 200, corsHeaders);
 }
+
+// authorizeGapResolutionRequest removed by migration 014 - Start Case
+// (start_kgr_case RPC) stamps authorized_at/authorized_by atomically.
 
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { getOutreachProspects, createOutreachProspect, updateOutreachProspect, sendOutreachContract, getOutreachTouches, createOutreachTouch, getReviewQueue, updateReviewQueue, deleteReviewQueue, bulkDeleteReviewQueue, getGapResolutionRequests, deleteGapResolutionRequest, authorizeGapResolutionRequest };
+export { getOutreachProspects, createOutreachProspect, updateOutreachProspect, sendOutreachContract, getOutreachTouches, createOutreachTouch, getReviewQueue, updateReviewQueue, deleteReviewQueue, bulkDeleteReviewQueue, getGapResolutionRequests, deleteGapResolutionRequest };

@@ -5,6 +5,7 @@ import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP
 // Lives next to /notify in intake.js; imported here so a [COLLECTED] marker is
 // captured server-side and can never be discarded by a resolve_gap route (Defect 2).
 import { captureContactHandoff } from "./intake.js";
+import { underReviewQaPairIds } from "./kgr.js";
 import { getTodayOfficeHoursText } from "../shared/office-hours.js";
 import { RATE_LIMITED_MESSAGE, checkChatRateLimit } from "../shared/rate-limit.js";
 import { LIMITED_CONFIDENCE_HEDGE, checkConstitutionalEligibility, createConstitutionalCandidateLifecycle, createGroundingLifecycle, createKnowledgeGapLifecycle, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
@@ -586,6 +587,36 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   const systemPromptContent = [globalPromptContent, pagePromptContent].filter(Boolean).join("\n\n");
 
   const qaPairs             = await supabaseFetch(env, "qa_pairs", buildQaPairsQuery(page));
+
+  // Migration 014 §3.4a: an implemented pair that an OPEN KGR replacement case
+  // (no signed-off statement yet) is reworking is still served, but with an
+  // "under active review" caveat prepended so the assistant discloses it and
+  // does not present it as settled. The caveat persists through constitutional
+  // escalation and clears only at sign-off / retarget-away. Best-effort: on a
+  // lookup failure, serve normally and file an agentic defect.
+  try {
+    const underReview = await underReviewQaPairIds(env, page);
+    if (Array.isArray(underReview) && underReview.length && Array.isArray(qaPairs)) {
+      const flagged = new Set(underReview);
+      for (const r of qaPairs) {
+        if (flagged.has(r.id)) {
+          r.answer =
+            "[UNDER REVIEW — FrontFrame is currently reviewing its position on this. Present the following " +
+            "as the current answer, not settled fact, and say it is under review.]\n" + r.answer;
+        }
+      }
+    }
+  } catch (e) {
+    ctx.waitUntil(
+      supabasePost(env, "defects", {
+        area: "agentic",
+        severity: "minor",
+        disposition: "retain",
+        description: `[under-review-lookup] Could not determine which qa_pairs are under KGR review; served without the caveat. ${String(e?.message ?? e).slice(0, 300)}`,
+        build_version: config.build_version ?? "unknown",
+      }).catch(() => {}),
+    );
+  }
 
   // ── Phase E completion, item A ───────────────────────────────────────────
   // constitutionSection is used two ways, and they must not be confused:

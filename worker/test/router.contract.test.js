@@ -9,11 +9,13 @@ const manifest = ROUTES.map(({ method, path }) => `${method} ${path}`).join("\n"
 
 describe("Worker route contract", () => {
   it("preserves the approved route manifest and declaration order", () => {
-    // 124 routes: +2 for KGR Increment 5 (POST /admin/kgr-cases/:id/solutions,
-    // POST /admin/kgr-cases/:id/solutions/:sid/withdraw).
-    expect(ROUTES).toHaveLength(124);
+    // 121 routes. Migration 014 (KGR corpus-write governance): -3 for the
+    // removed POST/PUT/DELETE /qa, -1 for POST /admin/system-prompt/:page,
+    // -1 for PATCH /admin/gap-resolution-requests/:id/authorize, +2 for
+    // PATCH /admin/kgr-cases/:id/target and POST /admin/kgr-cases/:id/companion.
+    expect(ROUTES).toHaveLength(121);
     expect(createHash("sha256").update(manifest).digest("hex"))
-      .toBe("faa5eb3227612c192a082d1c99bf9c727301bd0757911a281dc15b3d407ddb53");
+      .toBe("2126a1c764908c7ab4b9ce07824fe1ab7181ce4d86ea6effc19f065cdde481b1");
   });
 
   it("keeps literal sub-routes ahead of their parameterized fallbacks", () => {
@@ -72,7 +74,6 @@ describe("central reviewer protection contract", () => {
       "/api/rd-log",
       "/api/rd-log/:id",
       "/qa",
-      "/qa/:id",
     ]));
 
     for (const route of ROUTES) {

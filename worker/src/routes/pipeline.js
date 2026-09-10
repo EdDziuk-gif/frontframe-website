@@ -177,14 +177,10 @@ async function getSystemPrompt(env, page, userJwt, corsHeaders) {
   return jsonResponse(rows[0], 200, corsHeaders);
 }
 
-async function updateSystemPrompt(request, env, page, userJwt, corsHeaders) {
-  const validPages = ["all","home","intake","discovery","yours","admin","proposal","resources"];
-  if (!validPages.includes(page))
-    return jsonResponse({ error: `Invalid page. Must be one of: ${validPages.join(", ")}` }, 400, corsHeaders);
-  const { content } = await request.json();
-  if (!content) return jsonResponse({ error: "content is required" }, 400, corsHeaders);
-  return jsonResponse(await supabaseUpsert(env, "system_prompt", { page, content, updated_at: new Date().toISOString() }, userJwt), 200, corsHeaders);
-}
+// updateSystemPrompt removed by migration 014 (KGR corpus-write governance):
+// system_prompt is written ONLY by sign_off_kgr_resolution, as a
+// resolution_target='system_prompt' outcome. getSystemPrompt stays as a
+// read-only viewer for the admin panel.
 
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -245,4 +241,4 @@ async function deleteReviewer(env, id, userJwt, corsHeaders) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { getChangelog, createChangelog, getLeads, createLead, getLeadAlerts, updateLeadAlert, deleteLeadAlert, getAlertSession, getAgreements, updateAgreement, sendAgreement, sendDueDiligence, getSystemPrompt, updateSystemPrompt, getReviewers, inviteReviewer, resetReviewerPassword, updateReviewer, deleteReviewer };
+export { getChangelog, createChangelog, getLeads, createLead, getLeadAlerts, updateLeadAlert, deleteLeadAlert, getAlertSession, getAgreements, updateAgreement, sendAgreement, sendDueDiligence, getSystemPrompt, getReviewers, inviteReviewer, resetReviewerPassword, updateReviewer, deleteReviewer };

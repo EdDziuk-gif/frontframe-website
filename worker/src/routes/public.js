@@ -11,9 +11,8 @@ export const PUBLIC_ROUTES = [
   { method: "GET", path: "/blackout", handler: (req, env, _ctx, ch) => handlers.getBlackout(env, ch) },
   { method: "POST", path: "/schedule", handler: (req, env, _ctx, ch) => handlers.handleSchedule(req, env, ch) },
   { method: "GET", path: "/qa", handler: (req, env, _ctx, ch) => handlers.getQaPairs(env, ch) },
-  { method: "POST", path: "/qa", handler: (req, env, _ctx, ch) => handlers.createQaPair(req, env, ch) },
-  { method: "PUT", path: "/qa/:id", handler: (req, env, _ctx, ch, p) => handlers.updateQaPair(req, env, p.id, ch) },
-  { method: "DELETE", path: "/qa/:id", handler: (req, env, _ctx, ch, p) => handlers.deleteQaPair(env, p.id, ch) },
+  // POST/PUT/DELETE /qa removed by migration 014 — qa_pairs is written only by
+  // KGR sign-off. GET stays as a read-only viewer for the admin panel.
   { method: "GET", path: "/proposal", handler: (req, env, _ctx, ch) => handlers.getClientProposal(req, env, ch) },
   { method: "POST", path: "/proposal/review", handler: (req, env, ctx, ch) => handlers.submitProposalReview(req, env, ctx, ch) },
   { method: "GET", path: "/podcast-episodes", handler: (req, env, _ctx, ch) => handlers.getPodcastEpisodes(env, ch) },

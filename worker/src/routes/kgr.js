@@ -108,9 +108,13 @@ async function fetchSolutions(env, caseId) {
     `?kgr_case_id=eq.${caseId}&select=id,kgr_hypothesis_id,proposed_content,submitted_by,origin,score,rationale,constitutional_provisions_hash,problem_snapshot,status,withdrawn_by,withdrawn_reason,withdrawn_at,created_at&order=created_at.asc`)) ?? [];
 }
 
+const CASE_SELECT =
+  "id,gap_resolution_request_id,status,research_notes,escalation_reason," +
+  "resolution_target,supersedes_qa_pair_id,target_system_prompt_page,target_revision," +
+  "created_by,created_at,updated_at,gap_resolution_requests(questions(question_text))";
+
 async function fetchCase(env, id) {
-  const rows = await supabaseFetch(env, "kgr_cases",
-    `?id=eq.${id}&select=id,gap_resolution_request_id,status,research_notes,escalation_reason,created_by,created_at,updated_at,gap_resolution_requests(questions(question_text))`);
+  const rows = await supabaseFetch(env, "kgr_cases", `?id=eq.${id}&select=${CASE_SELECT}`);
   return rows?.[0] ?? null;
 }
 
@@ -124,19 +128,21 @@ async function fetchHypotheses(env, caseId) {
 // (nullable: the one pre-Increment-5 snapshot row carries none).
 async function fetchResolutionStatement(env, caseId) {
   const rows = await supabaseFetch(env, "kgr_resolution_statements",
-    `?kgr_case_id=eq.${caseId}&select=id,kgr_case_id,problem_statement,prepared_by,created_at,selected_candidate_id,signed_off_by,signed_off_at,qa_pair_id,kgr_resolution_candidates!kgr_resolution_candidates_kgr_resolution_statement_id_fkey(id,kgr_hypothesis_id,presented_content,score,rationale,origin_solution_id,submitted_by,origin,constitutional_provisions_hash,problem_snapshot)`);
+    `?kgr_case_id=eq.${caseId}&select=id,kgr_case_id,problem_statement,prepared_by,created_at,selected_candidate_id,signed_off_by,signed_off_at,qa_pair_id,system_prompt_history_id,system_prompt_history(page,adopted_content,prior_content_present,replaced_at),kgr_resolution_candidates!kgr_resolution_candidates_kgr_resolution_statement_id_fkey(id,kgr_hypothesis_id,presented_content,score,rationale,origin_solution_id,submitted_by,origin,constitutional_provisions_hash,problem_snapshot)`);
   return rows?.[0] ?? null;
 }
 
 // ── Case creation and reads ─────────────────────────────────────────────────
 
-// Management-only (REQ-KGR-02's authorization act and case creation are the
-// same continuous Management action). One-to-one/idempotent: a UNIQUE
-// constraint on gap_resolution_request_id backs this at the database level;
-// a repeat call for the same intake row returns the existing case (409)
-// rather than a duplicate row or a raw constraint error.
+// "Start Case" — Staff or Management (migration 014 / decision 0036: this is the
+// affirmative authorization REQ-KGR-02 requires; restricting it to Management was
+// an unfounded assumption). The whole thing — reject resolved/escalated/has-a-
+// case, stamp authorized_at/authorized_by if absent, insert exactly one case at
+// the default target — is one transaction in the start_kgr_case RPC (migration
+// 014), replacing the previous read-then-write. No target information in the
+// body; the case starts at resolution_target='qa_pair'.
 async function createKgrCase(request, env, userJwt, corsHeaders) {
-  const auth = await requireCaseAuthority(env, userJwt, CASE_MANAGEMENT_ONLY_ROLES, corsHeaders);
+  const auth = await requireCaseAuthority(env, userJwt, CASE_DEVELOPMENT_ROLES, corsHeaders);
   if (!auth.ok) return auth.response;
   const gate = await kgrMutationGate(env, corsHeaders);
   if (gate) return gate;
@@ -145,27 +151,114 @@ async function createKgrCase(request, env, userJwt, corsHeaders) {
   const gapRequestId = body.gap_resolution_request_id;
   if (!gapRequestId) return jsonResponse({ error: "gap_resolution_request_id is required" }, 400, corsHeaders);
 
-  const parentRows = await supabaseFetch(env, "gap_resolution_requests",
-    `?id=eq.${gapRequestId}&select=id,authorized_at`);
-  const parent = parentRows?.[0];
-  if (!parent) return jsonResponse({ error: "gap_resolution_requests row not found" }, 404, corsHeaders);
-  if (!parent.authorized_at) return jsonResponse({ error: "Intake row is not authorized" }, 403, corsHeaders);
+  try {
+    const out = await supabaseRpc(env, "start_kgr_case", {
+      p_request_id: Number(gapRequestId),
+      p_reviewer: auth.authority.id,
+    });
+    const row = Array.isArray(out) ? out[0] ?? null : out;
+    const caseId = row?.id;
+    if (!caseId) throw new Error("start_kgr_case returned no case");
+    return jsonResponse(await fetchCase(env, caseId), 200, corsHeaders);
+  } catch (e) {
+    const msg = rpcErrMessage(e);
+    const status = msg.includes("not found") ? 404
+      : (msg.includes("already exists") || msg.includes("already resolved") || msg.includes("escalated")) ? 409
+      : 400;
+    return jsonResponse({ error: msg }, status, corsHeaders);
+  }
+}
 
-  const existingRows = await supabaseFetch(env, "kgr_cases",
-    `?gap_resolution_request_id=eq.${gapRequestId}&select=id`);
-  if (existingRows?.length) {
-    const existing = await fetchCase(env, existingRows[0].id);
-    return jsonResponse({ error: "A case already exists for this intake row", case: existing }, 409, corsHeaders);
+// Set / change a case's resolution target while in_development (Staff or
+// Management). One transaction in set_kgr_case_target (migration 014): takes the
+// case-row lock, validates the combination, bumps target_revision, and deletes
+// contributed solutions on a content-kind or prompt-page change.
+async function setKgrCaseTarget(request, env, id, userJwt, corsHeaders) {
+  const auth = await requireCaseAuthority(env, userJwt, CASE_DEVELOPMENT_ROLES, corsHeaders);
+  if (!auth.ok) return auth.response;
+  const gate = await kgrMutationGate(env, corsHeaders);
+  if (gate) return gate;
+
+  const body = await request.json().catch(() => ({}));
+  const target = body.resolution_target;
+  if (target !== "qa_pair" && target !== "system_prompt") {
+    return jsonResponse({ error: "resolution_target must be 'qa_pair' or 'system_prompt'" }, 400, corsHeaders);
   }
 
-  const inserted = await supabasePost(env, "kgr_cases", {
-    gap_resolution_request_id: gapRequestId,
-    status: "in_development",
-    created_by: auth.authority.id,
-  });
-  const caseId = inserted?.[0]?.id;
-  if (!caseId) throw new Error("Failed to create kgr_cases row");
-  return jsonResponse(await fetchCase(env, caseId), 200, corsHeaders);
+  try {
+    const out = await supabaseRpc(env, "set_kgr_case_target", {
+      p_case_id: Number(id),
+      p_target: target,
+      p_supersedes_qa_pair_id: body.supersedes_qa_pair_id ?? null,
+      p_sp_page: body.target_system_prompt_page ?? null,
+      p_reviewer: auth.authority.id,
+    });
+    const row = Array.isArray(out) ? out[0] ?? null : out;
+    return jsonResponse(await fetchCase(env, row?.id ?? id), 200, corsHeaders);
+  } catch (e) {
+    const msg = rpcErrMessage(e);
+    const status = msg.includes("not found") ? 404 : msg.includes("in_development") ? 409 : 400;
+    return jsonResponse({ error: msg }, status, corsHeaders);
+  }
+}
+
+// Open a companion case: a second corpus target for one problem. Staff or
+// Management, off an existing case's request. open_companion_case (migration
+// 014) creates the linked question / route / gap_resolution_request / case.
+async function openCompanionCase(request, env, id, userJwt, corsHeaders) {
+  const auth = await requireCaseAuthority(env, userJwt, CASE_DEVELOPMENT_ROLES, corsHeaders);
+  if (!auth.ok) return auth.response;
+  const gate = await kgrMutationGate(env, corsHeaders);
+  if (gate) return gate;
+
+  // :id is the parent case; the RPC hangs the companion off that case's request.
+  const parentCaseRows = await supabaseFetch(env, "kgr_cases",
+    `?id=eq.${Number(id)}&select=gap_resolution_request_id`);
+  const parentRequestId = parentCaseRows?.[0]?.gap_resolution_request_id;
+  if (!parentRequestId) return jsonResponse({ error: "parent case not found" }, 404, corsHeaders);
+
+  const body = await request.json().catch(() => ({}));
+  const problemText = (body.problem_text ?? "").trim();
+  if (!problemText) return jsonResponse({ error: "problem_text is required" }, 400, corsHeaders);
+
+  try {
+    const out = await supabaseRpc(env, "open_companion_case", {
+      p_parent_request_id: Number(parentRequestId),
+      p_problem_text: problemText,
+      p_reviewer: auth.authority.id,
+    });
+    const row = Array.isArray(out) ? out[0] ?? null : out;
+    if (!row?.case_id) throw new Error("open_companion_case returned no case");
+    return jsonResponse(await fetchCase(env, row.case_id), 200, corsHeaders);
+  } catch (e) {
+    const msg = rpcErrMessage(e);
+    return jsonResponse({ error: msg }, msg.includes("no case") ? 409 : 400, corsHeaders);
+  }
+}
+
+// Which served, implemented qa_pairs are the replacement target of an OPEN case
+// (no signed-off statement yet), for the given page scope. Consumed by chat.js
+// to add the "under active review" caveat (plan §3.4a). Throws on error — the
+// caller (chat.js) decides to serve without the caveat and log a defect.
+async function underReviewQaPairIds(env, page) {
+  const rows = await supabaseFetch(env, "kgr_cases",
+    `?resolution_target=eq.qa_pair&supersedes_qa_pair_id=not.is.null` +
+    `&select=supersedes_qa_pair_id,kgr_resolution_statements(signed_off_at)`);
+  if (!Array.isArray(rows)) throw new Error("under-review lookup failed");
+  const ids = new Set();
+  for (const c of rows) {
+    const stmts = c.kgr_resolution_statements;
+    const signedOff = Array.isArray(stmts)
+      ? stmts.some((s) => s.signed_off_at)
+      : Boolean(stmts?.signed_off_at);
+    if (!signedOff && c.supersedes_qa_pair_id) ids.add(c.supersedes_qa_pair_id);
+  }
+  if (ids.size === 0) return [];
+  // Restrict to pairs actually served on this page scope.
+  const list = [...ids].map((x) => `"${x}"`).join(",");
+  const served = await supabaseFetch(env, "qa_pairs",
+    `?id=in.(${list})&status=eq.implemented&or=(page.eq.all,page.eq.${encodeURIComponent(page)})&select=id`);
+  return Array.isArray(served) ? served.map((r) => r.id) : [];
 }
 
 async function listKgrCases(env, userJwt, corsHeaders) {
@@ -444,6 +537,10 @@ async function submitKgrSolution(request, env, id, userJwt, corsHeaders) {
     p_provisions_hash: provHash,
     p_problem_snapshot: problemText,
     p_submission_key: submissionKey,
+    // Migration 014: bind the contribution to the target revision it was
+    // screened/scored against. If a set-target bumped it in the meantime the
+    // RPC rejects and nothing is written.
+    p_target_revision: kgrCase.target_revision,
   };
 
   try {
@@ -728,5 +825,6 @@ export {
   createKgrCase, listKgrCases, getKgrCase, updateKgrCase,
   addHypothesis, updateHypothesis, readyKgrCase, escalateKgrCase, developKgrCase,
   submitKgrSolution, withdrawKgrSolution,
+  setKgrCaseTarget, openCompanionCase, underReviewQaPairIds,
   prepareResolutionStatement, signOffKgrResolution, listFalsifiedHypotheses, deleteFalsifiedHypothesis,
 };

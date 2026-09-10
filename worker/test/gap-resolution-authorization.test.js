@@ -1,142 +1,119 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Phase F Candidate 2, Increment 1 — KGR intake authorization gate.
-// Scope: authorizeGapResolutionRequest only. No research, model call,
-// notification, resolution, or promulgation is exercised by this feature,
-// so none of that is tested here — this increment is infrastructure only.
+// Migration 014 (KGR corpus-write governance) removed authorizeGapResolutionRequest
+// entirely — Start Case (start_kgr_case RPC) now stamps authorized_at/authorized_by
+// atomically. What remains on the Unresolved Questions queue read/delete path:
+//   * getGapResolutionRequests takes a `state` filter (actionable | resolved | all)
+//   * deleteGapResolutionRequest is Management-only and 409s on a linked/
+//     resolved/escalated request.
 
-const supabaseFetchMock = vi.fn();
-const supabasePatchMock = vi.fn();
+const supabaseFetchMock  = vi.fn();
+const supabaseDeleteMock = vi.fn();
 
 vi.mock("../src/shared/supabase.js", () => ({
-  supabaseFetch: (...a) => supabaseFetchMock(...a),
-  supabasePost:  vi.fn(),
-  supabasePatch: (...a) => supabasePatchMock(...a),
+  supabaseFetch:  (...a) => supabaseFetchMock(...a),
+  supabasePost:   vi.fn(),
+  supabasePatch:  vi.fn(),
   supabasePatchByField: vi.fn(),
-  supabaseRpc:   vi.fn(),
+  supabaseRpc:    vi.fn(),
   supabaseUpsert: vi.fn(),
-  supabaseDelete: vi.fn(),
+  supabaseDelete: (...a) => supabaseDeleteMock(...a),
   supabaseHeaders: () => ({}),
 }));
 
-vi.mock("../src/shared/runtime.js", async (importOriginal) => {
-  const actual = await importOriginal();
-  return { ...actual };
-});
+vi.mock("../src/shared/runtime.js", async (importOriginal) => ({ ...(await importOriginal()) }));
 
-// fetch is used by getReviewerAuthority for /auth/v1/user
 global.fetch = vi.fn();
 
-const { authorizeGapResolutionRequest } = await import("../src/routes/outreach.js");
+const { getGapResolutionRequests, deleteGapResolutionRequest } = await import("../src/routes/outreach.js");
 
 const CH = {};
-const ENV = {
-  SUPABASE_URL: "https://example.supabase.co",
-  SUPABASE_SERVICE_ROLE_KEY: "service-key",
-};
+const ENV = { SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "service-key" };
 
-function mockRequest(body = {}) {
-  return { method: "PATCH", json: () => Promise.resolve(body), headers: new Map() };
-}
-
-// Mocks the getReviewerAuthority(env, jwt) call chain: /auth/v1/user, then
-// reviewers, then reviewer_roles.
-function mockReviewerAuth({ id = "rev-uuid", role = "frontframe_admin", active = true, canAmend = false } = {}) {
-  global.fetch.mockResolvedValueOnce({
-    ok: true,
-    json: () => Promise.resolve({ email: "ed@frontframe.co" }),
-  });
+function mockReviewerAuth({ id = "rev-uuid", role = "frontframe_admin", active = true } = {}) {
+  global.fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ email: "ed@frontframe.co" }) });
   supabaseFetchMock
-    .mockResolvedValueOnce([{ id, role, active }])                       // reviewers
-    .mockResolvedValueOnce([{ roles: { can_amend_constitution: canAmend } }]); // reviewer_roles
+    .mockResolvedValueOnce([{ id, role, active }])                             // reviewers
+    .mockResolvedValueOnce([{ roles: { can_amend_constitution: false } }]);    // reviewer_roles
 }
 
-function mockInvalidJwt() {
-  global.fetch.mockResolvedValueOnce({ ok: false });
-}
+beforeEach(() => { vi.clearAllMocks(); });
 
-describe("authorizeGapResolutionRequest (Phase F Candidate 2, Increment 1)", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+describe("getGapResolutionRequests state filter", () => {
+  it("defaults to actionable — excludes resolved and escalated", async () => {
+    supabaseFetchMock.mockResolvedValueOnce([]);
+    const res = await getGapResolutionRequests({ url: "https://x/admin/gap-resolution-requests" }, ENV, "jwt", CH);
+    expect(res.status).toBe(200);
+    const q = supabaseFetchMock.mock.calls[0][2];
+    expect(q).toContain("resolved_at=is.null");
+    expect(q).toContain("escalated_at=is.null");
+    expect(q).toContain("kgr_cases");   // embeds the linked case so the UI can show Open Case
   });
 
-  it("rejects a missing/invalid JWT before any write", async () => {
-    mockInvalidJwt();
-    const res = await authorizeGapResolutionRequest(mockRequest(), ENV, "1", "bad-jwt", CH);
+  it("state=resolved returns resolved history", async () => {
+    supabaseFetchMock.mockResolvedValueOnce([]);
+    await getGapResolutionRequests({ url: "https://x/admin/gap-resolution-requests?state=resolved" }, ENV, "jwt", CH);
+    const q = supabaseFetchMock.mock.calls[0][2];
+    expect(q).toContain("resolved_at=not.is.null");
+    expect(q).toContain("order=resolved_at.desc");
+  });
+
+  it("state=all applies no state filter", async () => {
+    supabaseFetchMock.mockResolvedValueOnce([]);
+    await getGapResolutionRequests({ url: "https://x/admin/gap-resolution-requests?state=all" }, ENV, "jwt", CH);
+    const q = supabaseFetchMock.mock.calls[0][2];
+    expect(q).not.toContain("resolved_at=is.null");
+    expect(q).not.toContain("resolved_at=not.is.null");
+  });
+
+  it("an unknown state value is a 400", async () => {
+    const res = await getGapResolutionRequests({ url: "https://x/admin/gap-resolution-requests?state=garbage" }, ENV, "jwt", CH);
+    expect(res.status).toBe(400);
+    expect(supabaseFetchMock).not.toHaveBeenCalled();
+  });
+
+  it("a missing JWT is a 401 before any read", async () => {
+    const res = await getGapResolutionRequests({ url: "https://x/admin/gap-resolution-requests" }, ENV, null, CH);
     expect(res.status).toBe(401);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
   });
+});
 
-  it("rejects a Staff (frontframe_staff) caller — Management authority required", async () => {
+describe("deleteGapResolutionRequest", () => {
+  it("rejects a Staff caller — Management authority required", async () => {
     mockReviewerAuth({ role: "frontframe_staff" });
-    const res = await authorizeGapResolutionRequest(mockRequest(), ENV, "1", "staff-jwt", CH);
+    const res = await deleteGapResolutionRequest(ENV, "5", "jwt", CH);
     expect(res.status).toBe(403);
-    const body = await res.json();
-    expect(body.error).toMatch(/Management authority required/);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
+    expect(supabaseDeleteMock).not.toHaveBeenCalled();
   });
 
-  it("rejects authorization of a nonexistent row", async () => {
+  it("404s a nonexistent row", async () => {
     mockReviewerAuth();
-    supabaseFetchMock.mockResolvedValueOnce([]); // gap_resolution_requests lookup
-    const res = await authorizeGapResolutionRequest(mockRequest(), ENV, "999", "admin-jwt", CH);
+    supabaseFetchMock.mockResolvedValueOnce([]);   // row lookup
+    const res = await deleteGapResolutionRequest(ENV, "999", "jwt", CH);
     expect(res.status).toBe(404);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
   });
 
-  it("rejects re-authorization of an already-authorized row (idempotency/one-way transition)", async () => {
+  it("409s a request that already has a case", async () => {
     mockReviewerAuth();
-    supabaseFetchMock.mockResolvedValueOnce([
-      { id: "1", authorized_at: "2026-09-04T00:00:00.000Z" },
-    ]);
-    const res = await authorizeGapResolutionRequest(mockRequest({ permitted_scope: "x" }), ENV, "1", "admin-jwt", CH);
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 5, resolved_at: null, escalated_at: null, kgr_cases: [{ id: 9 }] }]);
+    const res = await deleteGapResolutionRequest(ENV, "5", "jwt", CH);
     expect(res.status).toBe(409);
-    expect(supabasePatchMock).not.toHaveBeenCalled();
+    expect(supabaseDeleteMock).not.toHaveBeenCalled();
   });
 
-  it("authorizes an open row for a Management caller: authorized_by is derived from the authenticated reviewer, never caller-supplied", async () => {
-    mockReviewerAuth({ id: "delegate-uuid", role: "frontframe_admin" });
-    supabaseFetchMock.mockResolvedValueOnce([{ id: "1", authorized_at: null }]);
-    supabasePatchMock.mockResolvedValueOnce([{ id: "1", authorized_by: "delegate-uuid" }]);
-
-    const res = await authorizeGapResolutionRequest(
-      mockRequest({ permitted_scope: "Investigate SLA/uptime policy", authorized_by: "attacker-uuid" }),
-      ENV, "1", "admin-jwt", CH,
-    );
-
-    expect(res.status).toBe(200);
-    expect(supabasePatchMock).toHaveBeenCalledTimes(1);
-    const [, table, id, payload] = supabasePatchMock.mock.calls[0];
-    expect(table).toBe("gap_resolution_requests");
-    expect(id).toBe("1");
-    // Caller-supplied authorized_by must never reach the write — this is
-    // the same defect class Candidate 1 found and fixed for submitted_by.
-    expect(payload.authorized_by).toBe("delegate-uuid");
-    expect(payload.permitted_scope).toBe("Investigate SLA/uptime policy");
-    expect(typeof payload.authorized_at).toBe("string");
-  });
-
-  it("accepts a Management caller with no permitted_scope supplied (nullable field)", async () => {
+  it("409s a resolved request", async () => {
     mockReviewerAuth();
-    supabaseFetchMock.mockResolvedValueOnce([{ id: "2", authorized_at: null }]);
-    supabasePatchMock.mockResolvedValueOnce([{ id: "2" }]);
-
-    const res = await authorizeGapResolutionRequest(mockRequest({}), ENV, "2", "admin-jwt", CH);
-
-    expect(res.status).toBe(200);
-    const [, , , payload] = supabasePatchMock.mock.calls[0];
-    expect(payload.permitted_scope).toBeNull();
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 5, resolved_at: "2026-09-09T00:00:00Z", escalated_at: null, kgr_cases: [] }]);
+    const res = await deleteGapResolutionRequest(ENV, "5", "jwt", CH);
+    expect(res.status).toBe(409);
   });
 
-  it("triggers no research, model call, notification, resolution, or promulgation — only the two/three fields are written", async () => {
-    mockReviewerAuth({ id: "op-uuid" });
-    supabaseFetchMock.mockResolvedValueOnce([{ id: "3", authorized_at: null }]);
-    supabasePatchMock.mockResolvedValueOnce([{ id: "3" }]);
-
-    await authorizeGapResolutionRequest(mockRequest({ permitted_scope: "x" }), ENV, "3", "admin-jwt", CH);
-
-    const [, table, , payload] = supabasePatchMock.mock.calls[0];
-    expect(table).toBe("gap_resolution_requests");
-    expect(Object.keys(payload).sort()).toEqual(["authorized_at", "authorized_by", "permitted_scope"]);
+  it("deletes an unlinked, unresolved, non-escalated request for a Management caller", async () => {
+    mockReviewerAuth();
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 5, resolved_at: null, escalated_at: null, kgr_cases: [] }]);
+    supabaseDeleteMock.mockResolvedValueOnce({});
+    const res = await deleteGapResolutionRequest(ENV, "5", "jwt", CH);
+    expect(res.status).toBe(200);
+    expect(supabaseDeleteMock).toHaveBeenCalledWith(ENV, "gap_resolution_requests", "5", "jwt");
   });
 });

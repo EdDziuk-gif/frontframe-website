@@ -47,7 +47,8 @@ export const ADMIN_ROUTES = [
   route("POST", "/admin/agreements/send-diligence", noParams(handlers.sendDueDiligence)),
   route("PATCH", "/admin/agreements/:id", param(handlers.updateAgreement)),
   route("GET", "/admin/system-prompt/:page", envParam(handlers.getSystemPrompt, "page")),
-  route("POST", "/admin/system-prompt/:page", param(handlers.updateSystemPrompt, "page")),
+  // POST /admin/system-prompt/:page removed by migration 014 — system_prompt is
+  // written only by KGR sign-off. GET stays as a read-only viewer.
   route("GET", "/admin/reviewers", envOnly(handlers.getReviewers)),
   route("POST", "/admin/reviewers/invite", noParams(handlers.inviteReviewer)),
   route("POST", "/admin/reviewers/reset-password", noParams(handlers.resetReviewerPassword)),
@@ -93,9 +94,10 @@ export const ADMIN_ROUTES = [
   route("GET", "/admin/review-queue", noParams(handlers.getReviewQueue)),
   route("PATCH", "/admin/review-queue/:id", param(handlers.updateReviewQueue)),
   route("DELETE", "/admin/review-queue/:id", envParam(handlers.deleteReviewQueue)),
-  route("GET", "/admin/gap-resolution-requests", envOnly(handlers.getGapResolutionRequests)),
+  route("GET", "/admin/gap-resolution-requests", noParams(handlers.getGapResolutionRequests)),
   route("DELETE", "/admin/gap-resolution-requests/:id", envParam(handlers.deleteGapResolutionRequest)),
-  route("PATCH", "/admin/gap-resolution-requests/:id/authorize", param(handlers.authorizeGapResolutionRequest)),
+  // PATCH .../authorize removed by migration 014 — Start Case (start_kgr_case
+  // RPC) now stamps authorized_at/authorized_by atomically with case creation.
 
   // Phase F Candidate 2, Increment 2: KGR case development record.
   route("POST",  "/admin/kgr-cases",                            noParams(handlers.createKgrCase)),
@@ -104,6 +106,9 @@ export const ADMIN_ROUTES = [
   route("PATCH", "/admin/kgr-cases/:id",                          param(handlers.updateKgrCase)),
   route("POST",  "/admin/kgr-cases/:id/hypotheses",               param(handlers.addHypothesis)),
   route("PATCH", "/admin/kgr-cases/:id/hypotheses/:hid",     twoParams(handlers.updateHypothesis)),
+  // Migration 014: resolution target + companion case (both Staff or Management).
+  route("PATCH", "/admin/kgr-cases/:id/target",                   param(handlers.setKgrCaseTarget)),
+  route("POST",  "/admin/kgr-cases/:id/companion",                param(handlers.openCompanionCase)),
   // Increment 5: human-contributed candidate solutions.
   route("POST",  "/admin/kgr-cases/:id/solutions",                param(handlers.submitKgrSolution)),
   route("POST",  "/admin/kgr-cases/:id/solutions/:sid/withdraw", twoParams(handlers.withdrawKgrSolution, "id", "sid")),
