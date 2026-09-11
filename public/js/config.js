@@ -3,10 +3,11 @@
 // Load this before any other FrontFrame script that references WORKER_URL.
 window.WORKER_URL = 'https://api.frontframe.co';
 
-// Supabase project — used by supabase-client.js for direct SDK auth calls
-// (signInWithOtp / verifyOtp / getSession). The anon key is safe to ship
-// client-side by design; it only grants what Supabase Auth + your RLS
-// policies allow. Get it from Dashboard -> Project Settings -> API.
+// Supabase project — used by supabase-client.js for session handling
+// (getSession / onAuthStateChange / signOut, and picking up the session
+// after a magic-link redirect). The anon key is safe to ship client-side
+// by design; it only grants what Supabase Auth + your RLS policies allow.
+// Get it from Dashboard -> Project Settings -> API.
 window.SUPABASE_URL = 'https://ifjsepyzdnpmwyuytppr.supabase.co';
 window.SUPABASE_ANON_KEY = 'sb_publishable_32AeSl5fyVdyS36J_048kg_Hb4Do1HK';
 

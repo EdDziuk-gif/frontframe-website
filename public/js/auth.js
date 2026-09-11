@@ -1,18 +1,20 @@
-// FrontFrame — shared OTP auth helpers
-// sendOtp / verifyOtp, calling the Supabase SDK directly (supabaseClient
-// from supabase-client.js). Depends on window.SUPABASE_URL/ANON_KEY
-// (config.js) and supabase-client.js — load both before this file.
+// FrontFrame — shared login helper
+// sendMagicLink, calling the Worker's /auth/magic-link route rather than
+// the Supabase SDK's own signInWithOtp. That endpoint generates the link
+// server-side via the Supabase Admin API (service-role key) and emails it
+// through Resend directly - it does not touch Supabase's own built-in
+// email/OTP rate limit, which repeated admin-login testing hit hard with
+// no way to raise it from our side. Depends on window.WORKER_URL
+// (config.js) - load that before this file.
 
-async function sendOtp(email) {
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email,
-    options: { shouldCreateUser: false },
+async function sendMagicLink(email) {
+  const res = await fetch(WORKER_URL + '/auth/magic-link', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
   });
-  if (error) throw new Error(error.message || 'Failed to send code.');
-}
-
-async function verifyOtp(email, token) {
-  const { data, error } = await supabaseClient.auth.verifyOtp({ email, token, type: 'email' });
-  if (error) throw new Error(error.message || 'Invalid or expired code.');
-  return { access_token: data.session.access_token, refresh_token: data.session.refresh_token };
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to send sign-in link.');
+  }
 }

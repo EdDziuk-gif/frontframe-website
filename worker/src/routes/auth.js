@@ -1,5 +1,6 @@
 import { jsonResponse } from "../shared/http.js";
-import { ADMIN_EMAIL, ADMIN_URL, sendResendEmail } from "../shared/runtime.js";
+import { ADMIN_URL, sendResendEmail } from "../shared/runtime.js";
+import { supabaseFetch } from "../shared/supabase.js";
 
 // § DOMAIN: auth
 // ════════════════════════════════════════════════════════════════════════════
@@ -35,15 +36,28 @@ async function handleVerifyOtp(request, env, corsHeaders) {
   return jsonResponse({ access_token: data.access_token, refresh_token: data.refresh_token }, 200, corsHeaders);
 }
 
+// Primary admin login path (see public/js/auth.js) — replaced the OTP-via-
+// Supabase-SDK flow, which hit Supabase's own built-in email/OTP rate limit
+// hard under repeated testing with no way to raise it from our side. This
+// route uses the Supabase Admin API (service-role key) to generate the link
+// and Resend to deliver it, bypassing that limit entirely.
+//
+// Authorization checks the reviewers table, not a single hardcoded email —
+// this admin panel has multiple reviewers (Staff/Management roles), and an
+// earlier version of this route only ever allowed and emailed ADMIN_EMAIL,
+// which would have locked out every reviewer but Ed.
 async function handleMagicLink(request, env, corsHeaders) {
-  const { email } = await request.json();
-  if (!email || email.toLowerCase() !== ADMIN_EMAIL)
-    return jsonResponse({ error: "Unauthorized" }, 403, corsHeaders);
+  const { email } = await request.json().catch(() => ({}));
+  if (!email) return jsonResponse({ error: "Email is required" }, 400, corsHeaders);
+
+  const reviewerRows = await supabaseFetch(env, "reviewers", `?select=email,active&email=ilike.${encodeURIComponent(email)}`);
+  const reviewer = reviewerRows?.[0];
+  if (!reviewer?.active) return jsonResponse({ error: "Unauthorized" }, 403, corsHeaders);
 
   const genRes = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/generate_link`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "apikey": env.SUPABASE_SERVICE_ROLE_KEY, "Authorization": `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` },
-    body: JSON.stringify({ type: "magiclink", email: ADMIN_EMAIL, options: { redirect_to: ADMIN_URL } }),
+    body: JSON.stringify({ type: "magiclink", email: reviewer.email, options: { redirect_to: ADMIN_URL } }),
   });
   if (!genRes.ok) throw new Error(`Magic link generation failed: ${await genRes.text()}`);
   const genData   = await genRes.json();
@@ -59,7 +73,7 @@ async function handleMagicLink(request, env, corsHeaders) {
 <p style="font-size:0.75rem;color:#8A9BAE">FrontFrame LLC</p>
 </body></html>`;
 
-  await sendResendEmail(env, ADMIN_EMAIL, "FrontFrame Admin Sign-In Link", html);
+  await sendResendEmail(env, reviewer.email, "FrontFrame Admin Sign-In Link", html);
   return jsonResponse({ sent: true }, 200, corsHeaders);
 }
 
