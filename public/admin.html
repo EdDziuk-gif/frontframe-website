@@ -2404,6 +2404,7 @@ function renderDefects() {
       <td>
         <button class="btn btn-ghost btn-xs" onclick="openDefectModal('${d.id}')">Edit</button>
         ${d.status !== 'resolved' ? `<button class="btn btn-ghost btn-xs" onclick="resolveDefect('${d.id}')">Resolve</button>` : ''}
+        <button class="btn btn-ghost btn-xs" onclick="deleteDefectRow('${d.id}')">Delete</button>
       </td>
     </tr>
   `).join('');
@@ -2467,6 +2468,20 @@ async function resolveDefect(id) {
     if (idx >= 0) defects[idx].status = 'resolved';
     renderDefects();
     toast('Resolved.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// For a defect that isn't being fixed right now (e.g. a known, deliberately
+// deferred behavior) rather than one that's actually been resolved — removes
+// it from the list entirely instead of leaving it open or misleadingly marked
+// resolved.
+async function deleteDefectRow(id) {
+  if (!confirm('Delete this defect? This cannot be undone.')) return;
+  try {
+    await api('DELETE', `/admin/defects/${id}`);
+    defects = defects.filter(d => d.id !== id);
+    renderDefects();
+    toast('Deleted.');
   } catch (e) { toast(e.message, 'error'); }
 }
 

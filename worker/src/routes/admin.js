@@ -30,6 +30,7 @@ export const ADMIN_ROUTES = [
   route("GET", "/admin/defects", envOnly(handlers.getDefects)),
   route("POST", "/admin/defects", noParams(handlers.createDefect)),
   route("PATCH", "/admin/defects/:id", param(handlers.updateDefect)),
+  route("DELETE", "/admin/defects/:id", envParam(handlers.deleteDefect)),
   route("GET", "/admin/feedback", envOnly(handlers.getFeedback)),
   route("POST", "/admin/feedback", noParams(handlers.createFeedback)),
   route("POST", "/admin/feedback/check-conflicts", noParams(handlers.checkFeedbackConflicts)),

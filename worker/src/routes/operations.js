@@ -65,6 +65,11 @@ async function updateDefect(request, env, id, userJwt, corsHeaders) {
   return jsonResponse(await supabasePatch(env, "defects", id, updates, userJwt), 200, corsHeaders);
 }
 
+async function deleteDefect(env, id, userJwt, corsHeaders) {
+  await supabaseDelete(env, "defects", id, userJwt);
+  return jsonResponse({ deleted: id }, 200, corsHeaders);
+}
+
 
 // ════════════════════════════════════════════════════════════════════════════
 // § DOMAIN: feedback
@@ -151,4 +156,4 @@ async function checkFeedbackConflicts(request, env, userJwt, corsHeaders) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { getConfig, updateConfig, getDefects, createDefect, updateDefect, getFeedback, createFeedback, updateFeedback, checkFeedbackConflicts };
+export { getConfig, updateConfig, getDefects, createDefect, updateDefect, deleteDefect, getFeedback, createFeedback, updateFeedback, checkFeedbackConflicts };
