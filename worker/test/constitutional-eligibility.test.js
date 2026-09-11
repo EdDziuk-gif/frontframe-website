@@ -181,13 +181,15 @@ describe("handleSingleTurn ordering — constitutional candidates never reach ge
     expect(scoresCall).toBeUndefined();
   });
 
-  it("routes an eligible (operational) question through generation and then SCR, in that order", async () => {
+  it("routes an eligible (operational) question through generation, conformance, and then SCR, in that order", async () => {
     // First call: eligibility review says eligible. Second call: ordinary
-    // generation. Third call (inside createScoringLifecycle -> scoreCandidateAnswer):
-    // the Scoring Agent itself.
+    // generation. Third call: the post-generation conformance check (Phase 3)
+    // says the answer conforms. Fourth call (inside createScoringLifecycle ->
+    // scoreCandidateAnswer): the Scoring Agent itself.
     callAnthropicMock
       .mockResolvedValueOnce('{"constitutional_candidate": false}')
       .mockResolvedValueOnce("The Standard Tier is $3,000 one-time.")
+      .mockResolvedValueOnce('{"conforms": true}')
       .mockResolvedValueOnce('{"score":0.95,"rationale":"Directly and correctly answers the question."}');
 
     // getActiveThresholds() reads threshold_config via supabaseFetch, which is
@@ -206,7 +208,7 @@ describe("handleSingleTurn ordering — constitutional candidates never reach ge
       [], "home", "session-2", "visitor_chat",
     );
 
-    expect(callAnthropicMock).toHaveBeenCalledTimes(3);
+    expect(callAnthropicMock).toHaveBeenCalledTimes(4);
     // Call order proves eligibility ran before generation.
     expect(callAnthropicMock.mock.calls[0][0]).toEqual({}); // env passed through unchanged to eligibility
     expect(result.isWithheld).toBe(false);

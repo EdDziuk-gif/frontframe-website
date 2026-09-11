@@ -8,7 +8,7 @@ import { captureContactHandoff } from "./intake.js";
 import { underReviewQaPairIds } from "./kgr.js";
 import { getTodayOfficeHoursText } from "../shared/office-hours.js";
 import { RATE_LIMITED_MESSAGE, checkChatRateLimit } from "../shared/rate-limit.js";
-import { LIMITED_CONFIDENCE_HEDGE, checkConstitutionalEligibility, createConstitutionalCandidateLifecycle, createGroundingLifecycle, createKnowledgeGapLifecycle, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
+import { LIMITED_CONFIDENCE_HEDGE, checkConstitutionalConformance, checkConstitutionalEligibility, createConstitutionalCandidateLifecycle, createConstitutionalNonconformanceLifecycle, createGroundingLifecycle, createKnowledgeGapLifecycle, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
 
 // § DOMAIN: chat
 // ════════════════════════════════════════════════════════════════════════════
@@ -387,6 +387,25 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     && !knowledgeGapMalformed
     && rawReply.length <= 600;
 
+  // ── Phase 3: post-generation constitutional-conformance check ───────────
+  // Distinct from checkConstitutionalEligibility() at the top of this
+  // function, which reviews the QUESTION before any answer exists. This
+  // reviews the candidate ANSWER itself, after generation — an eligible
+  // question can still produce a non-conforming answer. Only worth running
+  // on a candidate that could actually be delivered: skipped for a handoff/
+  // collect-dialogue turn (not a scored answer at all) and for a knowledge-
+  // gap/malformed candidate (already unconditionally withheld regardless of
+  // this check, per createKnowledgeGapLifecycle's hardcoded resolve_gap
+  // route). Runs before the kbGrounded/SCR branches below so a non-conforming
+  // answer never reaches grounding or SCR — the Constitution is superior to
+  // both, same as the eligibility boundary is to generation itself.
+  const needsConformanceCheck = !isHandoffTurn && !isCollectDialogue
+    && knowledgeGapMissing === null && !knowledgeGapMalformed
+    && Boolean(constitutionSection);
+  const conformance = needsConformanceCheck
+    ? await checkConstitutionalConformance(env, constitutionSection, response)
+    : { conforms: true, issue: null };
+
   if (isHandoffTurn || isCollectDialogue) {
     // Defect 2: a handoff turn ([COLLECTED] captured above, or an escalation
     // marker), or contact-collection dialogue inside the withhold sub-flow
@@ -395,6 +414,44 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     // question still carries the knowledge-gap marker and is handled by the
     // branches below, so it cannot reach here.
     isWithheld = false;
+  } else if (!conformance.conforms) {
+    // The answer's own content conflicts with a Constitution provision — the
+    // model overstepped, misstated a governance fact, or claimed an authority
+    // the Constitution doesn't grant. Withheld here, before grounding or SCR
+    // ever run on this candidate. Distinct route_reason from
+    // constitutional_candidate (that one catches the QUESTION, before
+    // generation) so a human reviewer can tell which boundary caught it.
+    let nonconformanceLifecycle = null;
+    try {
+      nonconformanceLifecycle = await createConstitutionalNonconformanceLifecycle(env, {
+        question: message,
+        answer: response,
+        issue: conformance.issue,
+        askedBy: session_id,
+        source,
+      });
+    } catch (e) {
+      console.error("Constitutional-nonconformance lifecycle failed:", e);
+      ctx.waitUntil(
+        supabasePost(env, "defects", agenticDefect(config,
+          `Constitutional-nonconformance lifecycle failed: ${e?.message ?? "unknown error"}`))
+          .catch((err) => console.error("nonconformance defect write failed:", err))
+      );
+    }
+    if (conformance.conformanceCheckFailed) {
+      ctx.waitUntil(
+        supabasePost(env, "defects", agenticDefect(config,
+          `Constitutional conformance check failed - failed closed, candidate withheld. Question: ${message.slice(0, 200)}`))
+          .catch((err) => console.error("conformance-check defect write failed:", err))
+      );
+    }
+    if (nonconformanceLifecycle?.gapResolutionRequestId) {
+      await alertGapResolutionQueue(env, ctx, page, message, "constitutional_nonconformance");
+    }
+    response = CONSTITUTIONAL_HOLD_MESSAGE;
+    isWithheld = true;
+    withheldNote = WITHHELD_CONSTITUTIONAL_NOTE;
+    scoringLifecycle = nonconformanceLifecycle;
   } else if (kbGrounded && knowledgeGapMissing === null && !knowledgeGapMalformed) {
     // Defect 95ebc11f: the answer claims to be drawn from promulgated material.
     // Verify fidelity to the corpus instead of scoring appropriateness.
