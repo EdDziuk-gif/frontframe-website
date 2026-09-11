@@ -3,6 +3,12 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 export const ANTHROPIC_MODEL      = "claude-sonnet-4-6";
+// Used for bounded, single-verdict classification/scoring calls (compound-question
+// decomposition, constitutional eligibility, SCR scoring, grounding verification) —
+// these return one line of JSON, not conversational generation, and don't need
+// ANTHROPIC_MODEL's depth. Already the same model the post-response evaluator in
+// chat.js uses for an equivalent judgment call.
+export const ANTHROPIC_FAST_MODEL = "claude-haiku-4-5-20251001";
 export const ANTHROPIC_MAX_TOKENS = 1024;
 
 export const SURGE_ACCOUNT_ID = "acct_01krevy9esf46rgm7ym1e66k8k";
@@ -113,7 +119,61 @@ marker instead. Never emit both markers in the same reply.`;
 // § ANTHROPIC
 // ════════════════════════════════════════════════════════════════════════════
 
-export async function callAnthropic(env, systemPrompt, messages) {
+// Every "return exactly one JSON object and no other text" prompt in this
+// pipeline (eligibility, conformance, SCR scoring, grounding, decomposition)
+// used to assume the whole cleaned response string WAS that JSON object, and
+// pass it straight to JSON.parse. A smaller/faster model doesn't always honor
+// "no other text" as reliably as a larger one: it can append a blank line and
+// trailing commentary after an otherwise-correct object, which throws a
+// SyntaxError and — for every one of these checks — fails closed on every
+// single request. Extracts and parses just the first balanced top-level {...}
+// object instead, ignoring anything before or after it. Brace-depth counting
+// tracks whether it's inside a JSON string (respecting \" escapes) so a brace
+// character inside a quoted value (e.g. a rationale) can't miscount.
+export function parseJsonObject(raw) {
+  const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
+  const start = cleaned.indexOf("{");
+  if (start === -1) throw new Error("No JSON object found in response");
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return JSON.parse(cleaned.slice(start, i + 1));
+    }
+  }
+  throw new Error("Unterminated JSON object in response");
+}
+
+// A text content block for the Anthropic Messages API, optionally marked for
+// prompt caching. Used to build `system` (and, for the eligibility check,
+// `messages` content) as an array of stability-ordered blocks instead of one
+// concatenated string, so a stable prefix can be cached independently of the
+// volatile content that follows it. `callAnthropic` passes whatever is given
+// straight through to `system`/`messages`, so a plain string still works
+// unchanged for callers that don't need caching.
+// ttl omitted -> Anthropic's default 5-minute ephemeral cache; ttl: "1h" for
+// content stable enough to be worth the higher (2x) write cost. A prefix
+// shorter than the model's minimum cacheable length (model-dependent, see
+// Anthropic's docs) silently doesn't cache — no error, no extra charge.
+export function cacheableBlock(text, { cache = true, ttl } = {}) {
+  const block = { type: "text", text };
+  if (cache && text) block.cache_control = ttl ? { type: "ephemeral", ttl } : { type: "ephemeral" };
+  return block;
+}
+
+export async function callAnthropic(env, systemPrompt, messages, model = ANTHROPIC_MODEL) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -122,7 +182,7 @@ export async function callAnthropic(env, systemPrompt, messages) {
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model:      ANTHROPIC_MODEL,
+      model,
       max_tokens: ANTHROPIC_MAX_TOKENS,
       system:     systemPrompt,
       messages,
@@ -150,6 +210,14 @@ export function buildQaPairsQuery(page) {
     `&status=eq.implemented` +
     `&or=(page.eq.all,page.eq.${encodeURIComponent(page)})` +
     `&order=created_at.asc`;
+}
+
+// Escapes visitor/model-supplied free text before it's interpolated into an
+// HTML email body (admin alert emails: handoff and escalation).
+export function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[c]);
 }
 
 // § DOMAIN: sms (Surge)

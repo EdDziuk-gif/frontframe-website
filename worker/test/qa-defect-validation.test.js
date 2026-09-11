@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const supabasePostMock = vi.fn().mockResolvedValue([{ id: "row-1" }]);
 const supabasePatchMock = vi.fn().mockResolvedValue([{ id: "row-1" }]);
+const supabaseDeleteMock = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("../src/shared/supabase.js", async (importOriginal) => {
   const actual = await importOriginal();
@@ -18,11 +19,12 @@ vi.mock("../src/shared/supabase.js", async (importOriginal) => {
     ...actual,
     supabasePost: (...a) => supabasePostMock(...a),
     supabasePatch: (...a) => supabasePatchMock(...a),
+    supabaseDelete: (...a) => supabaseDeleteMock(...a),
     supabaseFetch: vi.fn().mockResolvedValue([{ build_version: "vT", stage_gate: "build" }]),
   };
 });
 
-const { createDefect, updateDefect } = await import("../src/routes/operations.js");
+const { createDefect, updateDefect, deleteDefect } = await import("../src/routes/operations.js");
 
 const CORS = { "Access-Control-Allow-Origin": "*" };
 const req = (obj) => ({ json: async () => obj });
@@ -54,5 +56,11 @@ describe("createDefect / updateDefect validation", () => {
     const res = await updateDefect(req({ status: "resolved" }), {}, "id1", "jwt", CORS);
     expect(res.status).toBe(200);
     expect(supabasePatchMock).toHaveBeenCalled();
+  });
+
+  it("deleteDefect removes a defect that isn't being fixed right now", async () => {
+    const res = await deleteDefect({}, "id1", "jwt", CORS);
+    expect(res.status).toBe(200);
+    expect(supabaseDeleteMock).toHaveBeenCalledWith({}, "defects", "id1", "jwt");
   });
 });

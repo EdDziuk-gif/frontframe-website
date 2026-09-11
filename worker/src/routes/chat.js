@@ -1,6 +1,6 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
+import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, escapeHtml, parseJsonObject, sendResendEmail, sendSms } from "../shared/runtime.js";
 // Shared contact-handoff capture (lead + lead_alert + SMS, de-duped on session_id).
 // Lives next to /notify in intake.js; imported here so a [COLLECTED] marker is
 // captured server-side and can never be discarded by a resolve_gap route (Defect 2).
@@ -8,7 +8,7 @@ import { captureContactHandoff } from "./intake.js";
 import { underReviewQaPairIds } from "./kgr.js";
 import { getTodayOfficeHoursText } from "../shared/office-hours.js";
 import { RATE_LIMITED_MESSAGE, checkChatRateLimit } from "../shared/rate-limit.js";
-import { LIMITED_CONFIDENCE_HEDGE, checkConstitutionalEligibility, createConstitutionalCandidateLifecycle, createGroundingLifecycle, createKnowledgeGapLifecycle, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
+import { LIMITED_CONFIDENCE_HEDGE, checkConstitutionalConformance, checkConstitutionalEligibility, createConstitutionalCandidateLifecycle, createConstitutionalNonconformanceLifecycle, createGroundingLifecycle, createKnowledgeGapLifecycle, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
 
 // § DOMAIN: chat
 // ════════════════════════════════════════════════════════════════════════════
@@ -104,12 +104,21 @@ async function alertGapResolutionQueue(env, ctx, page, question, reason) {
 // Phase E completion, item C. Cheap, purely syntactic prefilter run before
 // ever spending a model call on decomposition — most single-question turns
 // never reach the Anthropic call below. Intentionally permissive (a false
-// positive just costs one small haiku call that returns {"subparts": null}).
+// positive just costs one extra call that returns {"subparts": null}).
 const COMPOUND_HINT_PATTERN = /\b(and also|also,|in addition|as well as)\b|\?.*\?/is;
 
 async function decomposeIfCompound(env, message) {
   if (!COMPOUND_HINT_PATTERN.test(message)) return null;
   try {
+    // Deliberately left on the full ANTHROPIC_MODEL, not ANTHROPIC_FAST_MODEL.
+    // Unlike the other classification calls in this pipeline (eligibility, SCR,
+    // grounding — each a single bounded JSON verdict), this one has to cleanly
+    // separate entangled clauses and rewrite each as a self-contained question.
+    // Moving it to the fast model (2026-09-11) caused it to mis-split an
+    // adversarially-phrased compound question, dropping one subpart entirely
+    // and duplicating the other — silently discarding half the visitor's
+    // question. This call is at most once per compound message, not once per
+    // turn, so the cost of the full model here is small.
     const raw = await callAnthropic(
       env,
       `Decide whether the visitor message below asks more than one genuinely separate
@@ -125,8 +134,7 @@ Return exactly one JSON object and no other text, in exactly this form:
 {"subparts": ["...", "..."]} or {"subparts": null}`,
       [{ role: "user", content: message }],
     );
-    const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = parseJsonObject(raw);
     if (!Array.isArray(parsed?.subparts) || parsed.subparts.length < 2) return null;
     const subparts = parsed.subparts
       .map((s) => (typeof s === "string" ? s.trim() : ""))
@@ -219,6 +227,31 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
       status: "new", sms_sent: false, sms_status: null,
     };
 
+    // Email backup, independent of the lead_alerts write and the SMS below -
+    // same reasoning as captureContactHandoff's backup email (intake.js): an
+    // invalid/missing SURGE_API_KEY silently dropped every alert here too,
+    // with nothing else to catch it. Escalation fires on signals in the
+    // conversation, often before the visitor has given contact info at all,
+    // so this stays a separate lightweight alert rather than being folded
+    // into captureContactHandoff's lead/contact shape.
+    const escalationEmailHtml = `<!DOCTYPE html><html><body style="font-family:Inter,system-ui,sans-serif;color:#1E2D40;max-width:560px;margin:0 auto;padding:40px 24px">
+<div style="margin-bottom:24px"><strong style="font-size:1.1rem">FrontFrame — Escalation Alert</strong></div>
+<p style="margin-bottom:4px">The chat assistant flagged a conversation for escalation.</p>
+<p style="margin:16px 0;color:#3A4A5C">
+  Prospect: ${escapeHtml(escalation.prospect ?? "Visitor")}<br>
+  Page: ${escapeHtml(page)}<br>
+  Signal: ${escapeHtml(escalation.reason ?? "escalation")}<br>
+  ${escalation.contact_preference ? `Contact: ${escapeHtml(escalation.contact_preference)} - ${escapeHtml(escalation.contact_value ?? "not provided")}<br>` : ""}
+  ${escalation.current_site ? `Site: ${escapeHtml(escalation.current_site)}<br>` : ""}
+</p>
+<hr style="border:none;border-top:1px solid #E8ECF0;margin:32px 0">
+<p style="font-size:0.75rem;color:#8A9BAE">Backup notification alongside the SMS alert. Not every escalation is a qualified lead — no need to drop everything for this.</p>
+</body></html>`;
+    ctx.waitUntil(
+      sendResendEmail(env, ADMIN_EMAIL, `FrontFrame escalation — ${escalation.prospect ?? "Visitor"}`, escalationEmailHtml)
+        .catch((e) => console.error("escalation backup email failed:", e))
+    );
+
     ctx.waitUntil(
       supabasePost(env, "lead_alerts", alertPayload)
         .then(async (alertRows) => {
@@ -304,6 +337,9 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     try { collected = JSON.parse(collectedMatch[1]); } catch { collected = {}; }
     if (collected && (collected.name || collected.contact)) {
       handoffCaptured = true;
+      const transcript = [...history, { role: "user", content: message }, { role: "assistant", content: response }]
+        .map((t) => `${t.role === "user" ? "Visitor" : "Assistant"}: ${t.content}`)
+        .join("\n");
       ctx.waitUntil(
         captureContactHandoff(env, ctx, {
           session_id,
@@ -314,6 +350,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
           timezone: collected.timezone ?? "",
           summary:  collected.summary  ?? "",
           source:   "agent",
+          transcript,
         }).catch((e) => console.error("server-side contact handoff failed:", e))
       );
     }
@@ -386,6 +423,25 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     && !knowledgeGapMalformed
     && rawReply.length <= 600;
 
+  // ── Phase 3: post-generation constitutional-conformance check ───────────
+  // Distinct from checkConstitutionalEligibility() at the top of this
+  // function, which reviews the QUESTION before any answer exists. This
+  // reviews the candidate ANSWER itself, after generation — an eligible
+  // question can still produce a non-conforming answer. Only worth running
+  // on a candidate that could actually be delivered: skipped for a handoff/
+  // collect-dialogue turn (not a scored answer at all) and for a knowledge-
+  // gap/malformed candidate (already unconditionally withheld regardless of
+  // this check, per createKnowledgeGapLifecycle's hardcoded resolve_gap
+  // route). Runs before the kbGrounded/SCR branches below so a non-conforming
+  // answer never reaches grounding or SCR — the Constitution is superior to
+  // both, same as the eligibility boundary is to generation itself.
+  const needsConformanceCheck = !isHandoffTurn && !isCollectDialogue
+    && knowledgeGapMissing === null && !knowledgeGapMalformed
+    && Boolean(constitutionSection);
+  const conformance = needsConformanceCheck
+    ? await checkConstitutionalConformance(env, constitutionSection, response)
+    : { conforms: true, issue: null };
+
   if (isHandoffTurn || isCollectDialogue) {
     // Defect 2: a handoff turn ([COLLECTED] captured above, or an escalation
     // marker), or contact-collection dialogue inside the withhold sub-flow
@@ -394,6 +450,44 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     // question still carries the knowledge-gap marker and is handled by the
     // branches below, so it cannot reach here.
     isWithheld = false;
+  } else if (!conformance.conforms) {
+    // The answer's own content conflicts with a Constitution provision — the
+    // model overstepped, misstated a governance fact, or claimed an authority
+    // the Constitution doesn't grant. Withheld here, before grounding or SCR
+    // ever run on this candidate. Distinct route_reason from
+    // constitutional_candidate (that one catches the QUESTION, before
+    // generation) so a human reviewer can tell which boundary caught it.
+    let nonconformanceLifecycle = null;
+    try {
+      nonconformanceLifecycle = await createConstitutionalNonconformanceLifecycle(env, {
+        question: message,
+        answer: response,
+        issue: conformance.issue,
+        askedBy: session_id,
+        source,
+      });
+    } catch (e) {
+      console.error("Constitutional-nonconformance lifecycle failed:", e);
+      ctx.waitUntil(
+        supabasePost(env, "defects", agenticDefect(config,
+          `Constitutional-nonconformance lifecycle failed: ${e?.message ?? "unknown error"}`))
+          .catch((err) => console.error("nonconformance defect write failed:", err))
+      );
+    }
+    if (conformance.conformanceCheckFailed) {
+      ctx.waitUntil(
+        supabasePost(env, "defects", agenticDefect(config,
+          `Constitutional conformance check failed - failed closed, candidate withheld. Question: ${message.slice(0, 200)}`))
+          .catch((err) => console.error("conformance-check defect write failed:", err))
+      );
+    }
+    if (nonconformanceLifecycle?.gapResolutionRequestId) {
+      await alertGapResolutionQueue(env, ctx, page, message, "constitutional_nonconformance");
+    }
+    response = CONSTITUTIONAL_HOLD_MESSAGE;
+    isWithheld = true;
+    withheldNote = WITHHELD_CONSTITUTIONAL_NOTE;
+    scoringLifecycle = nonconformanceLifecycle;
   } else if (kbGrounded && knowledgeGapMissing === null && !knowledgeGapMalformed) {
     // Defect 95ebc11f: the answer claims to be drawn from promulgated material.
     // Verify fidelity to the corpus instead of scoring appropriateness.
@@ -577,45 +671,51 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   // in operations.js's read path but was never joined into what visitors
   // actually talk to. This wires it in here too, so the two paths (live
   // chat, admin preview) build the prompt the same way.
-  const [pageRow, globalRow, constitutionRows] = await Promise.all([
+  //
+  // These six lookups are mutually independent (none needs another's result),
+  // so they run as one Promise.all instead of one round trip per stage —
+  // underReviewQaPairIds and getTodayOfficeHoursText used to run sequentially
+  // after qaPairs resolved, tripling the wall-clock cost of this section for
+  // no reason. underReviewQaPairIds throws on failure (per its own contract,
+  // the caller decides how to degrade); the catch below preserves the
+  // original "serve without the caveat and log a defect" behavior.
+  const [pageRow, globalRow, constitutionRows, qaPairs, underReview, hoursText] = await Promise.all([
 	supabaseFetch(env, "system_prompt", `?page=eq.${encodeURIComponent(page)}&select=content`),
 	supabaseFetch(env, "system_prompt", `?page=eq.all&select=content`),
 	supabaseFetch(env, "constitution_provisions", `?select=provision_number,title,current_text&order=provision_number.asc`),
+	supabaseFetch(env, "qa_pairs", buildQaPairsQuery(page)),
+	underReviewQaPairIds(env, page).catch((e) => {
+	  ctx.waitUntil(
+		supabasePost(env, "defects", {
+		  area: "agentic",
+		  severity: "minor",
+		  disposition: "retain",
+		  description: `[under-review-lookup] Could not determine which qa_pairs are under KGR review; served without the caveat. ${String(e?.message ?? e).slice(0, 300)}`,
+		  build_version: config.build_version ?? "unknown",
+		}).catch(() => {}),
+	  );
+	  return null;
+	}),
+	getTodayOfficeHoursText(env),
   ]);
   const pagePromptContent   = pageRow?.[0]?.content ?? "";
   const globalPromptContent = globalRow?.[0]?.content ?? "";
   const systemPromptContent = [globalPromptContent, pagePromptContent].filter(Boolean).join("\n\n");
 
-  const qaPairs             = await supabaseFetch(env, "qa_pairs", buildQaPairsQuery(page));
-
   // Migration 014 §3.4a: an implemented pair that an OPEN KGR replacement case
   // (no signed-off statement yet) is reworking is still served, but with an
   // "under active review" caveat prepended so the assistant discloses it and
   // does not present it as settled. The caveat persists through constitutional
-  // escalation and clears only at sign-off / retarget-away. Best-effort: on a
-  // lookup failure, serve normally and file an agentic defect.
-  try {
-    const underReview = await underReviewQaPairIds(env, page);
-    if (Array.isArray(underReview) && underReview.length && Array.isArray(qaPairs)) {
-      const flagged = new Set(underReview);
-      for (const r of qaPairs) {
-        if (flagged.has(r.id)) {
-          r.answer =
-            "[UNDER REVIEW — FrontFrame is currently reviewing its position on this. Present the following " +
-            "as the current answer, not settled fact, and say it is under review.]\n" + r.answer;
-        }
+  // escalation and clears only at sign-off / retarget-away.
+  if (Array.isArray(underReview) && underReview.length && Array.isArray(qaPairs)) {
+    const flagged = new Set(underReview);
+    for (const r of qaPairs) {
+      if (flagged.has(r.id)) {
+        r.answer =
+          "[UNDER REVIEW — FrontFrame is currently reviewing its position on this. Present the following " +
+          "as the current answer, not settled fact, and say it is under review.]\n" + r.answer;
       }
     }
-  } catch (e) {
-    ctx.waitUntil(
-      supabasePost(env, "defects", {
-        area: "agentic",
-        severity: "minor",
-        disposition: "retain",
-        description: `[under-review-lookup] Could not determine which qa_pairs are under KGR review; served without the caveat. ${String(e?.message ?? e).slice(0, 300)}`,
-        build_version: config.build_version ?? "unknown",
-      }).catch(() => {}),
-    );
   }
 
   // ── Phase E completion, item A ───────────────────────────────────────────
@@ -637,15 +737,34 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   const promulgatedCorpus = buildSystemPrompt(systemPromptContent, qaPairs);
 
   const constitutionSection = buildConstitutionSection(constitutionRows);
-  let combinedPrompt = constitutionSection
-	? constitutionSection + "\n\n" + promulgatedCorpus
-	: promulgatedCorpus;
-  combinedPrompt += KNOWLEDGE_GAP_INSTRUCTION;
-  combinedPrompt += KB_GROUNDED_INSTRUCTION;
-  if (config.mode === "testing") combinedPrompt += TESTING_LAYER;
 
-  const hoursText = await getTodayOfficeHoursText(env);
-  if (hoursText) combinedPrompt = hoursText + "\n\n" + combinedPrompt;
+  // ── Phase F: prompt caching ───────────────────────────────────────────────
+  // Same visible content and order as before generation ever saw it — this is
+  // a caching restructure, not a prompt change. Built as stability-ordered
+  // cache_control blocks instead of one concatenated string (a 1h-TTL block
+  // must precede any 5m-TTL block in the same request, per Anthropic's
+  // caching rules):
+  //   1. constitutionSection — identical across every page and every visitor,
+  //      and changes only on a promulgated amendment. 1h TTL.
+  //   2. promulgatedCorpus + the two static instructions — identical across
+  //      visitors of the SAME page, but changes whenever an admin edits that
+  //      page's system_prompt/qa_pairs. Default 5-minute TTL. The two
+  //      instructions must stay physically after promulgatedCorpus in the
+  //      same block — they say "above" referring to the Knowledge Base.
+  //   3. office-hours text (+ TESTING_LAYER in testing mode) — changes daily
+  //      / per-mode, not per visitor. Left uncached at the end (previously
+  //      hoursText sat at the very front) so it never invalidates the two
+  //      blocks above it — see the caching guide's "keep the system prompt
+  //      frozen" rule against interpolating dynamic content at position 0.
+  const pageScoped = promulgatedCorpus + KNOWLEDGE_GAP_INSTRUCTION + KB_GROUNDED_INSTRUCTION;
+  const volatileTail = [hoursText, config.mode === "testing" ? TESTING_LAYER : ""]
+	.filter(Boolean).join("\n\n");
+
+  const combinedPrompt = [
+	...(constitutionSection ? [cacheableBlock(constitutionSection, { ttl: "1h" })] : []),
+	cacheableBlock(pageScoped),
+	...(volatileTail ? [cacheableBlock(volatileTail, { cache: false })] : []),
+  ];
 
   // ── Phase E completion, item C ────────────────────────────────────────────
   // Compound-question handling is a lightweight orchestration loop over the

@@ -1,4 +1,4 @@
-import { callAnthropic } from "./runtime.js";
+import { ANTHROPIC_FAST_MODEL, cacheableBlock, callAnthropic, parseJsonObject } from "./runtime.js";
 import { supabaseFetch, supabasePost } from "./supabase.js";
 
 // Phase D — REQ-SCR-01..08, REQ-SCA-01..06.
@@ -44,10 +44,9 @@ export function routeScore(score, thresholdLow, thresholdHigh) {
 }
 
 export function parseScoringResult(raw) {
-  const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
   let parsed;
   try {
-    parsed = JSON.parse(cleaned);
+    parsed = parseJsonObject(raw);
   } catch {
     throw new Error("Scoring Agent returned invalid JSON");
   }
@@ -68,7 +67,7 @@ export async function scoreCandidateAnswer(env, question, answer) {
       role: "user",
       content: `QUESTION:\n${question}\n\nANSWER:\n${answer}`,
     },
-  ]);
+  ], ANTHROPIC_FAST_MODEL);
   return parseScoringResult(raw);
 }
 
@@ -246,10 +245,9 @@ Output schema:
 score is a number from 0.00 through 1.00. rationale is exactly one sentence.`;
 
 export function parseGroundingResult(raw) {
-  const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
   let parsed;
   try {
-    parsed = JSON.parse(cleaned);
+    parsed = parseJsonObject(raw);
   } catch {
     throw new Error("Grounding Verifier returned invalid JSON");
   }
@@ -265,7 +263,7 @@ export function parseGroundingResult(raw) {
 export async function verifyGroundedAnswer(env, answer, corpus) {
   const raw = await callAnthropic(env, GROUNDING_SYSTEM_PROMPT, [
     { role: "user", content: `SOURCE:\n${corpus ?? "(none supplied)"}\n\nANSWER:\n${answer}` },
-  ]);
+  ], ANTHROPIC_FAST_MODEL);
   return parseGroundingResult(raw);
 }
 
@@ -453,11 +451,21 @@ export async function checkConstitutionalEligibility(env, constitutionSection, q
   if (!constitutionSection) return { constitutionalCandidate: false, issue: null };
 
   try {
+    // constitutionSection is identical on every call regardless of the
+    // question asked, so it's split into its own cache_control block ahead
+    // of the per-turn question (the "shared prefix, varying suffix" pattern)
+    // instead of being concatenated into one string with it — a marker on
+    // the combined string would key the cache to the question and never hit.
     const raw = await callAnthropic(env, CONSTITUTIONAL_ELIGIBILITY_SYSTEM_PROMPT, [
-      { role: "user", content: `${constitutionSection}\n\nQUESTION:\n${question}` },
-    ]);
-    const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
-    const parsed = JSON.parse(cleaned);
+      {
+        role: "user",
+        content: [
+          cacheableBlock(constitutionSection),
+          cacheableBlock(`QUESTION:\n${question}`, { cache: false }),
+        ],
+      },
+    ], ANTHROPIC_FAST_MODEL);
+    const parsed = parseJsonObject(raw);
     if (parsed?.constitutional_candidate === true) {
       const issue = typeof parsed.issue === "string" && parsed.issue.trim()
         ? parsed.issue.trim()
@@ -533,6 +541,139 @@ export async function createConstitutionalCandidateLifecycle(env, {
     rationale: issue ?? null,
     route: "resolve_gap",
     routeReason: "constitutional_candidate",
+  };
+}
+
+// Phase 3. Sibling to checkConstitutionalEligibility(), but on the other side
+// of generation: eligibility reviews the QUESTION before any answer exists;
+// this reviews the candidate ANSWER itself, after generation, for whether its
+// actual content conflicts with a Constitution provision. An eligible
+// question (one that didn't require a human authority determination) can
+// still produce a non-conforming answer - the model overstepped, misstated a
+// governance fact, or claimed an authority/exception the Constitution doesn't
+// grant. This is NOT re-litigating eligibility and NOT grounding against the
+// operational corpus (system_prompt + qa_pairs, handled separately by
+// verifyGroundedAnswer) - it judges the ANSWER against the CONSTITUTION only.
+const CONSTITUTIONAL_CONFORMANCE_SYSTEM_PROMPT = `You are the FrontFrame Constitutional Conformance Verifier.
+
+You are given the CONSTITUTION (FrontFrame's governing provisions) and an ANSWER a
+visitor is about to receive. Judge whether the ANSWER conflicts with, contradicts, or
+oversteps any CONSTITUTION provision.
+
+Rules:
+- You are not re-deciding eligibility (whether the question should have been asked in
+  the first place) and not checking factual grounding against FrontFrame's operational
+  Knowledge Base - both are separate checks. Judge ONLY whether the ANSWER's content is
+  consistent with the CONSTITUTION.
+- Flag the ANSWER only when it actually asserts something that conflicts with a
+  provision - e.g. it claims an authority, delegation, or exception the CONSTITUTION
+  does not grant; it states a governance fact the CONSTITUTION contradicts; or it
+  purports to settle a matter the CONSTITUTION reserves for human determination.
+- An ANSWER that is merely silent on governance, or never mentions authority or the
+  Constitution at all, conforms by default - do not flag an answer just because it
+  doesn't discuss the Constitution.
+- Return exactly one JSON object and no other text.
+
+Output schema:
+{"conforms": true} or {"conforms": false, "issue": "One concise sentence naming the specific conflict."}`;
+
+export async function checkConstitutionalConformance(env, constitutionSection, answer) {
+  // No constitution provisions loaded - there is nothing for the answer to
+  // conflict with, so it conforms by default.
+  if (!constitutionSection) return { conforms: true, issue: null };
+
+  try {
+    // constitutionSection is identical on every call regardless of the
+    // answer being checked, so it's split into its own cache_control block
+    // ahead of the per-turn answer (same pattern as checkConstitutionalEligibility
+    // above) - and, within a single visitor turn, this is the second call to
+    // reuse that exact block, so it's typically a cache read rather than a
+    // fresh write.
+    const raw = await callAnthropic(env, CONSTITUTIONAL_CONFORMANCE_SYSTEM_PROMPT, [
+      {
+        role: "user",
+        content: [
+          cacheableBlock(constitutionSection),
+          cacheableBlock(`ANSWER:\n${answer}`, { cache: false }),
+        ],
+      },
+    ], ANTHROPIC_FAST_MODEL);
+    const parsed = parseJsonObject(raw);
+    if (parsed?.conforms === false) {
+      const issue = typeof parsed.issue === "string" && parsed.issue.trim()
+        ? parsed.issue.trim()
+        : "(not specified)";
+      return { conforms: false, issue };
+    }
+    return { conforms: true, issue: null };
+  } catch (e) {
+    // Same fail-closed posture as checkConstitutionalEligibility: an
+    // infrastructure/parse failure here is not license to deliver an
+    // unverified answer. Treat it as non-conforming and route to human review.
+    console.error("Constitutional conformance check failed - failing closed:", e);
+    return { conforms: false, issue: "(conformance review failed - flagged for safety)", conformanceCheckFailed: true };
+  }
+}
+
+// Sibling to createConstitutionalCandidateLifecycle(), for the other side of
+// the same boundary: that one withholds a QUESTION before generation ever
+// runs (score_id null, no candidate answer was actually produced from the
+// operational corpus); this withholds an ANSWER that WAS generated and DID
+// clear eligibility, but failed the post-generation conformance check above.
+// Distinct route_reason so a human reviewer can tell at a glance whether the
+// question or the answer was the problem. SCR is never invoked on this
+// candidate - no scores row is created - matching the same "Constitution is
+// superior to SCR's appropriateness judgment" invariant as the eligibility
+// boundary.
+export async function createConstitutionalNonconformanceLifecycle(env, {
+  question,
+  answer,
+  issue,
+  askedBy = null,
+  source = "visitor_chat",
+}) {
+  const questionRows = await supabasePost(env, "questions", {
+    source,
+    question_text: question,
+    asked_by: askedBy,
+  });
+  const questionId = questionRows?.[0]?.id;
+  if (!questionId) throw new Error("Failed to persist lifecycle question (constitutional nonconformance)");
+
+  const candidateRows = await supabasePost(env, "candidate_answers", {
+    question_id: questionId,
+    answer_text: answer,
+    origin: "retrieval",
+  });
+  const candidateAnswerId = candidateRows?.[0]?.id;
+  if (!candidateAnswerId) throw new Error("Failed to persist candidate answer (constitutional nonconformance)");
+
+  const routeRows = await supabasePost(env, "routes", {
+    score_id: null,
+    route_decision: "resolve_gap",
+    route_reason: "constitutional_nonconformance",
+  });
+  const routeId = routeRows?.[0]?.id;
+  if (!routeId) throw new Error("Failed to persist constitutional-nonconformance route");
+
+  const requestRows = await supabasePost(env, "gap_resolution_requests", {
+    route_id: routeId,
+    question_id: questionId,
+    candidate_answer_id: candidateAnswerId,
+  });
+  const gapResolutionRequestId = requestRows?.[0]?.id;
+  if (!gapResolutionRequestId) throw new Error("Failed to persist gap-resolution request (constitutional nonconformance)");
+
+  return {
+    questionId,
+    candidateAnswerId,
+    scoreId: null,
+    routeId,
+    gapResolutionRequestId,
+    score: null,
+    rationale: issue ?? null,
+    route: "resolve_gap",
+    routeReason: "constitutional_nonconformance",
   };
 }
 
