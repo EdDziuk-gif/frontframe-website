@@ -131,6 +131,32 @@ async function getReviewQueue(request, env, userJwt, corsHeaders) {
   return jsonResponse(await supabaseFetch(env, "review_queue", query, userJwt), 200, corsHeaders);
 }
 
+// Manual counterpart to the automatic post-response evaluator in chat.js
+// (which only ever writes flag_source: "auto"). Lets a reviewer challenge a
+// response they saw directly - live testing, a screenshot, a visitor
+// complaint - without needing a stored session transcript to flag from.
+// Lands in the same review_queue table and Review Queue UI, status
+// "candidate" so it appears alongside auto-flagged items ready for triage.
+async function createReviewQueueItem(request, env, userJwt, corsHeaders) {
+  if (!userJwt) return jsonResponse({ error: "Unauthorized" }, 401, corsHeaders);
+  const body = await request.json().catch(() => null);
+  if (!body) return jsonResponse({ error: "Invalid JSON" }, 400, corsHeaders);
+
+  const visitorMessage = typeof body.visitor_message === "string" ? body.visitor_message.trim() : "";
+  const botResponse = typeof body.bot_response === "string" ? body.bot_response.trim() : "";
+  if (!visitorMessage || !botResponse) {
+    return jsonResponse({ error: "visitor_message and bot_response are required" }, 400, corsHeaders);
+  }
+
+  const row = await supabasePost(env, "review_queue", {
+    flagged_turn: { visitor_message: visitorMessage, bot_response: botResponse },
+    flag_source: "manual",
+    status: "candidate",
+    notes: typeof body.notes === "string" && body.notes.trim() ? body.notes.trim() : null,
+  }, userJwt);
+  return jsonResponse(row, 201, corsHeaders);
+}
+
 async function updateReviewQueue(request, env, id, userJwt, corsHeaders) {
   const body = await request.json();
   const updates = {};
@@ -220,4 +246,4 @@ async function deleteGapResolutionRequest(env, id, userJwt, corsHeaders) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { getOutreachProspects, createOutreachProspect, updateOutreachProspect, sendOutreachContract, getOutreachTouches, createOutreachTouch, getReviewQueue, updateReviewQueue, deleteReviewQueue, bulkDeleteReviewQueue, getGapResolutionRequests, deleteGapResolutionRequest };
+export { getOutreachProspects, createOutreachProspect, updateOutreachProspect, sendOutreachContract, getOutreachTouches, createOutreachTouch, getReviewQueue, createReviewQueueItem, updateReviewQueue, deleteReviewQueue, bulkDeleteReviewQueue, getGapResolutionRequests, deleteGapResolutionRequest };

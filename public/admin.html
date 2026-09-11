@@ -725,6 +725,7 @@
         <div class="card-header">
           <div class="card-title">Review Queue</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="openChallengeModal()">+ Flag a Response</button>
             <button class="btn btn-sm" id="rq-btn-candidate"             onclick="setRqView('candidate')">Candidates</button>
             <button class="btn btn-sm" id="rq-btn-comprehension_failure" onclick="setRqView('comprehension_failure')">Comp. Failures</button>
             <button class="btn btn-sm" id="rq-btn-dismissed"             onclick="setRqView('dismissed')">Dismissed</button>
@@ -1674,6 +1675,22 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="challenge-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Flag a Response</div>
+      <button class="modal-close" onclick="closeModal('challenge-modal')">&#x00D7;</button>
+    </div>
+    <div class="form-group"><label>Visitor Question</label><textarea id="cg-question" rows="2" placeholder="What the visitor asked"></textarea></div>
+    <div class="form-group"><label>Bot Response</label><textarea id="cg-response" rows="4" placeholder="What the assistant answered"></textarea></div>
+    <div class="form-group"><label>What's wrong with it (optional)</label><textarea id="cg-notes" rows="2" placeholder="Why this needs fixing"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('challenge-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveChallenge()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="feedback-edit-modal">
   <div class="modal">
     <div class="modal-header">
@@ -2509,6 +2526,30 @@ async function saveFeedback() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
+function openChallengeModal() { document.getElementById('challenge-modal').classList.add('open'); }
+
+// Manual counterpart to the auto-evaluator's review_queue writes in chat.js —
+// lets a reviewer flag a response they saw directly (live testing, a visitor
+// complaint) without needing a stored session transcript. Lands in the same
+// queue, status "candidate", alongside auto-flagged items.
+async function saveChallenge() {
+  const visitor_message = document.getElementById('cg-question').value.trim();
+  const bot_response    = document.getElementById('cg-response').value.trim();
+  const notes           = document.getElementById('cg-notes').value.trim();
+  if (!visitor_message || !bot_response) { toast('Visitor question and bot response are both required.', 'error'); return; }
+  try {
+    const created = await api('POST', '/admin/review-queue', { visitor_message, bot_response, notes });
+    const newRow  = Array.isArray(created) ? created[0] : created;
+    if (newRow) reviewQueue.unshift(newRow);
+    document.getElementById('cg-question').value = '';
+    document.getElementById('cg-response').value = '';
+    document.getElementById('cg-notes').value    = '';
+    closeModal('challenge-modal');
+    setRqView('candidate');
+    toast('Flagged for review.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
 async function promoteFeedback(id) {
   try {
     await api('PATCH', `/admin/feedback/${id}`, { action: 'promote' });
@@ -3054,8 +3095,8 @@ function renderReviewQueue() {
     tbody.innerHTML = records.map(r => {
       const q      = esc(r.flagged_turn?.visitor_message ?? '—');
       const a      = esc((r.flagged_turn?.bot_response ?? '—').slice(0, 120));
-      const score  = r.auto_score ?? '—';
-      const reason = esc(r.auto_reasoning ?? '—');
+      const score  = r.auto_score ?? (r.flag_source === 'manual' ? 'manual' : '—');
+      const reason = esc(r.auto_reasoning ?? r.notes ?? '—');
       return `<tr>
         <td style="max-width:200px">${q}</td>
         <td style="max-width:200px;color:var(--gray)">${a}</td>

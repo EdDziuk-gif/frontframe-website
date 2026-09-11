@@ -92,6 +92,7 @@ export const ADMIN_ROUTES = [
   route("PATCH", "/admin/outreach/:id", param(handlers.updateOutreachProspect)),
   route("DELETE", "/admin/review-queue/bulk", noParams(handlers.bulkDeleteReviewQueue)),
   route("GET", "/admin/review-queue", noParams(handlers.getReviewQueue)),
+  route("POST", "/admin/review-queue", noParams(handlers.createReviewQueueItem)),
   route("PATCH", "/admin/review-queue/:id", param(handlers.updateReviewQueue)),
   route("DELETE", "/admin/review-queue/:id", envParam(handlers.deleteReviewQueue)),
   route("GET", "/admin/gap-resolution-requests", noParams(handlers.getGapResolutionRequests)),
