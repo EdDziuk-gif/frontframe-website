@@ -119,6 +119,23 @@ marker instead. Never emit both markers in the same reply.`;
 // § ANTHROPIC
 // ════════════════════════════════════════════════════════════════════════════
 
+// A text content block for the Anthropic Messages API, optionally marked for
+// prompt caching. Used to build `system` (and, for the eligibility check,
+// `messages` content) as an array of stability-ordered blocks instead of one
+// concatenated string, so a stable prefix can be cached independently of the
+// volatile content that follows it. `callAnthropic` passes whatever is given
+// straight through to `system`/`messages`, so a plain string still works
+// unchanged for callers that don't need caching.
+// ttl omitted -> Anthropic's default 5-minute ephemeral cache; ttl: "1h" for
+// content stable enough to be worth the higher (2x) write cost. A prefix
+// shorter than the model's minimum cacheable length (model-dependent, see
+// Anthropic's docs) silently doesn't cache — no error, no extra charge.
+export function cacheableBlock(text, { cache = true, ttl } = {}) {
+  const block = { type: "text", text };
+  if (cache && text) block.cache_control = ttl ? { type: "ephemeral", ttl } : { type: "ephemeral" };
+  return block;
+}
+
 export async function callAnthropic(env, systemPrompt, messages, model = ANTHROPIC_MODEL) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",

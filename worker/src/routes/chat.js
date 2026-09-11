@@ -1,6 +1,6 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, ANTHROPIC_FAST_MODEL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
+import { ADMIN_EMAIL, ANTHROPIC_FAST_MODEL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, sendSms } from "../shared/runtime.js";
 // Shared contact-handoff capture (lead + lead_alert + SMS, de-duped on session_id).
 // Lives next to /notify in intake.js; imported here so a [COLLECTED] marker is
 // captured server-side and can never be discarded by a resolve_gap route (Defect 2).
@@ -644,14 +644,34 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   const promulgatedCorpus = buildSystemPrompt(systemPromptContent, qaPairs);
 
   const constitutionSection = buildConstitutionSection(constitutionRows);
-  let combinedPrompt = constitutionSection
-	? constitutionSection + "\n\n" + promulgatedCorpus
-	: promulgatedCorpus;
-  combinedPrompt += KNOWLEDGE_GAP_INSTRUCTION;
-  combinedPrompt += KB_GROUNDED_INSTRUCTION;
-  if (config.mode === "testing") combinedPrompt += TESTING_LAYER;
 
-  if (hoursText) combinedPrompt = hoursText + "\n\n" + combinedPrompt;
+  // ── Phase F: prompt caching ───────────────────────────────────────────────
+  // Same visible content and order as before generation ever saw it — this is
+  // a caching restructure, not a prompt change. Built as stability-ordered
+  // cache_control blocks instead of one concatenated string (a 1h-TTL block
+  // must precede any 5m-TTL block in the same request, per Anthropic's
+  // caching rules):
+  //   1. constitutionSection — identical across every page and every visitor,
+  //      and changes only on a promulgated amendment. 1h TTL.
+  //   2. promulgatedCorpus + the two static instructions — identical across
+  //      visitors of the SAME page, but changes whenever an admin edits that
+  //      page's system_prompt/qa_pairs. Default 5-minute TTL. The two
+  //      instructions must stay physically after promulgatedCorpus in the
+  //      same block — they say "above" referring to the Knowledge Base.
+  //   3. office-hours text (+ TESTING_LAYER in testing mode) — changes daily
+  //      / per-mode, not per visitor. Left uncached at the end (previously
+  //      hoursText sat at the very front) so it never invalidates the two
+  //      blocks above it — see the caching guide's "keep the system prompt
+  //      frozen" rule against interpolating dynamic content at position 0.
+  const pageScoped = promulgatedCorpus + KNOWLEDGE_GAP_INSTRUCTION + KB_GROUNDED_INSTRUCTION;
+  const volatileTail = [hoursText, config.mode === "testing" ? TESTING_LAYER : ""]
+	.filter(Boolean).join("\n\n");
+
+  const combinedPrompt = [
+	...(constitutionSection ? [cacheableBlock(constitutionSection, { ttl: "1h" })] : []),
+	cacheableBlock(pageScoped),
+	...(volatileTail ? [cacheableBlock(volatileTail, { cache: false })] : []),
+  ];
 
   // ── Phase E completion, item C ────────────────────────────────────────────
   // Compound-question handling is a lightweight orchestration loop over the

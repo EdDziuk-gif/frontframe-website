@@ -1,4 +1,4 @@
-import { ANTHROPIC_FAST_MODEL, callAnthropic } from "./runtime.js";
+import { ANTHROPIC_FAST_MODEL, cacheableBlock, callAnthropic } from "./runtime.js";
 import { supabaseFetch, supabasePost } from "./supabase.js";
 
 // Phase D — REQ-SCR-01..08, REQ-SCA-01..06.
@@ -453,8 +453,19 @@ export async function checkConstitutionalEligibility(env, constitutionSection, q
   if (!constitutionSection) return { constitutionalCandidate: false, issue: null };
 
   try {
+    // constitutionSection is identical on every call regardless of the
+    // question asked, so it's split into its own cache_control block ahead
+    // of the per-turn question (the "shared prefix, varying suffix" pattern)
+    // instead of being concatenated into one string with it — a marker on
+    // the combined string would key the cache to the question and never hit.
     const raw = await callAnthropic(env, CONSTITUTIONAL_ELIGIBILITY_SYSTEM_PROMPT, [
-      { role: "user", content: `${constitutionSection}\n\nQUESTION:\n${question}` },
+      {
+        role: "user",
+        content: [
+          cacheableBlock(constitutionSection),
+          cacheableBlock(`QUESTION:\n${question}`, { cache: false }),
+        ],
+      },
     ], ANTHROPIC_FAST_MODEL);
     const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
     const parsed = JSON.parse(cleaned);
