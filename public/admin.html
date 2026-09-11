@@ -413,18 +413,23 @@
     </div>
     <div id="login-email-view">
       <h1>Admin Portal</h1>
-      <p>Enter your email to receive a sign-in link.</p>
+      <p>Enter your email to receive a sign-in code.</p>
       <div class="form-group">
         <label for="login-email">Email</label>
         <input type="email" id="login-email" placeholder="ed@frontframe.co" autocomplete="email">
       </div>
-      <button class="btn btn-primary btn-full" id="send-code-btn">Send Sign-In Link</button>
+      <button class="btn btn-primary btn-full" id="send-code-btn">Send Code</button>
       <div class="error-msg" id="login-error"></div>
     </div>
     <div id="login-code-view" class="hidden">
-      <div class="login-sent-icon">&#x1F4E7;</div>
-      <h1>Check Your Email</h1>
-      <p>A sign-in link was sent to <strong id="login-sent-to"></strong>. Click it to finish signing in — this page will pick it up automatically.</p>
+      <div class="login-sent-icon">&#x1F510;</div>
+      <h1>Enter Your Code</h1>
+      <p>A sign-in code was sent to <strong id="login-sent-to"></strong>.</p>
+      <div class="form-group" style="margin-top:20px">
+        <label for="login-code">Sign-In Code</label>
+        <input type="text" id="login-code" placeholder="000000" autocomplete="one-time-code" inputmode="numeric" style="letter-spacing:.2em;font-size:1.25rem;text-align:center">
+      </div>
+      <button class="btn btn-primary btn-full" id="verify-code-btn">Verify Code</button>
       <div class="error-msg" id="login-code-error"></div>
       <button class="btn btn-ghost btn-full" id="login-back-btn" style="margin-top:12px">Use a different email</button>
     </div>
@@ -1931,17 +1936,14 @@ const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','
 
 // Auth
 
-// saveSession/loadSession/clearSession/sendMagicLink now live in
-// /js/client-utils.js and /js/auth.js (loaded above). Login is magic-link
-// only: OTP-via-Supabase-SDK hit Supabase's own built-in email rate limit
-// hard under repeated testing (a handful of sends per hour by default) with
-// nothing in our control to raise it. The magic link is generated server-side
-// via the Worker's service-role Supabase Admin API and emailed through Resend
-// directly, bypassing that limit entirely. Clicking the emailed link returns
-// here with the session in the URL hash; the Supabase JS SDK (created with
-// its default detectSessionInUrl: true) picks it up on its own, so the
-// existing init() -> loadSession() check below just works without any
-// hash-parsing code here.
+let pendingEmail = '';
+
+// saveSession/loadSession/clearSession/sendOtp/verifyOtp now live in
+// /js/client-utils.js and /js/auth.js (loaded above). Back to OTP now that
+// the FrontFrame Supabase project has its own custom SMTP configured
+// (matching Cox Meadows) \u2014 the rate limit was Supabase's default email
+// sender, not OTP itself, and a magic link doesn't fit this app's actual
+// workflow (it's bound to whatever device/browser opens it).
 
 document.getElementById('send-code-btn').addEventListener('click', async () => {
   const email = document.getElementById('login-email').value.trim();
@@ -1951,14 +1953,16 @@ document.getElementById('send-code-btn').addEventListener('click', async () => {
   const btn = document.getElementById('send-code-btn');
   btn.textContent = 'Sending\u2026'; btn.disabled = true;
   try {
-    await sendMagicLink(email);
+    await sendOtp(email);
+    pendingEmail = email;
     document.getElementById('login-sent-to').textContent = email;
     document.getElementById('login-email-view').classList.add('hidden');
     document.getElementById('login-code-view').classList.remove('hidden');
+    document.getElementById('login-code').focus();
   } catch (e) {
     errEl.textContent = e.message;
   } finally {
-    btn.textContent = 'Send Sign-In Link'; btn.disabled = false;
+    btn.textContent = 'Send Code'; btn.disabled = false;
   }
 });
 
@@ -1966,10 +1970,34 @@ document.getElementById('login-email').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('send-code-btn').click();
 });
 
+document.getElementById('verify-code-btn').addEventListener('click', async () => {
+  const code  = document.getElementById('login-code').value.trim();
+  const errEl = document.getElementById('login-code-error');
+  errEl.textContent = '';
+  if (!code) { errEl.textContent = 'Code is required.'; return; }
+  const btn = document.getElementById('verify-code-btn');
+  btn.textContent = 'Verifying\u2026'; btn.disabled = true;
+  try {
+    const data = await verifyOtp(pendingEmail, code);
+    session = { access_token: data.access_token, refresh_token: data.refresh_token, user: { email: pendingEmail } };
+    showAdmin();
+  } catch (e) {
+    errEl.textContent = e.message;
+  } finally {
+    btn.textContent = 'Verify Code'; btn.disabled = false;
+  }
+});
+
+document.getElementById('login-code').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('verify-code-btn').click();
+});
+
 document.getElementById('login-back-btn').addEventListener('click', () => {
   document.getElementById('login-code-view').classList.add('hidden');
   document.getElementById('login-email-view').classList.remove('hidden');
+  document.getElementById('login-code').value = '';
   document.getElementById('login-code-error').textContent = '';
+  pendingEmail = '';
 });
 
 async function signOut() { await clearSession(); location.reload(); }
