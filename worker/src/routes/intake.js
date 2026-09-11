@@ -1,6 +1,6 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, sendResendEmail, sendSms } from "../shared/runtime.js";
+import { ADMIN_EMAIL, escapeHtml, sendResendEmail, sendSms } from "../shared/runtime.js";
 
 // § DOMAIN: notify
 // ════════════════════════════════════════════════════════════════════════════
@@ -12,12 +12,6 @@ import { ADMIN_EMAIL, sendResendEmail, sendSms } from "../shared/runtime.js";
 function inferContactMethod(method, contact) {
   if (method === "phone" || method === "text" || method === "email") return method;
   return String(contact ?? "").includes("@") ? "email" : "phone";
-}
-
-function escapeHtml(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-  })[c]);
 }
 
 // Shared contact-handoff capture: one lead row, one lead_alert row, one SMS,

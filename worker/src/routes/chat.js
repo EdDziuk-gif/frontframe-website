@@ -1,6 +1,6 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, parseJsonObject, sendSms } from "../shared/runtime.js";
+import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, escapeHtml, parseJsonObject, sendResendEmail, sendSms } from "../shared/runtime.js";
 // Shared contact-handoff capture (lead + lead_alert + SMS, de-duped on session_id).
 // Lives next to /notify in intake.js; imported here so a [COLLECTED] marker is
 // captured server-side and can never be discarded by a resolve_gap route (Defect 2).
@@ -226,6 +226,31 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
       current_site:   escalation.current_site ?? null,
       status: "new", sms_sent: false, sms_status: null,
     };
+
+    // Email backup, independent of the lead_alerts write and the SMS below -
+    // same reasoning as captureContactHandoff's backup email (intake.js): an
+    // invalid/missing SURGE_API_KEY silently dropped every alert here too,
+    // with nothing else to catch it. Escalation fires on signals in the
+    // conversation, often before the visitor has given contact info at all,
+    // so this stays a separate lightweight alert rather than being folded
+    // into captureContactHandoff's lead/contact shape.
+    const escalationEmailHtml = `<!DOCTYPE html><html><body style="font-family:Inter,system-ui,sans-serif;color:#1E2D40;max-width:560px;margin:0 auto;padding:40px 24px">
+<div style="margin-bottom:24px"><strong style="font-size:1.1rem">FrontFrame — Escalation Alert</strong></div>
+<p style="margin-bottom:4px">The chat assistant flagged a conversation for escalation.</p>
+<p style="margin:16px 0;color:#3A4A5C">
+  Prospect: ${escapeHtml(escalation.prospect ?? "Visitor")}<br>
+  Page: ${escapeHtml(page)}<br>
+  Signal: ${escapeHtml(escalation.reason ?? "escalation")}<br>
+  ${escalation.contact_preference ? `Contact: ${escapeHtml(escalation.contact_preference)} - ${escapeHtml(escalation.contact_value ?? "not provided")}<br>` : ""}
+  ${escalation.current_site ? `Site: ${escapeHtml(escalation.current_site)}<br>` : ""}
+</p>
+<hr style="border:none;border-top:1px solid #E8ECF0;margin:32px 0">
+<p style="font-size:0.75rem;color:#8A9BAE">Backup notification alongside the SMS alert. Not every escalation is a qualified lead — no need to drop everything for this.</p>
+</body></html>`;
+    ctx.waitUntil(
+      sendResendEmail(env, ADMIN_EMAIL, `FrontFrame escalation — ${escalation.prospect ?? "Visitor"}`, escalationEmailHtml)
+        .catch((e) => console.error("escalation backup email failed:", e))
+    );
 
     ctx.waitUntil(
       supabasePost(env, "lead_alerts", alertPayload)

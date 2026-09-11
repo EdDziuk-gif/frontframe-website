@@ -212,6 +212,14 @@ export function buildQaPairsQuery(page) {
     `&order=created_at.asc`;
 }
 
+// Escapes visitor/model-supplied free text before it's interpolated into an
+// HTML email body (admin alert emails: handoff and escalation).
+export function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[c]);
+}
+
 // § DOMAIN: sms (Surge)
 // ════════════════════════════════════════════════════════════════════════════
 
