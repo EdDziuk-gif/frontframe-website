@@ -1,6 +1,6 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
+import { ADMIN_EMAIL, ANTHROPIC_FAST_MODEL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, callAnthropic, sendSms } from "../shared/runtime.js";
 // Shared contact-handoff capture (lead + lead_alert + SMS, de-duped on session_id).
 // Lives next to /notify in intake.js; imported here so a [COLLECTED] marker is
 // captured server-side and can never be discarded by a resolve_gap route (Defect 2).
@@ -124,6 +124,7 @@ context needed for the question to stand alone). If it is not, return null.
 Return exactly one JSON object and no other text, in exactly this form:
 {"subparts": ["...", "..."]} or {"subparts": null}`,
       [{ role: "user", content: message }],
+      ANTHROPIC_FAST_MODEL,
     );
     const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
     const parsed = JSON.parse(cleaned);
@@ -577,45 +578,51 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   // in operations.js's read path but was never joined into what visitors
   // actually talk to. This wires it in here too, so the two paths (live
   // chat, admin preview) build the prompt the same way.
-  const [pageRow, globalRow, constitutionRows] = await Promise.all([
+  //
+  // These six lookups are mutually independent (none needs another's result),
+  // so they run as one Promise.all instead of one round trip per stage —
+  // underReviewQaPairIds and getTodayOfficeHoursText used to run sequentially
+  // after qaPairs resolved, tripling the wall-clock cost of this section for
+  // no reason. underReviewQaPairIds throws on failure (per its own contract,
+  // the caller decides how to degrade); the catch below preserves the
+  // original "serve without the caveat and log a defect" behavior.
+  const [pageRow, globalRow, constitutionRows, qaPairs, underReview, hoursText] = await Promise.all([
 	supabaseFetch(env, "system_prompt", `?page=eq.${encodeURIComponent(page)}&select=content`),
 	supabaseFetch(env, "system_prompt", `?page=eq.all&select=content`),
 	supabaseFetch(env, "constitution_provisions", `?select=provision_number,title,current_text&order=provision_number.asc`),
+	supabaseFetch(env, "qa_pairs", buildQaPairsQuery(page)),
+	underReviewQaPairIds(env, page).catch((e) => {
+	  ctx.waitUntil(
+		supabasePost(env, "defects", {
+		  area: "agentic",
+		  severity: "minor",
+		  disposition: "retain",
+		  description: `[under-review-lookup] Could not determine which qa_pairs are under KGR review; served without the caveat. ${String(e?.message ?? e).slice(0, 300)}`,
+		  build_version: config.build_version ?? "unknown",
+		}).catch(() => {}),
+	  );
+	  return null;
+	}),
+	getTodayOfficeHoursText(env),
   ]);
   const pagePromptContent   = pageRow?.[0]?.content ?? "";
   const globalPromptContent = globalRow?.[0]?.content ?? "";
   const systemPromptContent = [globalPromptContent, pagePromptContent].filter(Boolean).join("\n\n");
 
-  const qaPairs             = await supabaseFetch(env, "qa_pairs", buildQaPairsQuery(page));
-
   // Migration 014 §3.4a: an implemented pair that an OPEN KGR replacement case
   // (no signed-off statement yet) is reworking is still served, but with an
   // "under active review" caveat prepended so the assistant discloses it and
   // does not present it as settled. The caveat persists through constitutional
-  // escalation and clears only at sign-off / retarget-away. Best-effort: on a
-  // lookup failure, serve normally and file an agentic defect.
-  try {
-    const underReview = await underReviewQaPairIds(env, page);
-    if (Array.isArray(underReview) && underReview.length && Array.isArray(qaPairs)) {
-      const flagged = new Set(underReview);
-      for (const r of qaPairs) {
-        if (flagged.has(r.id)) {
-          r.answer =
-            "[UNDER REVIEW — FrontFrame is currently reviewing its position on this. Present the following " +
-            "as the current answer, not settled fact, and say it is under review.]\n" + r.answer;
-        }
+  // escalation and clears only at sign-off / retarget-away.
+  if (Array.isArray(underReview) && underReview.length && Array.isArray(qaPairs)) {
+    const flagged = new Set(underReview);
+    for (const r of qaPairs) {
+      if (flagged.has(r.id)) {
+        r.answer =
+          "[UNDER REVIEW — FrontFrame is currently reviewing its position on this. Present the following " +
+          "as the current answer, not settled fact, and say it is under review.]\n" + r.answer;
       }
     }
-  } catch (e) {
-    ctx.waitUntil(
-      supabasePost(env, "defects", {
-        area: "agentic",
-        severity: "minor",
-        disposition: "retain",
-        description: `[under-review-lookup] Could not determine which qa_pairs are under KGR review; served without the caveat. ${String(e?.message ?? e).slice(0, 300)}`,
-        build_version: config.build_version ?? "unknown",
-      }).catch(() => {}),
-    );
   }
 
   // ── Phase E completion, item A ───────────────────────────────────────────
@@ -644,7 +651,6 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   combinedPrompt += KB_GROUNDED_INSTRUCTION;
   if (config.mode === "testing") combinedPrompt += TESTING_LAYER;
 
-  const hoursText = await getTodayOfficeHoursText(env);
   if (hoursText) combinedPrompt = hoursText + "\n\n" + combinedPrompt;
 
   // ── Phase E completion, item C ────────────────────────────────────────────

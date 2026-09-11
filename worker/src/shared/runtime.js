@@ -3,6 +3,12 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 export const ANTHROPIC_MODEL      = "claude-sonnet-4-6";
+// Used for bounded, single-verdict classification/scoring calls (compound-question
+// decomposition, constitutional eligibility, SCR scoring, grounding verification) —
+// these return one line of JSON, not conversational generation, and don't need
+// ANTHROPIC_MODEL's depth. Already the same model the post-response evaluator in
+// chat.js uses for an equivalent judgment call.
+export const ANTHROPIC_FAST_MODEL = "claude-haiku-4-5-20251001";
 export const ANTHROPIC_MAX_TOKENS = 1024;
 
 export const SURGE_ACCOUNT_ID = "acct_01krevy9esf46rgm7ym1e66k8k";
@@ -113,7 +119,7 @@ marker instead. Never emit both markers in the same reply.`;
 // § ANTHROPIC
 // ════════════════════════════════════════════════════════════════════════════
 
-export async function callAnthropic(env, systemPrompt, messages) {
+export async function callAnthropic(env, systemPrompt, messages, model = ANTHROPIC_MODEL) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -122,7 +128,7 @@ export async function callAnthropic(env, systemPrompt, messages) {
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model:      ANTHROPIC_MODEL,
+      model,
       max_tokens: ANTHROPIC_MAX_TOKENS,
       system:     systemPrompt,
       messages,

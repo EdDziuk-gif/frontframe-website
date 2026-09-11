@@ -1,4 +1,4 @@
-import { callAnthropic } from "./runtime.js";
+import { ANTHROPIC_FAST_MODEL, callAnthropic } from "./runtime.js";
 import { supabaseFetch, supabasePost } from "./supabase.js";
 
 // Phase D — REQ-SCR-01..08, REQ-SCA-01..06.
@@ -68,7 +68,7 @@ export async function scoreCandidateAnswer(env, question, answer) {
       role: "user",
       content: `QUESTION:\n${question}\n\nANSWER:\n${answer}`,
     },
-  ]);
+  ], ANTHROPIC_FAST_MODEL);
   return parseScoringResult(raw);
 }
 
@@ -265,7 +265,7 @@ export function parseGroundingResult(raw) {
 export async function verifyGroundedAnswer(env, answer, corpus) {
   const raw = await callAnthropic(env, GROUNDING_SYSTEM_PROMPT, [
     { role: "user", content: `SOURCE:\n${corpus ?? "(none supplied)"}\n\nANSWER:\n${answer}` },
-  ]);
+  ], ANTHROPIC_FAST_MODEL);
   return parseGroundingResult(raw);
 }
 
@@ -455,7 +455,7 @@ export async function checkConstitutionalEligibility(env, constitutionSection, q
   try {
     const raw = await callAnthropic(env, CONSTITUTIONAL_ELIGIBILITY_SYSTEM_PROMPT, [
       { role: "user", content: `${constitutionSection}\n\nQUESTION:\n${question}` },
-    ]);
+    ], ANTHROPIC_FAST_MODEL);
     const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
     const parsed = JSON.parse(cleaned);
     if (parsed?.constitutional_candidate === true) {
