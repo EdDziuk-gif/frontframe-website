@@ -1,4 +1,4 @@
-import { ANTHROPIC_FAST_MODEL, cacheableBlock, callAnthropic } from "./runtime.js";
+import { ANTHROPIC_FAST_MODEL, cacheableBlock, callAnthropic, parseJsonObject } from "./runtime.js";
 import { supabaseFetch, supabasePost } from "./supabase.js";
 
 // Phase D — REQ-SCR-01..08, REQ-SCA-01..06.
@@ -44,10 +44,9 @@ export function routeScore(score, thresholdLow, thresholdHigh) {
 }
 
 export function parseScoringResult(raw) {
-  const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
   let parsed;
   try {
-    parsed = JSON.parse(cleaned);
+    parsed = parseJsonObject(raw);
   } catch {
     throw new Error("Scoring Agent returned invalid JSON");
   }
@@ -246,10 +245,9 @@ Output schema:
 score is a number from 0.00 through 1.00. rationale is exactly one sentence.`;
 
 export function parseGroundingResult(raw) {
-  const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
   let parsed;
   try {
-    parsed = JSON.parse(cleaned);
+    parsed = parseJsonObject(raw);
   } catch {
     throw new Error("Grounding Verifier returned invalid JSON");
   }
@@ -467,8 +465,7 @@ export async function checkConstitutionalEligibility(env, constitutionSection, q
         ],
       },
     ], ANTHROPIC_FAST_MODEL);
-    const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = parseJsonObject(raw);
     if (parsed?.constitutional_candidate === true) {
       const issue = typeof parsed.issue === "string" && parsed.issue.trim()
         ? parsed.issue.trim()
@@ -601,8 +598,7 @@ export async function checkConstitutionalConformance(env, constitutionSection, a
         ],
       },
     ], ANTHROPIC_FAST_MODEL);
-    const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = parseJsonObject(raw);
     if (parsed?.conforms === false) {
       const issue = typeof parsed.issue === "string" && parsed.issue.trim()
         ? parsed.issue.trim()

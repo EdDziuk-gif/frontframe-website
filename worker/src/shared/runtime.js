@@ -119,6 +119,43 @@ marker instead. Never emit both markers in the same reply.`;
 // § ANTHROPIC
 // ════════════════════════════════════════════════════════════════════════════
 
+// Every "return exactly one JSON object and no other text" prompt in this
+// pipeline (eligibility, conformance, SCR scoring, grounding, decomposition)
+// used to assume the whole cleaned response string WAS that JSON object, and
+// pass it straight to JSON.parse. A smaller/faster model doesn't always honor
+// "no other text" as reliably as a larger one: it can append a blank line and
+// trailing commentary after an otherwise-correct object, which throws a
+// SyntaxError and — for every one of these checks — fails closed on every
+// single request. Extracts and parses just the first balanced top-level {...}
+// object instead, ignoring anything before or after it. Brace-depth counting
+// tracks whether it's inside a JSON string (respecting \" escapes) so a brace
+// character inside a quoted value (e.g. a rationale) can't miscount.
+export function parseJsonObject(raw) {
+  const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
+  const start = cleaned.indexOf("{");
+  if (start === -1) throw new Error("No JSON object found in response");
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return JSON.parse(cleaned.slice(start, i + 1));
+    }
+  }
+  throw new Error("Unterminated JSON object in response");
+}
+
 // A text content block for the Anthropic Messages API, optionally marked for
 // prompt caching. Used to build `system` (and, for the eligibility check,
 // `messages` content) as an array of stability-ordered blocks instead of one

@@ -1,6 +1,6 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, sendSms } from "../shared/runtime.js";
+import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, parseJsonObject, sendSms } from "../shared/runtime.js";
 // Shared contact-handoff capture (lead + lead_alert + SMS, de-duped on session_id).
 // Lives next to /notify in intake.js; imported here so a [COLLECTED] marker is
 // captured server-side and can never be discarded by a resolve_gap route (Defect 2).
@@ -134,8 +134,7 @@ Return exactly one JSON object and no other text, in exactly this form:
 {"subparts": ["...", "..."]} or {"subparts": null}`,
       [{ role: "user", content: message }],
     );
-    const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = parseJsonObject(raw);
     if (!Array.isArray(parsed?.subparts) || parsed.subparts.length < 2) return null;
     const subparts = parsed.subparts
       .map((s) => (typeof s === "string" ? s.trim() : ""))
