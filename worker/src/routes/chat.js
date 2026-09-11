@@ -1,6 +1,6 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, ANTHROPIC_FAST_MODEL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, sendSms } from "../shared/runtime.js";
+import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, sendSms } from "../shared/runtime.js";
 // Shared contact-handoff capture (lead + lead_alert + SMS, de-duped on session_id).
 // Lives next to /notify in intake.js; imported here so a [COLLECTED] marker is
 // captured server-side and can never be discarded by a resolve_gap route (Defect 2).
@@ -104,12 +104,21 @@ async function alertGapResolutionQueue(env, ctx, page, question, reason) {
 // Phase E completion, item C. Cheap, purely syntactic prefilter run before
 // ever spending a model call on decomposition — most single-question turns
 // never reach the Anthropic call below. Intentionally permissive (a false
-// positive just costs one small haiku call that returns {"subparts": null}).
+// positive just costs one extra call that returns {"subparts": null}).
 const COMPOUND_HINT_PATTERN = /\b(and also|also,|in addition|as well as)\b|\?.*\?/is;
 
 async function decomposeIfCompound(env, message) {
   if (!COMPOUND_HINT_PATTERN.test(message)) return null;
   try {
+    // Deliberately left on the full ANTHROPIC_MODEL, not ANTHROPIC_FAST_MODEL.
+    // Unlike the other classification calls in this pipeline (eligibility, SCR,
+    // grounding — each a single bounded JSON verdict), this one has to cleanly
+    // separate entangled clauses and rewrite each as a self-contained question.
+    // Moving it to the fast model (2026-09-11) caused it to mis-split an
+    // adversarially-phrased compound question, dropping one subpart entirely
+    // and duplicating the other — silently discarding half the visitor's
+    // question. This call is at most once per compound message, not once per
+    // turn, so the cost of the full model here is small.
     const raw = await callAnthropic(
       env,
       `Decide whether the visitor message below asks more than one genuinely separate
@@ -124,7 +133,6 @@ context needed for the question to stand alone). If it is not, return null.
 Return exactly one JSON object and no other text, in exactly this form:
 {"subparts": ["...", "..."]} or {"subparts": null}`,
       [{ role: "user", content: message }],
-      ANTHROPIC_FAST_MODEL,
     );
     const cleaned = String(raw ?? "").replace(/```json|```/gi, "").trim();
     const parsed = JSON.parse(cleaned);
