@@ -277,9 +277,10 @@
   .session-bubble.assistant { background: #EBF5FB; margin-left: auto; }
   .session-role { font-size: 0.72rem; color: var(--gray); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; }
 
-  /* Office Hours two-col grid */
-  .oh-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
-  @media (max-width: 900px) { .oh-grid { grid-template-columns: 1fr; } }
+  /* Office Hours: stacked full-width (Weekly Schedule, then Date Overrides)
+     — a side-by-side two-col grid squeezed the schedule table enough that
+     its Day/Open/Close/Closed columns needed horizontal scrolling to view. */
+  .oh-grid { display: flex; flex-direction: column; gap: 24px; }
 
   /* Vault / Payment Method */
   .vault-card { background: white; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 24px; overflow: hidden; }
@@ -3157,7 +3158,11 @@ function renderReviewQueue() {
 }
 
 async function proposeAnswerFromQueue(id) {
-  const rec = reviewQueue.find(r => r.id === id);
+  // Same class of bug already fixed for the gap-resolution queue: ids come
+  // back from onclick="...('${r.id}')" as strings, but reviewQueue rows
+  // carry numeric ids from the API, so a strict === here silently matched
+  // nothing.
+  const rec = reviewQueue.find(r => String(r.id) === String(id));
   if (!rec) return;
   const question   = rec.flagged_turn?.visitor_message ?? '';
   const edResponse = rec.flagged_turn?.bot_response    ?? '';
@@ -3175,10 +3180,11 @@ async function proposeAnswerFromQueue(id) {
 async function dismissQueueRecord(id) {
   try {
     await api('PATCH', `/admin/review-queue/${id}`, { status: 'dismissed' });
-    const idx = reviewQueue.findIndex(r => r.id === id);
-    if (idx >= 0) reviewQueue[idx].status = 'dismissed';
-    renderReviewQueue();
-    updateBadges();
+    // Reload from the server rather than patching the local copy by id —
+    // same fix already applied to the gap-resolution queue, and for the
+    // same reason: id-type mismatches between the API and onclick-supplied
+    // string ids made local lookups silently no-op.
+    await loadReviewQueue();
     toast('Dismissed.');
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -3186,8 +3192,9 @@ async function dismissQueueRecord(id) {
 async function deleteQueueRecord(id) {
   try {
     await api('DELETE', `/admin/review-queue/${id}`);
-    reviewQueue = reviewQueue.filter(r => r.id !== id);
-    renderReviewQueue();
+    // Reload from the server — see dismissQueueRecord above for why a local
+    // filter by id doesn't reliably work here.
+    await loadReviewQueue();
     toast('Deleted.');
   } catch (e) { toast(e.message, 'error'); }
 }
