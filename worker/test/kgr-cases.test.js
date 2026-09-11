@@ -438,7 +438,10 @@ describe("case history reconstruction", () => {
     expect(body.gap_resolution_requests?.questions?.question_text).toBe("Does FrontFrame offer an SLA?");
 
     const [, , query] = supabaseFetchMock.mock.calls[2]; // after mockAuth's two reviewer lookups
-    expect(query).toContain("gap_resolution_requests(questions(question_text))");
+    // The FK is named explicitly: migration 014 added a second kgr_cases <->
+    // gap_resolution_requests foreign key (resolved_kgr_case_id), so a bare
+    // gap_resolution_requests(...) embed is ambiguous (PostgREST PGRST201).
+    expect(query).toContain("gap_resolution_requests!kgr_cases_gap_resolution_request_id_fkey(questions(question_text))");
   });
 
   it("getKgrCase embeds a null resolution_statement when none exists yet", async () => {

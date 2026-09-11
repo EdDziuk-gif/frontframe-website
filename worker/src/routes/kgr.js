@@ -111,7 +111,7 @@ async function fetchSolutions(env, caseId) {
 const CASE_SELECT =
   "id,gap_resolution_request_id,status,research_notes,escalation_reason," +
   "resolution_target,supersedes_qa_pair_id,target_system_prompt_page,target_revision," +
-  "created_by,created_at,updated_at,gap_resolution_requests(questions(question_text))";
+  "created_by,created_at,updated_at,gap_resolution_requests!kgr_cases_gap_resolution_request_id_fkey(questions(question_text))";
 
 async function fetchCase(env, id) {
   const rows = await supabaseFetch(env, "kgr_cases", `?id=eq.${id}&select=${CASE_SELECT}`);
@@ -128,7 +128,7 @@ async function fetchHypotheses(env, caseId) {
 // (nullable: the one pre-Increment-5 snapshot row carries none).
 async function fetchResolutionStatement(env, caseId) {
   const rows = await supabaseFetch(env, "kgr_resolution_statements",
-    `?kgr_case_id=eq.${caseId}&select=id,kgr_case_id,problem_statement,prepared_by,created_at,selected_candidate_id,signed_off_by,signed_off_at,qa_pair_id,system_prompt_history_id,system_prompt_history(page,adopted_content,prior_content_present,replaced_at),kgr_resolution_candidates!kgr_resolution_candidates_kgr_resolution_statement_id_fkey(id,kgr_hypothesis_id,presented_content,score,rationale,origin_solution_id,submitted_by,origin,constitutional_provisions_hash,problem_snapshot)`);
+    `?kgr_case_id=eq.${caseId}&select=id,kgr_case_id,problem_statement,prepared_by,created_at,selected_candidate_id,signed_off_by,signed_off_at,qa_pair_id,system_prompt_history_id,system_prompt_history!kgr_resolution_statements_system_prompt_history_id_fkey(page,adopted_content,prior_content_present,replaced_at),kgr_resolution_candidates!kgr_resolution_candidates_kgr_resolution_statement_id_fkey(id,kgr_hypothesis_id,presented_content,score,rationale,origin_solution_id,submitted_by,origin,constitutional_provisions_hash,problem_snapshot)`);
   return rows?.[0] ?? null;
 }
 
@@ -265,7 +265,7 @@ async function listKgrCases(env, userJwt, corsHeaders) {
   const auth = await requireCaseAuthority(env, userJwt, CASE_DEVELOPMENT_ROLES, corsHeaders);
   if (!auth.ok) return auth.response;
   const rows = await supabaseFetch(env, "kgr_cases",
-    "?select=id,gap_resolution_request_id,status,research_notes,escalation_reason,created_by,created_at,updated_at,gap_resolution_requests(questions(question_text))&order=created_at.desc");
+    "?select=id,gap_resolution_request_id,status,research_notes,escalation_reason,created_by,created_at,updated_at,gap_resolution_requests!kgr_cases_gap_resolution_request_id_fkey(questions(question_text))&order=created_at.desc");
   return jsonResponse(rows ?? [], 200, corsHeaders);
 }
 
@@ -797,7 +797,7 @@ async function listFalsifiedHypotheses(request, env, userJwt, corsHeaders) {
   const auth = await requireCaseAuthority(env, userJwt, CASE_DEVELOPMENT_ROLES, corsHeaders);
   if (!auth.ok) return auth.response;
   const rows = await supabaseFetch(env, "kgr_hypotheses",
-    "?status=eq.falsified&select=id,description,test_notes,created_at,kgr_case_id,kgr_cases(gap_resolution_requests(questions(question_text)))&order=created_at.desc");
+    "?status=eq.falsified&select=id,description,test_notes,created_at,kgr_case_id,kgr_cases(gap_resolution_requests!kgr_cases_gap_resolution_request_id_fkey(questions(question_text)))&order=created_at.desc");
   return jsonResponse(rows ?? [], 200, corsHeaders);
 }
 
