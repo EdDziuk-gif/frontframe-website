@@ -312,6 +312,9 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
     try { collected = JSON.parse(collectedMatch[1]); } catch { collected = {}; }
     if (collected && (collected.name || collected.contact)) {
       handoffCaptured = true;
+      const transcript = [...history, { role: "user", content: message }, { role: "assistant", content: response }]
+        .map((t) => `${t.role === "user" ? "Visitor" : "Assistant"}: ${t.content}`)
+        .join("\n");
       ctx.waitUntil(
         captureContactHandoff(env, ctx, {
           session_id,
@@ -322,6 +325,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
           timezone: collected.timezone ?? "",
           summary:  collected.summary  ?? "",
           source:   "agent",
+          transcript,
         }).catch((e) => console.error("server-side contact handoff failed:", e))
       );
     }

@@ -1,6 +1,6 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { sendSms } from "../shared/runtime.js";
+import { ADMIN_EMAIL, sendResendEmail, sendSms } from "../shared/runtime.js";
 
 // § DOMAIN: notify
 // ════════════════════════════════════════════════════════════════════════════
@@ -14,13 +14,19 @@ function inferContactMethod(method, contact) {
   return String(contact ?? "").includes("@") ? "email" : "phone";
 }
 
-// Shared contact-handoff capture: one lead row, one lead_alert row, one SMS.
-// Called from the /notify route (widget-driven) and from the chat worker's
-// server-side [COLLECTED] handling. De-dupes on session_id within a short
-// window so the two paths cannot double-book the same visitor.
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[c]);
+}
+
+// Shared contact-handoff capture: one lead row, one lead_alert row, one SMS,
+// one backup email. Called from the /notify route (widget-driven) and from
+// the chat worker's server-side [COLLECTED] handling. De-dupes on session_id
+// within a short window so the two paths cannot double-book the same visitor.
 async function captureContactHandoff(env, ctx, {
   session_id = null, name, contact, method, zip = "", timezone = "",
-  summary = "", source = "agent",
+  summary = "", source = "agent", transcript = "",
 }) {
   const resolvedMethod = inferContactMethod(method, contact);
 
@@ -52,6 +58,30 @@ async function captureContactHandoff(env, ctx, {
     (geo ? `${geo}\n` : "") + `Source: ${source}\n` +
     (summary ? `Summary: ${summary.slice(0, 200)}` : "");
 
+  // Email backup, independent of the SMS/lead_alerts path below - it should
+  // still go out even if Surge is down or the lead_alerts write fails (that
+  // was the actual gap this closes: an invalid SURGE_API_KEY silently dropped
+  // every handoff notification with nothing else to catch it). Deliberately
+  // low-key, not an urgent page - not every handoff is a qualified lead.
+  const emailHtml = `<!DOCTYPE html><html><body style="font-family:Inter,system-ui,sans-serif;color:#1E2D40;max-width:560px;margin:0 auto;padding:40px 24px">
+<div style="margin-bottom:24px"><strong style="font-size:1.1rem">FrontFrame — Contact Handoff</strong></div>
+<p style="margin-bottom:4px"><strong>${escapeHtml(name)}</strong> left contact info via the chat assistant.</p>
+<p style="margin:16px 0;color:#3A4A5C">
+  Reach by: ${escapeHtml(methodLabel)}<br>
+  Contact: ${escapeHtml(contact)}<br>
+  ${geo ? escapeHtml(geo) + "<br>" : ""}
+  Source: ${escapeHtml(source)}
+</p>
+${summary ? `<p style="margin:16px 0"><strong>Summary:</strong> ${escapeHtml(summary)}</p>` : ""}
+${transcript ? `<p style="margin:20px 0 8px;font-weight:700">Conversation</p><pre style="white-space:pre-wrap;font-family:inherit;background:#F4F6F8;padding:16px;border-radius:8px;font-size:0.85rem;color:#3A4A5C">${escapeHtml(transcript)}</pre>` : ""}
+<hr style="border:none;border-top:1px solid #E8ECF0;margin:32px 0">
+<p style="font-size:0.75rem;color:#8A9BAE">Backup notification alongside the SMS alert. Not every handoff is a qualified lead — no need to drop everything for this.</p>
+</body></html>`;
+  const emailPromise = sendResendEmail(env, ADMIN_EMAIL, `FrontFrame handoff — ${name}`, emailHtml)
+    .catch((e) => console.error("handoff backup email failed:", e));
+  if (ctx?.waitUntil) ctx.waitUntil(emailPromise);
+  else await emailPromise;
+
   const alertPromise = supabasePost(env, "lead_alerts", {
     session_id, page: source, prospect_name: name, trigger_reason: summary,
     current_site: null, status: "new", sms_sent: false, sms_status: null, lead_id: leadId,
@@ -75,11 +105,11 @@ async function captureContactHandoff(env, ctx, {
 
 async function handleNotify(request, env, ctx, corsHeaders) {
   const body = await request.json();
-  const { session_id = null, name, contact, method, zip = "", timezone = "", summary = "", source } = body;
+  const { session_id = null, name, contact, method, zip = "", timezone = "", summary = "", source, transcript = "" } = body;
   if (!name || !contact || !source)
     return jsonResponse({ error: "name, contact, and source are required" }, 400, corsHeaders);
 
-  await captureContactHandoff(env, ctx, { session_id, name, contact, method, zip, timezone, summary, source });
+  await captureContactHandoff(env, ctx, { session_id, name, contact, method, zip, timezone, summary, source, transcript });
   return jsonResponse({ received: true }, 200, corsHeaders);
 }
 
