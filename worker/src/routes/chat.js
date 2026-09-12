@@ -6,6 +6,8 @@ import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP
 // captured server-side and can never be discarded by a resolve_gap route (Defect 2).
 import { captureContactHandoff } from "./intake.js";
 import { underReviewQaPairIds } from "./kgr.js";
+import { getReviewerAuthority } from "./constitution.js";
+import { extractJwt } from "../middleware/auth.js";
 import { getTodayOfficeHoursText } from "../shared/office-hours.js";
 import { RATE_LIMITED_MESSAGE, checkChatRateLimit } from "../shared/rate-limit.js";
 import { LIMITED_CONFIDENCE_HEDGE, checkConstitutionalConformance, checkConstitutionalEligibility, createConstitutionalCandidateLifecycle, createConstitutionalNonconformanceLifecycle, createGroundingLifecycle, createKnowledgeGapLifecycle, createScoringLifecycle, recordDeliveredResponse } from "../shared/scoring.js";
@@ -644,6 +646,13 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   const body = await request.json();
   const { page, message, history = [], session_id = null } = body;
   if (!page || !message) return jsonResponse({ error: "page and message are required" }, 400, corsHeaders);
+
+  // The "admin" page persona is for signed-in staff, not site visitors — /chat
+  // itself is otherwise unauthenticated (isProtectedRoute() only covers
+  // /admin/*), so without this check anyone could POST {page:"admin"} and
+  // read the internal persona and any admin-tagged qa_pairs with no login.
+  if (page === "admin" && !(await getReviewerAuthority(env, extractJwt(request))))
+    return jsonResponse({ error: "Unauthorized" }, 401, corsHeaders);
 
   const configRows = await supabaseFetch(env, "config", "?id=eq.1&select=mode,build_version,capture_enabled");
   const config = configRows?.[0] ?? { mode: "live", build_version: "unknown", capture_enabled: false };
