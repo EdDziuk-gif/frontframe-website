@@ -3975,9 +3975,9 @@ function openProposalModal(id) {
             <option value="assistant">assistant</option><option value="outside_resource">outside_resource</option>
           </select>
         </div>
-        <div class="form-group"><label>Affected Provision Number</label><input id="pm-provision" type="text" style="width:100%;"></div>
-        <div class="form-group"><label>Proposed Provision Title</label><input id="pm-title" type="text" style="width:100%;"></div>
-        <div class="form-group"><label>Expected Preceding Text</label><textarea id="pm-preceding" rows="3" style="width:100%;"></textarea></div>
+        <div class="form-group"><label>Provision Number — existing or new *</label><input id="pm-provision" type="text" style="width:100%;" placeholder="e.g. 9 to amend, or 1.1 for a new provision"></div>
+        <div class="form-group"><label>Proposed Provision Title</label><input id="pm-title" type="text" style="width:100%;" placeholder="Required if this is a new provision (leave Expected Preceding Text blank)"></div>
+        <div class="form-group"><label>Expected Preceding Text</label><textarea id="pm-preceding" rows="3" style="width:100%;" placeholder="Leave blank to create a new provision. To amend an existing one, paste its exact current text — this is checked for staleness before promulgation."></textarea></div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('proposal-create-modal')">Cancel</button>
