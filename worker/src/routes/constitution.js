@@ -42,9 +42,9 @@ const INCIDENT_SMS_TTL_S = 3600;
 // ── Reviewer authority ─────────────────────────────────────────────────────
 
 // Returns { id, email, role, canAmendConstitution } for a valid active reviewer,
-// or null on any auth failure. Checks can_amend_constitution via reviewer_roles
-// → roles join rather than relying on the reviewers.role string alone, since
-// the roles table is the authoritative source for constitutional authority.
+// or null on any auth failure. can_amend_constitution is a field directly on
+// the reviewer's own record in the organizational chart (`reviewers`) — no
+// separate role catalog or join table is consulted for this authority.
 export async function getReviewerAuthority(env, jwt) {
   if (!jwt) return null;
 
@@ -62,19 +62,17 @@ export async function getReviewerAuthority(env, jwt) {
 
   const reviewerRows = await supabaseFetch(
     env, "reviewers",
-    `?select=id,role,active&email=eq.${encodeURIComponent(email)}`,
+    `?select=id,role,active,can_amend_constitution&email=eq.${encodeURIComponent(email)}`,
   );
   const reviewer = reviewerRows?.[0];
   if (!reviewer?.active) return null;
 
-  const roleRows = await supabaseFetch(
-    env, "reviewer_roles",
-    `?reviewer_id=eq.${reviewer.id}&select=roles(can_amend_constitution)`,
-  );
-  const canAmendConstitution =
-    roleRows?.some((rr) => rr.roles?.can_amend_constitution === true) ?? false;
-
-  return { id: reviewer.id, email, role: reviewer.role, canAmendConstitution };
+  return {
+    id: reviewer.id,
+    email,
+    role: reviewer.role,
+    canAmendConstitution: reviewer.can_amend_constitution === true,
+  };
 }
 
 // ── Authorization incident recording ──────────────────────────────────────

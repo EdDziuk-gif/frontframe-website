@@ -65,17 +65,14 @@ function mockRequest(body = {}) {
   return { json: () => Promise.resolve(body) };
 }
 
-// Mocks getReviewerAuthority(env, jwt)'s call chain: /auth/v1/user, then
-// reviewers, then reviewer_roles (the last is unused by kgr.js but
-// getReviewerAuthority always queries it).
-function mockAuth({ id = "rev-uuid", role = "frontframe_admin", active = true } = {}) {
+// Mocks getReviewerAuthority(env, jwt)'s call chain: /auth/v1/user, then reviewers.
+function mockAuth({ id = "rev-uuid", role = "frontframe_admin", active = true, can_amend_constitution = false } = {}) {
   global.fetch.mockResolvedValueOnce({
     ok: true,
     json: () => Promise.resolve({ email: "reviewer@frontframe.co" }),
   });
   supabaseFetchMock
-    .mockResolvedValueOnce([{ id, role, active }])
-    .mockResolvedValueOnce([{ roles: { can_amend_constitution: false } }]);
+    .mockResolvedValueOnce([{ id, role, active, can_amend_constitution }]);
 }
 
 function mockInvalidJwt() {
@@ -437,7 +434,7 @@ describe("case history reconstruction", () => {
     const body = await res.json();
     expect(body.gap_resolution_requests?.questions?.question_text).toBe("Does FrontFrame offer an SLA?");
 
-    const [, , query] = supabaseFetchMock.mock.calls[2]; // after mockAuth's two reviewer lookups
+    const [, , query] = supabaseFetchMock.mock.calls[1]; // after mockAuth's reviewer lookup
     // The FK is named explicitly: migration 014 added a second kgr_cases <->
     // gap_resolution_requests foreign key (resolved_kgr_case_id), so a bare
     // gap_resolution_requests(...) embed is ambiguous (PostgREST PGRST201).
@@ -941,7 +938,7 @@ describe("listFalsifiedHypotheses", () => {
     mockAuth();
     supabaseFetchMock.mockResolvedValueOnce([]);
     await listFalsifiedHypotheses(mockRequest(), ENV, "admin-jwt", CH);
-    const [, table, query] = supabaseFetchMock.mock.calls[2];
+    const [, table, query] = supabaseFetchMock.mock.calls[1];
     expect(table).toBe("kgr_hypotheses");
     expect(query).toContain("status=eq.falsified");
     expect(query).not.toContain("research_notes");
