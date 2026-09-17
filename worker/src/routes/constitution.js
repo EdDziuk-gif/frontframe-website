@@ -14,7 +14,7 @@ const VALID_SOURCE_TYPES = new Set([
 
 const PROPOSAL_REQUIRED_FIELDS = [
   "constitutional_matter", "factual_context", "material_assumptions",
-  "proposed_decision", "proposed_resulting_text",
+  "proposed_decision", "affected_provision_number", "proposed_resulting_text",
   "interactions_with_other_provisions", "no_conflict_explanation",
 ];
 
@@ -27,6 +27,24 @@ const PROPOSAL_DRAFT_MUTABLE = [
 ];
 
 const INCIDENT_STATUS_VALUES = new Set(["open", "reviewed", "resolved"]);
+
+// Shared new-vs-existing contract, matching promulgate_constitutional_amendment's
+// own branch logic exactly: affected_provision_number always identifies the
+// target (the provision to amend, or the number a new provision will receive).
+// expected_preceding_text is the sole discriminator — null means "create a new
+// provision numbered affected_provision_number"; non-null means "amend the
+// existing provision, and reject if its current text no longer matches."
+// (REQ-PROF-06/07.) Returns an error string, or null if the combination is valid.
+function validateProvisionContract({ affected_provision_number, expected_preceding_text, proposed_provision_title }) {
+  if (!affected_provision_number?.trim?.()) {
+    return "affected_provision_number is required";
+  }
+  const isNewProvision = !expected_preceding_text?.trim?.();
+  if (isNewProvision && !proposed_provision_title?.trim?.()) {
+    return "proposed_provision_title is required when expected_preceding_text is not supplied (creating a new provision)";
+  }
+  return null;
+}
 
 // Maps attempted_action values to safe, system-controlled SMS text.
 // Raw attacker-supplied strings are never interpolated into SMS messages.
@@ -158,13 +176,11 @@ export async function createProposal(request, env, jwt, corsHeaders) {
     );
   }
 
-  // For a new provision (no provision number supplied), a title is required.
-  const isNewProvision = !affected_provision_number;
-  if (isNewProvision && !proposed_provision_title?.trim()) {
-    return jsonResponse(
-      { error: "proposed_provision_title is required when affected_provision_number is not supplied" },
-      400, corsHeaders,
-    );
+  const contractError = validateProvisionContract({
+    affected_provision_number, expected_preceding_text, proposed_provision_title,
+  });
+  if (contractError) {
+    return jsonResponse({ error: contractError }, 400, corsHeaders);
   }
 
   const row = await supabasePost(env, "constitution_amendment_proposals", {
@@ -205,12 +221,13 @@ export async function getProposal(env, id, jwt, corsHeaders) {
 export async function updateProposal(request, env, id, jwt, corsHeaders) {
   const existing = await supabaseFetch(
     env, "constitution_amendment_proposals",
-    `?id=eq.${encodeURIComponent(id)}&select=status`,
+    `?id=eq.${encodeURIComponent(id)}&select=*`,
   );
   if (!existing?.length) return jsonResponse({ error: "Not found" }, 404, corsHeaders);
-  if (!["draft", "returned"].includes(existing[0].status)) {
+  const proposal = existing[0];
+  if (!["draft", "returned"].includes(proposal.status)) {
     return jsonResponse(
-      { error: `Only draft or returned proposals may be updated; current status is '${existing[0].status}'` },
+      { error: `Only draft or returned proposals may be updated; current status is '${proposal.status}'` },
       409, corsHeaders,
     );
   }
@@ -225,6 +242,15 @@ export async function updateProposal(request, env, id, jwt, corsHeaders) {
   }
   if (updates.source_type && !VALID_SOURCE_TYPES.has(updates.source_type)) {
     return jsonResponse({ error: "Invalid source_type" }, 400, corsHeaders);
+  }
+
+  // Validate the contract against the resulting merged state, not just the
+  // raw patch — a partial update could otherwise leave an invalid combination
+  // (e.g. clearing expected_preceding_text without adding a title).
+  const merged = { ...proposal, ...updates };
+  const contractError = validateProvisionContract(merged);
+  if (contractError) {
+    return jsonResponse({ error: contractError }, 400, corsHeaders);
   }
 
   const rows = await supabasePatch(env, "constitution_amendment_proposals", id, updates);
@@ -252,6 +278,10 @@ export async function submitProposal(request, env, id, jwt, corsHeaders) {
       { error: `Proposal is missing required fields before submission: ${incomplete.join(", ")}` },
       422, corsHeaders,
     );
+  }
+  const contractError = validateProvisionContract(proposal);
+  if (contractError) {
+    return jsonResponse({ error: contractError }, 422, corsHeaders);
   }
 
   const rows = await supabasePatch(env, "constitution_amendment_proposals", id, {
@@ -388,6 +418,16 @@ export async function promulgateProposal(request, env, ctx, id, jwt, corsHeaders
     }
     if (msg.includes("provision_not_found")) {
       return jsonResponse({ error: "Referenced provision number not found" }, 404, corsHeaders);
+    }
+    // constitution_provisions_provision_number_key: the RPC's new-provision
+    // branch (expected_preceding_text null) tried to insert a
+    // provision_number that already exists — most likely a proposal meant to
+    // amend an existing provision was missing expected_preceding_text.
+    if (msg.includes("constitution_provisions_provision_number_key") || msg.includes("duplicate key value violates unique constraint")) {
+      return jsonResponse(
+        { error: "A provision with this number already exists. If this amends an existing provision, expected_preceding_text must be set to its current text." },
+        409, corsHeaders,
+      );
     }
     throw e;
   }

@@ -180,7 +180,7 @@ describe("createProposal", () => {
     expect(supabasePostMock).not.toHaveBeenCalled();
   });
 
-  it("rejects a new-provision proposal without proposed_provision_title", async () => {
+  it("rejects any proposal missing affected_provision_number, new or existing", async () => {
     mockStaffAuth();
     const req = mockRequest({
       ...VALID_PROPOSAL,
@@ -192,22 +192,75 @@ describe("createProposal", () => {
     expect(supabasePostMock).not.toHaveBeenCalled();
   });
 
-  it("accepts a new-provision proposal when proposed_provision_title is supplied", async () => {
+  it("rejects a new-provision proposal (expected_preceding_text null) without proposed_provision_title", async () => {
+    mockStaffAuth();
+    const req = mockRequest({
+      ...VALID_PROPOSAL,
+      affected_provision_number:  "1.1",
+      expected_preceding_text:    null,
+      proposed_provision_title:   null,
+    });
+    const res = await createProposal(req, ENV, "jwt", CH);
+    expect(res.status).toBe(400);
+    expect(supabasePostMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts a new-provision proposal: affected_provision_number set, expected_preceding_text null, title supplied", async () => {
     mockStaffAuth();
     supabasePostMock.mockResolvedValueOnce([{ id: 2, status: "draft" }]);
     const req = mockRequest({
       ...VALID_PROPOSAL,
-      affected_provision_number: null,
+      affected_provision_number: "1.1",
       expected_preceding_text:   null,
       proposed_provision_title:  "New Provision Title",
     });
     const res = await createProposal(req, ENV, "jwt", CH);
     expect(res.status).toBe(201);
     expect(supabasePostMock.mock.calls[0][2]).toMatchObject({
-      affected_provision_number: null,
+      affected_provision_number: "1.1",
       expected_preceding_text:   null,
       proposed_provision_title:  "New Provision Title",
     });
+  });
+
+  it("accepts an existing-provision amendment: affected_provision_number and expected_preceding_text both set, no title needed", async () => {
+    mockStaffAuth();
+    supabasePostMock.mockResolvedValueOnce([{ id: 3, status: "draft" }]);
+    const req = mockRequest({
+      ...VALID_PROPOSAL,
+      affected_provision_number: "9",
+      expected_preceding_text:   "Current live text of §9.",
+      proposed_provision_title:  null,
+    });
+    const res = await createProposal(req, ENV, "jwt", CH);
+    expect(res.status).toBe(201);
+  });
+});
+
+describe("updateProposal", () => {
+  it("rejects a patch that would clear expected_preceding_text without adding a title (invalid merged state)", async () => {
+    supabaseFetchMock.mockResolvedValueOnce([{
+      ...VALID_PROPOSAL,
+      id: 4, status: "draft",
+      affected_provision_number: "9", expected_preceding_text: "Current text", proposed_provision_title: null,
+    }]);
+    const req = mockRequest({ expected_preceding_text: null }, "PATCH");
+    const res = await updateProposal(req, ENV, "4", "jwt", CH);
+    expect(res.status).toBe(400);
+    expect(supabasePatchMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts a patch that keeps the merged state valid (still amending an existing provision)", async () => {
+    supabaseFetchMock.mockResolvedValueOnce([{
+      ...VALID_PROPOSAL,
+      id: 4, status: "draft",
+      affected_provision_number: "9", expected_preceding_text: "Current text", proposed_provision_title: null,
+    }]);
+    supabasePatchMock.mockResolvedValueOnce([{ id: 4, status: "draft" }]);
+    const req = mockRequest({ proposed_decision: "Revised decision text" }, "PATCH");
+    const res = await updateProposal(req, ENV, "4", "jwt", CH);
+    expect(res.status).toBe(200);
+    expect(supabasePatchMock).toHaveBeenCalled();
   });
 });
 
@@ -350,6 +403,17 @@ describe("promulgateProposal", () => {
     );
     const res = await promulgateProposal(mockRequest({}), ENV, fakeCtx(), "1", "jwt", CH);
     expect(res.status).toBe(409);
+  });
+
+  it("returns 409 with a clear message when the RPC hits the provision_number unique constraint", async () => {
+    mockOperatorAuth();
+    supabaseRpcMock.mockRejectedValueOnce(
+      new Error('Supabase RPC failed: duplicate key value violates unique constraint "constitution_provisions_provision_number_key"'),
+    );
+    const res = await promulgateProposal(mockRequest({}), ENV, fakeCtx(), "1", "jwt", CH);
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toMatch(/already exists/i);
   });
 
   it("new-provision path: RPC called with correct proposal id and no preceding text", async () => {
