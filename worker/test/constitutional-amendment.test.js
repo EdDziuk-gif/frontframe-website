@@ -85,8 +85,7 @@ function mockOperatorAuth(id = "op-uuid") {
     json: () => Promise.resolve({ email: "ed@frontframe.co" }),
   });
   supabaseFetchMock
-    .mockResolvedValueOnce([{ id, role: "frontframe_admin", active: true }]) // reviewers
-    .mockResolvedValueOnce([{ roles: { can_amend_constitution: true } }]);   // reviewer_roles
+    .mockResolvedValueOnce([{ id, role: "frontframe_admin", active: true, can_amend_constitution: true }]); // reviewers
 }
 
 function mockStaffAuth(id = "staff-uuid") {
@@ -95,8 +94,7 @@ function mockStaffAuth(id = "staff-uuid") {
     json: () => Promise.resolve({ email: "staff@frontframe.co" }),
   });
   supabaseFetchMock
-    .mockResolvedValueOnce([{ id, role: "frontframe_staff", active: true }])
-    .mockResolvedValueOnce([{ roles: { can_amend_constitution: false } }]);
+    .mockResolvedValueOnce([{ id, role: "frontframe_staff", active: true, can_amend_constitution: false }]);
 }
 
 const VALID_PROPOSAL = {
@@ -486,8 +484,7 @@ describe("getReviewerAuthority", () => {
       json: () => Promise.resolve({ email: "ed@frontframe.co" }),
     });
     supabaseFetchMock
-      .mockResolvedValueOnce([{ id: "op-uuid", role: "frontframe_admin", active: true }])
-      .mockResolvedValueOnce([{ roles: { can_amend_constitution: true } }]);
+      .mockResolvedValueOnce([{ id: "op-uuid", role: "frontframe_admin", active: true, can_amend_constitution: true }]);
 
     const result = await getReviewerAuthority(ENV, "jwt");
     expect(result.canAmendConstitution).toBe(true);
@@ -500,8 +497,7 @@ describe("getReviewerAuthority", () => {
       json: () => Promise.resolve({ email: "staff@frontframe.co" }),
     });
     supabaseFetchMock
-      .mockResolvedValueOnce([{ id: "staff-uuid", role: "frontframe_staff", active: true }])
-      .mockResolvedValueOnce([{ roles: { can_amend_constitution: false } }]);
+      .mockResolvedValueOnce([{ id: "staff-uuid", role: "frontframe_staff", active: true, can_amend_constitution: false }]);
 
     const result = await getReviewerAuthority(ENV, "jwt");
     expect(result.canAmendConstitution).toBe(false);

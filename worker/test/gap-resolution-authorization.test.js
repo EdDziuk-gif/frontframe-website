@@ -30,11 +30,10 @@ const { getGapResolutionRequests, deleteGapResolutionRequest } = await import(".
 const CH = {};
 const ENV = { SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "service-key" };
 
-function mockReviewerAuth({ id = "rev-uuid", role = "frontframe_admin", active = true } = {}) {
+function mockReviewerAuth({ id = "rev-uuid", role = "frontframe_admin", active = true, can_amend_constitution = false } = {}) {
   global.fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ email: "ed@frontframe.co" }) });
   supabaseFetchMock
-    .mockResolvedValueOnce([{ id, role, active }])                             // reviewers
-    .mockResolvedValueOnce([{ roles: { can_amend_constitution: false } }]);    // reviewer_roles
+    .mockResolvedValueOnce([{ id, role, active, can_amend_constitution }]);    // reviewers
 }
 
 beforeEach(() => { vi.clearAllMocks(); });

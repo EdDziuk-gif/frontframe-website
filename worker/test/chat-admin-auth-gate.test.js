@@ -42,8 +42,7 @@ function makeRequest(bodyObj, { jwt = null } = {}) {
 function mockValidReviewer({ role = "frontframe_staff" } = {}) {
   global.fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ email: "staff@frontframe.co" }) });
   supabaseFetchMock
-    .mockResolvedValueOnce([{ id: "rev-1", role, active: true }])                // reviewers
-    .mockResolvedValueOnce([{ roles: { can_amend_constitution: false } }]);      // reviewer_roles
+    .mockResolvedValueOnce([{ id: "rev-1", role, active: true, can_amend_constitution: false }]); // reviewers
 }
 
 beforeEach(() => { vi.clearAllMocks(); });

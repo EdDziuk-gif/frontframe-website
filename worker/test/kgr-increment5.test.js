@@ -44,11 +44,10 @@ const CH = {};
 const ENV = { SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "k", RATE_LIMIT_KV: { get: async () => null } };
 const mockRequest = (body = {}) => ({ json: () => Promise.resolve(body) });
 
-function mockAuth({ id = "rev-uuid", role = "frontframe_admin", active = true } = {}) {
+function mockAuth({ id = "rev-uuid", role = "frontframe_admin", active = true, can_amend_constitution = false } = {}) {
   global.fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ email: "r@frontframe.co" }) });
   supabaseFetchMock
-    .mockResolvedValueOnce([{ id, role, active }])
-    .mockResolvedValueOnce([{ roles: { can_amend_constitution: false } }]);
+    .mockResolvedValueOnce([{ id, role, active, can_amend_constitution }]);
 }
 const mockInvalidJwt = () => global.fetch.mockResolvedValueOnce({ ok: false });
 const scoreJson = (score, rationale) => JSON.stringify({ score, rationale });
@@ -298,7 +297,7 @@ describe("KGR mutation gate (deploy-window pause)", () => {
       pausedEnv, "7", "jwt", CH
     );
     expect(res.status).toBe(503);
-    expect(supabaseFetchMock).toHaveBeenCalledTimes(2); // only mockAuth's two reviewer lookups
+    expect(supabaseFetchMock).toHaveBeenCalledTimes(1); // only mockAuth's reviewer lookup
     expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
