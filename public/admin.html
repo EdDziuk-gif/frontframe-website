@@ -4116,10 +4116,11 @@ async function updateIncidentStatus(id, status) {
 async function resolveIncident(id) {
   const notes = prompt('Resolution notes (optional):');
   try {
+    // resolved_by/resolved_at are derived server-side from the authenticated
+    // caller — not sent from here.
     const updated = await api('PATCH', `/admin/authorization-incidents/${id}`, {
       status: 'resolved',
       resolution_notes: notes || null,
-      resolved_at: new Date().toISOString(),
     });
     authIncidents = authIncidents.map(i => i.id === id ? updated : i);
     renderAuthIncidents();

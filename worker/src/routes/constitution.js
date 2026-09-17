@@ -49,9 +49,11 @@ function validateProvisionContract({ affected_provision_number, expected_precedi
 // Maps attempted_action values to safe, system-controlled SMS text.
 // Raw attacker-supplied strings are never interpolated into SMS messages.
 const ACTION_CATEGORIES = {
-  promulgate_amendment: "constitutional promulgation",
-  return_proposal:      "proposal return",
-  reject_proposal:      "proposal rejection",
+  promulgate_amendment:          "constitutional promulgation",
+  return_proposal:               "proposal return",
+  reject_proposal:               "proposal rejection",
+  view_authorization_incidents:  "authorization incident access",
+  update_authorization_incident: "authorization incident disposition",
 };
 
 // One SMS per fingerprint per hour.
@@ -454,7 +456,23 @@ export async function listProvisions(env, jwt, corsHeaders) {
 
 // ── Authorization incident handlers ───────────────────────────────────────
 
-export async function listAuthorizationIncidents(env, jwt, corsHeaders) {
+// Viewing and dispositioning Authorization Incidents requires Operator
+// authority (can_amend_constitution) for the duration of this bootstrap
+// cycle — see Decision 0036 Stage 5. This is a temporary, explicit
+// narrowing, not an assertion that Staff can never be authorized here.
+export async function listAuthorizationIncidents(env, ctx, jwt, corsHeaders) {
+  const authority = await getReviewerAuthority(env, jwt);
+  if (!authority?.canAmendConstitution) {
+    await recordDeniedAction(env, ctx, {
+      actingReviewerId:   authority?.id ?? null,
+      actingIdentityText: authority?.email ?? null,
+      attemptedAction:    "view_authorization_incidents",
+      targetObject:       "authorization_incidents",
+      denialReason:       "Insufficient authority: can_amend_constitution required",
+    });
+    return jsonResponse({ error: "Operator authority required" }, 403, corsHeaders);
+  }
+
   const rows = await supabaseFetch(
     env, "authorization_incidents",
     "?select=*&order=last_occurred_at.desc",
@@ -462,12 +480,27 @@ export async function listAuthorizationIncidents(env, jwt, corsHeaders) {
   return jsonResponse(rows ?? [], 200, corsHeaders);
 }
 
-export async function updateAuthorizationIncident(request, env, id, jwt, corsHeaders) {
+export async function updateAuthorizationIncident(request, env, ctx, id, jwt, corsHeaders) {
+  const authority = await getReviewerAuthority(env, jwt);
+  if (!authority?.canAmendConstitution) {
+    await recordDeniedAction(env, ctx, {
+      actingReviewerId:   authority?.id ?? null,
+      actingIdentityText: authority?.email ?? null,
+      attemptedAction:    "update_authorization_incident",
+      targetObject:       `authorization_incidents:${id}`,
+      denialReason:       "Insufficient authority: can_amend_constitution required",
+    });
+    return jsonResponse({ error: "Operator authority required" }, 403, corsHeaders);
+  }
+
   const body = await request.json().catch(() => null);
   if (!body) return jsonResponse({ error: "Invalid JSON" }, 400, corsHeaders);
 
+  // resolved_by/resolved_at are never accepted from the client — only status
+  // and resolution_notes are caller-supplied. Resolver identity and time are
+  // always derived server-side from the authenticated, authorized caller.
   const updates = {};
-  ["status", "resolution_notes", "resolved_by", "resolved_at"].forEach((k) => {
+  ["status", "resolution_notes"].forEach((k) => {
     if (k in body) updates[k] = body[k];
   });
   if (!Object.keys(updates).length) {
@@ -475,6 +508,17 @@ export async function updateAuthorizationIncident(request, env, id, jwt, corsHea
   }
   if (updates.status && !INCIDENT_STATUS_VALUES.has(updates.status)) {
     return jsonResponse({ error: "Invalid status value" }, 400, corsHeaders);
+  }
+
+  if (updates.status === "resolved") {
+    updates.resolved_by = authority.id;
+    updates.resolved_at = new Date().toISOString();
+  } else if (updates.status) {
+    // Moving away from resolved (back to open/reviewed) — clear stale
+    // resolution data rather than leaving a resolver/time that no longer
+    // describes the incident's current disposition.
+    updates.resolved_by = null;
+    updates.resolved_at = null;
   }
 
   const rows = await supabasePatch(env, "authorization_incidents", id, updates);

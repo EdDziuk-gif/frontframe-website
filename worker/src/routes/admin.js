@@ -11,6 +11,8 @@ const envOnly = (handler) => withJwt((req, env, _ctx, ch, _params, jwt) => handl
 const envParam = (handler, key = "id") => withJwt((req, env, _ctx, ch, params, jwt) => handler(env, params[key], jwt, ch));
 // ctxParam passes ctx through for handlers that need waitUntil (e.g. Operator-only constitution actions).
 const ctxParam = (handler, key = "id") => withJwt((req, env, ctx, ch, params, jwt) => handler(req, env, ctx, params[key], jwt, ch));
+// ctxEnvOnly: ctx + env, no path param, no request body (e.g. a list route that must still record a denied-access attempt).
+const ctxEnvOnly = (handler) => withJwt((req, env, ctx, ch, _params, jwt) => handler(env, ctx, jwt, ch));
 // twoParams: for a route with two path params (e.g. /:id/hypotheses/:hid).
 // request is passed through since these handlers read a JSON body.
 const twoParams = (handler, key1 = "id", key2 = "hid") =>
@@ -133,6 +135,6 @@ export const ADMIN_ROUTES = [
   route("POST",  "/admin/constitution/proposals/:id/promulgate",    ctxParam(handlers.promulgateProposal)),
   route("GET",   "/admin/constitution/amendments",                  envOnly(handlers.listAmendments)),
   route("GET",   "/admin/constitution/provisions",                  envOnly(handlers.listProvisions)),
-  route("GET",   "/admin/authorization-incidents",                  envOnly(handlers.listAuthorizationIncidents)),
-  route("PATCH", "/admin/authorization-incidents/:id",              param(handlers.updateAuthorizationIncident)),
+  route("GET",   "/admin/authorization-incidents",                  ctxEnvOnly(handlers.listAuthorizationIncidents)),
+  route("PATCH", "/admin/authorization-incidents/:id",              ctxParam(handlers.updateAuthorizationIncident)),
 ];

@@ -522,18 +522,64 @@ describe("SMS content safety", () => {
 
 // ── Authorization incident disposition ────────────────────────────────────
 
-describe("updateAuthorizationIncident", () => {
-  it("updates status and resolution_notes", async () => {
-    supabasePatchMock.mockResolvedValueOnce([{ id: 1, status: "resolved", resolution_notes: "Investigated — false alarm" }]);
-    const req = mockRequest({ status: "resolved", resolution_notes: "Investigated — false alarm" }, "PATCH");
-    const res = await updateAuthorizationIncident(req, ENV, "1", "jwt", CH);
-    expect(res.status).toBe(200);
-    expect(supabasePatchMock.mock.calls[0][3]).toMatchObject({ status: "resolved" });
+describe("listAuthorizationIncidents", () => {
+  it("non-Operator gets 403 and a denied-action record, list is never fetched", async () => {
+    mockStaffAuth();
+    const res = await listAuthorizationIncidents(ENV, fakeCtx(), "jwt", CH);
+    expect(res.status).toBe(403);
+    expect(supabaseFetchMock).toHaveBeenCalledTimes(1); // only the auth lookup — never the incidents list
   });
 
-  it("rejects an invalid status value", async () => {
+  it("Operator can list incidents", async () => {
+    mockOperatorAuth();
+    supabaseFetchMock.mockResolvedValueOnce([{ id: 1, status: "open" }]);
+    const res = await listAuthorizationIncidents(ENV, fakeCtx(), "jwt", CH);
+    expect(res.status).toBe(200);
+  });
+});
+
+describe("updateAuthorizationIncident", () => {
+  it("non-Operator gets 403, incident is never modified", async () => {
+    mockStaffAuth();
+    const req = mockRequest({ status: "resolved" }, "PATCH");
+    const res = await updateAuthorizationIncident(req, ENV, fakeCtx(), "1", "jwt", CH);
+    expect(res.status).toBe(403);
+    expect(supabasePatchMock).not.toHaveBeenCalled();
+  });
+
+  it("Operator resolving an incident: resolved_by/resolved_at are server-derived, client values ignored", async () => {
+    mockOperatorAuth("op-uuid");
+    supabasePatchMock.mockResolvedValueOnce([{ id: 1, status: "resolved" }]);
+    const req = mockRequest({
+      status: "resolved",
+      resolution_notes: "Investigated — false alarm",
+      resolved_by: "attacker-uuid",
+      resolved_at: "2020-01-01T00:00:00Z",
+    }, "PATCH");
+    const res = await updateAuthorizationIncident(req, ENV, fakeCtx(), "1", "jwt", CH);
+    expect(res.status).toBe(200);
+    const patchBody = supabasePatchMock.mock.calls[0][3];
+    expect(patchBody.status).toBe("resolved");
+    expect(patchBody.resolved_by).toBe("op-uuid");
+    expect(patchBody.resolved_by).not.toBe("attacker-uuid");
+    expect(patchBody.resolved_at).not.toBe("2020-01-01T00:00:00Z");
+  });
+
+  it("moving an incident away from resolved clears resolved_by/resolved_at", async () => {
+    mockOperatorAuth();
+    supabasePatchMock.mockResolvedValueOnce([{ id: 1, status: "reviewed" }]);
+    const req = mockRequest({ status: "reviewed" }, "PATCH");
+    const res = await updateAuthorizationIncident(req, ENV, fakeCtx(), "1", "jwt", CH);
+    expect(res.status).toBe(200);
+    const patchBody = supabasePatchMock.mock.calls[0][3];
+    expect(patchBody.resolved_by).toBeNull();
+    expect(patchBody.resolved_at).toBeNull();
+  });
+
+  it("rejects an invalid status value (after authority is confirmed)", async () => {
+    mockOperatorAuth();
     const req = mockRequest({ status: "deleted" }, "PATCH");
-    const res = await updateAuthorizationIncident(req, ENV, "1", "jwt", CH);
+    const res = await updateAuthorizationIncident(req, ENV, fakeCtx(), "1", "jwt", CH);
     expect(res.status).toBe(400);
     expect(supabasePatchMock).not.toHaveBeenCalled();
   });
