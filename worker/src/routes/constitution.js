@@ -200,7 +200,7 @@ export async function createProposal(request, env, jwt, corsHeaders) {
     submitted_by:                       authority?.id ?? null,
     status:                             "draft",
   });
-  return jsonResponse(row, 201, corsHeaders);
+  return jsonResponse(row?.[0] ?? null, 201, corsHeaders);
 }
 
 export async function listProposals(env, jwt, corsHeaders) {
@@ -256,7 +256,7 @@ export async function updateProposal(request, env, id, jwt, corsHeaders) {
   }
 
   const rows = await supabasePatch(env, "constitution_amendment_proposals", id, updates);
-  return jsonResponse(rows, 200, corsHeaders);
+  return jsonResponse(rows?.[0] ?? null, 200, corsHeaders);
 }
 
 export async function submitProposal(request, env, id, jwt, corsHeaders) {
@@ -290,7 +290,7 @@ export async function submitProposal(request, env, id, jwt, corsHeaders) {
     status:     "pending_review",
     updated_at: new Date().toISOString(),
   });
-  return jsonResponse(rows, 200, corsHeaders);
+  return jsonResponse(rows?.[0] ?? null, 200, corsHeaders);
 }
 
 export async function reopenProposal(request, env, id, jwt, corsHeaders) {
@@ -310,7 +310,7 @@ export async function reopenProposal(request, env, id, jwt, corsHeaders) {
     status:     "draft",
     updated_at: new Date().toISOString(),
   });
-  return jsonResponse(rows, 200, corsHeaders);
+  return jsonResponse(rows?.[0] ?? null, 200, corsHeaders);
 }
 
 export async function returnProposal(request, env, ctx, id, jwt, corsHeaders) {
@@ -346,7 +346,7 @@ export async function returnProposal(request, env, ctx, id, jwt, corsHeaders) {
     returned_at:  new Date().toISOString(),
     updated_at:   new Date().toISOString(),
   });
-  return jsonResponse(rows, 200, corsHeaders);
+  return jsonResponse(rows?.[0] ?? null, 200, corsHeaders);
 }
 
 export async function rejectProposal(request, env, ctx, id, jwt, corsHeaders) {
@@ -382,7 +382,7 @@ export async function rejectProposal(request, env, ctx, id, jwt, corsHeaders) {
     rejected_at:  new Date().toISOString(),
     updated_at:   new Date().toISOString(),
   });
-  return jsonResponse(rows, 200, corsHeaders);
+  return jsonResponse(rows?.[0] ?? null, 200, corsHeaders);
 }
 
 export async function promulgateProposal(request, env, ctx, id, jwt, corsHeaders) {
@@ -522,5 +522,5 @@ export async function updateAuthorizationIncident(request, env, ctx, id, jwt, co
   }
 
   const rows = await supabasePatch(env, "authorization_incidents", id, updates);
-  return jsonResponse(rows, 200, corsHeaders);
+  return jsonResponse(rows?.[0] ?? null, 200, corsHeaders);
 }

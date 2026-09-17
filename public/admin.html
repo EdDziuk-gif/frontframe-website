@@ -1895,6 +1895,9 @@ let proposals     = [];
 let amendments    = [];
 let provisions    = [];
 let authIncidents = [];
+// Guards repeat-click on an in-flight action (e.g. a slow request before the
+// button/modal visibly updates) from firing the same request twice.
+const pendingActions = new Set();
 let subscriptions = [];
 let mktLog        = [];
 let problems      = [];
@@ -4008,6 +4011,9 @@ async function saveNewProposal() {
     proposed_provision_title:           document.getElementById('pm-title').value.trim() || null,
     expected_preceding_text:            document.getElementById('pm-preceding').value.trim() || null,
   };
+  const key = 'proposal-create';
+  if (pendingActions.has(key)) return;
+  pendingActions.add(key);
   try {
     const created = await api('POST', '/admin/constitution/proposals', body);
     proposals = [created, ...proposals];
@@ -4016,9 +4022,13 @@ async function saveNewProposal() {
     closeModal('proposal-create-modal');
     toast('Proposal created.');
   } catch (e) { toast(e.message, 'error'); }
+  finally { pendingActions.delete(key); }
 }
 
 async function submitProposal(id) {
+  const key = 'proposal-submit-' + id;
+  if (pendingActions.has(key)) return;
+  pendingActions.add(key);
   try {
     const updated = await api('POST', `/admin/constitution/proposals/${id}/submit`, {});
     proposals = proposals.map(p => p.id === id ? updated : p);
@@ -4026,9 +4036,13 @@ async function submitProposal(id) {
     updateBadges();
     toast('Submitted for review.');
   } catch (e) { toast(e.message, 'error'); }
+  finally { pendingActions.delete(key); }
 }
 
 async function reopenProposal(id) {
+  const key = 'proposal-reopen-' + id;
+  if (pendingActions.has(key)) return;
+  pendingActions.add(key);
   try {
     const updated = await api('POST', `/admin/constitution/proposals/${id}/reopen`, {});
     proposals = proposals.map(p => p.id === id ? updated : p);
@@ -4036,11 +4050,15 @@ async function reopenProposal(id) {
     updateBadges();
     toast('Proposal reopened to draft.');
   } catch (e) { toast(e.message, 'error'); }
+  finally { pendingActions.delete(key); }
 }
 
 async function returnProposal(id) {
   const notes = prompt('Return notes (required):');
   if (!notes) return;
+  const key = 'proposal-return-' + id;
+  if (pendingActions.has(key)) return;
+  pendingActions.add(key);
   try {
     const updated = await api('POST', `/admin/constitution/proposals/${id}/return`, { review_notes: notes });
     proposals = proposals.map(p => p.id === id ? updated : p);
@@ -4048,11 +4066,15 @@ async function returnProposal(id) {
     updateBadges();
     toast('Proposal returned.');
   } catch (e) { toast(e.message, 'error'); }
+  finally { pendingActions.delete(key); }
 }
 
 async function rejectProposal(id) {
   const notes = prompt('Rejection notes (required):');
   if (!notes) return;
+  const key = 'proposal-reject-' + id;
+  if (pendingActions.has(key)) return;
+  pendingActions.add(key);
   try {
     const updated = await api('POST', `/admin/constitution/proposals/${id}/reject`, { review_notes: notes });
     proposals = proposals.map(p => p.id === id ? updated : p);
@@ -4060,15 +4082,20 @@ async function rejectProposal(id) {
     updateBadges();
     toast('Proposal rejected.');
   } catch (e) { toast(e.message, 'error'); }
+  finally { pendingActions.delete(key); }
 }
 
 async function promulgateProposal(id) {
   if (!confirm(`Promulgate proposal #${id}? This will create a constitutional amendment and update the live provision. This action cannot be undone.`)) return;
+  const key = 'proposal-promulgate-' + id;
+  if (pendingActions.has(key)) return;
+  pendingActions.add(key);
   try {
     await api('POST', `/admin/constitution/proposals/${id}/promulgate`, {});
     await loadConstitution();
     toast('Proposal promulgated. Amendment created.');
   } catch (e) { toast(e.message, 'error'); }
+  finally { pendingActions.delete(key); }
 }
 
 // Authorization Incidents
@@ -4105,16 +4132,23 @@ function renderAuthIncidents() {
 }
 
 async function updateIncidentStatus(id, status) {
+  const key = 'incident-status-' + id;
+  if (pendingActions.has(key)) return;
+  pendingActions.add(key);
   try {
     const updated = await api('PATCH', `/admin/authorization-incidents/${id}`, { status });
     authIncidents = authIncidents.map(i => i.id === id ? updated : i);
     renderAuthIncidents();
     updateBadges();
   } catch (e) { toast(e.message, 'error'); }
+  finally { pendingActions.delete(key); }
 }
 
 async function resolveIncident(id) {
   const notes = prompt('Resolution notes (optional):');
+  const key = 'incident-resolve-' + id;
+  if (pendingActions.has(key)) return;
+  pendingActions.add(key);
   try {
     // resolved_by/resolved_at are derived server-side from the authenticated
     // caller — not sent from here.
@@ -4127,6 +4161,7 @@ async function resolveIncident(id) {
     updateBadges();
     toast('Incident resolved.');
   } catch (e) { toast(e.message, 'error'); }
+  finally { pendingActions.delete(key); }
 }
 
 // Badges
