@@ -67,11 +67,18 @@ async function handleDocusealWebhook(request, env, corsHeaders) {
   const submissionId = String(payload?.data?.id ?? payload?.submission_id ?? "");
   if (!submissionId || !eventType.includes("completed")) return jsonResponse({ ok: true }, 200, corsHeaders);
 
+  // Extract SMS consent fields from DocuSeal submission values
+  const submitterValues = payload?.data?.submitters?.[0]?.values ?? payload?.data?.values ?? {};
+  const smsOptedIn = !!(submitterValues["sms_opted_in"] ?? submitterValues["SMS_Opt_In"] ?? submitterValues["sms_opt_in"]);
+  const smsMobile  = submitterValues["Client_Mobile_Number"] ?? submitterValues["mobile_number"] ?? null;
+
   const agreementRows = await supabaseFetch(env, "agreements",
     `?docuseal_envelope_id=eq.${encodeURIComponent(submissionId)}&select=id,order_id,lead_id`).catch(() => null);
   if (agreementRows?.length) {
     const agreement = agreementRows[0];
-    await supabasePatch(env, "agreements", agreement.id, { status: "signed", signed_at: new Date().toISOString() })
+    const signedPatch = { status: "signed", signed_at: new Date().toISOString(), sms_opted_in: smsOptedIn };
+    if (smsMobile) signedPatch.sms_mobile = smsMobile;
+    await supabasePatch(env, "agreements", agreement.id, signedPatch)
       .catch((e) => console.error("agreement patch failed:", e));
     const documentUrl = await fetchAndStoreDocument(env, submissionId, agreement.lead_id, agreement.id);
     if (documentUrl) {

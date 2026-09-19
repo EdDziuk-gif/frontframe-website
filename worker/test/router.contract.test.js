@@ -9,15 +9,14 @@ const manifest = ROUTES.map(({ method, path }) => `${method} ${path}`).join("\n"
 
 describe("Worker route contract", () => {
   it("preserves the approved route manifest and declaration order", () => {
-    // 123 routes. Migration 014 (KGR corpus-write governance): -3 for the
-    // removed POST/PUT/DELETE /qa, -1 for POST /admin/system-prompt/:page,
-    // -1 for PATCH /admin/gap-resolution-requests/:id/authorize, +2 for
-    // PATCH /admin/kgr-cases/:id/target and POST /admin/kgr-cases/:id/companion.
-    // +1 for POST /admin/review-queue (manual challenge entry point).
-    // +1 for DELETE /admin/defects/:id (delete a defect not being fixed now).
-    expect(ROUTES).toHaveLength(123);
+    // 134 routes. Previous: 123. +11 for the proposals workflow:
+    // GET/POST /admin/proposals, GET/PATCH /admin/proposals/:id,
+    // POST /admin/proposals/:id/sections, PATCH+DELETE /admin/proposals/:id/sections/:sid,
+    // POST /admin/proposals/:id/send, POST /admin/proposals/:id/mark-agreed,
+    // GET /proposal, POST /proposal/review.
+    expect(ROUTES).toHaveLength(134);
     expect(createHash("sha256").update(manifest).digest("hex"))
-      .toBe("0f2d2372d40a88ffd66bf9339bfbb8dfee93aa842a76c4ad6bdd2dc1d2797fb8");
+      .toBe("fc85d80553c52f240b9a3defa98f1a12aec895653be92ddedb0742118e301f4b");
   });
 
   it("keeps literal sub-routes ahead of their parameterized fallbacks", () => {

@@ -164,6 +164,46 @@ async function sendDueDiligence(request, env, userJwt, corsHeaders) {
 }
 
 
+async function sendInfraAgreement(request, env, userJwt, corsHeaders) {
+  const { lead_id } = await request.json();
+  if (!lead_id) return jsonResponse({ error: "lead_id is required" }, 400, corsHeaders);
+  const leadRows = await supabaseFetch(env, "leads", `?id=eq.${lead_id}&select=id,name,email,business_name`);
+  if (!leadRows?.length) return jsonResponse({ error: "Lead not found" }, 404, corsHeaders);
+  const lead         = leadRows[0];
+  const today        = new Date().toISOString().split("T")[0];
+  const signatureUrl = env.DOCUSEAL_SIGNATURE_URL ?? "";
+  const submissionPayload = {
+    template_id: 5966406, send_email: true,
+    submitters: [
+      { role: "Second Party", email: lead.email ?? "",
+        fields: [
+          { name: "Client_Name",   default_value: lead.name          ?? "", readonly: true },
+          { name: "Business_Name", default_value: lead.business_name ?? "", readonly: true },
+          { name: "Client_email",  default_value: lead.email         ?? "", readonly: true },
+          { name: "Contract_date", default_value: today,                   readonly: true },
+        ] },
+      { role: "FrontFrame", email: "ed@frontframe.co", completed: true,
+        fields: [{ name: "FrontFrame_Signature", default_value: signatureUrl, readonly: true }] },
+    ],
+  };
+  const dsRes = await fetch("https://api.docuseal.com/submissions", {
+    method: "POST", headers: { "Content-Type": "application/json", "X-Auth-Token": env.DOCUSEAL_API_KEY },
+    body: JSON.stringify(submissionPayload),
+  });
+  if (!dsRes.ok) throw new Error(`DocuSeal submission failed: ${await dsRes.text()}`);
+  const dsData     = await dsRes.json();
+  const envelopeId = String(dsData?.[0]?.submission_id ?? dsData?.id ?? "");
+  const agreement  = await supabasePost(env, "agreements", {
+    lead_id,
+    docuseal_envelope_id: envelopeId,
+    status:         "sent",
+    agreement_type: "infrastructure",
+    sent_at:        new Date().toISOString(),
+  });
+  return jsonResponse({ sent: true, envelope_id: envelopeId, agreement }, 201, corsHeaders);
+}
+
+
 // ════════════════════════════════════════════════════════════════════════════
 // § DOMAIN: system-prompt
 // ════════════════════════════════════════════════════════════════════════════
@@ -241,4 +281,4 @@ async function deleteReviewer(env, id, userJwt, corsHeaders) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { getChangelog, createChangelog, getLeads, createLead, getLeadAlerts, updateLeadAlert, deleteLeadAlert, getAlertSession, getAgreements, updateAgreement, sendAgreement, sendDueDiligence, getSystemPrompt, getReviewers, inviteReviewer, resetReviewerPassword, updateReviewer, deleteReviewer };
+export { getChangelog, createChangelog, getLeads, createLead, getLeadAlerts, updateLeadAlert, deleteLeadAlert, getAlertSession, getAgreements, updateAgreement, sendAgreement, sendDueDiligence, sendInfraAgreement, getSystemPrompt, getReviewers, inviteReviewer, resetReviewerPassword, updateReviewer, deleteReviewer };
