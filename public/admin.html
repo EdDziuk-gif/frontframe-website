@@ -358,6 +358,20 @@
   }
   .sub-link-btn:hover { background: var(--offwhite); }
 
+  /* Proposal modal */
+  .proposal-modal-inner { max-width: 780px; width: 100%; }
+  .proposal-sections-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .proposal-section-item { background: var(--offwhite); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .proposal-section-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .proposal-section-item-title { flex: 1; font-weight: 600; font-size: 0.875rem; }
+  .proposal-review-section { margin-bottom: 16px; padding: 14px 16px; background: var(--offwhite); border-radius: 8px; border: 1px solid var(--border); }
+  .proposal-review-section h3 { font-size: 0.9rem; margin-bottom: 6px; }
+  .proposal-flag-badge { display: inline-block; background: #FDECEA; color: var(--red); border-radius: 6px; font-size: 0.72rem; font-weight: 700; padding: 2px 7px; margin-left: 8px; }
+  .proposal-status-badge-sent       { background: #EBF5FB; color: #2980B9; }
+  .proposal-status-badge-under_review { background: #FEF9E7; color: var(--yellow); }
+  .proposal-status-badge-agreed      { background: #E8F8EE; color: var(--green); }
+  .proposal-status-badge-draft       { background: #F2F3F4; color: var(--gray); }
+
   /* Outreach */
   .outreach-stage-track { display: flex; align-items: flex-start; gap: 0; overflow-x: auto; padding: 8px 0 4px; }
   .outreach-stage-node { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; min-width: 60px; }
@@ -471,6 +485,16 @@
       <div class="page-header">
         <div class="page-title">Pipeline</div>
         <div class="page-sub">Active sales calls and all visitor alerts</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+          <label style="font-size:0.8rem;color:var(--gray);white-space:nowrap">Infra Agreement</label>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:0.85rem;color:var(--gray)">$</span>
+            <input type="number" id="infra-amount-field" min="1" step="1"
+              style="width:80px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:0.875rem;background:var(--surface);color:var(--text)"
+              placeholder="75" onchange="saveInfraAmount()" title="Monthly infrastructure agreement amount">
+            <span style="font-size:0.8rem;color:var(--gray)">/mo</span>
+          </div>
+        </div>
       </div>
       <div id="pipeline-active-section"></div>
       <div class="card">
@@ -819,7 +843,7 @@
               <option value="promulgated">Promulgated</option>
             </select>
             <button class="btn btn-ghost btn-sm" onclick="loadConstitution()">&#x21BA;</button>
-            <button class="btn btn-primary btn-sm" onclick="openProposalModal()">+ New Proposal</button>
+            <button class="btn btn-primary btn-sm" onclick="openConstitutionProposalModal()">+ New Proposal</button>
           </div>
         </div>
         <div class="table-wrap">
@@ -1625,6 +1649,76 @@
   </div>
 </div>
 
+<!-- Proposal authoring modal -->
+<div class="modal-backdrop" id="proposal-modal">
+  <div class="modal proposal-modal-inner">
+    <div class="modal-header">
+      <div class="modal-title" id="proposal-modal-title">Draft Proposal</div>
+      <button class="modal-close" onclick="closeModal('proposal-modal')">&#x00D7;</button>
+    </div>
+    <input type="hidden" id="proposal-modal-id">
+    <div class="form-group">
+      <label>Prospect Name *</label>
+      <input type="text" id="pm-name" placeholder="Jane Smith">
+    </div>
+    <div class="form-group">
+      <label>Prospect Email *</label>
+      <input type="email" id="pm-email" placeholder="jane@example.com">
+    </div>
+    <div class="form-group">
+      <label>Internal Notes</label>
+      <textarea id="pm-notes" rows="2" placeholder="For your reference only — not sent to client"></textarea>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div class="card-title">Sections</div>
+      <button class="btn btn-ghost btn-sm" onclick="addProposalSection()">+ Add Section</button>
+    </div>
+    <div class="proposal-sections-list" id="pm-sections"></div>
+    <div class="error-msg" id="pm-error"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('proposal-modal')">Cancel</button>
+      <button class="btn btn-ghost" onclick="saveProposalDraft()">Save Draft</button>
+      <button class="btn btn-amber" onclick="confirmSendProposal()">Send to Client &#x2192;</button>
+    </div>
+  </div>
+</div>
+
+<!-- Proposal send-confirm modal -->
+<div class="modal-backdrop" id="proposal-send-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Send Proposal</div>
+      <button class="modal-close" onclick="closeModal('proposal-send-modal')">&#x00D7;</button>
+    </div>
+    <p class="text-gray mb-16" style="font-size:.875rem">A review link will be emailed to the address below. It expires in 7 days.</p>
+    <div class="form-group">
+      <label>Send to</label>
+      <input type="email" id="proposal-send-email" placeholder="prospect@example.com">
+    </div>
+    <div class="error-msg" id="proposal-send-error"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('proposal-send-modal')">Cancel</button>
+      <button class="btn btn-amber" onclick="doSendProposal()">Send Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- Proposal review-response modal -->
+<div class="modal-backdrop" id="proposal-review-modal">
+  <div class="modal proposal-modal-inner">
+    <div class="modal-header">
+      <div class="modal-title" id="prv-title">Proposal Review</div>
+      <button class="modal-close" onclick="closeModal('proposal-review-modal')">&#x00D7;</button>
+    </div>
+    <div id="prv-overall" style="margin-bottom:16px;padding:14px 16px;background:var(--offwhite);border-radius:8px;border:1px solid var(--border)"></div>
+    <div id="prv-sections"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('proposal-review-modal')">Close</button>
+      <button class="btn btn-primary" id="prv-agree-btn" onclick="agreeProposal()">Mark Agreed</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="defect-modal">
   <div class="modal">
     <div class="modal-header">
@@ -2069,14 +2163,42 @@ function switchTab(tab) {
 
 // Pipeline
 
+let _infraAmountCents = 7500; // local cache; authoritative value is in config
+
+async function loadInfraAmount() {
+  try {
+    const cfg = await api('GET', '/admin/config');
+    const cents = cfg?.infra_agreement_amount_cents;
+    if (cents > 0) {
+      _infraAmountCents = cents;
+      const el = document.getElementById('infra-amount-field');
+      if (el) el.value = (cents / 100).toFixed(0);
+    }
+  } catch { /* non-fatal */ }
+}
+
+async function saveInfraAmount() {
+  const el = document.getElementById('infra-amount-field');
+  const dollars = parseFloat(el?.value ?? '0');
+  if (!dollars || dollars <= 0) { toast('Enter a valid amount', 'error'); return; }
+  const cents = Math.round(dollars * 100);
+  try {
+    await api('POST', '/admin/config', { infra_agreement_amount_cents: cents });
+    _infraAmountCents = cents;
+    toast(`Infra amount saved: $${dollars.toFixed(2)}/mo`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
 async function loadPipelineTab() {
   try {
-    [alerts, agreements] = await Promise.all([
+    [alerts, agreements, proposals] = await Promise.all([
       api('GET', '/admin/lead-alerts'),
       api('GET', '/admin/agreements'),
+      api('GET', '/admin/proposals'),
     ]);
     updateBadges();
   } catch (e) { toast('Failed to load pipeline: ' + e.message, 'error'); }
+  loadInfraAmount(); // non-blocking — populates the header field
   renderPipeline();
 }
 
@@ -2091,49 +2213,91 @@ function renderActivePipeline(activeAlerts) {
   if (!activeAlerts.length) { section.innerHTML = ''; return; }
   let html = `<div class="pipeline-section-title">Active Sales Calls (${activeAlerts.length})</div>`;
   html += activeAlerts.map(alert => {
-    const agreement = agreements.find(a => a.lead_id === alert.lead_id) ?? null;
-    return renderPipelineCard(alert, agreement);
+    const leadId       = alert.lead_id;
+    const ddAgreement  = agreements.find(a => a.lead_id === leadId && a.agreement_type !== 'infrastructure') ?? null;
+    const infraAgr     = agreements.find(a => a.lead_id === leadId && a.agreement_type === 'infrastructure') ?? null;
+    const proposal     = proposals.find(p => p.lead_id === leadId) ?? null;
+    return renderPipelineCard(alert, ddAgreement, infraAgr, proposal);
   }).join('');
   section.innerHTML = html;
 }
 
-function renderPipelineCard(alert, agreement) {
-  const hasLead          = !!alert.lead_id;
-  const letterSent       = !!agreement;
-  const letterSigned     = !!agreement?.signed_at || agreement?.status === 'signed';
-  const paymentRequested = !!agreement?.payment_request_sent_at;
-  const paymentReceived  = !!agreement?.payment_received_at;
-  const called           = !!agreement?.client_called_at;
+function renderPipelineCard(alert, ddAgreement, infraAgreement, proposal) {
+  const hasLead       = !!alert.lead_id;
 
-  const s1 = !hasLead ? 'start' : !letterSent ? 'ready' : letterSigned ? 'done' : 'waiting';
-  const s2 = !letterSigned ? 'locked' : !paymentRequested ? 'ready' : paymentReceived ? 'done' : 'waiting';
-  const s3 = !paymentReceived ? 'locked' : !called ? 'ready' : 'done';
-  const s4 = !called ? 'locked' : 'ready';
-
+  // Step 1: Due Diligence Letter
+  const ddSent   = !!ddAgreement;
+  const ddSigned = !!ddAgreement?.signed_at || ddAgreement?.status === 'signed';
+  const s1 = !hasLead ? 'start' : !ddSent ? 'ready' : ddSigned ? 'done' : 'waiting';
   const s1meta = s1 === 'waiting' ? 'Sent \u00b7 Awaiting signature'
-               : s1 === 'done'    ? 'Signed ' + fmtDateShort(agreement?.signed_at)
-               : '';
-  const s2meta = s2 === 'waiting' ? 'Sent ' + fmtDateShort(agreement?.payment_request_sent_at) + ' \u00b7 Awaiting payment'
-               : s2 === 'done'    ? 'Received ' + fmtDateShort(agreement?.payment_received_at)
-               : '';
-  const s3meta = s3 === 'done' ? 'Called ' + fmtDateShort(agreement?.client_called_at) : '';
+               : s1 === 'done'    ? 'Signed ' + fmtDateShort(ddAgreement?.signed_at) : '';
+
+  // Step 2: Infrastructure Agreement ($75/mo)
+  const infraSent   = !!infraAgreement;
+  const infraSigned = !!infraAgreement?.signed_at || infraAgreement?.status === 'signed';
+  const s2 = !ddSigned ? 'locked' : !infraSent ? 'ready' : infraSigned ? 'done' : 'waiting';
+  const s2meta = s2 === 'waiting' ? 'Sent \u00b7 Awaiting signature'
+               : s2 === 'done'    ? 'Signed ' + fmtDateShort(infraAgreement?.signed_at) : '';
+
+  // Step 3: First Month Payment ($75)
+  const paymentRequested = !!infraAgreement?.payment_request_sent_at;
+  const paymentReceived  = !!infraAgreement?.payment_received_at;
+  const s3 = !infraSigned ? 'locked' : !paymentRequested ? 'ready' : paymentReceived ? 'done' : 'waiting';
+  const s3meta = s3 === 'waiting' ? 'Sent ' + fmtDateShort(infraAgreement?.payment_request_sent_at) + ' \u00b7 Awaiting payment'
+               : s3 === 'done'    ? 'Received ' + fmtDateShort(infraAgreement?.payment_received_at) : '';
+
+  // Step 4: Call Client
+  const called = !!infraAgreement?.client_called_at;
+  const s4 = !paymentReceived ? 'locked' : !called ? 'ready' : 'done';
+  const s4meta = s4 === 'done' ? 'Called ' + fmtDateShort(infraAgreement?.client_called_at) : '';
+
+  // Step 5: Data Gathering
+  const s5 = !called ? 'locked' : 'ready';
+
+  // Step 6: Proposal
+  const proposalStatus = proposal?.status ?? null;
+  const proposalId     = proposal?.proposal_id ?? null;
+  let s6, s6meta, s6action, s6label;
+  if (!called) {
+    s6 = 'locked'; s6meta = ''; s6action = null; s6label = '';
+  } else if (!proposalId) {
+    s6 = 'ready'; s6meta = ''; s6action = `openProposalModal(null,'${alert.lead_id}','${esc(alert.prospect_name ?? '')}','')`;
+    s6label = 'Draft';
+  } else if (proposalStatus === 'draft') {
+    s6 = 'ready'; s6meta = 'Draft saved';
+    s6action = `openProposalModal('${proposalId}','${alert.lead_id}','','')`;
+    s6label = 'Edit / Send';
+  } else if (proposalStatus === 'sent') {
+    s6 = 'waiting'; s6meta = 'Sent \u00b7 Awaiting review'; s6action = null; s6label = '';
+  } else if (proposalStatus === 'under_review') {
+    s6 = 'waiting'; s6meta = 'Client reviewed';
+    s6action = `openProposalReview('${proposalId}')`;
+    s6label = 'View Response';
+  } else if (proposalStatus === 'agreed' || proposalStatus === 'signed') {
+    s6 = 'done'; s6meta = proposalStatus === 'agreed' ? 'Agreed' : 'Signed'; s6action = null; s6label = '';
+  } else {
+    s6 = 'ready'; s6meta = ''; s6action = null; s6label = '';
+  }
 
   const step1 = pipelineStep(1, 'Due Diligence Letter', s1, s1meta,
     s1 === 'start' ? `openLinkLeadModal('${alert.alert_id}')` :
-    s1 === 'ready' ? `sendLetter('${alert.alert_id}','${alert.lead_id}')` : null,
+    s1 === 'ready' ? `sendDDLetter('${alert.alert_id}','${alert.lead_id}')` : null,
     s1 === 'start' ? 'Link Lead' : 'Send');
 
-  const step2 = pipelineStep(2, 'Payment Request ($500)', s2, s2meta,
-    s2 === 'ready' ? `sendPaymentRequest('${alert.lead_id}','${agreement?.id ?? ''}')` : null,
-    'Send');
+  const _infraDollars = (_infraAmountCents / 100).toFixed(0);
+  const step2 = pipelineStep(2, `Infrastructure Agreement ($${_infraDollars}/mo)`, s2, s2meta,
+    s2 === 'ready' ? `sendInfraLetter('${alert.lead_id}')` : null, 'Send');
 
-  const step3 = pipelineStep(3, 'Call Client', s3, s3meta,
-    s3 === 'ready' ? `markCalled('${agreement?.id}')` : null,
-    'Mark Called');
+  const step3 = pipelineStep(3, `First Month Payment ($${_infraDollars})`, s3, s3meta,
+    s3 === 'ready' ? `sendInfraPaymentRequest('${alert.lead_id}','${infraAgreement?.id ?? ''}')` : null, 'Send');
 
-  const step4 = pipelineStep(4, 'Data Gathering', s4, '',
-    s4 === 'ready' ? `copyStartLink('${alert.lead_id}')` : null,
-    'Copy Link');
+  const step4 = pipelineStep(4, 'Call Client', s4, s4meta,
+    s4 === 'ready' ? `markCalled('${infraAgreement?.id}')` : null, 'Mark Called');
+
+  const step5 = pipelineStep(5, 'Data Gathering', s5, '',
+    s5 === 'ready' ? `copyStartLink('${alert.lead_id}')` : null, 'Copy Link');
+
+  const step6 = pipelineStep(6, 'Proposal', s6, s6meta, s6action, s6label);
 
   return `<div class="pipeline-card">
     <div class="pipeline-card-header">
@@ -2142,11 +2306,12 @@ function renderPipelineCard(alert, agreement) {
         <div class="pipeline-lead-meta">${esc(alert.trigger_reason ?? '')}${alert.trigger_reason ? ' \u00b7 ' : ''}${fmtDate(alert.triggered_at)}</div>
       </div>
       <div class="flex-row">
-        ${agreement?.document_url ? `<a href="${agreement.document_url}" target="_blank" class="btn btn-ghost btn-sm">&#x1F4C4; PDF</a>` : ''}
+        ${ddAgreement?.document_url ? `<a href="${ddAgreement.document_url}" target="_blank" class="btn btn-ghost btn-sm">&#x1F4C4; DD PDF</a>` : ''}
+        ${infraAgreement?.document_url ? `<a href="${infraAgreement.document_url}" target="_blank" class="btn btn-ghost btn-sm">&#x1F4C4; Infra PDF</a>` : ''}
         <button class="btn btn-ghost btn-sm" onclick="moveAlertStatus('${alert.alert_id}','closed')">Close</button>
       </div>
     </div>
-    <div class="pipeline-steps">${step1}${step2}${step3}${step4}</div>
+    <div class="pipeline-steps">${step1}${step2}${step3}${step4}${step5}${step6}</div>
   </div>`;
 }
 
@@ -2167,11 +2332,20 @@ function pipelineStep(num, label, state, meta, actionFn, actionLabel) {
   </div>`;
 }
 
-async function sendLetter(alertId, leadId) {
+async function sendDDLetter(alertId, leadId) {
   if (!leadId) { toast('No lead linked to this alert.', 'error'); return; }
   try {
     await api('POST', '/admin/agreements/send-diligence', { lead_id: leadId });
     toast('Due Diligence Letter sent.');
+    await loadPipelineTab();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function sendInfraLetter(leadId) {
+  if (!leadId) { toast('No lead linked to this alert.', 'error'); return; }
+  try {
+    await api('POST', '/admin/agreements/send-infra', { lead_id: leadId });
+    toast('Infrastructure Agreement sent.');
     await loadPipelineTab();
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -2182,6 +2356,16 @@ async function sendPaymentRequest(leadId, agreementId) {
     if (agreementId) body.agreement_id = agreementId;
     await api('POST', '/admin/payments/send-request', body);
     toast('Payment request sent.');
+    await loadPipelineTab();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function sendInfraPaymentRequest(leadId, agreementId) {
+  try {
+    const body = { lead_id: leadId, amount_cents: _infraAmountCents };
+    if (agreementId) body.agreement_id = agreementId;
+    await api('POST', '/admin/payments/send-infra-request', body);
+    toast(`Infrastructure payment request sent ($${(_infraAmountCents / 100).toFixed(2)}/mo).`);
     await loadPipelineTab();
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -2306,6 +2490,170 @@ async function deleteAlert(alertId) {
     toast('Alert deleted.');
   } catch (e) { toast(e.message, 'error'); }
 }
+
+// ── Proposal ──────────────────────────────────────────────────────────────────
+
+let _proposalModalId = null;
+let _proposalSections = [];
+let _proposalReviewId = null;
+
+async function openProposalModal(proposalId, leadId, prospectName, prospectEmail) {
+  _proposalModalId = proposalId ?? null;
+  _proposalSections = [];
+
+  document.getElementById('proposal-modal-title').textContent = proposalId ? 'Edit Proposal' : 'Draft Proposal';
+  document.getElementById('proposal-modal-id').value          = proposalId ?? '';
+  document.getElementById('pm-name').value    = prospectName ?? '';
+  document.getElementById('pm-email').value   = prospectEmail ?? '';
+  document.getElementById('pm-notes').value   = '';
+  document.getElementById('pm-error').textContent = '';
+  document.getElementById('pm-sections').innerHTML = '<div class="text-gray text-small">Loading…</div>';
+  document.getElementById('proposal-modal').classList.add('open');
+
+  if (proposalId) {
+    try {
+      const p = await api('GET', `/admin/proposals/${proposalId}`);
+      document.getElementById('pm-name').value  = p.prospect_name  ?? '';
+      document.getElementById('pm-email').value = p.prospect_email ?? '';
+      document.getElementById('pm-notes').value = p.internal_notes ?? '';
+      _proposalSections = p.sections ?? [];
+    } catch (e) { toast(e.message, 'error'); }
+  }
+  renderProposalSections();
+}
+
+function renderProposalSections() {
+  const wrap = document.getElementById('pm-sections');
+  if (!_proposalSections.length) {
+    wrap.innerHTML = '<div class="text-gray text-small">No sections yet. Add one above.</div>';
+    return;
+  }
+  wrap.innerHTML = _proposalSections
+    .slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .map((s, idx) => `
+      <div class="proposal-section-item" data-idx="${idx}">
+        <div class="proposal-section-item-header">
+          <span class="proposal-section-item-title">${esc(s.title || 'Untitled section')}</span>
+          <label style="font-size:0.75rem;display:flex;align-items:center;gap:4px;color:var(--gray)">
+            <input type="checkbox" ${s.client_visible !== false ? 'checked' : ''} onchange="_proposalSections[${idx}].client_visible=this.checked"> Visible to client
+          </label>
+          <button class="btn btn-danger btn-xs" onclick="removeProposalSection(${idx})">Remove</button>
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <input type="text" value="${esc(s.title)}" placeholder="Section title"
+            oninput="_proposalSections[${idx}].title=this.value">
+        </div>
+        <textarea rows="4" style="width:100%" placeholder="Section content"
+          oninput="_proposalSections[${idx}].content=this.value">${esc(s.content ?? '')}</textarea>
+      </div>`).join('');
+}
+
+function addProposalSection() {
+  const maxOrder = _proposalSections.reduce((m, s) => Math.max(m, s.sort_order ?? 0), 0);
+  _proposalSections.push({ title: '', content: '', sort_order: maxOrder + 10, client_visible: true, _new: true });
+  renderProposalSections();
+}
+
+function removeProposalSection(idx) {
+  _proposalSections.splice(idx, 1);
+  renderProposalSections();
+}
+
+async function saveProposalDraft() {
+  const name  = document.getElementById('pm-name').value.trim();
+  const email = document.getElementById('pm-email').value.trim();
+  const notes = document.getElementById('pm-notes').value.trim();
+  const errEl = document.getElementById('pm-error');
+  if (!name || !email) { errEl.textContent = 'Name and email are required.'; return; }
+  errEl.textContent = '';
+  try {
+    let proposalId = _proposalModalId;
+    if (!proposalId) {
+      const created = await api('POST', '/admin/proposals', { prospect_name: name, prospect_email: email, internal_notes: notes || null });
+      proposalId = (Array.isArray(created) ? created[0] : created)?.proposal_id;
+      _proposalModalId = proposalId;
+      document.getElementById('proposal-modal-id').value = proposalId;
+    } else {
+      await api('PATCH', `/admin/proposals/${proposalId}`, { prospect_name: name, prospect_email: email, internal_notes: notes || null });
+    }
+    for (const s of _proposalSections) {
+      if (s._new || !s.section_id) {
+        const created = await api('POST', `/admin/proposals/${proposalId}/sections`, {
+          title: s.title, content: s.content, sort_order: s.sort_order, client_visible: s.client_visible,
+        });
+        const row = Array.isArray(created) ? created[0] : created;
+        s.section_id = row?.section_id;
+        delete s._new;
+      } else {
+        await api('PATCH', `/admin/proposals/${proposalId}/sections/${s.section_id}`, {
+          title: s.title, content: s.content, sort_order: s.sort_order, client_visible: s.client_visible,
+        });
+      }
+    }
+    toast('Draft saved.');
+    await loadPipelineTab();
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+function confirmSendProposal() {
+  const email = document.getElementById('pm-email').value.trim();
+  document.getElementById('proposal-send-email').value = email;
+  document.getElementById('proposal-send-error').textContent = '';
+  document.getElementById('proposal-send-modal').classList.add('open');
+}
+
+async function doSendProposal() {
+  const email = document.getElementById('proposal-send-email').value.trim();
+  const errEl = document.getElementById('proposal-send-error');
+  if (!email) { errEl.textContent = 'Email is required.'; return; }
+  await saveProposalDraft();
+  const proposalId = _proposalModalId;
+  if (!proposalId) { errEl.textContent = 'Save draft first.'; return; }
+  try {
+    await api('POST', `/admin/proposals/${proposalId}/send`, { email });
+    toast('Proposal sent to ' + email);
+    closeModal('proposal-send-modal');
+    closeModal('proposal-modal');
+    await loadPipelineTab();
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+async function openProposalReview(proposalId) {
+  _proposalReviewId = proposalId;
+  document.getElementById('prv-overall').innerHTML = '<div class="text-gray text-small">Loading…</div>';
+  document.getElementById('prv-sections').innerHTML = '';
+  document.getElementById('proposal-review-modal').classList.add('open');
+  try {
+    const p = await api('GET', `/admin/proposals/${proposalId}`);
+    document.getElementById('prv-title').textContent = `Review — ${esc(p.prospect_name)}`;
+    const statusLabels = { ready: 'Ready to move forward', questions: 'Has questions', changes: 'Requesting changes' };
+    document.getElementById('prv-overall').innerHTML = `
+      <div style="font-size:0.8rem;color:var(--gray);margin-bottom:4px">Overall Response</div>
+      <div style="font-weight:600;font-size:1rem;margin-bottom:8px">${esc(statusLabels[p.overall_status] ?? p.status ?? '—')}</div>
+      ${p.overall_comment ? `<div style="font-size:0.875rem;color:var(--gray)">&#x201C;${esc(p.overall_comment)}&#x201D;</div>` : ''}`;
+    document.getElementById('prv-sections').innerHTML = (p.sections ?? []).map(s => `
+      <div class="proposal-review-section">
+        <h3>${esc(s.title)}${s.flagged ? '<span class="proposal-flag-badge">Flagged</span>' : ''}</h3>
+        ${s.client_comment
+          ? `<div style="font-size:0.875rem;color:var(--gray);margin-top:4px">&#x201C;${esc(s.client_comment)}&#x201D;</div>`
+          : '<div style="font-size:0.8rem;color:var(--gray);font-style:italic">No comment</div>'}
+      </div>`).join('');
+    const agreeBtn = document.getElementById('prv-agree-btn');
+    agreeBtn.style.display = ['sent','under_review'].includes(p.status) ? '' : 'none';
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function agreeProposal() {
+  if (!_proposalReviewId) return;
+  try {
+    await api('POST', `/admin/proposals/${_proposalReviewId}/mark-agreed`);
+    toast('Proposal marked agreed.');
+    closeModal('proposal-review-modal');
+    await loadPipelineTab();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── end Proposal ──────────────────────────────────────────────────────────────
 
 // Q&A
 
@@ -3955,7 +4303,7 @@ function showSimpleModal(title, bodyHtml) {
 
 let proposalModalData = {};
 
-function openProposalModal(id) {
+function openConstitutionProposalModal(id) {
   proposalModalData = {};
   let modal = document.getElementById('proposal-create-modal');
   if (!modal) {
