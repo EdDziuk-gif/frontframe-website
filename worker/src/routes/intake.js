@@ -47,9 +47,10 @@ async function captureContactHandoff(env, ctx, {
   } catch (e) { console.error("handoff lead write failed:", e); }
 
   const methodLabel = resolvedMethod === "phone" ? "Phone call" : resolvedMethod === "text" ? "Text" : "Email";
+  const sourceLabel = source === "intake" ? "intake form" : "site assistant";
   const smsMessage =
     `FrontFrame contact request\nName: ${name}\nReach by: ${methodLabel}\nContact: ${contact}\n` +
-    (geo ? `${geo}\n` : "") + `Source: ${source}\n` +
+    (geo ? `${geo}\n` : "") + `Source: ${sourceLabel}\n` +
     (summary ? `Summary: ${summary.slice(0, 200)}` : "");
 
   // Email backup, independent of the SMS/lead_alerts path below - it should
@@ -59,7 +60,7 @@ async function captureContactHandoff(env, ctx, {
   // low-key, not an urgent page - not every handoff is a qualified lead.
   const emailHtml = `<!DOCTYPE html><html><body style="font-family:Inter,system-ui,sans-serif;color:#1E2D40;max-width:560px;margin:0 auto;padding:40px 24px">
 <div style="margin-bottom:24px"><strong style="font-size:1.1rem">FrontFrame — Contact Handoff</strong></div>
-<p style="margin-bottom:4px"><strong>${escapeHtml(name)}</strong> left contact info via the chat assistant.</p>
+<p style="margin-bottom:4px"><strong>${escapeHtml(name)}</strong> submitted the ${escapeHtml(sourceLabel)}.</p>
 <p style="margin:16px 0;color:#3A4A5C">
   Reach by: ${escapeHtml(methodLabel)}<br>
   Contact: ${escapeHtml(contact)}<br>
