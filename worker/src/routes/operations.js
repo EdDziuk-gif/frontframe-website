@@ -11,7 +11,7 @@ async function getConfig(env, userJwt, corsHeaders) {
 async function updateConfig(request, env, userJwt, corsHeaders) {
   const body = await request.json();
   const updates = {};
-  ["mode","build_version","stage_gate","capture_enabled"].forEach(k => { if (body[k] !== undefined) updates[k] = body[k]; });
+  ["mode","build_version","stage_gate","capture_enabled","infra_agreement_amount_cents"].forEach(k => { if (body[k] !== undefined) updates[k] = body[k]; });
   if (!Object.keys(updates).length) return jsonResponse({ error: "No valid fields to update" }, 400, corsHeaders);
   updates.updated_at = new Date().toISOString();
   return jsonResponse(await supabaseUpsert(env, "config", { id: 1, ...updates }, userJwt), 200, corsHeaders);

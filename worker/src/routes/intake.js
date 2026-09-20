@@ -1,5 +1,5 @@
 import { jsonResponse } from "../shared/http.js";
-import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
+import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseHeaders } from "../shared/supabase.js";
 import { ADMIN_EMAIL, escapeHtml, sendResendEmail, sendSms } from "../shared/runtime.js";
 
 // § DOMAIN: notify
@@ -140,22 +140,25 @@ async function handleInquiry(request, env, corsHeaders) {
   if (!humanVerified)
     return jsonResponse({ error: "Verification failed. Please retry the checkbox above." }, 400, corsHeaders);
 
-  const fullDescription = [
+  // Pack all intake detail into notes so it travels with the lead record.
+  // business_type and tier_interest are intake-specific fields; leads table
+  // does not have columns for them so they are serialized here.
+  const notes = [
     description,
-    services      ? `Services: ${services}`       : null,
-    clients       ? `Clients: ${clients}`          : null,
-    anything_else ? `Additional: ${anything_else}` : null,
+    business_type  ? `Business type: ${business_type}`   : null,
+    tier_interest  ? `Tier interest: ${tier_interest}`   : null,
+    services       ? `Services: ${services}`             : null,
+    clients        ? `Clients: ${clients}`               : null,
+    anything_else  ? `Additional: ${anything_else}`      : null,
   ].filter(Boolean).join("\n\n") || null;
 
-  await supabasePost(env, "inquiries", {
-    owner_name:    owner_name.trim(),
-    business_name: business_name.trim(),
+  await supabasePost(env, "leads", {
+    name:          owner_name.trim(),
     email:         email.trim().toLowerCase(),
     phone:         phone?.trim() ?? null,
-    business_type: business_type ?? null,
-    tier_interest: tier_interest ?? "undecided",
-    description:   fullDescription,
-    source_page:   source_page ?? "added-intake",
+    business_name: business_name.trim(),
+    notes,
+    source:        "intake",
     status:        "new",
   });
 
