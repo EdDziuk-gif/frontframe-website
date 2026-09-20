@@ -35,6 +35,48 @@ ran.**
 
 ---
 
+## Pre-change analysis (required before writing any code)
+
+This step exists because most wasted time in this project has come from
+making a change in one file without tracing its downstream impact first.
+The model must complete and report this analysis before proposing any code.
+
+**For any worker route change:**
+1. Grep every file in `worker/src/` that references the affected table,
+   function, or route. Read them. List what each one does with it.
+2. Check the live Supabase DDL for the affected table: column names,
+   check constraints, foreign keys. Do not assume the template DDL is current.
+3. Identify every caller of any function being changed, not just the
+   immediate one. If `captureContactHandoff` is being changed, find
+   every place it is called.
+4. State explicitly which deploy path is required (worker deploy, Pages
+   push, or both) and include the deploy step in the same set of
+   instructions as the code change — never as a separate follow-up.
+
+**For any database change:**
+1. Query the live table DDL before writing a migration.
+2. List all foreign keys referencing the affected table and the order
+   in which they must be addressed (e.g. delete child rows before parent).
+3. If adding a value to a CHECK constraint, verify the constraint exists
+   on the live table, not just the template DDL.
+
+**For any frontend change:**
+1. Read the full relevant section of the HTML file, not just the line
+   being changed. State what the surrounding logic does before modifying it.
+2. Identify any JS functions called from the changed section and confirm
+   they exist and behave as expected.
+
+**Reporting:** Before writing code, the model states in plain language:
+- What files will change and why
+- What downstream effects were checked and what they are
+- What deploy steps are required
+- What verification will confirm the change is working
+
+If this analysis cannot be completed because files are missing or unclear,
+the model asks before proceeding — not after the code is written.
+
+---
+
 ## Pre-commit checklist
 
 1. **Diff before you stage.** Run `git status` and `git diff` and actually
