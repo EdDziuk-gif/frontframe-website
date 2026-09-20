@@ -35,6 +35,26 @@ ran.**
 
 ---
 
+## Session opening (required at the start of every working session)
+
+Before any code is written or any change is proposed, the model must:
+
+1. **Confirm which domain and folders are in scope** for this session.
+   Ask Ed which area we're working in if it isn't stated. Do not assume
+   continuity from a prior session summary.
+2. **State the test-coverage posture for that area.** The pre-commit hook
+   only fires for high-risk files (shared utilities, constitution, webhooks,
+   KGR, chat). For anything in scope that falls into one of those categories,
+   name it upfront so Ed knows a test prompt may appear during the commit.
+3. **Review the pre-change analysis checklist below** and confirm it will
+   be followed before any change in this session.
+
+This takes thirty seconds and prevents the pattern where test prompts and
+deploy reminders appear mid-session without context, get bypassed, and
+accumulate as invisible debt.
+
+---
+
 ## Pre-change analysis (required before writing any code)
 
 This step exists because most wasted time in this project has come from

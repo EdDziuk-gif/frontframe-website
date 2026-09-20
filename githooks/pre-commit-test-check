@@ -24,10 +24,18 @@ PROMPT_FILES=()
 
 is_feature_file() {
   local f="$1"
+  [[ "$f" == *".test.js" ]] && return 1
+
+  # Only flag high-risk worker files: shared utilities, constitutional
+  # governance, webhooks, KGR, and the chat agent. Straightforward CRUD
+  # routes (pipeline, proposals, intake, billing, etc.) and all frontend
+  # files are excluded -- they fire too frequently and get bypassed anyway.
   case "$f" in
-    worker/src/*.js)   [[ "$f" != *".test.js" ]] && return 0 ;;
-    public/*.js)        [[ "$f" != *".test.js" ]] && [[ "$(basename "$f")" != debug-* ]] && return 0 ;;
-    public/*.html)      return 0 ;;
+    worker/src/shared/*.js)      return 0 ;;
+    worker/src/routes/constitution.js) return 0 ;;
+    worker/src/routes/webhooks.js)     return 0 ;;
+    worker/src/routes/kgr.js)          return 0 ;;
+    worker/src/routes/chat.js)         return 0 ;;
   esac
   return 1
 }
