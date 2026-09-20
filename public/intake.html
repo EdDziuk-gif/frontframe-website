@@ -8,6 +8,8 @@
   <meta name="description" content="Tell us about your business. No payment yet — this is where a FrontFrame engagement begins. We respond within one business day." />
   <link rel="canonical" href="https://frontframe.co/intake" />
   <meta name="robots" content="noindex, follow" />
+  <!-- Config must load before Turnstile so TURNSTILE_SITE_KEY is defined when the widget renders -->
+  <script src="/js/config.js"></script>
   <!-- Cloudflare Turnstile (bot protection) -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
@@ -534,7 +536,6 @@
     </button>
   </div>
 
-  <script src="/js/config.js"></script>
   <script>
     // ── Form Submission ──
 
