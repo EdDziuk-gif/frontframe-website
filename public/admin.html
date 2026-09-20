@@ -2225,79 +2225,69 @@ function renderActivePipeline(activeAlerts) {
 function renderPipelineCard(alert, ddAgreement, infraAgreement, proposal) {
   const hasLead       = !!alert.lead_id;
 
-  // Step 1: Due Diligence Letter
-  const ddSent   = !!ddAgreement;
-  const ddSigned = !!ddAgreement?.signed_at || ddAgreement?.status === 'signed';
-  const s1 = !hasLead ? 'start' : !ddSent ? 'ready' : ddSigned ? 'done' : 'waiting';
-  const s1meta = s1 === 'waiting' ? 'Sent \u00b7 Awaiting signature'
-               : s1 === 'done'    ? 'Signed ' + fmtDateShort(ddAgreement?.signed_at) : '';
-
-  // Step 2: Infrastructure Agreement ($75/mo)
+  // Step 1: Infrastructure Agreement
   const infraSent   = !!infraAgreement;
   const infraSigned = !!infraAgreement?.signed_at || infraAgreement?.status === 'signed';
-  const s2 = !ddSigned ? 'locked' : !infraSent ? 'ready' : infraSigned ? 'done' : 'waiting';
-  const s2meta = s2 === 'waiting' ? 'Sent \u00b7 Awaiting signature'
-               : s2 === 'done'    ? 'Signed ' + fmtDateShort(infraAgreement?.signed_at) : '';
+  const s1 = !hasLead ? 'start' : !infraSent ? 'ready' : infraSigned ? 'done' : 'waiting';
+  const s1meta = s1 === 'waiting' ? 'Sent \u00b7 Awaiting signature'
+               : s1 === 'done'    ? 'Signed ' + fmtDateShort(infraAgreement?.signed_at) : '';
 
-  // Step 3: First Month Payment ($75)
+  // Step 2: First Month Payment
   const paymentRequested = !!infraAgreement?.payment_request_sent_at;
   const paymentReceived  = !!infraAgreement?.payment_received_at;
-  const s3 = !infraSigned ? 'locked' : !paymentRequested ? 'ready' : paymentReceived ? 'done' : 'waiting';
-  const s3meta = s3 === 'waiting' ? 'Sent ' + fmtDateShort(infraAgreement?.payment_request_sent_at) + ' \u00b7 Awaiting payment'
-               : s3 === 'done'    ? 'Received ' + fmtDateShort(infraAgreement?.payment_received_at) : '';
+  const s2 = !infraSigned ? 'locked' : !paymentRequested ? 'ready' : paymentReceived ? 'done' : 'waiting';
+  const s2meta = s2 === 'waiting' ? 'Sent ' + fmtDateShort(infraAgreement?.payment_request_sent_at) + ' \u00b7 Awaiting payment'
+               : s2 === 'done'    ? 'Received ' + fmtDateShort(infraAgreement?.payment_received_at) : '';
 
-  // Step 4: Call Client
+  // Step 3: Call Client
   const called = !!infraAgreement?.client_called_at;
-  const s4 = !paymentReceived ? 'locked' : !called ? 'ready' : 'done';
-  const s4meta = s4 === 'done' ? 'Called ' + fmtDateShort(infraAgreement?.client_called_at) : '';
+  const s3 = !paymentReceived ? 'locked' : !called ? 'ready' : 'done';
+  const s3meta = s3 === 'done' ? 'Called ' + fmtDateShort(infraAgreement?.client_called_at) : '';
 
-  // Step 5: Data Gathering
-  const s5 = !called ? 'locked' : 'ready';
+  // Step 4: Data Gathering
+  const s4 = !called ? 'locked' : 'ready';
 
-  // Step 6: Proposal
+  // Step 5: Proposal
   const proposalStatus = proposal?.status ?? null;
   const proposalId     = proposal?.proposal_id ?? null;
-  let s6, s6meta, s6action, s6label;
+  let s5, s5meta, s5action, s5label;
   if (!called) {
-    s6 = 'locked'; s6meta = ''; s6action = null; s6label = '';
+    s5 = 'locked'; s5meta = ''; s5action = null; s5label = '';
   } else if (!proposalId) {
-    s6 = 'ready'; s6meta = ''; s6action = `openProposalModal(null,'${alert.lead_id}','${esc(alert.prospect_name ?? '')}','')`;
-    s6label = 'Draft';
+    s5 = 'ready'; s5meta = ''; s5action = `openProposalModal(null,'${alert.lead_id}','${esc(alert.prospect_name ?? '')}','')`;
+    s5label = 'Draft';
   } else if (proposalStatus === 'draft') {
-    s6 = 'ready'; s6meta = 'Draft saved';
-    s6action = `openProposalModal('${proposalId}','${alert.lead_id}','','')`;
-    s6label = 'Edit / Send';
+    s5 = 'ready'; s5meta = 'Draft saved';
+    s5action = `openProposalModal('${proposalId}','${alert.lead_id}','','')`;
+    s5label = 'Edit / Send';
   } else if (proposalStatus === 'sent') {
-    s6 = 'waiting'; s6meta = 'Sent \u00b7 Awaiting review'; s6action = null; s6label = '';
+    s5 = 'waiting'; s5meta = 'Sent \u00b7 Awaiting review'; s5action = null; s5label = '';
   } else if (proposalStatus === 'under_review') {
-    s6 = 'waiting'; s6meta = 'Client reviewed';
-    s6action = `openProposalReview('${proposalId}')`;
-    s6label = 'View Response';
+    s5 = 'waiting'; s5meta = 'Client reviewed';
+    s5action = `openProposalReview('${proposalId}')`;
+    s5label = 'View Response';
   } else if (proposalStatus === 'agreed' || proposalStatus === 'signed') {
-    s6 = 'done'; s6meta = proposalStatus === 'agreed' ? 'Agreed' : 'Signed'; s6action = null; s6label = '';
+    s5 = 'done'; s5meta = proposalStatus === 'agreed' ? 'Agreed' : 'Signed'; s5action = null; s5label = '';
   } else {
-    s6 = 'ready'; s6meta = ''; s6action = null; s6label = '';
+    s5 = 'ready'; s5meta = ''; s5action = null; s5label = '';
   }
 
-  const step1 = pipelineStep(1, 'Due Diligence Letter', s1, s1meta,
+  const _infraDollars = (_infraAmountCents / 100).toFixed(0);
+  const step1 = pipelineStep(1, `Infrastructure Agreement ($${_infraDollars}/mo)`, s1, s1meta,
     s1 === 'start' ? `openLinkLeadModal('${alert.alert_id}')` :
-    s1 === 'ready' ? `sendDDLetter('${alert.alert_id}','${alert.lead_id}')` : null,
+    s1 === 'ready' ? `sendInfraLetter('${alert.lead_id}')` : null,
     s1 === 'start' ? 'Link Lead' : 'Send');
 
-  const _infraDollars = (_infraAmountCents / 100).toFixed(0);
-  const step2 = pipelineStep(2, `Infrastructure Agreement ($${_infraDollars}/mo)`, s2, s2meta,
-    s2 === 'ready' ? `sendInfraLetter('${alert.lead_id}')` : null, 'Send');
+  const step2 = pipelineStep(2, `First Month Payment ($${_infraDollars})`, s2, s2meta,
+    s2 === 'ready' ? `sendInfraPaymentRequest('${alert.lead_id}','${infraAgreement?.id ?? ''}')` : null, 'Send');
 
-  const step3 = pipelineStep(3, `First Month Payment ($${_infraDollars})`, s3, s3meta,
-    s3 === 'ready' ? `sendInfraPaymentRequest('${alert.lead_id}','${infraAgreement?.id ?? ''}')` : null, 'Send');
+  const step3 = pipelineStep(3, 'Call Client', s3, s3meta,
+    s3 === 'ready' ? `markCalled('${infraAgreement?.id}')` : null, 'Mark Called');
 
-  const step4 = pipelineStep(4, 'Call Client', s4, s4meta,
-    s4 === 'ready' ? `markCalled('${infraAgreement?.id}')` : null, 'Mark Called');
+  const step4 = pipelineStep(4, 'Data Gathering', s4, '',
+    s4 === 'ready' ? `copyStartLink('${alert.lead_id}')` : null, 'Copy Link');
 
-  const step5 = pipelineStep(5, 'Data Gathering', s5, '',
-    s5 === 'ready' ? `copyStartLink('${alert.lead_id}')` : null, 'Copy Link');
-
-  const step6 = pipelineStep(6, 'Proposal', s6, s6meta, s6action, s6label);
+  const step5 = pipelineStep(5, 'Proposal', s5, s5meta, s5action, s5label);
 
   return `<div class="pipeline-card">
     <div class="pipeline-card-header">
@@ -2306,12 +2296,11 @@ function renderPipelineCard(alert, ddAgreement, infraAgreement, proposal) {
         <div class="pipeline-lead-meta">${esc(alert.trigger_reason ?? '')}${alert.trigger_reason ? ' \u00b7 ' : ''}${fmtDate(alert.triggered_at)}</div>
       </div>
       <div class="flex-row">
-        ${ddAgreement?.document_url ? `<a href="${ddAgreement.document_url}" target="_blank" class="btn btn-ghost btn-sm">&#x1F4C4; DD PDF</a>` : ''}
         ${infraAgreement?.document_url ? `<a href="${infraAgreement.document_url}" target="_blank" class="btn btn-ghost btn-sm">&#x1F4C4; Infra PDF</a>` : ''}
         <button class="btn btn-ghost btn-sm" onclick="moveAlertStatus('${alert.alert_id}','closed')">Close</button>
       </div>
     </div>
-    <div class="pipeline-steps">${step1}${step2}${step3}${step4}${step5}${step6}</div>
+    <div class="pipeline-steps">${step1}${step2}${step3}${step4}${step5}</div>
   </div>`;
 }
 
