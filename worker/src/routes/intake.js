@@ -152,14 +152,18 @@ async function handleInquiry(request, env, corsHeaders) {
     anything_else  ? `Additional: ${anything_else}`      : null,
   ].filter(Boolean).join("\n\n") || null;
 
-  await supabasePost(env, "leads", {
-    name:          owner_name.trim(),
-    email:         email.trim().toLowerCase(),
-    phone:         phone?.trim() ?? null,
-    business_name: business_name.trim(),
-    notes,
-    source:        "intake",
-    status:        "new",
+  const contact = phone?.trim() || email.trim().toLowerCase();
+  const method  = phone?.trim() ? "phone" : "email";
+
+  await captureContactHandoff(env, null, {
+    name:     owner_name.trim(),
+    contact,
+    method,
+    summary:  notes ?? "",
+    source:   "intake",
+    zip:      "",
+    timezone: "",
+    transcript: "",
   });
 
   return jsonResponse({ ok: true }, 200, corsHeaders);
