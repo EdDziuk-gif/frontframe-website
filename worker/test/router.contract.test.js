@@ -9,14 +9,13 @@ const manifest = ROUTES.map(({ method, path }) => `${method} ${path}`).join("\n"
 
 describe("Worker route contract", () => {
   it("preserves the approved route manifest and declaration order", () => {
-    // 134 routes. Previous: 123. +11 for the proposals workflow:
-    // GET/POST /admin/proposals, GET/PATCH /admin/proposals/:id,
-    // POST /admin/proposals/:id/sections, PATCH+DELETE /admin/proposals/:id/sections/:sid,
-    // POST /admin/proposals/:id/send, POST /admin/proposals/:id/mark-agreed,
-    // GET /proposal, POST /proposal/review.
-    expect(ROUTES).toHaveLength(134);
+    // 133 routes. Previous: 134. -1 for DELETE /admin/reviewers/:id, stood down
+    // 2026-09-23 (reviewer-authority buildout) and replaced by the extended
+    // PATCH /admin/reviewers/:id, which now also handles deactivation and
+    // reactivation via the `active` field.
+    expect(ROUTES).toHaveLength(133);
     expect(createHash("sha256").update(manifest).digest("hex"))
-      .toBe("fc85d80553c52f240b9a3defa98f1a12aec895653be92ddedb0742118e301f4b");
+      .toBe("f4b079fd498043b91840d792a66247463132b6632866baea07f004e7baf64af7");
   });
 
   it("keeps literal sub-routes ahead of their parameterized fallbacks", () => {

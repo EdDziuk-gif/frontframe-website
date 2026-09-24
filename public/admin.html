@@ -167,6 +167,10 @@
   .badge-high       { background: #FDECEA; color: var(--red); }
   .badge-promoted   { background: #E8F8EE; color: var(--green); }
   .badge-approved   { background: #E8F8EE; color: var(--green); }
+  .badge-frontframe_operator { background: #F4ECF7; color: #8E44AD; }
+  .badge-delegate      { background: #FEF9E7; color: var(--yellow); }
+  .badge-staff         { background: #EBF5FB; color: #2980B9; }
+  .badge-client_tester { background: #F2F3F4; color: var(--gray); }
 
   /* Tabs */
   .tab-panel { display: none; }
@@ -469,6 +473,7 @@
       <button class="nav-item" data-tab="solutions"     onclick="switchTab('solutions')">&#x1F4A1; Solutions</button>
       <button class="nav-item" data-tab="subscriptions" onclick="switchTab('subscriptions')">&#x1F4F1; Subscriptions</button>
       <button class="nav-item" data-tab="office-hours"  onclick="switchTab('office-hours')">&#x1F550; Office Hours</button>
+      <button class="nav-item" data-tab="reviewers"    onclick="switchTab('reviewers')">&#x1F464; Reviewers</button>
       <button class="nav-item" data-tab="config"        onclick="switchTab('config')">&#x2699;&#xFE0F; Config</button>
     </div>
     <div class="sidebar-footer">
@@ -1601,6 +1606,26 @@
     </div>
 
     <!-- Config -->
+    <!-- Reviewers -->
+    <div class="tab-panel" id="tab-reviewers">
+      <div class="page-header">
+        <div class="page-title">Reviewers</div>
+        <div class="page-sub">Operator, Delegate, Staff, and Client Tester access to this admin panel</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All Reviewers</div>
+          <button class="btn btn-primary btn-sm" id="reviewers-invite-btn" onclick="openInviteReviewerModal()">+ Invite Reviewer</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Tier</th><th>Status</th><th>KGR Sign-off</th><th>Actions</th></tr></thead>
+            <tbody id="reviewers-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div class="tab-panel" id="tab-config">
       <div class="page-header">
         <div class="page-title">Config</div>
@@ -1970,6 +1995,25 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="invite-reviewer-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Invite Reviewer</div>
+      <button class="modal-close" onclick="closeModal('invite-reviewer-modal')">&#x00D7;</button>
+    </div>
+    <div class="form-group"><label>Name</label><input type="text" id="invite-reviewer-name" placeholder="Full name"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="invite-reviewer-email" placeholder="email@domain.com"></div>
+    <div class="form-group">
+      <label>Tier</label>
+      <select id="invite-reviewer-tier"></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('invite-reviewer-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveInviteReviewer()">Send Invite</button>
+    </div>
+  </div>
+</div>
+
 <script src="/js/config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/js/supabase-client.js"></script>
@@ -1989,6 +2033,7 @@ let proposals     = [];
 let amendments    = [];
 let provisions    = [];
 let authIncidents = [];
+let reviewersList = [];
 // Guards repeat-click on an in-flight action (e.g. a slow request before the
 // button/modal visibly updates) from firing the same request twice.
 const pendingActions = new Set();
@@ -2111,6 +2156,7 @@ function showLogin() {
 // independently re-checks authority on every mutating call regardless of
 // what this variable says.
 let currentReviewerRole = null;
+let currentReviewerBaselineRole = null;   // this admin panel's tier for the logged-in reviewer; UI convenience only, server re-checks independently
 let currentReviewerId = null;   // used to show a solution's Withdraw control to its own contributor
 
 async function showAdmin() {
@@ -2125,6 +2171,7 @@ async function showAdmin() {
     if (devLink) devLink.style.display = (me?.dev_access === true) ? '' : 'none';
     currentReviewerRole = me?.role ?? null;
     currentReviewerId = me?.id ?? null;
+    currentReviewerBaselineRole = me?.baseline_role ?? null;
   } catch { /* non-fatal */ }
   switchTab('pipeline');
 }
@@ -2157,6 +2204,7 @@ function switchTab(tab) {
     case 'subscriptions': loadSubscriptions().catch(e => toast('Subscriptions: ' + e.message, 'error')); break;
     case 'office-hours':  loadOfficeHours().catch(e => toast('Office Hours: ' + e.message, 'error')); break;
     case 'outreach':      loadOutreachTab().catch(e => toast('Outreach: ' + e.message, 'error')); break;
+    case 'reviewers':     loadReviewersTab().catch(e => toast('Reviewers: ' + e.message, 'error')); break;
     case 'config':        loadConfig().catch(e => toast('Config: ' + e.message, 'error')); break;
   }
 }
@@ -4915,6 +4963,96 @@ async function logTouch() {
   if (stored) { session = stored; showAdmin(); return; }
   showLogin();
 })();
+
+// Reviewers
+// ─────────────────────────────────────────────────────────────────────────
+// baseline_role is the source of truth for tier (Operator/Delegate/Staff/
+// Client Tester); role is the legacy column kept in sync by the server.
+// The server (worker/src/routes/pipeline.js) independently re-checks every
+// authorization decision below on every mutating call - what this file
+// shows or hides is a UI convenience only.
+
+function reviewerTierLabel(baseline_role) {
+  const labels = { frontframe_operator: 'Operator', delegate: 'Delegate', staff: 'Staff', client_tester: 'Client Tester' };
+  return labels[baseline_role] ?? (baseline_role ?? '\u2014');
+}
+
+async function loadReviewersTab() {
+  try { reviewersList = await api('GET', '/admin/reviewers'); } catch (e) { toast('Failed to load reviewers: ' + e.message, 'error'); return; }
+  renderReviewersList();
+}
+
+function renderReviewersList() {
+  const tbody = document.getElementById('reviewers-tbody');
+  const isOperator = currentReviewerBaselineRole === 'frontframe_operator';
+  const isDelegate  = currentReviewerBaselineRole === 'delegate';
+  const canInvite   = isOperator || isDelegate;
+  const inviteBtn = document.getElementById('reviewers-invite-btn');
+  if (inviteBtn) inviteBtn.style.display = canInvite ? '' : 'none';
+  if (!reviewersList.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No reviewers</div></td></tr>`; return; }
+  tbody.innerHTML = reviewersList.map(r => {
+    const tierClass = r.baseline_role ?? 'unknown';
+    const canActOnThis = isOperator || (isDelegate && ['staff', 'client_tester'].includes(r.baseline_role));
+    const toggleBtn = canActOnThis
+      ? (r.active
+          ? `<button class="btn btn-ghost btn-xs" onclick="setReviewerActive('${r.id}', false)">Deactivate</button>`
+          : `<button class="btn btn-ghost btn-xs" onclick="setReviewerActive('${r.id}', true)">Reactivate</button>`)
+      : '';
+    const promoteBtn = (isOperator && r.baseline_role === 'staff')
+      ? `<button class="btn btn-ghost btn-xs" onclick="promoteToDelegate('${r.id}')">Promote to Delegate</button>`
+      : '';
+    return `
+      <tr>
+        <td>${esc(r.display_name ?? '')}</td>
+        <td>${esc(r.email ?? '')}</td>
+        <td><span class="badge badge-${tierClass}">${esc(reviewerTierLabel(r.baseline_role))}</span></td>
+        <td><span class="badge badge-${r.active ? 'active' : 'closed'}">${r.active ? 'Active' : 'Inactive'}</span></td>
+        <td>${r.can_sign_off_kgr ? '<span class="badge badge-approved">Yes</span>' : ''}</td>
+        <td>${toggleBtn} ${promoteBtn}</td>
+      </tr>`;
+  }).join('');
+}
+
+function openInviteReviewerModal() {
+  const isOperator = currentReviewerBaselineRole === 'frontframe_operator';
+  const sel = document.getElementById('invite-reviewer-tier');
+  sel.innerHTML = isOperator
+    ? '<option value="delegate">Delegate</option><option value="staff" selected>Staff</option><option value="client_tester">Client Tester</option>'
+    : '<option value="staff" selected>Staff</option><option value="client_tester">Client Tester</option>';
+  document.getElementById('invite-reviewer-email').value = '';
+  document.getElementById('invite-reviewer-name').value = '';
+  document.getElementById('invite-reviewer-modal').classList.add('open');
+}
+
+async function saveInviteReviewer() {
+  const email = document.getElementById('invite-reviewer-email').value.trim();
+  const display_name = document.getElementById('invite-reviewer-name').value.trim();
+  const baseline_role = document.getElementById('invite-reviewer-tier').value;
+  if (!email || !display_name) { toast('Name and email are required.', 'error'); return; }
+  try {
+    await api('POST', '/admin/reviewers/invite', { email, display_name, baseline_role });
+    closeModal('invite-reviewer-modal');
+    toast('Invitation sent to ' + email + '.');
+    loadReviewersTab();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function setReviewerActive(id, active) {
+  try {
+    await api('PATCH', `/admin/reviewers/${id}`, { active });
+    toast(active ? 'Reviewer reactivated.' : 'Reviewer deactivated.');
+    loadReviewersTab();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function promoteToDelegate(id) {
+  if (!confirm('Promote this Staff reviewer to Delegate? This grants Delegate-level authority over Staff and Client Tester reviewers.')) return;
+  try {
+    await api('PATCH', `/admin/reviewers/${id}`, { baseline_role: 'delegate' });
+    toast('Reviewer promoted to Delegate.');
+    loadReviewersTab();
+  } catch (e) { toast(e.message, 'error'); }
+}
 </script>
 <!-- [DEBUG:vault] — remove this tag to end debug session -->
 <script src="/debug-vault.js"></script>

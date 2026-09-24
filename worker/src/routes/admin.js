@@ -56,7 +56,12 @@ export const ADMIN_ROUTES = [
   route("POST", "/admin/reviewers/invite", noParams(handlers.inviteReviewer)),
   route("POST", "/admin/reviewers/reset-password", noParams(handlers.resetReviewerPassword)),
   route("PATCH", "/admin/reviewers/:id", param(handlers.updateReviewer)),
-  route("DELETE", "/admin/reviewers/:id", envParam(handlers.deleteReviewer)),
+  // DELETE /admin/reviewers/:id removed 2026-09-23 (reviewer-authority buildout):
+  // it performed a hard DELETE FROM reviewers, contradicting the never-delete,
+  // deactivate-only design of the reviewer-authority model, and would now fail
+  // with a foreign-key violation against reviewer_permissions/reviewer_engagements
+  // for any reviewer with grant history. Deactivation and reactivation are both
+  // handled by the PATCH route above via the `active` field.
   route("GET", "/admin/podcast-episodes", envOnly(handlers.adminGetPodcastEpisodes)),
   route("POST", "/admin/podcast-episodes", noParams(handlers.createPodcastEpisode)),
   route("PATCH", "/admin/podcast-episodes/:id", param(handlers.updatePodcastEpisode)),
@@ -72,6 +77,7 @@ export const ADMIN_ROUTES = [
   route("PATCH", "/admin/deliverables/:id", param(handlers.updateDeliverable)),
   route("POST", "/admin/payments/create-checkout", noParams(handlers.createCheckoutSession)),
   route("POST", "/admin/payments/send-request", noParams(handlers.handleSendPaymentRequest)),
+  route("POST", "/admin/payments/send-infra-request", noParams(handlers.handleSendInfraPaymentRequest)),
   route("GET", "/admin/subscriptions", envOnly(handlers.getSubscriptions)),
   route("POST", "/admin/subscriptions", noParams(handlers.createSubscription)),
   route("POST", "/admin/subscriptions/:id/send", envParam(handlers.sendSubscription)),
@@ -124,10 +130,10 @@ export const ADMIN_ROUTES = [
   route("GET",   "/admin/kgr-hypotheses/falsified",              noParams(handlers.listFalsifiedHypotheses)),
   route("DELETE", "/admin/kgr-hypotheses/:id",                    envParam(handlers.deleteFalsifiedHypothesis)),
   // Phase F candidate 1: constitutional amendment proposals
-  route("GET",   "/admin/constitution/proposals",                   envOnly(handlers.listProposals)),
-  route("POST",  "/admin/constitution/proposals",                   noParams(handlers.createProposal)),
-  route("GET",   "/admin/constitution/proposals/:id",               envParam(handlers.getProposal)),
-  route("PATCH", "/admin/constitution/proposals/:id",               param(handlers.updateProposal)),
+  route("GET",   "/admin/constitution/proposals",                   envOnly(handlers.constitutionListProposals)),
+  route("POST",  "/admin/constitution/proposals",                   noParams(handlers.constitutionCreateProposal)),
+  route("GET",   "/admin/constitution/proposals/:id",               envParam(handlers.constitutionGetProposal)),
+  route("PATCH", "/admin/constitution/proposals/:id",               param(handlers.constitutionUpdateProposal)),
   route("POST",  "/admin/constitution/proposals/:id/submit",        param(handlers.submitProposal)),
   route("POST",  "/admin/constitution/proposals/:id/reopen",        param(handlers.reopenProposal)),
   route("POST",  "/admin/constitution/proposals/:id/return",        ctxParam(handlers.returnProposal)),
@@ -137,4 +143,16 @@ export const ADMIN_ROUTES = [
   route("GET",   "/admin/constitution/provisions",                  envOnly(handlers.listProvisions)),
   route("GET",   "/admin/authorization-incidents",                  ctxEnvOnly(handlers.listAuthorizationIncidents)),
   route("PATCH", "/admin/authorization-incidents/:id",              ctxParam(handlers.updateAuthorizationIncident)),
+  // Infrastructure agreement
+  route("POST",  "/admin/agreements/send-infra",                    noParams(handlers.sendInfraAgreement)),
+  // Proposals
+  route("GET",   "/admin/proposals",                                envOnly(handlers.listProposals)),
+  route("POST",  "/admin/proposals",                                noParams(handlers.createProposal)),
+  route("GET",   "/admin/proposals/:id",                            envParam(handlers.getProposal)),
+  route("PATCH", "/admin/proposals/:id",                            param(handlers.updateProposal)),
+  route("POST",  "/admin/proposals/:id/sections",                   param(handlers.addProposalSection)),
+  route("PATCH", "/admin/proposals/:id/sections/:sid",              twoParams(handlers.updateProposalSection, "id", "sid")),
+  route("DELETE","/admin/proposals/:id/sections/:sid",              twoParams(handlers.deleteProposalSection, "id", "sid")),
+  route("POST",  "/admin/proposals/:id/send",                       ctxParam(handlers.sendProposal)),
+  route("POST",  "/admin/proposals/:id/mark-agreed",                envParam(handlers.markProposalAgreed)),
 ];

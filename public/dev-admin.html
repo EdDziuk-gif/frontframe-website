@@ -776,7 +776,7 @@ function renderReviewers() {
 	  <td>
 		<div class="flex-row">
 		  <button class="btn btn-ghost btn-xs" onclick="openEditReviewerModal('${r.id}')">Edit</button>
-		  <button class="btn btn-danger btn-xs" onclick="deleteReviewer('${r.id}','${esc(r.display_name)}')">Del</button>
+		  <button class="btn btn-danger btn-xs" onclick="deactivateReviewer('${r.id}','${esc(r.display_name)}')">Deactivate</button>
 		</div>
 	  </td>
 	</tr>
@@ -827,7 +827,7 @@ async function saveReviewer() {
 	  renderReviewers();
 	  toast('Updated.');
 	} else {
-	  await api('POST', '/admin/reviewers/invite', { email, display_name: name, role: 'client_tester' });
+	  await api('POST', '/admin/reviewers/invite', { email, display_name: name, baseline_role: 'client_tester' });
 	  closeModal('reviewer-modal');
 	  await loadReviewers();
 	  toast('Added ' + name + '.');
@@ -835,13 +835,14 @@ async function saveReviewer() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function deleteReviewer(id, name) {
-  if (!confirm(`Remove ${name} from reviewers?`)) return;
+async function deactivateReviewer(id, name) {
+  if (!confirm(`Deactivate ${name}? They will lose reviewer access; this can be reversed later.`)) return;
   try {
-	await api('DELETE', `/admin/reviewers/${id}`);
-	reviewers = reviewers.filter(r => r.id !== id);
+	await api('PATCH', `/admin/reviewers/${id}`, { active: false });
+	const idx = reviewers.findIndex(r => r.id === id);
+	if (idx >= 0) reviewers[idx].active = false;
 	renderReviewers();
-	toast(name + ' removed.');
+	toast(name + ' deactivated.');
   } catch (e) { toast(e.message, 'error'); }
 }
 

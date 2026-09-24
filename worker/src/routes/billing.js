@@ -126,6 +126,72 @@ async function handleSendPaymentRequest(request, env, userJwt, corsHeaders) {
 }
 
 
+// ── Infrastructure agreement payment request ──────────────────────────────
+// Uses price_data so the amount is driven by the config record, not a
+// hardcoded Stripe Price ID.  Admin passes amount_cents; Worker validates it
+// is a positive integer before calling Stripe.
+
+async function handleSendInfraPaymentRequest(request, env, userJwt, corsHeaders) {
+  const { lead_id, agreement_id, amount_cents } = await request.json();
+  if (!lead_id) return jsonResponse({ error: "lead_id is required" }, 400, corsHeaders);
+  if (!Number.isInteger(amount_cents) || amount_cents <= 0)
+    return jsonResponse({ error: "amount_cents must be a positive integer" }, 400, corsHeaders);
+
+  const leadRows = await supabaseFetch(env, "leads", `?id=eq.${lead_id}&select=id,name,email,business_name`);
+  if (!leadRows?.length) return jsonResponse({ error: "Lead not found" }, 404, corsHeaders);
+  const lead = leadRows[0];
+
+  let agrId = agreement_id;
+  if (!agrId) {
+    const agrRows = await supabaseFetch(env, "agreements",
+      `?lead_id=eq.${lead_id}&agreement_type=eq.infrastructure&status=eq.signed&order=sent_at.desc&limit=1`);
+    if (!agrRows?.length) return jsonResponse({ error: "No signed infrastructure agreement found for this lead" }, 404, corsHeaders);
+    agrId = agrRows[0].id;
+  }
+
+  const dollarAmount = (amount_cents / 100).toFixed(2);
+  const params = new URLSearchParams();
+  params.append("mode", "payment");
+  params.append("line_items[0][price_data][currency]", "usd");
+  params.append("line_items[0][price_data][unit_amount]", String(amount_cents));
+  params.append("line_items[0][price_data][product_data][name]", "FrontFrame Infrastructure Agreement — Monthly");
+  params.append("line_items[0][price_data][product_data][description]",
+    "Supabase, DocuSeal, Surge, Resend and Cloudflare infrastructure to support your FrontFrame build");
+  params.append("line_items[0][quantity]", "1");
+  params.append("success_url", `https://frontframe.co/start?lead=${lead_id}`);
+  params.append("cancel_url", "https://frontframe.co");
+  params.append("customer_email", lead.email ?? "");
+  params.append("metadata[lead_id]", lead_id);
+  params.append("metadata[price_label]", "Infrastructure Agreement");
+
+  const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${env.STRIPE_SECRET_KEY}`, "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString(),
+  });
+  if (!stripeRes.ok) throw new Error(`Stripe checkout failed: ${await stripeRes.text()}`);
+  const stripeSession = await stripeRes.json();
+
+  const emailHtml = `<!DOCTYPE html><html><body style="font-family:Inter,system-ui,sans-serif;color:#1E2D40;max-width:560px;margin:0 auto;padding:40px 24px">
+<div style="margin-bottom:32px"><strong style="font-size:1.1rem">FrontFrame</strong></div>
+<p style="margin-bottom:16px">Hi ${lead.name},</p>
+<p style="margin-bottom:16px">Thank you for signing the Infrastructure Agreement.</p>
+<p style="margin-bottom:16px">The $${dollarAmount}/month covers the shared infrastructure — Supabase, DocuSeal, Surge, Resend and Cloudflare — needed to start your FrontFrame build. This keeps our costs separate until the project is complete and you take ownership.</p>
+<p style="margin:32px 0"><a href="${stripeSession.url}" style="background:#F5A623;color:#1E2D40;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block">Pay $${dollarAmount}/month</a></p>
+<p style="font-size:0.875rem;color:#8A9BAE">If you have any questions, reply to this email and I'll get back to you promptly.</p>
+<hr style="border:none;border-top:1px solid #E8ECF0;margin:32px 0">
+<p style="font-size:0.8rem;color:#8A9BAE">FrontFrame LLC - Phoenix, Arizona - frontframe.co</p>
+</body></html>`;
+
+  await sendResendEmail(env, lead.email, `FrontFrame Infrastructure — $${dollarAmount}/month`, emailHtml);
+  await supabasePatch(env, "agreements", agrId, {
+    payment_request_sent_at: new Date().toISOString(),
+    stripe_session_id:       stripeSession.id,
+  }).catch(e => console.error("infra agreement payment_request update failed:", e));
+
+  return jsonResponse({ sent: true, checkout_url: stripeSession.url, amount_cents }, 200, corsHeaders);
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // § DOMAIN: vault
 // ════════════════════════════════════════════════════════════════════════════
@@ -180,4 +246,4 @@ async function handleAdminVaultSet(request, env, userJwt, corsHeaders) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { getSubscriptions, createSubscription, updateSubscription, sendSubscription, createCheckoutSession, handleSendPaymentRequest, handleAdminVaultGet, handleAdminVaultSet };
+export { getSubscriptions, createSubscription, updateSubscription, sendSubscription, createCheckoutSession, handleSendPaymentRequest, handleSendInfraPaymentRequest, handleAdminVaultGet, handleAdminVaultSet };

@@ -22,7 +22,16 @@ export function isProtectedRoute(path) {
     || ADMIN_EXTRA_PROTECTED_PATHS.has(path);
 }
 
-export async function requireReviewer(request, env, allowedRoles = ["frontframe_admin", "frontframe_staff"]) {
+// allowedRoles is the blanket gate applied to every /admin/* route before any
+// handler runs (see index.js). frontframe_delegate was added here so a
+// Delegate reviewer (reviewer-authority buildout, 2026-09-23) can reach
+// /admin/* at all - without it, every Delegate request would be rejected
+// here with "Insufficient role" before ever reaching a handler. This gate is
+// necessarily broad (same access as frontframe_staff already had); the
+// narrower, per-action authorization for reviewer management specifically
+// (who may invite/deactivate/promote whom) lives in
+// routes/pipeline.js's reviewer handlers, not here.
+export async function requireReviewer(request, env, allowedRoles = ["frontframe_admin", "frontframe_staff", "frontframe_delegate"]) {
   const jwt = extractJwt(request);
   if (!jwt) return { ok: false, status: 401, error: "Missing Authorization header" };
 
@@ -36,12 +45,12 @@ export async function requireReviewer(request, env, allowedRoles = ["frontframe_
   if (!email) return { ok: false, status: 401, error: "Invalid session" };
 
   const rows = await supabaseFetch(env, "reviewers",
-    `?select=role,active&email=eq.${encodeURIComponent(email)}`);
+    `?select=id,role,baseline_role,active&email=eq.${encodeURIComponent(email)}`);
   const reviewer = rows?.[0];
   if (!reviewer || reviewer.active === false)
     return { ok: false, status: 403, error: "Not an active reviewer" };
   if (allowedRoles && !allowedRoles.includes(reviewer.role))
     return { ok: false, status: 403, error: "Insufficient role" };
 
-  return { ok: true, email, role: reviewer.role };
+  return { ok: true, email, id: reviewer.id, role: reviewer.role, baseline_role: reviewer.baseline_role };
 }

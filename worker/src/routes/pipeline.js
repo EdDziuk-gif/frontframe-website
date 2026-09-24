@@ -226,19 +226,85 @@ async function getSystemPrompt(env, page, userJwt, corsHeaders) {
 // ════════════════════════════════════════════════════════════════════════════
 // § DOMAIN: reviewers
 // ════════════════════════════════════════════════════════════════════════════
+//
+// Reviewer-authority buildout (2026-09-23). baseline_role is the source of
+// truth for tier (frontframe_operator / delegate / staff / client_tester);
+// role is the legacy column, kept in sync alongside it because is_reviewer(),
+// requireReviewer() (middleware/auth.js), getReviewerAuthority()
+// (routes/constitution.js), and CASE_MANAGEMENT_ONLY_ROLES (routes/kgr.js)
+// all read role directly and are out of scope for this change.
+//
+// Authorization settled for this buildout (see project record
+// "FrontFrame Reviewer Authority — Progress Report", §7-8):
+//   - Only the Operator may create a new Delegate, or promote an existing
+//     Staff reviewer to Delegate. No Delegate-initiated tier change exists,
+//     of any kind, ever.
+//   - The Operator or an active Delegate may invite a new Staff or Client
+//     Tester reviewer.
+//   - The Operator may deactivate/reactivate any reviewer. A Delegate may
+//     deactivate/reactivate only Staff and Client Tester reviewers, never a
+//     Delegate or the Operator.
+//   - Reactivation clears deactivated_at/deactivated_by back to NULL - no
+//     inactivity-period history is kept (decided explicitly; this does not
+//     affect the separately-preserved grant/permission attribution history).
+//   - can_sign_off_kgr is never set by invite or promotion; it defaults to
+//     false for every new or promoted reviewer and is granted/revoked as its
+//     own, independent action (not built here).
+
+const INVITABLE_BASELINE_ROLES = ["delegate", "staff", "client_tester"];
+const BASELINE_ROLE_TO_LEGACY_ROLE = {
+  delegate: "frontframe_delegate",
+  staff: "frontframe_staff",
+  client_tester: "client_tester",
+};
+const DELEGATE_MANAGEABLE_TIERS = ["staff", "client_tester"];
+
+// Resolves the acting reviewer (the one holding userJwt) to their own
+// reviewer row, for the per-action authorization checks below. Mirrors
+// middleware/auth.js's requireReviewer() and constitution.js's
+// getReviewerAuthority(), each of which independently re-derives the same
+// identity for its own domain's checks - this file follows that existing
+// per-domain-helper convention rather than introducing a new shared one.
+async function getActingReviewer(env, userJwt) {
+  if (!userJwt) return null;
+  const userRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+    headers: { "apikey": env.SUPABASE_SERVICE_ROLE_KEY, "Authorization": `Bearer ${userJwt}` },
+  });
+  if (!userRes.ok) return null;
+  const user = await userRes.json();
+  const email = user?.email;
+  if (!email) return null;
+  const rows = await supabaseFetch(env, "reviewers",
+    `?select=id,email,role,baseline_role,active&email=eq.${encodeURIComponent(email)}`);
+  const reviewer = rows?.[0];
+  if (!reviewer?.active) return null;
+  return reviewer;
+}
 
 async function getReviewers(env, userJwt, corsHeaders) {
   return jsonResponse(await supabaseFetch(env, "reviewers",
-    "?select=id,email,display_name,role,engagement_id,invited_at,active,dev_access&order=invited_at.asc", userJwt), 200, corsHeaders);
+    "?select=id,email,display_name,role,baseline_role,engagement_id,invited_at,active,dev_access,can_sign_off_kgr,deactivated_at,deactivated_by&order=invited_at.asc", userJwt), 200, corsHeaders);
 }
 
 async function inviteReviewer(request, env, userJwt, corsHeaders) {
-  const { email, display_name, role, engagement_id } = await request.json();
-  if (!email || !display_name || !role)
-    return jsonResponse({ error: "email, display_name, and role are required" }, 400, corsHeaders);
-  const validRoles = ["frontframe_admin","frontframe_staff","contractor","client_tester","client_owner"];
-  if (!validRoles.includes(role))
-    return jsonResponse({ error: `role must be one of: ${validRoles.join(", ")}` }, 400, corsHeaders);
+  const acting = await getActingReviewer(env, userJwt);
+  if (!acting) return jsonResponse({ error: "Not an active reviewer" }, 403, corsHeaders);
+
+  const { email, display_name, baseline_role, engagement_id } = await request.json();
+  if (!email || !display_name || !baseline_role)
+    return jsonResponse({ error: "email, display_name, and baseline_role are required" }, 400, corsHeaders);
+  if (!INVITABLE_BASELINE_ROLES.includes(baseline_role))
+    return jsonResponse({ error: `baseline_role must be one of: ${INVITABLE_BASELINE_ROLES.join(", ")}` }, 400, corsHeaders);
+
+  // Only the Operator may create a new Delegate.
+  if (baseline_role === "delegate" && acting.baseline_role !== "frontframe_operator")
+    return jsonResponse({ error: "Only the Operator may invite a Delegate" }, 403, corsHeaders);
+  // Staff/Client Tester invites: Operator or an active Delegate.
+  if (baseline_role !== "delegate" && !["frontframe_operator", "delegate"].includes(acting.baseline_role))
+    return jsonResponse({ error: "Only the Operator or a Delegate may invite a reviewer" }, 403, corsHeaders);
+
+  const role = BASELINE_ROLE_TO_LEGACY_ROLE[baseline_role];
+
   const inviteRes = await fetch(`${env.SUPABASE_URL}/auth/v1/invite`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "apikey": env.SUPABASE_SERVICE_ROLE_KEY, "Authorization": `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` },
@@ -247,7 +313,9 @@ async function inviteReviewer(request, env, userJwt, corsHeaders) {
   if (!inviteRes.ok) throw new Error(`Supabase invite failed: ${await inviteRes.text()}`);
   const inviteData = await inviteRes.json();
   if (!inviteData.id) return jsonResponse({ error: "Invite sent but no user ID returned" }, 500, corsHeaders);
-  const reviewer = await supabasePost(env, "reviewers", { id: inviteData.id, email, display_name, role, engagement_id: engagement_id ?? null });
+  const reviewer = await supabasePost(env, "reviewers", {
+    id: inviteData.id, email, display_name, role, baseline_role, engagement_id: engagement_id ?? null,
+  });
   return jsonResponse({ invited: email, reviewer }, 201, corsHeaders);
 }
 
@@ -263,22 +331,61 @@ async function resetReviewerPassword(request, env, userJwt, corsHeaders) {
   return jsonResponse({ sent: true }, 200, corsHeaders);
 }
 
+// Extended PATCH, replacing the stood-down DELETE /admin/reviewers/:id.
+// Handles ordinary field edits, deactivation/reactivation (the `active`
+// flag), and the single authorized tier-change (Staff -> Delegate,
+// Operator-only) - see the DOMAIN header above for the settled authorization
+// rules this enforces.
 async function updateReviewer(request, env, id, userJwt, corsHeaders) {
+  const acting = await getActingReviewer(env, userJwt);
+  if (!acting) return jsonResponse({ error: "Not an active reviewer" }, 403, corsHeaders);
+
+  const targetRows = await supabaseFetch(env, "reviewers", `?id=eq.${encodeURIComponent(id)}&select=id,baseline_role,active`);
+  const target = targetRows?.[0];
+  if (!target) return jsonResponse({ error: "Reviewer not found" }, 404, corsHeaders);
+
+  const actingIsOperator = acting.baseline_role === "frontframe_operator";
+  const actingIsDelegate = acting.baseline_role === "delegate";
+  const actingManagesTarget = actingIsOperator || (actingIsDelegate && DELEGATE_MANAGEABLE_TIERS.includes(target.baseline_role));
+  if (!actingManagesTarget)
+    return jsonResponse({ error: "Not authorized to manage this reviewer" }, 403, corsHeaders);
+
   const body = await request.json();
   const updates = {};
   ["display_name","email","dev_access"].forEach(k => { if (body[k] !== undefined) updates[k] = body[k]; });
+
+  // Deactivation / reactivation - same authority as above, running in
+  // reverse for reactivation. No inactivity-period history is kept.
+  if (body.active !== undefined) {
+    if (typeof body.active !== "boolean")
+      return jsonResponse({ error: "active must be a boolean" }, 400, corsHeaders);
+    updates.active = body.active;
+    if (body.active === false) {
+      updates.deactivated_at = new Date().toISOString();
+      updates.deactivated_by = acting.id;
+    } else {
+      updates.deactivated_at = null;
+      updates.deactivated_by = null;
+    }
+  }
+
+  // Tier change - Operator-only, and only the single authorized promotion
+  // path (an existing Staff reviewer becoming a Delegate). No other tier
+  // change is authorized at any level.
+  if (body.baseline_role !== undefined) {
+    if (!actingIsOperator)
+      return jsonResponse({ error: "Only the Operator may change a reviewer's tier" }, 403, corsHeaders);
+    if (body.baseline_role !== "delegate" || target.baseline_role !== "staff")
+      return jsonResponse({ error: "Only a Staff reviewer may be promoted, and only to Delegate" }, 400, corsHeaders);
+    updates.baseline_role = "delegate";
+    updates.role = "frontframe_delegate";
+  }
+
   if (!Object.keys(updates).length) return jsonResponse({ error: "No valid fields to update" }, 400, corsHeaders);
   return jsonResponse(await supabasePatch(env, "reviewers", id, updates, userJwt), 200, corsHeaders);
-}
-
-async function deleteReviewer(env, id, userJwt, corsHeaders) {
-  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/reviewers?id=eq.${encodeURIComponent(id)}`,
-    { method: "DELETE", headers: supabaseHeaders(env) });
-  if (!res.ok) throw new Error(`Supabase DELETE reviewers failed: ${await res.text()}`);
-  return jsonResponse({ deleted: id }, 200, corsHeaders);
 }
 
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { getChangelog, createChangelog, getLeads, createLead, getLeadAlerts, updateLeadAlert, deleteLeadAlert, getAlertSession, getAgreements, updateAgreement, sendAgreement, sendDueDiligence, sendInfraAgreement, getSystemPrompt, getReviewers, inviteReviewer, resetReviewerPassword, updateReviewer, deleteReviewer };
+export { getChangelog, createChangelog, getLeads, createLead, getLeadAlerts, updateLeadAlert, deleteLeadAlert, getAlertSession, getAgreements, updateAgreement, sendAgreement, sendDueDiligence, sendInfraAgreement, getSystemPrompt, getReviewers, inviteReviewer, resetReviewerPassword, updateReviewer };
