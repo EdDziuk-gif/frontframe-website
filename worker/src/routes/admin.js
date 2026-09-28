@@ -52,9 +52,12 @@ export const ADMIN_ROUTES = [
   route("GET", "/admin/system-prompt/:page", envParam(handlers.getSystemPrompt, "page")),
   // POST /admin/system-prompt/:page removed by migration 014 — system_prompt is
   // written only by KGR sign-off. GET stays as a read-only viewer.
+  route("GET", "/admin/admin-panels", envOnly(handlers.getAdminPanels)),
   route("GET", "/admin/reviewers", envOnly(handlers.getReviewers)),
   route("POST", "/admin/reviewers/invite", noParams(handlers.inviteReviewer)),
   route("POST", "/admin/reviewers/reset-password", noParams(handlers.resetReviewerPassword)),
+  route("GET", "/admin/reviewers/:id/permissions", envParam(handlers.getReviewerPermissions)),
+  route("PUT", "/admin/reviewers/:id/permissions", param(handlers.setReviewerPermissions)),
   route("PATCH", "/admin/reviewers/:id", param(handlers.updateReviewer)),
   // DELETE /admin/reviewers/:id removed 2026-09-23 (reviewer-authority buildout):
   // it performed a hard DELETE FROM reviewers, contradicting the never-delete,

@@ -386,6 +386,103 @@ async function updateReviewer(request, env, id, userJwt, corsHeaders) {
 }
 
 
+// § Panel-scoped reviewer permissions (2026-09-27)
+// ────────────────────────────────────────────────────────────────────────────
+// admin_panels holds one row per TAB per panel file - admin.html (the
+// Operator/Delegate/Staff surface) and dev-admin.html ("Dev Tools", the Client
+// Tester surface) - keyed by (panel_file, key) where key matches the tab's
+// data-tab attribute. reviewer_permissions grants a reviewer a specific tab.
+//
+// These endpoints record grants and revocations only. They do NOT yet gate
+// anything: tab visibility and route access still follow the tier rules in the
+// DOMAIN header above. Wiring enforcement requires deciding what an ABSENCE of
+// rows means for a Staff/Client Tester reviewer (deny-by-default, which locks
+// out every reviewer until granted, vs. restrict-only-when-rows-exist), which
+// is an open decision for the Operator and is deliberately not assumed here.
+//
+// reviewer_permissions is PK (reviewer_id, admin_panel_id), so one row per
+// pair for all time: a revoke sets revoked_at, and a re-grant clears it and
+// refreshes granted_by/granted_at. The table therefore carries current state
+// plus last-grant attribution, not a full grant/revoke audit trail.
+
+async function getAdminPanels(env, userJwt, corsHeaders) {
+  return jsonResponse(await supabaseFetch(env, "admin_panels",
+    "?select=id,panel_file,key,label,active&active=is.true&order=panel_file.asc,label.asc", userJwt), 200, corsHeaders);
+}
+
+async function getReviewerPermissions(env, id, userJwt, corsHeaders) {
+  const acting = await getActingReviewer(env, userJwt);
+  if (!acting) return jsonResponse({ error: "Not an active reviewer" }, 403, corsHeaders);
+  return jsonResponse(await supabaseFetch(env, "reviewer_permissions",
+    `?reviewer_id=eq.${encodeURIComponent(id)}&select=reviewer_id,admin_panel_id,granted_by,granted_at,revoked_at,admin_panels(panel_file,key,label)&order=granted_at.asc`,
+    userJwt), 200, corsHeaders);
+}
+
+// PUT: reconciles the reviewer's granted tabs to exactly admin_panel_ids.
+// A checkbox grid saves in one call; anything currently granted and absent
+// from the list is revoked, anything present and not granted is granted.
+async function setReviewerPermissions(request, env, id, userJwt, corsHeaders) {
+  const acting = await getActingReviewer(env, userJwt);
+  if (!acting) return jsonResponse({ error: "Not an active reviewer" }, 403, corsHeaders);
+
+  const targetRows = await supabaseFetch(env, "reviewers", `?id=eq.${encodeURIComponent(id)}&select=id,baseline_role,active`);
+  const target = targetRows?.[0];
+  if (!target) return jsonResponse({ error: "Reviewer not found" }, 404, corsHeaders);
+
+  // Same authority as updateReviewer: Operator over anyone, Delegate over
+  // Staff and Client Tester only. Plus: nobody edits their own permissions,
+  // so a Delegate cannot widen their own access.
+  const actingIsOperator = acting.baseline_role === "frontframe_operator";
+  const actingIsDelegate = acting.baseline_role === "delegate";
+  if (acting.id === target.id)
+    return jsonResponse({ error: "A reviewer may not change their own panel permissions" }, 403, corsHeaders);
+  if (!(actingIsOperator || (actingIsDelegate && DELEGATE_MANAGEABLE_TIERS.includes(target.baseline_role))))
+    return jsonResponse({ error: "Not authorized to manage this reviewer" }, 403, corsHeaders);
+
+  const body = await request.json();
+  const requested = body?.admin_panel_ids;
+  if (!Array.isArray(requested) || requested.some(v => typeof v !== "string"))
+    return jsonResponse({ error: "admin_panel_ids must be an array of admin_panels.id values" }, 400, corsHeaders);
+  const desired = [...new Set(requested)];
+
+  // Every requested panel must exist and be active - a stale or bogus id
+  // would otherwise fail at the FK with an opaque 500.
+  const panels = await supabaseFetch(env, "admin_panels", "?select=id&active=is.true");
+  const validIds = new Set((panels ?? []).map(p => p.id));
+  const unknown = desired.filter(pid => !validIds.has(pid));
+  if (unknown.length)
+    return jsonResponse({ error: `Unknown or inactive admin_panels id(s): ${unknown.join(", ")}` }, 400, corsHeaders);
+
+  const existing = await supabaseFetch(env, "reviewer_permissions",
+    `?reviewer_id=eq.${encodeURIComponent(id)}&select=admin_panel_id,revoked_at`);
+  const currentlyGranted = new Set((existing ?? []).filter(r => r.revoked_at === null).map(r => r.admin_panel_id));
+
+  const now = new Date().toISOString();
+  const toGrant = desired.filter(pid => !currentlyGranted.has(pid));
+  const toRevoke = [...currentlyGranted].filter(pid => !desired.includes(pid));
+
+  if (toGrant.length) {
+    await supabaseUpsert(env, "reviewer_permissions", toGrant.map(pid => ({
+      reviewer_id: id, admin_panel_id: pid, granted_by: acting.id, granted_at: now, revoked_at: null,
+    })), userJwt);
+  }
+
+  if (toRevoke.length) {
+    // Two-field filter, which supabasePatch/supabasePatchByField do not cover.
+    const filter = `?reviewer_id=eq.${encodeURIComponent(id)}` +
+      `&admin_panel_id=in.(${toRevoke.map(encodeURIComponent).join(",")})`;
+    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/reviewer_permissions${filter}`, {
+      method: "PATCH", headers: supabaseHeaders(env), body: JSON.stringify({ revoked_at: now }),
+    });
+    if (!res.ok) throw new Error(`Supabase PATCH reviewer_permissions failed: ${await res.text()}`);
+  }
+
+  const updated = await supabaseFetch(env, "reviewer_permissions",
+    `?reviewer_id=eq.${encodeURIComponent(id)}&select=admin_panel_id,granted_by,granted_at,revoked_at`, userJwt);
+  return jsonResponse({ granted: toGrant.length, revoked: toRevoke.length, permissions: updated }, 200, corsHeaders);
+}
+
+
 // ════════════════════════════════════════════════════════════════════════════
 
-export { getChangelog, createChangelog, getLeads, createLead, getLeadAlerts, updateLeadAlert, deleteLeadAlert, getAlertSession, getAgreements, updateAgreement, sendAgreement, sendDueDiligence, sendInfraAgreement, getSystemPrompt, getReviewers, inviteReviewer, resetReviewerPassword, updateReviewer };
+export { getChangelog, createChangelog, getLeads, createLead, getLeadAlerts, updateLeadAlert, deleteLeadAlert, getAlertSession, getAgreements, updateAgreement, sendAgreement, sendDueDiligence, sendInfraAgreement, getSystemPrompt, getReviewers, inviteReviewer, resetReviewerPassword, updateReviewer, getAdminPanels, getReviewerPermissions, setReviewerPermissions };

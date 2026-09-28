@@ -1995,6 +1995,22 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="reviewer-panels-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Panel Access</div>
+      <button class="modal-close" onclick="closeModal('reviewer-panels-modal')">&#x00D7;</button>
+    </div>
+    <div class="page-sub" id="reviewer-panels-who" style="margin-bottom:0.75rem;"></div>
+    <div class="page-sub" style="margin-bottom:0.75rem;">Recorded grants only &mdash; these do not yet restrict access. Tier rules still govern what a reviewer can open.</div>
+    <div id="reviewer-panels-grid"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('reviewer-panels-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveReviewerPanels()">Save Grants</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="invite-reviewer-modal">
   <div class="modal">
     <div class="modal-header">
@@ -2034,6 +2050,8 @@ let amendments    = [];
 let provisions    = [];
 let authIncidents = [];
 let reviewersList = [];
+let adminPanelsList = [];          // admin_panels inventory: one row per tab per panel file
+let panelsModalReviewerId = null;   // reviewer whose panel grants the permissions modal is editing
 // Guards repeat-click on an in-flight action (e.g. a slow request before the
 // button/modal visibly updates) from firing the same request twice.
 const pendingActions = new Set();
@@ -5001,6 +5019,11 @@ function renderReviewersList() {
     const promoteBtn = (isOperator && r.baseline_role === 'staff')
       ? `<button class="btn btn-ghost btn-xs" onclick="promoteToDelegate('${r.id}')">Promote to Delegate</button>`
       : '';
+    // Panel grants: the Operator has every tab implicitly, and the server
+    // refuses self-edits, so neither case gets a button.
+    const panelsBtn = (canActOnThis && r.baseline_role !== 'frontframe_operator' && r.id !== currentReviewerId)
+      ? `<button class="btn btn-ghost btn-xs" onclick="openReviewerPanelsModal('${r.id}', '${esc(r.display_name ?? '')}')">Panels</button>`
+      : '';
     return `
       <tr>
         <td>${esc(r.display_name ?? '')}</td>
@@ -5008,7 +5031,7 @@ function renderReviewersList() {
         <td><span class="badge badge-${tierClass}">${esc(reviewerTierLabel(r.baseline_role))}</span></td>
         <td><span class="badge badge-${r.active ? 'active' : 'closed'}">${r.active ? 'Active' : 'Inactive'}</span></td>
         <td>${r.can_sign_off_kgr ? '<span class="badge badge-approved">Yes</span>' : ''}</td>
-        <td>${toggleBtn} ${promoteBtn}</td>
+        <td>${toggleBtn} ${promoteBtn} ${panelsBtn}</td>
       </tr>`;
   }).join('');
 }
@@ -5051,6 +5074,57 @@ async function promoteToDelegate(id) {
     await api('PATCH', `/admin/reviewers/${id}`, { baseline_role: 'delegate' });
     toast('Reviewer promoted to Delegate.');
     loadReviewersTab();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// Panel grants (admin_panels inventory, one row per tab per panel file).
+// The server reconciles to exactly the checked set on save: newly checked tabs
+// are granted, unchecked ones revoked (revoked_at set, row and attribution
+// kept). Enforcement is not wired yet - see the note in the modal.
+
+const PANEL_FILE_LABELS = { 'admin.html': 'Admin Panel', 'dev-admin.html': 'Dev Tools' };
+
+async function openReviewerPanelsModal(id, displayName) {
+  panelsModalReviewerId = id;
+  document.getElementById('reviewer-panels-who').textContent = 'Granting tab access for ' + displayName + '.';
+  document.getElementById('reviewer-panels-grid').innerHTML = '<div class="empty-state">Loading\u2026</div>';
+  document.getElementById('reviewer-panels-modal').classList.add('open');
+  try {
+    const [panels, perms] = await Promise.all([
+      adminPanelsList.length ? Promise.resolve(adminPanelsList) : api('GET', '/admin/admin-panels'),
+      api('GET', `/admin/reviewers/${id}/permissions`),
+    ]);
+    adminPanelsList = panels;
+    const grantedIds = new Set((perms ?? []).filter(p => p.revoked_at === null).map(p => p.admin_panel_id));
+    renderReviewerPanelsGrid(grantedIds);
+  } catch (e) {
+    document.getElementById('reviewer-panels-grid').innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderReviewerPanelsGrid(grantedIds) {
+  const byFile = {};
+  adminPanelsList.forEach(p => { (byFile[p.panel_file] ??= []).push(p); });
+  document.getElementById('reviewer-panels-grid').innerHTML = Object.keys(byFile).sort().map(file => `
+    <div class="form-group">
+      <label>${esc(PANEL_FILE_LABELS[file] ?? file)}</label>
+      ${byFile[file].map(p => `
+        <div style="padding:0.15rem 0;">
+          <label style="font-weight:400;display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+            <input type="checkbox" class="reviewer-panel-cb" value="${p.id}"${grantedIds.has(p.id) ? ' checked' : ''}>
+            ${esc(p.label)}
+          </label>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+async function saveReviewerPanels() {
+  const admin_panel_ids = [...document.querySelectorAll('.reviewer-panel-cb')]
+    .filter(cb => cb.checked).map(cb => cb.value);
+  try {
+    const res = await api('PUT', `/admin/reviewers/${panelsModalReviewerId}/permissions`, { admin_panel_ids });
+    closeModal('reviewer-panels-modal');
+    toast(`Panel grants saved (${res.granted} granted, ${res.revoked} revoked).`);
   } catch (e) { toast(e.message, 'error'); }
 }
 </script>
