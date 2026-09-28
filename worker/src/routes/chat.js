@@ -849,7 +849,11 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   }
 
   // ── Post-response evaluator — single-call, fire-and-forget ──────────────
-  if (session_id) {
+  // Gated on capture_enabled (2026-09-28, Operator decision): the evaluator
+  // is a testing instrument, and running it on live traffic meant one Haiku
+  // call per visitor turn whether or not anyone was reviewing the output.
+  // With the flag off, nothing is evaluated and nothing reaches review_queue.
+  if (config.capture_enabled && session_id) {
 	ctx.waitUntil((async () => {
 	  try {
 		const flaggedTurn = { visitor_message: message, bot_response: response };
@@ -889,21 +893,20 @@ No other text.`,
 			status: "comprehension_failure",
 		  });
 		} else if (objectionHigh) {
-		  await supabasePost(env, "review_queue", {
-			session_id, flagged_turn: flaggedTurn, flag_source: "auto",
-			auto_score: null, auto_reasoning: null, status: "dismissed",
-		  });
+		  // Deliberately writes nothing. A high objection count is sales
+		  // resistance, not a response defect - but this branch must still
+		  // precede the low-score check so an objection-heavy exchange is
+		  // not filed as a bot failure.
 		} else if (!isNaN(score) && score <= 6) {
 		  await supabasePost(env, "review_queue", {
 			session_id, flagged_turn: flaggedTurn, flag_source: "auto",
 			auto_score: score, auto_reasoning: ev.reasoning ?? "", status: "candidate",
 		  });
-		} else {
-		  await supabasePost(env, "review_queue", {
-			session_id, flagged_turn: flaggedTurn, flag_source: "auto",
-			auto_score: isNaN(score) ? null : score, auto_reasoning: ev.reasoning ?? "", status: "dismissed",
-		  });
 		}
+		// No else: a response that scored well enough to be delivered is not
+		// worth a row. Every passing turn used to write status "dismissed",
+		// which is what made a Dismissed view necessary at all. Manual
+		// dismissals still set that status via PATCH.
 	  } catch { /* evaluator errors never interrupt visitor response */ }
 	})());
   }

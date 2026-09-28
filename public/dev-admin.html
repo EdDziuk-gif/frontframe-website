@@ -235,7 +235,6 @@
 	  <button class="nav-item" data-tab="changelog"  onclick="switchTab('changelog')">&#x1F4D6; Changelog</button>
 	  <button class="nav-item" data-tab="rd-log"     onclick="switchTab('rd-log')">&#x1F4CA; R&amp;D Log</button>
 	  <button class="nav-item" data-tab="episodes"   onclick="switchTab('episodes')">&#x1F399; Episodes</button>
-	  <button class="nav-item" data-tab="bot-review" onclick="switchTab('bot-review')">&#x1F916; Bot Review <span class="nav-badge hidden" id="badge-bot-review">0</span></button>
 	</div>
 	<div class="sidebar-footer">
 	  <div id="sidebar-email"></div>
@@ -343,26 +342,6 @@
 	</div>
 
 	<!-- Bot Review -->
-	<div class="tab-panel" id="tab-bot-review">
-	  <div class="page-header">
-		<div class="page-title">Bot Review</div>
-		<div class="page-sub">Auto-flagged responses scoring 6 or below — review, correct, or dismiss</div>
-	  </div>
-	  <div class="card">
-		<div class="card-header">
-		  <div class="card-title">Review Queue</div>
-		  <div class="review-filter-bar">
-			<select id="rq-status-filter" onchange="loadBotReview()">
-			  <option value="pending">Pending only</option>
-			  <option value="all">All statuses</option>
-			</select>
-			<button class="btn btn-danger btn-sm" onclick="bulkDeleteReviewed()">Delete Reviewed/Dismissed</button>
-		  </div>
-		</div>
-		<div id="rq-list" style="padding:16px"></div>
-	  </div>
-	</div>
-
   </main>
 </div>
 
@@ -414,62 +393,6 @@
 </div>
 
 <!-- Bot Review Notes Modal -->
-<div class="modal-backdrop" id="rq-notes-modal">
-  <div class="modal-box">
-	<div class="modal-title">Correction Notes</div>
-	<input type="hidden" id="rq-notes-id">
-	<div class="form-group"><label>What should the bot have said?</label>
-	  <textarea id="rq-notes-text" rows="5" placeholder="Correct answer or guidance…"></textarea>
-	</div>
-	<div class="modal-footer">
-	  <button class="btn btn-ghost" onclick="closeModal('rq-notes-modal')">Cancel</button>
-	  <button class="btn btn-primary" onclick="submitReviewNotes()">Save &amp; Mark Reviewed</button>
-	</div>
-  </div>
-</div>
-
-
-<!-- R&D Edit Modal -->
-<div class="modal-backdrop" id="rd-edit-modal">
-  <div class="modal-box wide">
-	<div class="modal-title">Edit R&amp;D Entry</div>
-	<input type="hidden" id="re-id">
-	<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px">
-	  <div class="form-group"><label>Client</label><input type="text" id="re-client"></div>
-	  <div class="form-group"><label>Date</label><input type="date" id="re-date"></div>
-	  <div class="form-group"><label>Hours</label><input type="number" id="re-hours" step="0.25" min="0.25" max="24"></div>
-	  <div class="form-group"><label>Category</label>
-		<select id="re-category" onchange="document.getElementById('re-qualifies').checked = QUALIFYING_CATS.has(this.value)">
-		  <optgroup label="Qualifying">
-			<option value="DB">DB — Database / Schema</option>
-			<option value="API">API — Worker / API</option>
-			<option value="FE">FE — Frontend / UI</option>
-			<option value="AI">AI — AI / Prompting</option>
-			<option value="TEST">TEST — Testing / QA</option>
-		  </optgroup>
-		  <optgroup label="Non-Qualifying">
-			<option value="CONT">CONT — Content</option>
-			<option value="STRAT">STRAT — Strategy</option>
-			<option value="MKT">MKT — Marketing</option>
-			<option value="LEGAL">LEGAL — Legal</option>
-			<option value="ADMIN">ADMIN — Admin</option>
-		  </optgroup>
-		</select>
-	  </div>
-	</div>
-	<div class="form-group" style="margin-bottom:12px"><label>Description (narrative)</label><textarea id="re-desc" rows="3"></textarea></div>
-	<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:.875rem">
-	  <input type="checkbox" id="re-qualifies"> <label for="re-qualifies">Qualifies for R&amp;D tax credit</label>
-	</div>
-	<div class="modal-footer">
-	  <button class="btn btn-ghost" onclick="closeModal('rd-edit-modal')">Cancel</button>
-	  <button class="btn btn-primary" onclick="saveRdEdit()">Save changes</button>
-	</div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
 <script src="/js/config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/js/supabase-client.js"></script>
@@ -480,7 +403,6 @@ let changelog   = [];
 let episodes    = [];
 let rdLog       = [];
 let rdFormOpen  = false;
-let reviewQueue = [];
 let currentTab  = '';
 
 // Session inherit — no login screen
@@ -536,7 +458,6 @@ function switchTab(tab) {
 	case 'changelog':  loadChangelog().catch(e => toast('Changelog: ' + e.message, 'error')); break;
 	case 'rd-log':     loadRdLog().catch(e => toast('R&D Log: ' + e.message, 'error')); break;
 	case 'episodes':   loadEpisodes().catch(e => toast('Episodes: ' + e.message, 'error')); break;
-	case 'bot-review': loadBotReview().catch(e => toast('Bot Review: ' + e.message, 'error')); break;
   }
 }
 
@@ -788,110 +709,6 @@ async function deleteEpisode(id) {
 	episodes = episodes.filter(e => e.id !== id);
 	renderEpisodes();
 	toast('Deleted.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-// Bot Review
-
-async function loadBotReview() {
-  const statusFilter = document.getElementById('rq-status-filter')?.value ?? 'pending';
-  const qs = statusFilter === 'all' ? '?status=all' : '';
-  try { reviewQueue = await api('GET', `/admin/review-queue${qs}`); } catch (e) { toast('Failed to load review queue: ' + e.message, 'error'); return; }
-  renderBotReview();
-  updateBotBadge();
-}
-
-function updateBotBadge() {
-  const pending = reviewQueue.filter(r => r.status === 'pending').length;
-  const badge = document.getElementById('badge-bot-review');
-  if (!badge) return;
-  if (pending > 0) { badge.textContent = pending; badge.classList.remove('hidden'); }
-  else { badge.classList.add('hidden'); }
-}
-
-function renderBotReview() {
-  const container = document.getElementById('rq-list');
-  if (!reviewQueue.length) { container.innerHTML = `<div class="empty-state">No items in queue</div>`; return; }
-  container.innerHTML = reviewQueue.map(r => {
-	const score = r.auto_score ?? 0;
-	const scoreCls = score <= 3 ? 'score-low' : score <= 5 ? 'score-mid' : '';
-	const turn = r.flagged_turn ?? {};
-	return `
-	  <div class="review-card" id="rq-card-${r.id}">
-		<div class="review-card-header">
-		  <div class="flex-row">
-			<span class="review-score ${scoreCls}">Score ${score}/10</span>
-			<span class="badge badge-${r.status}">${r.status}</span>
-			<span class="text-small text-gray">${fmtDate(r.created_at)}</span>
-			${r.flag_source === 'auto' ? '<span class="badge badge-closed">auto</span>' : '<span class="badge badge-pending">visitor</span>'}
-		  </div>
-		  <div class="flex-row">
-			${r.status === 'pending' ? `
-			  <button class="btn btn-ghost btn-xs" onclick="openReviewNotes('${r.id}')">Flag for Correction</button>
-			  <button class="btn btn-ghost btn-xs" onclick="dismissReview('${r.id}')">Dismiss</button>
-			` : ''}
-			<button class="btn btn-danger btn-xs" onclick="deleteReview('${r.id}')">Delete</button>
-		  </div>
-		</div>
-		<div class="review-question">${esc(turn.visitor_message ?? '')}</div>
-		<div class="review-response">${esc(turn.bot_response ?? '')}</div>
-		${r.auto_reasoning ? `<div class="review-reasoning">${esc(r.auto_reasoning)}</div>` : ''}
-		${r.notes ? `<div style="margin-top:8px;padding:10px;background:var(--offwhite);border-radius:6px;font-size:0.82rem"><strong>Notes:</strong> ${esc(r.notes)}</div>` : ''}
-	  </div>
-	`;
-  }).join('');
-}
-
-function openReviewNotes(id) {
-  document.getElementById('rq-notes-id').value   = id;
-  document.getElementById('rq-notes-text').value = '';
-  document.getElementById('rq-notes-modal').classList.add('open');
-}
-
-async function submitReviewNotes() {
-  const id    = document.getElementById('rq-notes-id').value;
-  const notes = document.getElementById('rq-notes-text').value.trim();
-  try {
-	await api('PATCH', `/admin/review-queue/${id}`, { status: 'reviewed', notes });
-	const idx = reviewQueue.findIndex(r => r.id === id);
-	if (idx >= 0) { reviewQueue[idx].status = 'reviewed'; reviewQueue[idx].notes = notes; }
-	closeModal('rq-notes-modal');
-	renderBotReview();
-	updateBotBadge();
-	toast('Marked reviewed.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function dismissReview(id) {
-  try {
-	await api('PATCH', `/admin/review-queue/${id}`, { status: 'dismissed' });
-	const idx = reviewQueue.findIndex(r => r.id === id);
-	if (idx >= 0) reviewQueue[idx].status = 'dismissed';
-	renderBotReview();
-	updateBotBadge();
-	toast('Dismissed.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function deleteReview(id) {
-  if (!confirm('Delete this review entry?')) return;
-  try {
-	await api('DELETE', `/admin/review-queue/${id}`);
-	reviewQueue = reviewQueue.filter(r => r.id !== id);
-	renderBotReview();
-	updateBotBadge();
-	toast('Deleted.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function bulkDeleteReviewed() {
-  if (!confirm('Delete all reviewed and dismissed entries?')) return;
-  try {
-	await api('DELETE', '/admin/review-queue/bulk');
-	reviewQueue = reviewQueue.filter(r => r.status === 'pending');
-	renderBotReview();
-	updateBotBadge();
-	toast('Bulk deleted.');
   } catch (e) { toast(e.message, 'error'); }
 }
 

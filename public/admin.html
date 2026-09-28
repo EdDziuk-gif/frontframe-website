@@ -759,6 +759,7 @@
             <button class="btn btn-sm" id="rq-btn-candidate"             onclick="setRqView('candidate')">Candidates</button>
             <button class="btn btn-sm" id="rq-btn-comprehension_failure" onclick="setRqView('comprehension_failure')">Comp. Failures</button>
             <button class="btn btn-sm" id="rq-btn-dismissed"             onclick="setRqView('dismissed')">Dismissed</button>
+            <button class="btn btn-danger btn-sm" onclick="bulkDeleteReviewedQueue()">Delete Reviewed/Dismissed</button>
             <button class="btn btn-ghost btn-sm" onclick="loadReviewQueue()">&#x21BA;</button>
           </div>
         </div>
@@ -3602,6 +3603,19 @@ async function deleteQueueRecord(id) {
     // filter by id doesn't reliably work here.
     await loadReviewQueue();
     toast('Deleted.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// Clears every reviewed and dismissed row in one call. Ported from the Dev
+// Tools Bot Review tab, removed 2026-09-28 as redundant with this card, which
+// held the only control for DELETE /admin/review-queue/bulk. Candidates and
+// comprehension failures are untouched - the route filters on status itself.
+async function bulkDeleteReviewedQueue() {
+  if (!confirm('Delete all reviewed and dismissed review-queue records? Candidates and comprehension failures are kept.')) return;
+  try {
+    await api('DELETE', '/admin/review-queue/bulk');
+    await loadReviewQueue();
+    toast('Reviewed and dismissed records deleted.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
