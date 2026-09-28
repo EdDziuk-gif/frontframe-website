@@ -234,7 +234,6 @@
 	<div class="sidebar-nav">
 	  <button class="nav-item" data-tab="changelog"  onclick="switchTab('changelog')">&#x1F4D6; Changelog</button>
 	  <button class="nav-item" data-tab="rd-log"     onclick="switchTab('rd-log')">&#x1F4CA; R&amp;D Log</button>
-	  <button class="nav-item" data-tab="reviewers"  onclick="switchTab('reviewers')">&#x1F465; Reviewers</button>
 	  <button class="nav-item" data-tab="episodes"   onclick="switchTab('episodes')">&#x1F399; Episodes</button>
 	  <button class="nav-item" data-tab="bot-review" onclick="switchTab('bot-review')">&#x1F916; Bot Review <span class="nav-badge hidden" id="badge-bot-review">0</span></button>
 	</div>
@@ -323,25 +322,6 @@
 	</div>
 
 	<!-- Reviewers -->
-	<div class="tab-panel" id="tab-reviewers">
-	  <div class="page-header">
-		<div class="page-title">Reviewers</div>
-		<div class="page-sub">Invited testers and their access levels</div>
-	  </div>
-	  <div class="card">
-		<div class="card-header">
-		  <div class="card-title">Reviewer List</div>
-		  <button class="btn btn-primary btn-sm" onclick="openReviewerModal()">+ Add Reviewer</button>
-		</div>
-		<div class="table-wrap">
-		  <table>
-			<thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Dev Access</th><th>Invited</th><th>Actions</th></tr></thead>
-			<tbody id="reviewers-tbody"></tbody>
-		  </table>
-		</div>
-	  </div>
-	</div>
-
 	<!-- Episodes -->
 	<div class="tab-panel" id="tab-episodes">
 	  <div class="page-header">
@@ -414,19 +394,6 @@
 </div>
 
 <!-- Reviewer Modal -->
-<div class="modal-backdrop" id="reviewer-modal">
-  <div class="modal-box">
-	<div class="modal-title" id="rv-modal-title">Add Reviewer</div>
-	<input type="hidden" id="rv-id">
-	<div class="form-group"><label>Display Name</label><input type="text" id="rv-name" placeholder="Jane Smith"></div>
-	<div class="form-group"><label>Email</label><input type="email" id="rv-email" placeholder="jane@example.com"></div>
-	<div class="modal-footer">
-	  <button class="btn btn-ghost" onclick="closeModal('reviewer-modal')">Cancel</button>
-	  <button class="btn btn-primary" id="rv-save-btn" onclick="saveReviewer()">Add Reviewer</button>
-	</div>
-  </div>
-</div>
-
 <!-- Episode Modal -->
 <div class="modal-backdrop" id="episode-modal">
   <div class="modal-box wide">
@@ -510,7 +477,6 @@
 <script>
 let session     = null;
 let changelog   = [];
-let reviewers   = [];
 let episodes    = [];
 let rdLog       = [];
 let rdFormOpen  = false;
@@ -569,7 +535,6 @@ function switchTab(tab) {
   switch (tab) {
 	case 'changelog':  loadChangelog().catch(e => toast('Changelog: ' + e.message, 'error')); break;
 	case 'rd-log':     loadRdLog().catch(e => toast('R&D Log: ' + e.message, 'error')); break;
-	case 'reviewers':  loadReviewers().catch(e => toast('Reviewers: ' + e.message, 'error')); break;
 	case 'episodes':   loadEpisodes().catch(e => toast('Episodes: ' + e.message, 'error')); break;
 	case 'bot-review': loadBotReview().catch(e => toast('Bot Review: ' + e.message, 'error')); break;
   }
@@ -751,98 +716,6 @@ async function saveRdEdit() {
 		closeModal('rd-edit-modal');
 		renderRdLog();
 		toast('Updated.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-// Reviewers
-
-async function loadReviewers() {
-  try { reviewers = await api('GET', '/admin/reviewers'); } catch (e) { toast('Failed to load reviewers: ' + e.message, 'error'); return; }
-  renderReviewers();
-}
-
-function renderReviewers() {
-  const tbody = document.getElementById('reviewers-tbody');
-  if (!reviewers.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No reviewers</div></td></tr>`; return; }
-  tbody.innerHTML = reviewers.map(r => `
-	<tr>
-	  <td><strong>${esc(r.display_name)}</strong></td>
-	  <td class="text-small text-gray">${esc(r.email)}</td>
-	  <td><span class="badge badge-new">${esc(r.role)}</span></td>
-	  <td>
-		<button class="toggle ${r.dev_access ? 'on' : ''}" onclick="toggleDevAccess('${r.id}', ${r.dev_access ? 'true' : 'false'})"></button>
-	  </td>
-	  <td class="text-small text-gray">${fmtDate(r.invited_at)}</td>
-	  <td>
-		<div class="flex-row">
-		  <button class="btn btn-ghost btn-xs" onclick="openEditReviewerModal('${r.id}')">Edit</button>
-		  <button class="btn btn-danger btn-xs" onclick="deactivateReviewer('${r.id}','${esc(r.display_name)}')">Deactivate</button>
-		</div>
-	  </td>
-	</tr>
-  `).join('');
-}
-
-async function toggleDevAccess(id, current) {
-  try {
-	await api('PATCH', `/admin/reviewers/${id}`, { dev_access: !current });
-	const idx = reviewers.findIndex(r => r.id === id);
-	if (idx >= 0) reviewers[idx].dev_access = !current;
-	renderReviewers();
-	toast(!current ? 'Dev access granted.' : 'Dev access removed.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-function openReviewerModal() {
-  document.getElementById('rv-modal-title').textContent = 'Add Reviewer';
-  document.getElementById('rv-save-btn').textContent    = 'Add Reviewer';
-  document.getElementById('rv-id').value    = '';
-  document.getElementById('rv-name').value  = '';
-  document.getElementById('rv-email').value = '';
-  document.getElementById('reviewer-modal').classList.add('open');
-}
-
-function openEditReviewerModal(id) {
-  const r = reviewers.find(r => r.id === id);
-  if (!r) return;
-  document.getElementById('rv-modal-title').textContent = 'Edit Reviewer';
-  document.getElementById('rv-save-btn').textContent    = 'Save Changes';
-  document.getElementById('rv-id').value    = r.id;
-  document.getElementById('rv-name').value  = r.display_name;
-  document.getElementById('rv-email').value = r.email;
-  document.getElementById('reviewer-modal').classList.add('open');
-}
-
-async function saveReviewer() {
-  const id    = document.getElementById('rv-id').value;
-  const email = document.getElementById('rv-email').value.trim();
-  const name  = document.getElementById('rv-name').value.trim();
-  if (!email || !name) { toast('Name and email are required.', 'error'); return; }
-  try {
-	if (id) {
-	  await api('PATCH', `/admin/reviewers/${id}`, { display_name: name, email });
-	  const idx = reviewers.findIndex(r => r.id === id);
-	  if (idx >= 0) { reviewers[idx].display_name = name; reviewers[idx].email = email; }
-	  closeModal('reviewer-modal');
-	  renderReviewers();
-	  toast('Updated.');
-	} else {
-	  await api('POST', '/admin/reviewers/invite', { email, display_name: name, baseline_role: 'client_tester' });
-	  closeModal('reviewer-modal');
-	  await loadReviewers();
-	  toast('Added ' + name + '.');
-	}
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-async function deactivateReviewer(id, name) {
-  if (!confirm(`Deactivate ${name}? They will lose reviewer access; this can be reversed later.`)) return;
-  try {
-	await api('PATCH', `/admin/reviewers/${id}`, { active: false });
-	const idx = reviewers.findIndex(r => r.id === id);
-	if (idx >= 0) reviewers[idx].active = false;
-	renderReviewers();
-	toast(name + ' deactivated.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
