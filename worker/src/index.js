@@ -1,4 +1,5 @@
 import { requireReviewer, isProtectedRoute } from "./middleware/auth.js";
+import { reviewerMayUseRoute } from "./middleware/panels.js";
 import { matchRoute } from "./router.js";
 import { ADMIN_ROUTES } from "./routes/admin.js";
 import { DEBUG_ROUTES } from "./routes/debug.js";
@@ -25,6 +26,15 @@ export default {
       if (isProtectedRoute(hit.route.path)) {
         const auth = await requireReviewer(request, env);
         if (!auth.ok) return jsonResponse({ error: auth.error }, auth.status, CORS_HEADERS);
+
+        // Panel scoping (2026-09-28). requireReviewer above answers "is this an
+        // active reviewer at all"; this answers "may THIS reviewer use THIS
+        // route". Deny-by-default: the Operator passes straight through, and
+        // everyone else must hold the panel the route belongs to. A route not
+        // assigned to any panel denies rather than leaks.
+        const panelCheck = await reviewerMayUseRoute(env, auth, hit.route.path);
+        if (!panelCheck.ok)
+          return jsonResponse({ error: panelCheck.error }, 403, CORS_HEADERS);
       }
       return hit.route.handler(request, env, ctx, CORS_HEADERS, hit.params);
     } catch (err) {

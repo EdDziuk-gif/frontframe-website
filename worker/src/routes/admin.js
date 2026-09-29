@@ -52,6 +52,9 @@ export const ADMIN_ROUTES = [
   route("GET", "/admin/system-prompt/:page", envParam(handlers.getSystemPrompt, "page")),
   // POST /admin/system-prompt/:page removed by migration 014 — system_prompt is
   // written only by KGR sign-off. GET stays as a read-only viewer.
+  // Always reachable by an active reviewer - it is how a panel learns who
+  // the caller is before it can render. See middleware/panels.js.
+  route("GET", "/admin/me", envOnly(handlers.getMe)),
   route("GET", "/admin/admin-panels", envOnly(handlers.getAdminPanels)),
   route("GET", "/admin/reviewers", envOnly(handlers.getReviewers)),
   route("POST", "/admin/reviewers/invite", noParams(handlers.inviteReviewer)),

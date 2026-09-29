@@ -411,14 +411,15 @@ let currentTab  = '';
 async function signOut() { await clearSession(); window.location.href = '/admin.html'; }
 
 async function checkDevAccess(storedSession) {
+  // Reads /admin/me rather than the full reviewer list: Dev Tools users do not
+  // necessarily hold the Reviewers panel, and /admin/reviewers is gated behind
+  // it as of 2026-09-28.
   try {
-	const res = await fetch(WORKER_URL + '/admin/reviewers', {
+	const res = await fetch(WORKER_URL + '/admin/me', {
 	  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${storedSession.access_token}` },
 	});
 	if (!res.ok) return false;
-	const list = await res.json();
-	const email = storedSession?.user?.email ?? '';
-	const me = list.find(r => r.email === email);
+	const me = await res.json();
 	return me?.dev_access === true;
   } catch { return false; }
 }

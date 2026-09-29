@@ -2097,25 +2097,54 @@ function showLogin() {
 let currentReviewerRole = null;
 let currentReviewerBaselineRole = null;   // this admin panel's tier for the logged-in reviewer; UI convenience only, server re-checks independently
 let currentReviewerId = null;   // used to show a solution's Withdraw control to its own contributor
+let currentReviewerPanels = [];  // granted panel keys from /admin/me, or '*' for the Operator
 
 async function showAdmin() {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-shell').classList.remove('hidden');
-  // Check dev_access for sidebar link, and record this reviewer's role.
+  // Boots from /admin/me, which returns only this caller's own record plus
+  // their granted panel keys. This used to fetch the entire reviewer list and
+  // find itself in it, which required every reviewer to be able to read every
+  // other reviewer's email and flags just to log in - untenable once Staff
+  // stopped holding the Reviewers panel.
   try {
-    const reviewerList = await api('GET', '/admin/reviewers');
-    const userEmail = session?.user?.email ?? '';
-    const me = reviewerList.find(r => r.email === userEmail);
+    const me = await api('GET', '/admin/me');
     const devLink = document.getElementById('dev-tools-link');
     if (devLink) devLink.style.display = (me?.dev_access === true) ? '' : 'none';
     currentReviewerRole = me?.role ?? null;
     currentReviewerId = me?.id ?? null;
     currentReviewerBaselineRole = me?.baseline_role ?? null;
+    currentReviewerPanels = me?.panels ?? [];
+    applyPanelVisibility();
   } catch { /* non-fatal */ }
-  switchTab('pipeline');
+  switchTab(firstVisibleTab());
 }
 
 // api() now lives in /js/client-utils.js (loaded above).
+
+// Panel visibility
+// The server enforces panel access on every route (middleware/panels.js); this
+// only stops the UI from offering a tab whose routes would be refused. '*' is
+// the Operator, who holds every panel.
+
+function mayUsePanel(tabKey) {
+  if (currentReviewerPanels === '*') return true;
+  return Array.isArray(currentReviewerPanels)
+    && currentReviewerPanels.includes('admin.html:' + tabKey);
+}
+
+function applyPanelVisibility() {
+  document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
+    btn.style.display = mayUsePanel(btn.dataset.tab) ? '' : 'none';
+  });
+}
+
+function firstVisibleTab() {
+  if (mayUsePanel('pipeline')) return 'pipeline';
+  const btn = [...document.querySelectorAll('.nav-item[data-tab]')]
+    .find(b => b.style.display !== 'none');
+  return btn?.dataset.tab ?? 'pipeline';
+}
 
 // Tab switching
 

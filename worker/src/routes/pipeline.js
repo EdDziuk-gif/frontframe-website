@@ -1,4 +1,5 @@
 import { jsonResponse } from "../shared/http.js";
+import { TIER_DEFAULT_PANELS, grantedPanelKeys, panelIdsForKeys } from "../middleware/panels.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
 import { ADMIN_EMAIL, ADMIN_URL, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, RESEARCH_PATTERN, STRIPE_PRICE_IDS, TESTING_LAYER, buildSystemPrompt, callAnthropic, fetchAndStoreDocument, getPhoenixDateStr, getPhoenixDayOfWeek, hashIp, sendResendEmail, sendSms, verifyStripeSignature } from "../shared/runtime.js";
 
@@ -281,6 +282,27 @@ async function getActingReviewer(env, userJwt) {
   return reviewer;
 }
 
+// GET /admin/me - the caller's own reviewer row plus their granted panel
+// keys. This exists because both admin panels used to boot by fetching the
+// FULL reviewer list and finding themselves in it, which meant every reviewer
+// needed read access to every reviewer's email and flags just to log in. With
+// panel scoping that was untenable: Staff do not hold the Reviewers panel, so
+// gating /admin/reviewers would have locked them out at boot. This route is
+// always reachable by an active reviewer (see ALWAYS_ALLOWED_PATHS in
+// middleware/panels.js) and returns only the caller's own record.
+async function getMe(env, userJwt, corsHeaders) {
+  const acting = await getActingReviewer(env, userJwt);
+  if (!acting) return jsonResponse({ error: "Not an active reviewer" }, 403, corsHeaders);
+  const rows = await supabaseFetch(env, "reviewers",
+    `?id=eq.${encodeURIComponent(acting.id)}&select=id,email,display_name,role,baseline_role,active,dev_access,can_sign_off_kgr,can_amend_constitution,can_grant_constitution_amendment,engagement_id`);
+  const me = rows?.[0];
+  if (!me) return jsonResponse({ error: "Reviewer not found" }, 404, corsHeaders);
+  const panels = me.baseline_role === "frontframe_operator"
+    ? "*"                                    // Operator holds every panel implicitly
+    : [...await grantedPanelKeys(env, me.id)];
+  return jsonResponse({ ...me, panels }, 200, corsHeaders);
+}
+
 async function getReviewers(env, userJwt, corsHeaders) {
   return jsonResponse(await supabaseFetch(env, "reviewers",
     "?select=id,email,display_name,role,baseline_role,engagement_id,invited_at,active,dev_access,can_sign_off_kgr,deactivated_at,deactivated_by&order=invited_at.asc", userJwt), 200, corsHeaders);
@@ -316,7 +338,26 @@ async function inviteReviewer(request, env, userJwt, corsHeaders) {
   const reviewer = await supabasePost(env, "reviewers", {
     id: inviteData.id, email, display_name, role, baseline_role, engagement_id: engagement_id ?? null,
   });
-  return jsonResponse({ invited: email, reviewer }, 201, corsHeaders);
+
+  // Tier defaults (middleware/panels.js). Tier acts as a template here, not as
+  // a standing authority: these rows become the reviewer's access, and the
+  // Operator edits them per person afterward from the Reviewers tab. A failure
+  // to write them must not fail an invite that already created an Auth user -
+  // the reviewer simply starts with no panels, which is the safe direction.
+  let granted = 0;
+  try {
+    const panelIds = await panelIdsForKeys(env, TIER_DEFAULT_PANELS[baseline_role] ?? []);
+    if (panelIds.length) {
+      await supabasePost(env, "reviewer_permissions", panelIds.map(pid => ({
+        reviewer_id: inviteData.id, admin_panel_id: pid, granted_by: acting.id,
+      })));
+      granted = panelIds.length;
+    }
+  } catch (e) {
+    console.error("tier default grants failed for", email, e);
+  }
+
+  return jsonResponse({ invited: email, reviewer, panels_granted: granted }, 201, corsHeaders);
 }
 
 async function resetReviewerPassword(request, env, userJwt, corsHeaders) {
@@ -485,4 +526,4 @@ async function setReviewerPermissions(request, env, id, userJwt, corsHeaders) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { getChangelog, createChangelog, getLeads, createLead, getLeadAlerts, updateLeadAlert, deleteLeadAlert, getAlertSession, getAgreements, updateAgreement, sendAgreement, sendDueDiligence, sendInfraAgreement, getSystemPrompt, getReviewers, inviteReviewer, resetReviewerPassword, updateReviewer, getAdminPanels, getReviewerPermissions, setReviewerPermissions };
+export { getMe, getChangelog, createChangelog, getLeads, createLead, getLeadAlerts, updateLeadAlert, deleteLeadAlert, getAlertSession, getAgreements, updateAgreement, sendAgreement, sendDueDiligence, sendInfraAgreement, getSystemPrompt, getReviewers, inviteReviewer, resetReviewerPassword, updateReviewer, getAdminPanels, getReviewerPermissions, setReviewerPermissions };
