@@ -9,14 +9,14 @@ const manifest = ROUTES.map(({ method, path }) => `${method} ${path}`).join("\n"
 
 describe("Worker route contract", () => {
   it("preserves the approved route manifest and declaration order", () => {
-    // 136 routes. Previous: 133 (134 minus the stood-down
-    // DELETE /admin/reviewers/:id, replaced by the extended PATCH that also
-    // handles deactivation/reactivation via the `active` field).
-    // +3 for panel-scoped reviewer permissions (2026-09-27):
-    // GET /admin/admin-panels, GET+PUT /admin/reviewers/:id/permissions.
-    expect(ROUTES).toHaveLength(136);
+    // 127 routes. Previous: 136. -9 for the retired Solutions tab
+    // (2026-09-28): marketing-log, problem-statements and deliverables, each
+    // GET/POST/PATCH. Their handler module src/routes/marketing.js is deleted.
+    // The KGR solutions routes (/admin/kgr-cases/:id/solutions) are a
+    // different feature and remain.
+    expect(ROUTES).toHaveLength(127);
     expect(createHash("sha256").update(manifest).digest("hex"))
-      .toBe("2e160a33a0a6735ca96a3db37480dfc2ad7ea828be44278dd0daa083a811ce3c");
+      .toBe("026c08765f4c30e0e1ffcfbe1ba4a6b67dffd3ee8b47025be536f390e80a445c");
   });
 
   it("keeps literal sub-routes ahead of their parameterized fallbacks", () => {

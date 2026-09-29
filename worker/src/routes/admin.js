@@ -69,15 +69,14 @@ export const ADMIN_ROUTES = [
   route("POST", "/admin/podcast-episodes", noParams(handlers.createPodcastEpisode)),
   route("PATCH", "/admin/podcast-episodes/:id", param(handlers.updatePodcastEpisode)),
   route("DELETE", "/admin/podcast-episodes/:id", envParam(handlers.deletePodcastEpisode)),
-  route("GET", "/admin/marketing-log", noParams(handlers.getMarketingLog)),
-  route("POST", "/admin/marketing-log", noParams(handlers.createMarketingLog)),
-  route("PATCH", "/admin/marketing-log/:id", param(handlers.updateMarketingLog)),
-  route("GET", "/admin/problem-statements", envOnly(handlers.getProblemStatements)),
-  route("POST", "/admin/problem-statements", noParams(handlers.createProblemStatement)),
-  route("PATCH", "/admin/problem-statements/:id", param(handlers.updateProblemStatement)),
-  route("GET", "/admin/deliverables", noParams(handlers.getDeliverables)),
-  route("POST", "/admin/deliverables", noParams(handlers.createDeliverable)),
-  route("PATCH", "/admin/deliverables/:id", param(handlers.updateDeliverable)),
+  // Solutions tab retired 2026-09-28: it was an early prompt-generator for
+  // LinkedIn article writing and is no longer needed. Its nine routes
+  // (marketing-log, problem-statements, deliverables) and their handler module
+  // src/routes/marketing.js are removed. The problem_statements, marketing_log
+  // and deliverables tables are intentionally left in place - the historical
+  // rows are retained pending a separate decision. Unrelated to the KGR
+  // solutions routes below (/admin/kgr-cases/:id/solutions), which are a
+  // different feature that merely shares the word.
   route("POST", "/admin/payments/create-checkout", noParams(handlers.createCheckoutSession)),
   route("POST", "/admin/payments/send-request", noParams(handlers.handleSendPaymentRequest)),
   route("POST", "/admin/payments/send-infra-request", noParams(handlers.handleSendInfraPaymentRequest)),

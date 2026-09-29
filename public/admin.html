@@ -470,7 +470,6 @@
       <button class="nav-item" data-tab="kgr-cases"    onclick="switchTab('kgr-cases')">&#x1F9EA; KGR Cases <span class="nav-badge hidden" id="badge-kgr-cases">0</span></button>
       <button class="nav-item" data-tab="constitution" onclick="switchTab('constitution')">&#x1F4DC; Constitution <span class="nav-badge hidden" id="badge-constitution">0</span></button>
       <button class="nav-item" data-tab="auth-incidents" onclick="switchTab('auth-incidents')">&#x26A0;&#xFE0F; Auth Incidents <span class="nav-badge hidden" id="badge-auth-incidents">0</span></button>
-      <button class="nav-item" data-tab="solutions"     onclick="switchTab('solutions')">&#x1F4A1; Solutions</button>
       <button class="nav-item" data-tab="subscriptions" onclick="switchTab('subscriptions')">&#x1F4F1; Subscriptions</button>
       <button class="nav-item" data-tab="office-hours"  onclick="switchTab('office-hours')">&#x1F550; Office Hours</button>
       <button class="nav-item" data-tab="reviewers"    onclick="switchTab('reviewers')">&#x1F464; Reviewers</button>
@@ -905,49 +904,6 @@
     </div>
 
     <!-- Solutions -->
-    <div class="tab-panel" id="tab-solutions">
-      <div class="page-header">
-        <div class="page-title">Solutions</div>
-        <div class="page-sub">Business problem sessions and daily deliverables</div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Problem Statements</div>
-          <button class="btn btn-primary btn-sm" onclick="openProblemModal()">+ Add Problem</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Title</th><th>Ideal Outcome</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="problems-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card" id="deliverables-card" style="display:none">
-        <div class="card-header">
-          <div class="card-title" id="deliverables-title">Deliverables</div>
-          <button class="btn btn-ghost btn-sm" onclick="closeDeliverables()">&larr; Back</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Challenge</th><th>Response</th><th>Action Committed</th><th>Date</th></tr></thead>
-            <tbody id="deliverables-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card" id="mkt-log-card">
-        <div class="card-header">
-          <div class="card-title">Solutions Log</div>
-          <button class="btn btn-primary btn-sm" onclick="openMktModal()">+ Add Entry</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Platform</th><th>Question</th><th>Answer</th><th>Action</th><th>Date</th></tr></thead>
-            <tbody id="mkt-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
     <!-- Subscriptions -->
     <div class="tab-panel" id="tab-subscriptions">
       <div class="page-header">
@@ -1882,39 +1838,6 @@
   </div>
 </div>
 
-<div class="modal-backdrop" id="problem-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">Add Problem Statement</div>
-      <button class="modal-close" onclick="closeModal('problem-modal')">&#x00D7;</button>
-    </div>
-    <div class="form-group"><label>Title</label><input type="text" id="ps-title"></div>
-    <div class="form-group"><label>Description</label><textarea id="ps-desc" rows="3"></textarea></div>
-    <div class="form-group"><label>Ideal Outcome</label><textarea id="ps-outcome" rows="3"></textarea></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('problem-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveProblem()">Save</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" id="mkt-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">Add Solutions Log Entry</div>
-      <button class="modal-close" onclick="closeModal('mkt-modal')">&#x00D7;</button>
-    </div>
-    <div class="form-group"><label>Platform / Context</label><input type="text" id="mkt-platform" placeholder="LinkedIn"></div>
-    <div class="form-group"><label>Question / Challenge</label><input type="text" id="mkt-question"></div>
-    <div class="form-group"><label>Answer / Response</label><textarea id="mkt-answer" rows="3"></textarea></div>
-    <div class="form-group"><label>Action Committed</label><input type="text" id="mkt-action" placeholder="Optional"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('mkt-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveMkt()">Save</button>
-    </div>
-  </div>
-</div>
-
 <!-- Outreach: Log Touch -->
 <div class="modal-backdrop" id="outreach-touch-modal">
   <div class="modal">
@@ -2057,9 +1980,6 @@ let panelsModalReviewerId = null;   // reviewer whose panel grants the permissio
 // button/modal visibly updates) from firing the same request twice.
 const pendingActions = new Set();
 let subscriptions = [];
-let mktLog        = [];
-let problems      = [];
-let deliverables  = [];
 let schedule      = [];
 let overrides     = [];
 let ovFormOpen    = false;
@@ -2219,7 +2139,6 @@ function switchTab(tab) {
                            loadFalsifiedHypotheses().catch(e => toast('Falsified hypotheses: ' + e.message, 'error')); break;
     case 'constitution':   loadConstitution().catch(e => toast('Constitution: ' + e.message, 'error')); break;
     case 'auth-incidents': loadAuthIncidents().catch(e => toast('Auth Incidents: ' + e.message, 'error')); break;
-    case 'solutions':     loadSolutions().catch(e => toast('Solutions: ' + e.message, 'error')); break;
     case 'subscriptions': loadSubscriptions().catch(e => toast('Subscriptions: ' + e.message, 'error')); break;
     case 'office-hours':  loadOfficeHours().catch(e => toast('Office Hours: ' + e.message, 'error')); break;
     case 'outreach':      loadOutreachTab().catch(e => toast('Outreach: ' + e.message, 'error')); break;
@@ -3085,101 +3004,6 @@ async function confirmPromoteFeedback() {
     closeModal('review-promote-modal');
     renderFeedback();
     toast('Promoted to Q&A.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-// Solutions
-
-async function loadSolutions() {
-  try {
-    [problems, mktLog] = await Promise.all([
-      api('GET', '/admin/problem-statements'),
-      api('GET', '/admin/marketing-log'),
-    ]);
-  } catch (e) { toast('Failed to load solutions: ' + e.message, 'error'); return; }
-  renderProblems();
-  renderMktLog();
-}
-
-function renderProblems() {
-  const tbody = document.getElementById('problems-tbody');
-  if (!problems.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No problem statements</div></td></tr>`; return; }
-  tbody.innerHTML = problems.map(p => `
-    <tr>
-      <td><strong>${esc(p.title)}</strong></td>
-      <td class="text-gray" style="max-width:240px">${esc(p.ideal_outcome?.slice(0,100) ?? '')}</td>
-      <td><span class="badge badge-${p.status ?? 'open'}">${p.status ?? 'open'}</span></td>
-      <td><button class="btn btn-ghost btn-xs" onclick="viewDeliverables('${p.id}','${esc(p.title)}')">Deliverables</button></td>
-    </tr>
-  `).join('');
-}
-
-async function viewDeliverables(problemId, title) {
-  document.getElementById('deliverables-card').style.display = 'block';
-  document.getElementById('deliverables-title').textContent  = 'Deliverables \u2014 ' + title;
-  try {
-    deliverables = await api('GET', `/admin/deliverables?problem_id=${problemId}`);
-  } catch (e) { toast('Failed to load deliverables: ' + e.message, 'error'); return; }
-  const tbody = document.getElementById('deliverables-tbody');
-  if (!deliverables.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">No deliverables yet</div></td></tr>`; return; }
-  tbody.innerHTML = deliverables.map(d => `
-    <tr>
-      <td>${esc(d.challenge?.slice(0,100) ?? '')}</td>
-      <td class="text-gray">${esc(d.response?.slice(0,100) ?? '\u2014')}</td>
-      <td class="text-gray">${esc(d.action_committed?.slice(0,80) ?? '\u2014')}</td>
-      <td class="text-small text-gray">${fmtDate(d.created_at)}</td>
-    </tr>
-  `).join('');
-}
-
-function closeDeliverables() { document.getElementById('deliverables-card').style.display = 'none'; }
-
-function openProblemModal() { document.getElementById('problem-modal').classList.add('open'); }
-
-async function saveProblem() {
-  const title       = document.getElementById('ps-title').value.trim();
-  const description = document.getElementById('ps-desc').value.trim();
-  const ideal       = document.getElementById('ps-outcome').value.trim();
-  if (!title || !description || !ideal) { toast('All fields required.', 'error'); return; }
-  try {
-    const created = await api('POST', '/admin/problem-statements', { title, description, ideal_outcome: ideal });
-    const newP    = Array.isArray(created) ? created[0] : created;
-    if (newP) problems.push(newP);
-    closeModal('problem-modal');
-    renderProblems();
-    toast('Problem statement saved.');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-function renderMktLog() {
-  const tbody = document.getElementById('mkt-tbody');
-  if (!mktLog.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No entries</div></td></tr>`; return; }
-  tbody.innerHTML = mktLog.map(m => `
-    <tr>
-      <td><span class="badge badge-new">${esc(m.platform)}</span></td>
-      <td style="max-width:200px">${esc(m.question?.slice(0,80) ?? '')}</td>
-      <td class="text-gray" style="max-width:200px">${esc(m.answer?.slice(0,80) ?? '\u2014')}</td>
-      <td class="text-gray">${esc(m.action_committed?.slice(0,60) ?? '\u2014')}</td>
-      <td class="text-small text-gray">${fmtDate(m.created_at)}</td>
-    </tr>
-  `).join('');
-}
-
-function openMktModal() { document.getElementById('mkt-modal').classList.add('open'); }
-
-async function saveMkt() {
-  const platform = document.getElementById('mkt-platform').value.trim();
-  const question = document.getElementById('mkt-question').value.trim();
-  const answer   = document.getElementById('mkt-answer').value.trim();
-  const action   = document.getElementById('mkt-action').value.trim();
-  if (!platform || !question) { toast('Platform and question required.', 'error'); return; }
-  try {
-    const created = await api('POST', '/admin/marketing-log', { platform, question, answer: answer || null, action_committed: action || null });
-    const newM    = Array.isArray(created) ? created[0] : created;
-    if (newM) mktLog.unshift(newM);
-    closeModal('mkt-modal');
-    renderMktLog();
-    toast('Saved.');
   } catch (e) { toast(e.message, 'error'); }
 }
 
