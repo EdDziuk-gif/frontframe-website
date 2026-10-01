@@ -33,7 +33,7 @@ export function routeScore(score, thresholdLow, thresholdHigh) {
   const high = Number(thresholdHigh);
 
   if (![value, low, high].every(Number.isFinite)) {
-    throw new Error("Scoring route received a non-numeric score or threshold");
+	throw new Error("Scoring route received a non-numeric score or threshold");
   }
   if (value < 0 || value > 1) throw new Error("Score must be between 0 and 1");
   if (low < 0 || high > 1 || low >= high) throw new Error("Invalid threshold configuration");
@@ -46,15 +46,15 @@ export function routeScore(score, thresholdLow, thresholdHigh) {
 export function parseScoringResult(raw) {
   let parsed;
   try {
-    parsed = parseJsonObject(raw);
+	parsed = parseJsonObject(raw);
   } catch {
-    throw new Error("Scoring Agent returned invalid JSON");
+	throw new Error("Scoring Agent returned invalid JSON");
   }
 
   const score = Number(parsed?.score);
   const rationale = typeof parsed?.rationale === "string" ? parsed.rationale.trim() : "";
   if (!Number.isFinite(score) || score < 0 || score > 1) {
-    throw new Error("Scoring Agent returned an invalid score");
+	throw new Error("Scoring Agent returned an invalid score");
   }
   if (!rationale) throw new Error("Scoring Agent returned no rationale");
 
@@ -63,19 +63,19 @@ export function parseScoringResult(raw) {
 
 export async function scoreCandidateAnswer(env, question, answer) {
   const raw = await callAnthropic(env, SCORING_SYSTEM_PROMPT, [
-    {
-      role: "user",
-      content: `QUESTION:\n${question}\n\nANSWER:\n${answer}`,
-    },
+	{
+	  role: "user",
+	  content: `QUESTION:\n${question}\n\nANSWER:\n${answer}`,
+	},
   ], ANTHROPIC_FAST_MODEL);
   return parseScoringResult(raw);
 }
 
 export async function getActiveThresholds(env) {
   const rows = await supabaseFetch(
-    env,
-    "threshold_config",
-    "?select=threshold_low,threshold_high&order=updated_at.desc&limit=1",
+	env,
+	"threshold_config",
+	"?select=threshold_low,threshold_high&order=updated_at.desc&limit=1",
   );
   const row = rows?.[0];
   if (!row) throw new Error("No threshold_config row is available");
@@ -94,26 +94,26 @@ export async function createScoringLifecycle(env, {
   source = "visitor_chat",
 }) {
   const questionRows = await supabasePost(env, "questions", {
-    source,
-    question_text: question,
-    asked_by: askedBy,
+	source,
+	question_text: question,
+	asked_by: askedBy,
   });
   const questionId = questionRows?.[0]?.id;
   if (!questionId) throw new Error("Failed to persist lifecycle question");
 
   const candidateRows = await supabasePost(env, "candidate_answers", {
-    question_id: questionId,
-    answer_text: answer,
-    origin: "retrieval",
+	question_id: questionId,
+	answer_text: answer,
+	origin: "retrieval",
   });
   const candidateAnswerId = candidateRows?.[0]?.id;
   if (!candidateAnswerId) throw new Error("Failed to persist candidate answer");
 
   const scoring = await scoreCandidateAnswer(env, question, answer);
   const scoreRows = await supabasePost(env, "scores", {
-    candidate_answer_id: candidateAnswerId,
-    score_value: scoring.score,
-    rationale: scoring.rationale,
+	candidate_answer_id: candidateAnswerId,
+	score_value: scoring.score,
+	rationale: scoring.rationale,
   });
   const scoreId = scoreRows?.[0]?.id;
   if (!scoreId) throw new Error("Failed to persist score");
@@ -122,38 +122,38 @@ export async function createScoringLifecycle(env, {
   const route = routeScore(scoring.score, thresholdLow, thresholdHigh);
 
   const routeRows = await supabasePost(env, "routes", {
-    score_id: scoreId,
-    route_decision: route,
-    route_reason: "scr",
+	score_id: scoreId,
+	route_decision: route,
+	route_reason: "scr",
   });
   const routeId = routeRows?.[0]?.id;
   if (!routeId) throw new Error("Failed to persist route");
 
   let gapResolutionRequestId = null;
   if (route === "resolve_gap") {
-    // REQ-SCA-06: forward the unresolved candidate into the manual KGR queue.
-    // authorized_by/authorized_at remain null until an Operator or authorized
-    // Delegate affirmatively authorizes gap-resolution work to begin.
-    const requestRows = await supabasePost(env, "gap_resolution_requests", {
-      route_id: routeId,
-      question_id: questionId,
-      candidate_answer_id: candidateAnswerId,
-    });
-    gapResolutionRequestId = requestRows?.[0]?.id ?? null;
-    if (!gapResolutionRequestId) throw new Error("Failed to persist gap-resolution request");
+	// REQ-SCA-06: forward the unresolved candidate into the manual KGR queue.
+	// authorized_by/authorized_at remain null until an Operator or authorized
+	// Delegate affirmatively authorizes gap-resolution work to begin.
+	const requestRows = await supabasePost(env, "gap_resolution_requests", {
+	  route_id: routeId,
+	  question_id: questionId,
+	  candidate_answer_id: candidateAnswerId,
+	});
+	gapResolutionRequestId = requestRows?.[0]?.id ?? null;
+	if (!gapResolutionRequestId) throw new Error("Failed to persist gap-resolution request");
   }
 
   return {
-    questionId,
-    candidateAnswerId,
-    scoreId,
-    routeId,
-    gapResolutionRequestId,
-    score: scoring.score,
-    rationale: scoring.rationale,
-    route,
-    thresholdLow,
-    thresholdHigh,
+	questionId,
+	candidateAnswerId,
+	scoreId,
+	routeId,
+	gapResolutionRequestId,
+	score: scoring.score,
+	rationale: scoring.rationale,
+	route,
+	thresholdLow,
+	thresholdHigh,
   };
 }
 
@@ -171,47 +171,47 @@ export async function createKnowledgeGapLifecycle(env, {
   source = "visitor_chat",
 }) {
   const questionRows = await supabasePost(env, "questions", {
-    source,
-    question_text: question,
-    asked_by: askedBy,
+	source,
+	question_text: question,
+	asked_by: askedBy,
   });
   const questionId = questionRows?.[0]?.id;
   if (!questionId) throw new Error("Failed to persist lifecycle question (knowledge gap)");
 
   const candidateRows = await supabasePost(env, "candidate_answers", {
-    question_id: questionId,
-    answer_text: answer,
-    origin: "retrieval",
+	question_id: questionId,
+	answer_text: answer,
+	origin: "retrieval",
   });
   const candidateAnswerId = candidateRows?.[0]?.id;
   if (!candidateAnswerId) throw new Error("Failed to persist candidate answer (knowledge gap)");
 
   const routeRows = await supabasePost(env, "routes", {
-    score_id: null,
-    route_decision: "resolve_gap",
-    route_reason: "knowledge_gap",
+	score_id: null,
+	route_decision: "resolve_gap",
+	route_reason: "knowledge_gap",
   });
   const routeId = routeRows?.[0]?.id;
   if (!routeId) throw new Error("Failed to persist knowledge-gap route");
 
   const requestRows = await supabasePost(env, "gap_resolution_requests", {
-    route_id: routeId,
-    question_id: questionId,
-    candidate_answer_id: candidateAnswerId,
+	route_id: routeId,
+	question_id: questionId,
+	candidate_answer_id: candidateAnswerId,
   });
   const gapResolutionRequestId = requestRows?.[0]?.id;
   if (!gapResolutionRequestId) throw new Error("Failed to persist gap-resolution request (knowledge gap)");
 
   return {
-    questionId,
-    candidateAnswerId,
-    scoreId: null,
-    routeId,
-    gapResolutionRequestId,
-    score: null,
-    rationale: missing ?? null,
-    route: "resolve_gap",
-    routeReason: "knowledge_gap",
+	questionId,
+	candidateAnswerId,
+	scoreId: null,
+	routeId,
+	gapResolutionRequestId,
+	score: null,
+	rationale: missing ?? null,
+	route: "resolve_gap",
+	routeReason: "knowledge_gap",
   };
 }
 
@@ -247,14 +247,14 @@ score is a number from 0.00 through 1.00. rationale is exactly one sentence.`;
 export function parseGroundingResult(raw) {
   let parsed;
   try {
-    parsed = parseJsonObject(raw);
+	parsed = parseJsonObject(raw);
   } catch {
-    throw new Error("Grounding Verifier returned invalid JSON");
+	throw new Error("Grounding Verifier returned invalid JSON");
   }
   const score = Number(parsed?.score);
   const rationale = typeof parsed?.rationale === "string" ? parsed.rationale.trim() : "";
   if (!Number.isFinite(score) || score < 0 || score > 1) {
-    throw new Error("Grounding Verifier returned an invalid score");
+	throw new Error("Grounding Verifier returned an invalid score");
   }
   if (!rationale) throw new Error("Grounding Verifier returned no rationale");
   return { score, rationale, sourceConflict: parsed?.source_conflict === true };
@@ -262,19 +262,27 @@ export function parseGroundingResult(raw) {
 
 export async function verifyGroundedAnswer(env, answer, corpus) {
   const raw = await callAnthropic(env, GROUNDING_SYSTEM_PROMPT, [
-    { role: "user", content: `SOURCE:\n${corpus ?? "(none supplied)"}\n\nANSWER:\n${answer}` },
+	{ role: "user", content: `SOURCE:\n${corpus ?? "(none supplied)"}\n\nANSWER:\n${answer}` },
   ], ANTHROPIC_FAST_MODEL);
   return parseGroundingResult(raw);
 }
 
-// One turn through grounding verification. Persists exactly one questions +
-// candidate_answers row. Outcomes:
+// One turn through grounding verification (Decision 0034, item 7 as amended
+// 2026-10-01). Persists exactly one questions + candidate_answers row.
+// Outcomes:
 //   - verified grounded  -> routes(route_reason='kb_grounded'); deliver
 //   - SOURCE self-conflict -> routes(resolve_gap, 'source_conflict') + KGR row;
 //                             caller withholds and files a content defect
-//   - over-claim / verifier unavailable -> re-score via SCR on the same
-//     candidate answer, routes(route_reason='scr_fallthrough'); caller may also
-//     log an [agentic] defect. Both score rows are kept for the audit trail.
+//   - grounding score below the low threshold
+//                        -> routes(resolve_gap, 'grounding_below_floor') + gap
+//                             request; caller withholds and escalates
+//   - Verifier unavailable or unusable result
+//                        -> routes(resolve_gap, 'grounding_unavailable') + gap
+//                             request; caller withholds, escalates, and files an
+//                             [agentic] defect so a broken Verifier is visible
+// A failed grounding claim is never re-scored by SCR and never delivered. A
+// valid grounding score, if one was obtained, is kept; none is fabricated when
+// verification fails.
 export async function createGroundingLifecycle(env, {
   question,
   answer,
@@ -283,13 +291,13 @@ export async function createGroundingLifecycle(env, {
   source = "visitor_chat",
 }) {
   const questionRows = await supabasePost(env, "questions", {
-    source, question_text: question, asked_by: askedBy,
+	source, question_text: question, asked_by: askedBy,
   });
   const questionId = questionRows?.[0]?.id;
   if (!questionId) throw new Error("Failed to persist lifecycle question (grounding)");
 
   const candidateRows = await supabasePost(env, "candidate_answers", {
-    question_id: questionId, answer_text: answer, origin: "retrieval",
+	question_id: questionId, answer_text: answer, origin: "retrieval",
   });
   const candidateAnswerId = candidateRows?.[0]?.id;
   if (!candidateAnswerId) throw new Error("Failed to persist candidate answer (grounding)");
@@ -298,82 +306,79 @@ export async function createGroundingLifecycle(env, {
 
   let grounding = null;
   let groundingError = null;
+  let groundingScoreId = null;
   try {
-    grounding = await verifyGroundedAnswer(env, answer, corpus);
+	grounding = await verifyGroundedAnswer(env, answer, corpus);
   } catch (e) {
-    groundingError = e?.message ?? "grounding verification failed";
+	groundingError = e?.message ?? "grounding verification failed";
   }
 
   if (grounding) {
-    const gScoreRows = await supabasePost(env, "scores", {
-      candidate_answer_id: candidateAnswerId,
-      score_value: grounding.score,
-      rationale: `[grounding] ${grounding.rationale}`,
-    });
-    const groundingScoreId = gScoreRows?.[0]?.id ?? null;
+	const gScoreRows = await supabasePost(env, "scores", {
+	  candidate_answer_id: candidateAnswerId,
+	  score_value: grounding.score,
+	  rationale: `[grounding] ${grounding.rationale}`,
+	});
+	groundingScoreId = gScoreRows?.[0]?.id ?? null;
 
-    if (grounding.sourceConflict) {
-      const routeRows = await supabasePost(env, "routes", {
-        score_id: groundingScoreId, route_decision: "resolve_gap", route_reason: "source_conflict",
-      });
-      const routeId = routeRows?.[0]?.id ?? null;
-      let gapResolutionRequestId = null;
-      if (routeId) {
-        const rr = await supabasePost(env, "gap_resolution_requests", {
-          route_id: routeId, question_id: questionId, candidate_answer_id: candidateAnswerId,
-        }).catch(() => null);
-        gapResolutionRequestId = rr?.[0]?.id ?? null;
-      }
-      return {
-        questionId, candidateAnswerId, scoreId: groundingScoreId, routeId, gapResolutionRequestId,
-        route: "source_conflict", routeReason: "source_conflict",
-        score: grounding.score, rationale: grounding.rationale,
-        groundingScore: grounding.score, groundingRationale: grounding.rationale, sourceConflict: true,
-      };
-    }
+	if (grounding.sourceConflict) {
+	  const routeRows = await supabasePost(env, "routes", {
+		score_id: groundingScoreId, route_decision: "resolve_gap", route_reason: "source_conflict",
+	  });
+	  const routeId = routeRows?.[0]?.id ?? null;
+	  let gapResolutionRequestId = null;
+	  if (routeId) {
+		const rr = await supabasePost(env, "gap_resolution_requests", {
+		  route_id: routeId, question_id: questionId, candidate_answer_id: candidateAnswerId,
+		}).catch(() => null);
+		gapResolutionRequestId = rr?.[0]?.id ?? null;
+	  }
+	  return {
+		questionId, candidateAnswerId, scoreId: groundingScoreId, routeId, gapResolutionRequestId,
+		route: "source_conflict", routeReason: "source_conflict",
+		score: grounding.score, rationale: grounding.rationale,
+		groundingScore: grounding.score, groundingRationale: grounding.rationale, sourceConflict: true,
+	  };
+	}
 
-    const groundingRoute = routeScore(grounding.score, thresholdLow, thresholdHigh);
-    if (groundingRoute !== "resolve_gap") {
-      const routeRows = await supabasePost(env, "routes", {
-        score_id: groundingScoreId, route_decision: groundingRoute, route_reason: "kb_grounded",
-      });
-      const routeId = routeRows?.[0]?.id;
-      if (!routeId) throw new Error("Failed to persist grounding route");
-      return {
-        questionId, candidateAnswerId, scoreId: groundingScoreId, routeId,
-        route: groundingRoute, routeReason: "kb_grounded",
-        score: grounding.score, rationale: grounding.rationale,
-        groundingScore: grounding.score, sourceConflict: false,
-      };
-    }
+	const groundingRoute = routeScore(grounding.score, thresholdLow, thresholdHigh);
+	if (groundingRoute !== "resolve_gap") {
+	  const routeRows = await supabasePost(env, "routes", {
+		score_id: groundingScoreId, route_decision: groundingRoute, route_reason: "kb_grounded",
+	  });
+	  const routeId = routeRows?.[0]?.id;
+	  if (!routeId) throw new Error("Failed to persist grounding route");
+	  return {
+		questionId, candidateAnswerId, scoreId: groundingScoreId, routeId,
+		route: groundingRoute, routeReason: "kb_grounded",
+		score: grounding.score, rationale: grounding.rationale,
+		groundingScore: grounding.score, sourceConflict: false,
+	  };
+	}
   }
 
-  // Over-claim (grounding score below the floor) or verifier unavailable:
-  // fall through to ordinary appropriateness scoring on the same candidate answer.
-  const scr = await scoreCandidateAnswer(env, question, answer);
-  const scrScoreRows = await supabasePost(env, "scores", {
-    candidate_answer_id: candidateAnswerId, score_value: scr.score, rationale: scr.rationale,
-  });
-  const scrScoreId = scrScoreRows?.[0]?.id ?? null;
-  const scrRoute = routeScore(scr.score, thresholdLow, thresholdHigh);
+  // Grounding score below the low threshold, or the Verifier produced no usable
+  // result: withhold and escalate. No fall-through to SCR (0034 item 7, amended).
+  const failureReason = grounding ? "grounding_below_floor" : "grounding_unavailable";
   const routeRows = await supabasePost(env, "routes", {
-    score_id: scrScoreId, route_decision: scrRoute, route_reason: "scr_fallthrough",
+	score_id: groundingScoreId, route_decision: "resolve_gap", route_reason: failureReason,
   });
   const routeId = routeRows?.[0]?.id ?? null;
   let gapResolutionRequestId = null;
-  if (scrRoute === "resolve_gap" && routeId) {
-    const rr = await supabasePost(env, "gap_resolution_requests", {
-      route_id: routeId, question_id: questionId, candidate_answer_id: candidateAnswerId,
-    }).catch(() => null);
-    gapResolutionRequestId = rr?.[0]?.id ?? null;
+  if (routeId) {
+	const rr = await supabasePost(env, "gap_resolution_requests", {
+	  route_id: routeId, question_id: questionId, candidate_answer_id: candidateAnswerId,
+	}).catch(() => null);
+	gapResolutionRequestId = rr?.[0]?.id ?? null;
   }
   return {
-    questionId, candidateAnswerId, scoreId: scrScoreId, routeId, gapResolutionRequestId,
-    route: scrRoute, routeReason: "scr_fallthrough",
-    score: scr.score, rationale: scr.rationale,
-    groundingScore: grounding ? grounding.score : null,
-    groundingRationale: grounding ? grounding.rationale : groundingError,
-    groundingFailed: true, sourceConflict: false,
+	questionId, candidateAnswerId, scoreId: groundingScoreId, routeId, gapResolutionRequestId,
+	route: "resolve_gap", routeReason: failureReason,
+	score: grounding ? grounding.score : null,
+	rationale: grounding ? grounding.rationale : groundingError,
+	groundingScore: grounding ? grounding.score : null,
+	groundingRationale: grounding ? grounding.rationale : groundingError,
+	groundingFailed: !grounding, sourceConflict: false,
   };
 }
 
@@ -451,36 +456,36 @@ export async function checkConstitutionalEligibility(env, constitutionSection, q
   if (!constitutionSection) return { constitutionalCandidate: false, issue: null };
 
   try {
-    // constitutionSection is identical on every call regardless of the
-    // question asked, so it's split into its own cache_control block ahead
-    // of the per-turn question (the "shared prefix, varying suffix" pattern)
-    // instead of being concatenated into one string with it — a marker on
-    // the combined string would key the cache to the question and never hit.
-    const raw = await callAnthropic(env, CONSTITUTIONAL_ELIGIBILITY_SYSTEM_PROMPT, [
-      {
-        role: "user",
-        content: [
-          cacheableBlock(constitutionSection),
-          cacheableBlock(`QUESTION:\n${question}`, { cache: false }),
-        ],
-      },
-    ], ANTHROPIC_FAST_MODEL);
-    const parsed = parseJsonObject(raw);
-    if (parsed?.constitutional_candidate === true) {
-      const issue = typeof parsed.issue === "string" && parsed.issue.trim()
-        ? parsed.issue.trim()
-        : "(not specified)";
-      return { constitutionalCandidate: true, issue };
-    }
-    return { constitutionalCandidate: false, issue: null };
+	// constitutionSection is identical on every call regardless of the
+	// question asked, so it's split into its own cache_control block ahead
+	// of the per-turn question (the "shared prefix, varying suffix" pattern)
+	// instead of being concatenated into one string with it — a marker on
+	// the combined string would key the cache to the question and never hit.
+	const raw = await callAnthropic(env, CONSTITUTIONAL_ELIGIBILITY_SYSTEM_PROMPT, [
+	  {
+		role: "user",
+		content: [
+		  cacheableBlock(constitutionSection),
+		  cacheableBlock(`QUESTION:\n${question}`, { cache: false }),
+		],
+	  },
+	], ANTHROPIC_FAST_MODEL);
+	const parsed = parseJsonObject(raw);
+	if (parsed?.constitutional_candidate === true) {
+	  const issue = typeof parsed.issue === "string" && parsed.issue.trim()
+		? parsed.issue.trim()
+		: "(not specified)";
+	  return { constitutionalCandidate: true, issue };
+	}
+	return { constitutionalCandidate: false, issue: null };
   } catch (e) {
-    // The eligibility reviewer's own job is bounded classification, not
-    // resolving the question - an infrastructure/parse failure here is not
-    // license to let a genuinely constitutional question slip through to
-    // ordinary generation. Fail closed: treat as a candidate requiring human
-    // determination rather than fail open into generation + SCR.
-    console.error("Constitutional eligibility check failed - failing closed:", e);
-    return { constitutionalCandidate: true, issue: "(eligibility review failed - flagged for safety)", eligibilityCheckFailed: true };
+	// The eligibility reviewer's own job is bounded classification, not
+	// resolving the question - an infrastructure/parse failure here is not
+	// license to let a genuinely constitutional question slip through to
+	// ordinary generation. Fail closed: treat as a candidate requiring human
+	// determination rather than fail open into generation + SCR.
+	console.error("Constitutional eligibility check failed - failing closed:", e);
+	return { constitutionalCandidate: true, issue: "(eligibility review failed - flagged for safety)", eligibilityCheckFailed: true };
   }
 }
 
@@ -500,47 +505,47 @@ export async function createConstitutionalCandidateLifecycle(env, {
   source = "visitor_chat",
 }) {
   const questionRows = await supabasePost(env, "questions", {
-    source,
-    question_text: question,
-    asked_by: askedBy,
+	source,
+	question_text: question,
+	asked_by: askedBy,
   });
   const questionId = questionRows?.[0]?.id;
   if (!questionId) throw new Error("Failed to persist lifecycle question (constitutional candidate)");
 
   const candidateRows = await supabasePost(env, "candidate_answers", {
-    question_id: questionId,
-    answer_text: answer,
-    origin: "retrieval",
+	question_id: questionId,
+	answer_text: answer,
+	origin: "retrieval",
   });
   const candidateAnswerId = candidateRows?.[0]?.id;
   if (!candidateAnswerId) throw new Error("Failed to persist candidate answer (constitutional candidate)");
 
   const routeRows = await supabasePost(env, "routes", {
-    score_id: null,
-    route_decision: "resolve_gap",
-    route_reason: "constitutional_candidate",
+	score_id: null,
+	route_decision: "resolve_gap",
+	route_reason: "constitutional_candidate",
   });
   const routeId = routeRows?.[0]?.id;
   if (!routeId) throw new Error("Failed to persist constitutional-candidate route");
 
   const requestRows = await supabasePost(env, "gap_resolution_requests", {
-    route_id: routeId,
-    question_id: questionId,
-    candidate_answer_id: candidateAnswerId,
+	route_id: routeId,
+	question_id: questionId,
+	candidate_answer_id: candidateAnswerId,
   });
   const gapResolutionRequestId = requestRows?.[0]?.id;
   if (!gapResolutionRequestId) throw new Error("Failed to persist gap-resolution request (constitutional candidate)");
 
   return {
-    questionId,
-    candidateAnswerId,
-    scoreId: null,
-    routeId,
-    gapResolutionRequestId,
-    score: null,
-    rationale: issue ?? null,
-    route: "resolve_gap",
-    routeReason: "constitutional_candidate",
+	questionId,
+	candidateAnswerId,
+	scoreId: null,
+	routeId,
+	gapResolutionRequestId,
+	score: null,
+	rationale: issue ?? null,
+	route: "resolve_gap",
+	routeReason: "constitutional_candidate",
   };
 }
 
@@ -583,35 +588,35 @@ export async function checkConstitutionalConformance(env, constitutionSection, a
   if (!constitutionSection) return { conforms: true, issue: null };
 
   try {
-    // constitutionSection is identical on every call regardless of the
-    // answer being checked, so it's split into its own cache_control block
-    // ahead of the per-turn answer (same pattern as checkConstitutionalEligibility
-    // above) - and, within a single visitor turn, this is the second call to
-    // reuse that exact block, so it's typically a cache read rather than a
-    // fresh write.
-    const raw = await callAnthropic(env, CONSTITUTIONAL_CONFORMANCE_SYSTEM_PROMPT, [
-      {
-        role: "user",
-        content: [
-          cacheableBlock(constitutionSection),
-          cacheableBlock(`ANSWER:\n${answer}`, { cache: false }),
-        ],
-      },
-    ], ANTHROPIC_FAST_MODEL);
-    const parsed = parseJsonObject(raw);
-    if (parsed?.conforms === false) {
-      const issue = typeof parsed.issue === "string" && parsed.issue.trim()
-        ? parsed.issue.trim()
-        : "(not specified)";
-      return { conforms: false, issue };
-    }
-    return { conforms: true, issue: null };
+	// constitutionSection is identical on every call regardless of the
+	// answer being checked, so it's split into its own cache_control block
+	// ahead of the per-turn answer (same pattern as checkConstitutionalEligibility
+	// above) - and, within a single visitor turn, this is the second call to
+	// reuse that exact block, so it's typically a cache read rather than a
+	// fresh write.
+	const raw = await callAnthropic(env, CONSTITUTIONAL_CONFORMANCE_SYSTEM_PROMPT, [
+	  {
+		role: "user",
+		content: [
+		  cacheableBlock(constitutionSection),
+		  cacheableBlock(`ANSWER:\n${answer}`, { cache: false }),
+		],
+	  },
+	], ANTHROPIC_FAST_MODEL);
+	const parsed = parseJsonObject(raw);
+	if (parsed?.conforms === false) {
+	  const issue = typeof parsed.issue === "string" && parsed.issue.trim()
+		? parsed.issue.trim()
+		: "(not specified)";
+	  return { conforms: false, issue };
+	}
+	return { conforms: true, issue: null };
   } catch (e) {
-    // Same fail-closed posture as checkConstitutionalEligibility: an
-    // infrastructure/parse failure here is not license to deliver an
-    // unverified answer. Treat it as non-conforming and route to human review.
-    console.error("Constitutional conformance check failed - failing closed:", e);
-    return { conforms: false, issue: "(conformance review failed - flagged for safety)", conformanceCheckFailed: true };
+	// Same fail-closed posture as checkConstitutionalEligibility: an
+	// infrastructure/parse failure here is not license to deliver an
+	// unverified answer. Treat it as non-conforming and route to human review.
+	console.error("Constitutional conformance check failed - failing closed:", e);
+	return { conforms: false, issue: "(conformance review failed - flagged for safety)", conformanceCheckFailed: true };
   }
 }
 
@@ -633,55 +638,55 @@ export async function createConstitutionalNonconformanceLifecycle(env, {
   source = "visitor_chat",
 }) {
   const questionRows = await supabasePost(env, "questions", {
-    source,
-    question_text: question,
-    asked_by: askedBy,
+	source,
+	question_text: question,
+	asked_by: askedBy,
   });
   const questionId = questionRows?.[0]?.id;
   if (!questionId) throw new Error("Failed to persist lifecycle question (constitutional nonconformance)");
 
   const candidateRows = await supabasePost(env, "candidate_answers", {
-    question_id: questionId,
-    answer_text: answer,
-    origin: "retrieval",
+	question_id: questionId,
+	answer_text: answer,
+	origin: "retrieval",
   });
   const candidateAnswerId = candidateRows?.[0]?.id;
   if (!candidateAnswerId) throw new Error("Failed to persist candidate answer (constitutional nonconformance)");
 
   const routeRows = await supabasePost(env, "routes", {
-    score_id: null,
-    route_decision: "resolve_gap",
-    route_reason: "constitutional_nonconformance",
+	score_id: null,
+	route_decision: "resolve_gap",
+	route_reason: "constitutional_nonconformance",
   });
   const routeId = routeRows?.[0]?.id;
   if (!routeId) throw new Error("Failed to persist constitutional-nonconformance route");
 
   const requestRows = await supabasePost(env, "gap_resolution_requests", {
-    route_id: routeId,
-    question_id: questionId,
-    candidate_answer_id: candidateAnswerId,
+	route_id: routeId,
+	question_id: questionId,
+	candidate_answer_id: candidateAnswerId,
   });
   const gapResolutionRequestId = requestRows?.[0]?.id;
   if (!gapResolutionRequestId) throw new Error("Failed to persist gap-resolution request (constitutional nonconformance)");
 
   return {
-    questionId,
-    candidateAnswerId,
-    scoreId: null,
-    routeId,
-    gapResolutionRequestId,
-    score: null,
-    rationale: issue ?? null,
-    route: "resolve_gap",
-    routeReason: "constitutional_nonconformance",
+	questionId,
+	candidateAnswerId,
+	scoreId: null,
+	routeId,
+	gapResolutionRequestId,
+	score: null,
+	rationale: issue ?? null,
+	route: "resolve_gap",
+	routeReason: "constitutional_nonconformance",
   };
 }
 
 export async function recordDeliveredResponse(env, routeId, responseText, hedgeShown = false) {
   const rows = await supabasePost(env, "responses", {
-    route_id: routeId,
-    response_text: responseText,
-    hedge_shown: Boolean(hedgeShown),
+	route_id: routeId,
+	response_text: responseText,
+	hedge_shown: Boolean(hedgeShown),
   });
   const responseId = rows?.[0]?.id;
   if (!responseId) throw new Error("Failed to persist delivered response");

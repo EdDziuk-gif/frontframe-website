@@ -60,11 +60,11 @@ const WITHHELD_CONSTITUTIONAL_NOTE =
 function inContactCollectSubflow(history) {
   if (!Array.isArray(history)) return false;
   return history.some((m) => {
-    if (m?.role !== "assistant") return false;
-    const t = String(m.content ?? "").trim();
-    return t === RESOLVE_GAP_MESSAGE
-        || t === CONSTITUTIONAL_HOLD_MESSAGE
-        || t.includes("leave your contact info on the part(s) I couldn't answer");
+	if (m?.role !== "assistant") return false;
+	const t = String(m.content ?? "").trim();
+	return t === RESOLVE_GAP_MESSAGE
+		|| t === CONSTITUTIONAL_HOLD_MESSAGE
+		|| t.includes("leave your contact info on the part(s) I couldn't answer");
   });
 }
 
@@ -82,12 +82,12 @@ const coerceDefectSeverity = (s) => (DEFECT_SEVERITIES.has(s) ? s : "minor");
 // severity:"high", which the constraint rejects — every such write was lost.
 function agenticDefect(config, description) {
   return {
-    area: "bot",
-    severity: "major",
-    description: `[agentic] ${description}`,
-    disposition: "retain",
-    build_version: config.build_version ?? "unknown",
-    stage_gate: config.stage_gate ?? "build",
+	area: "bot",
+	severity: "major",
+	description: `[agentic] ${description}`,
+	disposition: "retain",
+	build_version: config.build_version ?? "unknown",
+	stage_gate: config.stage_gate ?? "build",
   };
 }
 
@@ -96,10 +96,10 @@ function agenticDefect(config, description) {
 // doesn't sit unseen. Best-effort — never blocks or fails the visitor reply.
 async function alertGapResolutionQueue(env, ctx, page, question, reason) {
   ctx.waitUntil(
-    sendSms(env,
-      `FrontFrame gap queue\nReason: ${reason}\nPage: ${page}\n` +
-      `Question: ${question.slice(0, 200)}`
-    ).catch((e) => console.error("gap-resolution-queue alert failed:", e))
+	sendSms(env,
+	  `FrontFrame gap queue\nReason: ${reason}\nPage: ${page}\n` +
+	  `Question: ${question.slice(0, 200)}`
+	).catch((e) => console.error("gap-resolution-queue alert failed:", e))
   );
 }
 
@@ -112,18 +112,18 @@ const COMPOUND_HINT_PATTERN = /\b(and also|also,|in addition|as well as)\b|\?.*\
 async function decomposeIfCompound(env, message) {
   if (!COMPOUND_HINT_PATTERN.test(message)) return null;
   try {
-    // Deliberately left on the full ANTHROPIC_MODEL, not ANTHROPIC_FAST_MODEL.
-    // Unlike the other classification calls in this pipeline (eligibility, SCR,
-    // grounding — each a single bounded JSON verdict), this one has to cleanly
-    // separate entangled clauses and rewrite each as a self-contained question.
-    // Moving it to the fast model (2026-09-11) caused it to mis-split an
-    // adversarially-phrased compound question, dropping one subpart entirely
-    // and duplicating the other — silently discarding half the visitor's
-    // question. This call is at most once per compound message, not once per
-    // turn, so the cost of the full model here is small.
-    const raw = await callAnthropic(
-      env,
-      `Decide whether the visitor message below asks more than one genuinely separate
+	// Deliberately left on the full ANTHROPIC_MODEL, not ANTHROPIC_FAST_MODEL.
+	// Unlike the other classification calls in this pipeline (eligibility, SCR,
+	// grounding — each a single bounded JSON verdict), this one has to cleanly
+	// separate entangled clauses and rewrite each as a self-contained question.
+	// Moving it to the fast model (2026-09-11) caused it to mis-split an
+	// adversarially-phrased compound question, dropping one subpart entirely
+	// and duplicating the other — silently discarding half the visitor's
+	// question. This call is at most once per compound message, not once per
+	// turn, so the cost of the full model here is small.
+	const raw = await callAnthropic(
+	  env,
+	  `Decide whether the visitor message below asks more than one genuinely separate
 question that would need separate answers. Most messages, even long ones, are a
 single question — do not split rhetorical asides, clarifying detail, or a single
 question that merely has multiple clauses.
@@ -134,19 +134,19 @@ context needed for the question to stand alone). If it is not, return null.
 
 Return exactly one JSON object and no other text, in exactly this form:
 {"subparts": ["...", "..."]} or {"subparts": null}`,
-      [{ role: "user", content: message }],
-    );
-    const parsed = parseJsonObject(raw);
-    if (!Array.isArray(parsed?.subparts) || parsed.subparts.length < 2) return null;
-    const subparts = parsed.subparts
-      .map((s) => (typeof s === "string" ? s.trim() : ""))
-      .filter(Boolean);
-    return subparts.length >= 2 ? subparts : null;
+	  [{ role: "user", content: message }],
+	);
+	const parsed = parseJsonObject(raw);
+	if (!Array.isArray(parsed?.subparts) || parsed.subparts.length < 2) return null;
+	const subparts = parsed.subparts
+	  .map((s) => (typeof s === "string" ? s.trim() : ""))
+	  .filter(Boolean);
+	return subparts.length >= 2 ? subparts : null;
   } catch (e) {
-    // Decomposition is an optimization, not a correctness requirement — on any
-    // failure, fall through to treating the message as a single turn.
-    console.error("compound decomposition failed, treating as single turn:", e);
-    return null;
+	// Decomposition is an optimization, not a correctness requirement — on any
+	// failure, fall through to treating the message as a single turn.
+	console.error("compound decomposition failed, treating as single turn:", e);
+	return null;
   }
 }
 
@@ -171,40 +171,40 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
   const eligibility = await checkConstitutionalEligibility(env, constitutionSection, message);
 
   if (eligibility.constitutionalCandidate) {
-    let scoringLifecycle = null;
-    try {
-      scoringLifecycle = await createConstitutionalCandidateLifecycle(env, {
-        question: message,
-        answer: "(No candidate answer generated — constitutional eligibility review withheld this question before generation.)",
-        issue: eligibility.issue,
-        askedBy: session_id,
-        source,
-      });
-    } catch (e) {
-      console.error("Phase E constitutional-candidate lifecycle failed:", e);
-      ctx.waitUntil(
-        supabasePost(env, "defects", agenticDefect(config,
-          `Constitutional-candidate lifecycle failed: ${e?.message ?? "unknown error"}`))
-          .catch((err) => console.error("constitutional defect write failed:", err))
-      );
-    }
-    if (eligibility.eligibilityCheckFailed) {
-      ctx.waitUntil(
-        supabasePost(env, "defects", agenticDefect(config,
-          `Constitutional eligibility check failed - failed closed, no generation, no SCR. Question: ${message.slice(0, 200)}`))
-          .catch((err) => console.error("eligibility defect write failed:", err))
-      );
-    }
-    if (scoringLifecycle?.gapResolutionRequestId) {
-      await alertGapResolutionQueue(env, ctx, page, message, "constitutional_candidate");
-    }
-    return {
-      response: CONSTITUTIONAL_HOLD_MESSAGE,
-      routeId: scoringLifecycle?.routeId ?? null,
-      hedgeShown: false,
-      isWithheld: true,
-      withheldNote: WITHHELD_CONSTITUTIONAL_NOTE,
-    };
+	let scoringLifecycle = null;
+	try {
+	  scoringLifecycle = await createConstitutionalCandidateLifecycle(env, {
+		question: message,
+		answer: "(No candidate answer generated — constitutional eligibility review withheld this question before generation.)",
+		issue: eligibility.issue,
+		askedBy: session_id,
+		source,
+	  });
+	} catch (e) {
+	  console.error("Phase E constitutional-candidate lifecycle failed:", e);
+	  ctx.waitUntil(
+		supabasePost(env, "defects", agenticDefect(config,
+		  `Constitutional-candidate lifecycle failed: ${e?.message ?? "unknown error"}`))
+		  .catch((err) => console.error("constitutional defect write failed:", err))
+	  );
+	}
+	if (eligibility.eligibilityCheckFailed) {
+	  ctx.waitUntil(
+		supabasePost(env, "defects", agenticDefect(config,
+		  `Constitutional eligibility check failed - failed closed, no generation, no SCR. Question: ${message.slice(0, 200)}`))
+		  .catch((err) => console.error("eligibility defect write failed:", err))
+	  );
+	}
+	if (scoringLifecycle?.gapResolutionRequestId) {
+	  await alertGapResolutionQueue(env, ctx, page, message, "constitutional_candidate");
+	}
+	return {
+	  response: CONSTITUTIONAL_HOLD_MESSAGE,
+	  routeId: scoringLifecycle?.routeId ?? null,
+	  hedgeShown: false,
+	  isWithheld: true,
+	  withheldNote: WITHHELD_CONSTITUTIONAL_NOTE,
+	};
   }
 
   // ── Eligible: ordinary operational-corpus generation ─────────────────────
@@ -216,27 +216,27 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
   const escMatch = rawReply.match(ESCALATION_PATTERN);
 
   if (escMatch) {
-    response = rawReply.replace(ESCALATION_PATTERN, "").trim();
-    let escalation;
-    try { escalation = JSON.parse(escMatch[0]); }
-    catch { escalation = { _escalate: true, reason: "unknown", prospect: "Visitor" }; }
+	response = rawReply.replace(ESCALATION_PATTERN, "").trim();
+	let escalation;
+	try { escalation = JSON.parse(escMatch[0]); }
+	catch { escalation = { _escalate: true, reason: "unknown", prospect: "Visitor" }; }
 
-    const alertPayload = {
-      session_id: null, page,
-      prospect_name:  escalation.prospect     ?? "Visitor",
-      trigger_reason: escalation.reason       ?? "",
-      current_site:   escalation.current_site ?? null,
-      status: "new", sms_sent: false, sms_status: null,
-    };
+	const alertPayload = {
+	  session_id: null, page,
+	  prospect_name:  escalation.prospect     ?? "Visitor",
+	  trigger_reason: escalation.reason       ?? "",
+	  current_site:   escalation.current_site ?? null,
+	  status: "new", sms_sent: false, sms_status: null,
+	};
 
-    // Email backup, independent of the lead_alerts write and the SMS below -
-    // same reasoning as captureContactHandoff's backup email (intake.js): an
-    // invalid/missing SURGE_API_KEY silently dropped every alert here too,
-    // with nothing else to catch it. Escalation fires on signals in the
-    // conversation, often before the visitor has given contact info at all,
-    // so this stays a separate lightweight alert rather than being folded
-    // into captureContactHandoff's lead/contact shape.
-    const escalationEmailHtml = `<!DOCTYPE html><html><body style="font-family:Inter,system-ui,sans-serif;color:#1E2D40;max-width:560px;margin:0 auto;padding:40px 24px">
+	// Email backup, independent of the lead_alerts write and the SMS below -
+	// same reasoning as captureContactHandoff's backup email (intake.js): an
+	// invalid/missing SURGE_API_KEY silently dropped every alert here too,
+	// with nothing else to catch it. Escalation fires on signals in the
+	// conversation, often before the visitor has given contact info at all,
+	// so this stays a separate lightweight alert rather than being folded
+	// into captureContactHandoff's lead/contact shape.
+	const escalationEmailHtml = `<!DOCTYPE html><html><body style="font-family:Inter,system-ui,sans-serif;color:#1E2D40;max-width:560px;margin:0 auto;padding:40px 24px">
 <div style="margin-bottom:24px"><strong style="font-size:1.1rem">FrontFrame — Escalation Alert</strong></div>
 <p style="margin-bottom:4px">The chat assistant flagged a conversation for escalation.</p>
 <p style="margin:16px 0;color:#3A4A5C">
@@ -249,81 +249,81 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 <hr style="border:none;border-top:1px solid #E8ECF0;margin:32px 0">
 <p style="font-size:0.75rem;color:#8A9BAE">Backup notification alongside the SMS alert. Not every escalation is a qualified lead — no need to drop everything for this.</p>
 </body></html>`;
-    ctx.waitUntil(
-      sendResendEmail(env, ADMIN_EMAIL, `FrontFrame escalation — ${escalation.prospect ?? "Visitor"}`, escalationEmailHtml)
-        .catch((e) => console.error("escalation backup email failed:", e))
-    );
+	ctx.waitUntil(
+	  sendResendEmail(env, ADMIN_EMAIL, `FrontFrame escalation — ${escalation.prospect ?? "Visitor"}`, escalationEmailHtml)
+		.catch((e) => console.error("escalation backup email failed:", e))
+	);
 
-    ctx.waitUntil(
-      supabasePost(env, "lead_alerts", alertPayload)
-        .then(async (alertRows) => {
-          const alertId = alertRows?.[0]?.alert_id ?? null;
-          const smsMessage =
-            `FrontFrame alert\nProspect: ${escalation.prospect ?? "Visitor"}\nPage: ${page}\n` +
-            `Signal: ${escalation.reason ?? "escalation"}\n` +
-            (escalation.contact_preference ? `Contact: ${escalation.contact_preference} - ${escalation.contact_value ?? "not provided"}\n` : "") +
-            (escalation.current_site ? `Site: ${escalation.current_site}\n` : "") +
-            `Reply to continue the conversation.`;
-          const smsResult = await sendSms(env, smsMessage);
-          if (alertId) {
-            await supabasePatchByField(env, "lead_alerts", "alert_id", alertId,
-              { sms_sent: smsResult.success, sms_status: smsResult.status })
-              .catch((e) => console.error("lead_alert update failed:", e));
-          }
-        })
-        .catch((e) => console.error("lead_alert write failed:", e))
-    );
+	ctx.waitUntil(
+	  supabasePost(env, "lead_alerts", alertPayload)
+		.then(async (alertRows) => {
+		  const alertId = alertRows?.[0]?.alert_id ?? null;
+		  const smsMessage =
+			`FrontFrame alert\nProspect: ${escalation.prospect ?? "Visitor"}\nPage: ${page}\n` +
+			`Signal: ${escalation.reason ?? "escalation"}\n` +
+			(escalation.contact_preference ? `Contact: ${escalation.contact_preference} - ${escalation.contact_value ?? "not provided"}\n` : "") +
+			(escalation.current_site ? `Site: ${escalation.current_site}\n` : "") +
+			`Reply to continue the conversation.`;
+		  const smsResult = await sendSms(env, smsMessage);
+		  if (alertId) {
+			await supabasePatchByField(env, "lead_alerts", "alert_id", alertId,
+			  { sms_sent: smsResult.success, sms_status: smsResult.status })
+			  .catch((e) => console.error("lead_alert update failed:", e));
+		  }
+		})
+		.catch((e) => console.error("lead_alert write failed:", e))
+	);
   }
 
   // ── Defect detection ─────────────────────────────────────────────────────
   const defMatch = response.match(DEFECT_PATTERN);
   if (defMatch) {
-    response = response.replace(DEFECT_PATTERN, "").trim();
-    let defectPayload;
-    try {
-      const parsed = JSON.parse(defMatch[0]);
-      defectPayload = {
-        area: coerceDefectArea(parsed.area), description: parsed.description ?? "(no description)",
-        severity: coerceDefectSeverity(parsed.severity),
-        disposition: parsed.disposition === "delete" ? "delete" : "retain",
-        build_version: config.build_version ?? "unknown", stage_gate: config.stage_gate ?? "build",
-      };
-    } catch {
-      defectPayload = {
-        area: "bot", description: "Marker unparsed. Raw: " + defMatch[0].slice(0, 200),
-        severity: "minor", disposition: "retain",
-        build_version: config.build_version ?? "unknown", stage_gate: config.stage_gate ?? "build",
-      };
-    }
-    ctx.waitUntil(supabasePost(env, "defects", defectPayload).catch((e) => console.error("defect write failed:", e)));
+	response = response.replace(DEFECT_PATTERN, "").trim();
+	let defectPayload;
+	try {
+	  const parsed = JSON.parse(defMatch[0]);
+	  defectPayload = {
+		area: coerceDefectArea(parsed.area), description: parsed.description ?? "(no description)",
+		severity: coerceDefectSeverity(parsed.severity),
+		disposition: parsed.disposition === "delete" ? "delete" : "retain",
+		build_version: config.build_version ?? "unknown", stage_gate: config.stage_gate ?? "build",
+	  };
+	} catch {
+	  defectPayload = {
+		area: "bot", description: "Marker unparsed. Raw: " + defMatch[0].slice(0, 200),
+		severity: "minor", disposition: "retain",
+		build_version: config.build_version ?? "unknown", stage_gate: config.stage_gate ?? "build",
+	  };
+	}
+	ctx.waitUntil(supabasePost(env, "defects", defectPayload).catch((e) => console.error("defect write failed:", e)));
   }
 
   // ── Research detection ───────────────────────────────────────────────────
   const researchMatch = response.match(RESEARCH_PATTERN);
   if (researchMatch) {
-    response = response.replace(RESEARCH_PATTERN, "").trim();
-    let leadPayload;
-    try {
-      const parsed  = JSON.parse(researchMatch[0]);
-      const contact = parsed.contact ?? "";
-      const isEmail = contact.includes("@");
-      leadPayload = {
-        name: parsed.name ?? "Visitor", email: isEmail ? contact : null,
-        phone: isEmail ? null : (contact || null), notes: parsed.question ?? "", source: "agent", status: "new",
-      };
-    } catch {
-      leadPayload = { name: "Visitor", notes: "Research request - marker unparsed. Raw: " + researchMatch[0].slice(0, 200), source: "agent", status: "new" };
-    }
-    ctx.waitUntil(
-      supabasePost(env, "leads", leadPayload)
-        .then(async () => {
-          await sendSms(env,
-            `FrontFrame research request\nName: ${leadPayload.name}\n` +
-            `Contact: ${leadPayload.email ?? leadPayload.phone ?? "not provided"}\n` +
-            `Question: ${leadPayload.notes?.slice(0, 120) ?? ""}`);
-        })
-        .catch((e) => console.error("research lead write failed:", e))
-    );
+	response = response.replace(RESEARCH_PATTERN, "").trim();
+	let leadPayload;
+	try {
+	  const parsed  = JSON.parse(researchMatch[0]);
+	  const contact = parsed.contact ?? "";
+	  const isEmail = contact.includes("@");
+	  leadPayload = {
+		name: parsed.name ?? "Visitor", email: isEmail ? contact : null,
+		phone: isEmail ? null : (contact || null), notes: parsed.question ?? "", source: "agent", status: "new",
+	  };
+	} catch {
+	  leadPayload = { name: "Visitor", notes: "Research request - marker unparsed. Raw: " + researchMatch[0].slice(0, 200), source: "agent", status: "new" };
+	}
+	ctx.waitUntil(
+	  supabasePost(env, "leads", leadPayload)
+		.then(async () => {
+		  await sendSms(env,
+			`FrontFrame research request\nName: ${leadPayload.name}\n` +
+			`Contact: ${leadPayload.email ?? leadPayload.phone ?? "not provided"}\n` +
+			`Question: ${leadPayload.notes?.slice(0, 120) ?? ""}`);
+		})
+		.catch((e) => console.error("research lead write failed:", e))
+	);
   }
 
   // ── Contact-handoff detection ([COLLECTED] marker) ─────────────────────
@@ -334,31 +334,31 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
   let handoffCaptured = false;
   const collectedMatch = response.match(COLLECTED_PATTERN);
   if (collectedMatch) {
-    response = response.replace(COLLECTED_PATTERN, "").trim();
-    let collected = {};
-    try { collected = JSON.parse(collectedMatch[1]); } catch { collected = {}; }
-    if (collected && (collected.name || collected.contact)) {
-      handoffCaptured = true;
-      const transcript = [...history, { role: "user", content: message }, { role: "assistant", content: response }]
-        .map((t) => `${t.role === "user" ? "Visitor" : "Assistant"}: ${t.content}`)
-        .join("\n");
-      ctx.waitUntil(
-        captureContactHandoff(env, ctx, {
-          session_id,
-          name:     collected.name     ?? "Visitor",
-          contact:  collected.contact  ?? "",
-          method:   collected.method   ?? "",
-          zip:      collected.zip      ?? "",
-          timezone: collected.timezone ?? "",
-          summary:  collected.summary  ?? "",
-          source:   "agent",
-          transcript,
-        }).catch((e) => console.error("server-side contact handoff failed:", e))
-      );
-    }
-    if (!response) {
-      response = `Got it — Ed will follow up personally. You can also reach him directly at ${ADMIN_EMAIL}.`;
-    }
+	response = response.replace(COLLECTED_PATTERN, "").trim();
+	let collected = {};
+	try { collected = JSON.parse(collectedMatch[1]); } catch { collected = {}; }
+	if (collected && (collected.name || collected.contact)) {
+	  handoffCaptured = true;
+	  const transcript = [...history, { role: "user", content: message }, { role: "assistant", content: response }]
+		.map((t) => `${t.role === "user" ? "Visitor" : "Assistant"}: ${t.content}`)
+		.join("\n");
+	  ctx.waitUntil(
+		captureContactHandoff(env, ctx, {
+		  session_id,
+		  name:     collected.name     ?? "Visitor",
+		  contact:  collected.contact  ?? "",
+		  method:   collected.method   ?? "",
+		  zip:      collected.zip      ?? "",
+		  timezone: collected.timezone ?? "",
+		  summary:  collected.summary  ?? "",
+		  source:   "agent",
+		  transcript,
+		}).catch((e) => console.error("server-side contact handoff failed:", e))
+	  );
+	}
+	if (!response) {
+	  response = `Got it — Ed will follow up personally. You can also reach him directly at ${ADMIN_EMAIL}.`;
+	}
   }
 
   // ── Knowledge-gap detection (Generation-Boundary Spike, Phase E) ─────────
@@ -371,26 +371,26 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
   let knowledgeGapMalformed = false;
 
   if (gapMatch) {
-    try {
-      const parsedGap = JSON.parse(gapMatch[0]);
-      if (parsedGap?._knowledge_gap === true) {
-        knowledgeGapMissing = typeof parsedGap.missing === "string" && parsedGap.missing.trim()
-          ? parsedGap.missing.trim()
-          : "(not specified)";
-        response = response.replace(KNOWLEDGE_GAP_PATTERN, "").trim();
-      } else {
-        knowledgeGapMalformed = true;
-      }
-    } catch {
-      knowledgeGapMalformed = true;
-    }
+	try {
+	  const parsedGap = JSON.parse(gapMatch[0]);
+	  if (parsedGap?._knowledge_gap === true) {
+		knowledgeGapMissing = typeof parsedGap.missing === "string" && parsedGap.missing.trim()
+		  ? parsedGap.missing.trim()
+		  : "(not specified)";
+		response = response.replace(KNOWLEDGE_GAP_PATTERN, "").trim();
+	  } else {
+		knowledgeGapMalformed = true;
+	  }
+	} catch {
+	  knowledgeGapMalformed = true;
+	}
   } else if (response.slice(-300).includes("_knowledge_gap")) {
-    // The model appears to have attempted the marker near the end of its
-    // reply but it did not match the expected shape closely enough to parse.
-    // Restricted to the tail of the response so an unrelated mid-reply
-    // mention (e.g. quoted or discussed in prose) is not mistaken for a
-    // failed marker attempt.
-    knowledgeGapMalformed = true;
+	// The model appears to have attempted the marker near the end of its
+	// reply but it did not match the expected shape closely enough to parse.
+	// Restricted to the tail of the response so an unrelated mid-reply
+	// mention (e.g. quoted or discussed in prose) is not mistaken for a
+	// failed marker attempt.
+	knowledgeGapMalformed = true;
   }
 
   // ── KB-grounded marker (Defect 95ebc11f) ───────────────────────────────
@@ -402,8 +402,8 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
   let kbGrounded = false;
   const kbMatch = response.match(KB_GROUNDED_PATTERN);
   if (kbMatch) {
-    kbGrounded = true;
-    response = response.replace(KB_GROUNDED_PATTERN, "").trim();
+	kbGrounded = true;
+	response = response.replace(KB_GROUNDED_PATTERN, "").trim();
   }
 
   // ── Phase D: Scoring Agent + deterministic Scoring Consumer ──────────────
@@ -420,10 +420,10 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 
   const isHandoffTurn = handoffCaptured || Boolean(escMatch);
   const isCollectDialogue = !isHandoffTurn
-    && inContactCollectSubflow(history)
-    && knowledgeGapMissing === null
-    && !knowledgeGapMalformed
-    && rawReply.length <= 600;
+	&& inContactCollectSubflow(history)
+	&& knowledgeGapMissing === null
+	&& !knowledgeGapMalformed
+	&& rawReply.length <= 600;
 
   // ── Phase 3: post-generation constitutional-conformance check ───────────
   // Distinct from checkConstitutionalEligibility() at the top of this
@@ -438,187 +438,183 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
   // answer never reaches grounding or SCR — the Constitution is superior to
   // both, same as the eligibility boundary is to generation itself.
   const needsConformanceCheck = !isHandoffTurn && !isCollectDialogue
-    && knowledgeGapMissing === null && !knowledgeGapMalformed
-    && Boolean(constitutionSection);
+	&& knowledgeGapMissing === null && !knowledgeGapMalformed
+	&& Boolean(constitutionSection);
   const conformance = needsConformanceCheck
-    ? await checkConstitutionalConformance(env, constitutionSection, response)
-    : { conforms: true, issue: null };
+	? await checkConstitutionalConformance(env, constitutionSection, response)
+	: { conforms: true, issue: null };
 
   if (isHandoffTurn || isCollectDialogue) {
-    // Defect 2: a handoff turn ([COLLECTED] captured above, or an escalation
-    // marker), or contact-collection dialogue inside the withhold sub-flow
-    // ("what's your zip?", "got it"). Not a scored answer — deliver the model's
-    // own reply as-is, no Phase D. A renewed attempt to answer the original
-    // question still carries the knowledge-gap marker and is handled by the
-    // branches below, so it cannot reach here.
-    isWithheld = false;
+	// Defect 2: a handoff turn ([COLLECTED] captured above, or an escalation
+	// marker), or contact-collection dialogue inside the withhold sub-flow
+	// ("what's your zip?", "got it"). Not a scored answer — deliver the model's
+	// own reply as-is, no Phase D. A renewed attempt to answer the original
+	// question still carries the knowledge-gap marker and is handled by the
+	// branches below, so it cannot reach here.
+	isWithheld = false;
   } else if (!conformance.conforms) {
-    // The answer's own content conflicts with a Constitution provision — the
-    // model overstepped, misstated a governance fact, or claimed an authority
-    // the Constitution doesn't grant. Withheld here, before grounding or SCR
-    // ever run on this candidate. Distinct route_reason from
-    // constitutional_candidate (that one catches the QUESTION, before
-    // generation) so a human reviewer can tell which boundary caught it.
-    let nonconformanceLifecycle = null;
-    try {
-      nonconformanceLifecycle = await createConstitutionalNonconformanceLifecycle(env, {
-        question: message,
-        answer: response,
-        issue: conformance.issue,
-        askedBy: session_id,
-        source,
-      });
-    } catch (e) {
-      console.error("Constitutional-nonconformance lifecycle failed:", e);
-      ctx.waitUntil(
-        supabasePost(env, "defects", agenticDefect(config,
-          `Constitutional-nonconformance lifecycle failed: ${e?.message ?? "unknown error"}`))
-          .catch((err) => console.error("nonconformance defect write failed:", err))
-      );
-    }
-    if (conformance.conformanceCheckFailed) {
-      ctx.waitUntil(
-        supabasePost(env, "defects", agenticDefect(config,
-          `Constitutional conformance check failed - failed closed, candidate withheld. Question: ${message.slice(0, 200)}`))
-          .catch((err) => console.error("conformance-check defect write failed:", err))
-      );
-    }
-    if (nonconformanceLifecycle?.gapResolutionRequestId) {
-      await alertGapResolutionQueue(env, ctx, page, message, "constitutional_nonconformance");
-    }
-    response = CONSTITUTIONAL_HOLD_MESSAGE;
-    isWithheld = true;
-    withheldNote = WITHHELD_CONSTITUTIONAL_NOTE;
-    scoringLifecycle = nonconformanceLifecycle;
+	// The answer's own content conflicts with a Constitution provision — the
+	// model overstepped, misstated a governance fact, or claimed an authority
+	// the Constitution doesn't grant. Withheld here, before grounding or SCR
+	// ever run on this candidate. Distinct route_reason from
+	// constitutional_candidate (that one catches the QUESTION, before
+	// generation) so a human reviewer can tell which boundary caught it.
+	let nonconformanceLifecycle = null;
+	try {
+	  nonconformanceLifecycle = await createConstitutionalNonconformanceLifecycle(env, {
+		question: message,
+		answer: response,
+		issue: conformance.issue,
+		askedBy: session_id,
+		source,
+	  });
+	} catch (e) {
+	  console.error("Constitutional-nonconformance lifecycle failed:", e);
+	  ctx.waitUntil(
+		supabasePost(env, "defects", agenticDefect(config,
+		  `Constitutional-nonconformance lifecycle failed: ${e?.message ?? "unknown error"}`))
+		  .catch((err) => console.error("nonconformance defect write failed:", err))
+	  );
+	}
+	if (conformance.conformanceCheckFailed) {
+	  ctx.waitUntil(
+		supabasePost(env, "defects", agenticDefect(config,
+		  `Constitutional conformance check failed - failed closed, candidate withheld. Question: ${message.slice(0, 200)}`))
+		  .catch((err) => console.error("conformance-check defect write failed:", err))
+	  );
+	}
+	if (nonconformanceLifecycle?.gapResolutionRequestId) {
+	  await alertGapResolutionQueue(env, ctx, page, message, "constitutional_nonconformance");
+	}
+	response = CONSTITUTIONAL_HOLD_MESSAGE;
+	isWithheld = true;
+	withheldNote = WITHHELD_CONSTITUTIONAL_NOTE;
+	scoringLifecycle = nonconformanceLifecycle;
   } else if (kbGrounded && knowledgeGapMissing === null && !knowledgeGapMalformed) {
-    // Defect 95ebc11f: the answer claims to be drawn from promulgated material.
-    // Verify fidelity to the corpus instead of scoring appropriateness.
-    try {
-      scoringLifecycle = await createGroundingLifecycle(env, {
-        question: message,
-        answer: response,
-        corpus: promulgatedCorpus,
-        askedBy: session_id,
-        source,
-      });
-      const gRoute = scoringLifecycle.route;
+	// Defect 95ebc11f: the answer claims to be drawn from promulgated material.
+	// Verify fidelity to the corpus instead of scoring appropriateness.
+	try {
+	  scoringLifecycle = await createGroundingLifecycle(env, {
+		question: message,
+		answer: response,
+		corpus: promulgatedCorpus,
+		askedBy: session_id,
+		source,
+	  });
+	  const gRoute = scoringLifecycle.route;
 
-      if (gRoute === "source_conflict") {
-        // The promulgated corpus contradicts itself on this answer's substance.
-        // Withhold, alert, and file a content defect naming the conflict.
-        response = RESOLVE_GAP_MESSAGE;
-        isWithheld = true;
-        withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
-        ctx.waitUntil(
-          supabasePost(env, "defects", {
-            area: "content",
-            severity: "major",
-            disposition: "retain",
-            description: `[corpus-conflict] Promulgated material contradicts itself on an answered point. ${scoringLifecycle.groundingRationale ?? ""}`.slice(0, 1000),
-            build_version: config.build_version ?? "unknown",
-            stage_gate: config.stage_gate ?? "build",
-          }).catch((err) => console.error("corpus-conflict defect write failed:", err))
-        );
-        if (scoringLifecycle?.gapResolutionRequestId) {
-          await alertGapResolutionQueue(env, ctx, page, message, "source_conflict");
-        }
-      } else if (gRoute === "resolve_gap") {
-        // Grounding below the floor and the SCR fall-through also withheld.
-        response = RESOLVE_GAP_MESSAGE;
-        isWithheld = true;
-        withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
-        if (scoringLifecycle?.groundingFailed) {
-          ctx.waitUntil(
-            supabasePost(env, "defects", agenticDefect(config,
-              `_kb_grounded claim failed grounding verification (score ${scoringLifecycle.groundingScore}); SCR fall-through withheld. ${scoringLifecycle.groundingRationale ?? ""}`))
-              .catch((err) => console.error("kb-grounded defect write failed:", err))
-          );
-        }
-        if (scoringLifecycle?.gapResolutionRequestId) {
-          await alertGapResolutionQueue(env, ctx, page, message, "scr_low_confidence");
-        }
-      } else {
-        // Delivered — verified grounded, or the SCR fall-through cleared it.
-        if (scoringLifecycle?.groundingFailed) {
-          ctx.waitUntil(
-            supabasePost(env, "defects", agenticDefect(config,
-              `_kb_grounded claim failed grounding verification (score ${scoringLifecycle.groundingScore}); SCR fall-through delivered as ${gRoute}. ${scoringLifecycle.groundingRationale ?? ""}`))
-              .catch((err) => console.error("kb-grounded defect write failed:", err))
-          );
-        }
-        if (gRoute === "respond_limited") {
-          hedgeShown = true;
-          response = LIMITED_CONFIDENCE_HEDGE + response;
-        }
-      }
-    } catch (e) {
-      console.error("Grounding pipeline failed:", e);
-      response = RESOLVE_GAP_MESSAGE;
-      isWithheld = true;
-      withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
-      ctx.waitUntil(
-        supabasePost(env, "defects", agenticDefect(config,
-          `Grounding pipeline failed: ${e?.message ?? "unknown error"}`))
-          .catch((err) => console.error("grounding defect write failed:", err))
-      );
-    }
+	  if (gRoute === "source_conflict") {
+		// The promulgated corpus contradicts itself on this answer's substance.
+		// Withhold, alert, and file a content defect naming the conflict.
+		response = RESOLVE_GAP_MESSAGE;
+		isWithheld = true;
+		withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
+		ctx.waitUntil(
+		  supabasePost(env, "defects", {
+			area: "content",
+			severity: "major",
+			disposition: "retain",
+			description: `[corpus-conflict] Promulgated material contradicts itself on an answered point. ${scoringLifecycle.groundingRationale ?? ""}`.slice(0, 1000),
+			build_version: config.build_version ?? "unknown",
+			stage_gate: config.stage_gate ?? "build",
+		  }).catch((err) => console.error("corpus-conflict defect write failed:", err))
+		);
+		if (scoringLifecycle?.gapResolutionRequestId) {
+		  await alertGapResolutionQueue(env, ctx, page, message, "source_conflict");
+		}
+	  } else if (gRoute === "resolve_gap") {
+		// Decision 0034 item 7 (amended 2026-10-01): grounding below the low
+		// threshold, or no usable Verifier result. Withhold and escalate to a
+		// person. Never re-scored by SCR, never delivered.
+		response = RESOLVE_GAP_MESSAGE;
+		isWithheld = true;
+		withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
+		if (scoringLifecycle?.groundingFailed) {
+		  // The Verifier itself failed: make a broken Verifier visible.
+		  ctx.waitUntil(
+			supabasePost(env, "defects", agenticDefect(config,
+			  `Grounding Verifier produced no usable result; _kb_grounded answer withheld and escalated. ${scoringLifecycle.groundingRationale ?? ""}`))
+			  .catch((err) => console.error("grounding-verifier defect write failed:", err))
+		  );
+		}
+		if (scoringLifecycle?.gapResolutionRequestId) {
+		  await alertGapResolutionQueue(env, ctx, page, message, scoringLifecycle.routeReason);
+		}
+	  } else {
+		// Delivered: verified grounded (respond_strong or respond_limited).
+		if (gRoute === "respond_limited") {
+		  hedgeShown = true;
+		  response = LIMITED_CONFIDENCE_HEDGE + response;
+		}
+	  }
+	} catch (e) {
+	  console.error("Grounding pipeline failed:", e);
+	  response = RESOLVE_GAP_MESSAGE;
+	  isWithheld = true;
+	  withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
+	  ctx.waitUntil(
+		supabasePost(env, "defects", agenticDefect(config,
+		  `Grounding pipeline failed: ${e?.message ?? "unknown error"}`))
+		  .catch((err) => console.error("grounding defect write failed:", err))
+	  );
+	}
   } else if (knowledgeGapMalformed) {
-    const rawCandidate = response;
-    console.error("Malformed knowledge-gap marker — withholding candidate:", rawCandidate.slice(0, 200));
-    response = RESOLVE_GAP_MESSAGE;
-    isWithheld = true;
-    withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
-    ctx.waitUntil(
-      supabasePost(env, "defects", agenticDefect(config,
-        `Malformed knowledge-gap marker - candidate withheld, SCR not invoked. Raw: ${rawCandidate.slice(0, 200)}`))
-        .catch((err) => console.error("marker defect write failed:", err))
-    );
+	const rawCandidate = response;
+	console.error("Malformed knowledge-gap marker — withholding candidate:", rawCandidate.slice(0, 200));
+	response = RESOLVE_GAP_MESSAGE;
+	isWithheld = true;
+	withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
+	ctx.waitUntil(
+	  supabasePost(env, "defects", agenticDefect(config,
+		`Malformed knowledge-gap marker - candidate withheld, SCR not invoked. Raw: ${rawCandidate.slice(0, 200)}`))
+		.catch((err) => console.error("marker defect write failed:", err))
+	);
   } else {
-    try {
-      scoringLifecycle = knowledgeGapMissing !== null
-        ? await createKnowledgeGapLifecycle(env, {
-            question: message,
-            answer: response.trim() ? response : "(No partial answer — full knowledge gap.)",
-            missing: knowledgeGapMissing,
-            askedBy: session_id,
-            source,
-          })
-        : await createScoringLifecycle(env, {
-            question: message,
-            answer: response,
-            askedBy: session_id,
-            source,
-          });
+	try {
+	  scoringLifecycle = knowledgeGapMissing !== null
+		? await createKnowledgeGapLifecycle(env, {
+			question: message,
+			answer: response.trim() ? response : "(No partial answer — full knowledge gap.)",
+			missing: knowledgeGapMissing,
+			askedBy: session_id,
+			source,
+		  })
+		: await createScoringLifecycle(env, {
+			question: message,
+			answer: response,
+			askedBy: session_id,
+			source,
+		  });
 
-      if (scoringLifecycle.route === "resolve_gap") {
-        // The candidate remains in lifecycle records for human handling, but the
-        // system does not surface it to the visitor on its own authority.
-        response = RESOLVE_GAP_MESSAGE;
-        isWithheld = true;
-        withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
-        if (scoringLifecycle?.gapResolutionRequestId) {
-          await alertGapResolutionQueue(env, ctx, page, message,
-            knowledgeGapMissing !== null ? "knowledge_gap" : "scr_low_confidence");
-        }
-      } else if (scoringLifecycle.route === "respond_limited") {
-        // Decision 0018: deliver the candidate with a confidence hedge; no
-        // mandatory affirm/decline gate.
-        hedgeShown = true;
-        response = LIMITED_CONFIDENCE_HEDGE + response;
-      }
-    } catch (e) {
-      // Infrastructure/model failure is not permission to surface an unscored
-      // candidate. Fail closed at the same human-resolution boundary.
-      console.error("Phase D scoring pipeline failed:", e);
-      response = RESOLVE_GAP_MESSAGE;
-      isWithheld = true;
-      withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
-      ctx.waitUntil(
-        supabasePost(env, "defects", agenticDefect(config,
-          `Phase D scoring pipeline failed: ${e?.message ?? "unknown error"}`))
-          .catch((err) => console.error("scoring defect write failed:", err))
-      );
-    }
+	  if (scoringLifecycle.route === "resolve_gap") {
+		// The candidate remains in lifecycle records for human handling, but the
+		// system does not surface it to the visitor on its own authority.
+		response = RESOLVE_GAP_MESSAGE;
+		isWithheld = true;
+		withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
+		if (scoringLifecycle?.gapResolutionRequestId) {
+		  await alertGapResolutionQueue(env, ctx, page, message,
+			knowledgeGapMissing !== null ? "knowledge_gap" : "scr_low_confidence");
+		}
+	  } else if (scoringLifecycle.route === "respond_limited") {
+		// Decision 0018: deliver the candidate with a confidence hedge; no
+		// mandatory affirm/decline gate.
+		hedgeShown = true;
+		response = LIMITED_CONFIDENCE_HEDGE + response;
+	  }
+	} catch (e) {
+	  // Infrastructure/model failure is not permission to surface an unscored
+	  // candidate. Fail closed at the same human-resolution boundary.
+	  console.error("Phase D scoring pipeline failed:", e);
+	  response = RESOLVE_GAP_MESSAGE;
+	  isWithheld = true;
+	  withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
+	  ctx.waitUntil(
+		supabasePost(env, "defects", agenticDefect(config,
+		  `Phase D scoring pipeline failed: ${e?.message ?? "unknown error"}`))
+		  .catch((err) => console.error("scoring defect write failed:", err))
+	  );
+	}
   }
 
   return { response, routeId: scoringLifecycle?.routeId ?? null, hedgeShown, isWithheld, withheldNote, handoff: handoffCaptured };
@@ -632,12 +628,12 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 // matching the completion prompt's item C acceptance criteria directly.
 function assembleCompoundReply(turnResults) {
   const bodyParts = turnResults.map((t) =>
-    t.isWithheld ? `On the other part: ${t.withheldNote}.` : t.response
+	t.isWithheld ? `On the other part: ${t.withheldNote}.` : t.response
   );
   let assembled = bodyParts.join(" ");
   if (turnResults.some((t) => t.isWithheld)) {
-    assembled += ` Want to leave your contact info on the part(s) I couldn't answer? ` +
-      `Ed will follow up personally. You can also reach him directly at ${ADMIN_EMAIL}.`;
+	assembled += ` Want to leave your contact info on the part(s) I couldn't answer? ` +
+	  `Ed will follow up personally. You can also reach him directly at ${ADMIN_EMAIL}.`;
   }
   return assembled;
 }
@@ -652,7 +648,7 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   // /admin/*), so without this check anyone could POST {page:"admin"} and
   // read the internal persona and any admin-tagged qa_pairs with no login.
   if (page === "admin" && !(await getReviewerAuthority(env, extractJwt(request))))
-    return jsonResponse({ error: "Unauthorized" }, 401, corsHeaders);
+	return jsonResponse({ error: "Unauthorized" }, 401, corsHeaders);
 
   const configRows = await supabaseFetch(env, "config", "?id=eq.1&select=mode,build_version,capture_enabled");
   const config = configRows?.[0] ?? { mode: "live", build_version: "unknown", capture_enabled: false };
@@ -717,14 +713,14 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   // does not present it as settled. The caveat persists through constitutional
   // escalation and clears only at sign-off / retarget-away.
   if (Array.isArray(underReview) && underReview.length && Array.isArray(qaPairs)) {
-    const flagged = new Set(underReview);
-    for (const r of qaPairs) {
-      if (flagged.has(r.id)) {
-        r.answer =
-          "[UNDER REVIEW — FrontFrame is currently reviewing its position on this. Present the following " +
-          "as the current answer, not settled fact, and say it is under review.]\n" + r.answer;
-      }
-    }
+	const flagged = new Set(underReview);
+	for (const r of qaPairs) {
+	  if (flagged.has(r.id)) {
+		r.answer =
+		  "[UNDER REVIEW — FrontFrame is currently reviewing its position on this. Present the following " +
+		  "as the current answer, not settled fact, and say it is under review.]\n" + r.answer;
+	  }
+	}
   }
 
   // ── Phase E completion, item A ───────────────────────────────────────────
