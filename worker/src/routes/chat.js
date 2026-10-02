@@ -1,6 +1,7 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, escapeHtml, parseJsonObject, sendResendEmail, sendSms } from "../shared/runtime.js";
+import { COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, escapeHtml, parseJsonObject, sendSms } from "../shared/runtime.js";
+import { getOperator, operatorFollowUp, operatorNameOr, operatorReachLine, sendOperatorEmail } from "../shared/operator.js";
 // Shared contact-handoff capture (lead + lead_alert + SMS, de-duped on session_id).
 // Lives next to /notify in intake.js; imported here so a [COLLECTED] marker is
 // captured server-side and can never be discarded by a resolve_gap route (Defect 2).
@@ -17,27 +18,39 @@ import { LIMITED_CONFIDENCE_HEDGE, checkConstitutionalConformance, checkConstitu
 
 // Shown to visitors when config.mode = "disabled" (kill switch, admin Config tab).
 // Draft copy — Ed's edit, not final. Keep it short, no overpromising on timeline.
-const BOT_DISABLED_MESSAGE =
-  `Our assistant is temporarily unavailable. For anything urgent, reach us directly at ${ADMIN_EMAIL}.`;
+// The contact line follows the active Operator row (shared/operator.js); when
+// the lookup fails no address is named.
+function botDisabledMessage(operator) {
+  return "Our assistant is temporarily unavailable." +
+    (operator.resolved ? ` For anything urgent, reach us directly at ${operator.email}.` : "");
+}
 
 // Per the architecture and REQ-SCA-06, a sub-threshold candidate answer cannot
 // be surfaced to the inquirer on the system's own authority.
 // Draft copy — Ed's edit, not final.
-const RESOLVE_GAP_MESSAGE =
-  "I don't have a reliable answer to that yet. Want to leave your contact info? " +
-  `Ed will follow up personally once we have a solid answer. You can also reach him directly at ${ADMIN_EMAIL}.`;
+// The fixed lead is what inContactCollectSubflow() recognizes in the history;
+// the contact wording after it follows the active Operator row.
+const RESOLVE_GAP_LEAD =
+  "I don't have a reliable answer to that yet. Want to leave your contact info? ";
+function resolveGapMessage(operator) {
+  return RESOLVE_GAP_LEAD + operatorFollowUp(operator, " once we have a solid answer") + operatorReachLine(operator);
+}
 
 // Phase E completion, item B. Shown when the prior, bounded constitutional-
 // eligibility check (checkConstitutionalEligibility(), run BEFORE generation
 // and BEFORE SCR — see handleSingleTurn below) has flagged this question as
 // a constitutional/authority-governance candidate. Distinct message from
-// RESOLVE_GAP_MESSAGE so a visitor and any log reader can tell this was a
+// resolveGapMessage() so a visitor and any log reader can tell this was a
 // governance question, not a missing fact — the model is not withholding a
 // guess, it is declining to decide something that isn't its call to make.
-const CONSTITUTIONAL_HOLD_MESSAGE =
-  "That touches how FrontFrame itself is governed, which isn't something I can decide on my own. " +
-  "I've flagged it for Ed to determine. Want to leave your contact info so he can follow up? " +
-  `You can also reach him directly at ${ADMIN_EMAIL}.`;
+const CONSTITUTIONAL_HOLD_LEAD =
+  "That touches how FrontFrame itself is governed, which isn't something I can decide on my own. ";
+function constitutionalHoldMessage(operator) {
+  return CONSTITUTIONAL_HOLD_LEAD +
+    `I've flagged it for ${operatorNameOr(operator, "the FrontFrame team")} to determine. ` +
+    `Want to leave your contact info so ${operatorNameOr(operator, "we")} can follow up?` +
+    operatorReachLine(operator);
+}
 
 // Truthful, compact statements used when assembling a compound reply — see
 // decomposeIfCompound()/handleSingleTurn() below. These stand in place of the
@@ -62,8 +75,8 @@ function inContactCollectSubflow(history) {
   return history.some((m) => {
 	if (m?.role !== "assistant") return false;
 	const t = String(m.content ?? "").trim();
-	return t === RESOLVE_GAP_MESSAGE
-		|| t === CONSTITUTIONAL_HOLD_MESSAGE
+	return t.startsWith(RESOLVE_GAP_LEAD)
+		|| t.startsWith(CONSTITUTIONAL_HOLD_LEAD)
 		|| t.includes("leave your contact info on the part(s) I couldn't answer");
   });
 }
@@ -164,6 +177,11 @@ Return exactly one JSON object and no other text, in exactly this form:
 // each subpart of a decomposed compound question, so the two paths can never
 // drift apart on how a candidate is judged eligible for delivery.
 async function handleSingleTurn(env, ctx, config, constitutionSection, combinedPrompt, message, history, page, session_id, source, promulgatedCorpus) {
+  // The Operator is looked up only on the paths that name them to the visitor or
+  // alert them, and at most once per turn.
+  let operatorLookup = null;
+  const operator = () => (operatorLookup ??= getOperator(env));
+
   // ── Constitutional eligibility review (Phase E completion, item B) ───────
   // Runs before anything else. On a genuine constitutional candidate, or on
   // an eligibility-check failure (fails closed), no candidate answer is ever
@@ -199,7 +217,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 	  await alertGapResolutionQueue(env, ctx, page, message, "constitutional_candidate");
 	}
 	return {
-	  response: CONSTITUTIONAL_HOLD_MESSAGE,
+	  response: constitutionalHoldMessage(await operator()),
 	  routeId: scoringLifecycle?.routeId ?? null,
 	  hedgeShown: false,
 	  isWithheld: true,
@@ -249,8 +267,9 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 <hr style="border:none;border-top:1px solid #E8ECF0;margin:32px 0">
 <p style="font-size:0.75rem;color:#8A9BAE">Backup notification alongside the SMS alert. Not every escalation is a qualified lead — no need to drop everything for this.</p>
 </body></html>`;
+	const escalationOperator = await operator();
 	ctx.waitUntil(
-	  sendResendEmail(env, ADMIN_EMAIL, `FrontFrame escalation — ${escalation.prospect ?? "Visitor"}`, escalationEmailHtml)
+	  sendOperatorEmail(env, `FrontFrame escalation — ${escalation.prospect ?? "Visitor"}`, escalationEmailHtml, escalationOperator)
 		.catch((e) => console.error("escalation backup email failed:", e))
 	);
 
@@ -357,7 +376,8 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 	  );
 	}
 	if (!response) {
-	  response = `Got it — Ed will follow up personally. You can also reach him directly at ${ADMIN_EMAIL}.`;
+	  const op = await operator();
+	  response = `Got it — ${operatorFollowUp(op)}${operatorReachLine(op)}`;
 	}
   }
 
@@ -486,7 +506,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 	if (nonconformanceLifecycle?.gapResolutionRequestId) {
 	  await alertGapResolutionQueue(env, ctx, page, message, "constitutional_nonconformance");
 	}
-	response = CONSTITUTIONAL_HOLD_MESSAGE;
+	response = constitutionalHoldMessage(await operator());
 	isWithheld = true;
 	withheldNote = WITHHELD_CONSTITUTIONAL_NOTE;
 	scoringLifecycle = nonconformanceLifecycle;
@@ -506,7 +526,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 	  if (gRoute === "source_conflict") {
 		// The promulgated corpus contradicts itself on this answer's substance.
 		// Withhold, alert, and file a content defect naming the conflict.
-		response = RESOLVE_GAP_MESSAGE;
+		response = resolveGapMessage(await operator());
 		isWithheld = true;
 		withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
 		ctx.waitUntil(
@@ -526,7 +546,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 		// Decision 0034 item 7 (amended 2026-10-01): grounding below the low
 		// threshold, or no usable Verifier result. Withhold and escalate to a
 		// person. Never re-scored by SCR, never delivered.
-		response = RESOLVE_GAP_MESSAGE;
+		response = resolveGapMessage(await operator());
 		isWithheld = true;
 		withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
 		if (scoringLifecycle?.groundingFailed) {
@@ -549,7 +569,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 	  }
 	} catch (e) {
 	  console.error("Grounding pipeline failed:", e);
-	  response = RESOLVE_GAP_MESSAGE;
+	  response = resolveGapMessage(await operator());
 	  isWithheld = true;
 	  withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
 	  ctx.waitUntil(
@@ -561,7 +581,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
   } else if (knowledgeGapMalformed) {
 	const rawCandidate = response;
 	console.error("Malformed knowledge-gap marker — withholding candidate:", rawCandidate.slice(0, 200));
-	response = RESOLVE_GAP_MESSAGE;
+	response = resolveGapMessage(await operator());
 	isWithheld = true;
 	withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
 	ctx.waitUntil(
@@ -589,7 +609,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 	  if (scoringLifecycle.route === "resolve_gap") {
 		// The candidate remains in lifecycle records for human handling, but the
 		// system does not surface it to the visitor on its own authority.
-		response = RESOLVE_GAP_MESSAGE;
+		response = resolveGapMessage(await operator());
 		isWithheld = true;
 		withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
 		if (scoringLifecycle?.gapResolutionRequestId) {
@@ -606,7 +626,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 	  // Infrastructure/model failure is not permission to surface an unscored
 	  // candidate. Fail closed at the same human-resolution boundary.
 	  console.error("Phase D scoring pipeline failed:", e);
-	  response = RESOLVE_GAP_MESSAGE;
+	  response = resolveGapMessage(await operator());
 	  isWithheld = true;
 	  withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
 	  ctx.waitUntil(
@@ -626,14 +646,14 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 // repeated full contact-pitch boilerplate), and a single combined contact
 // invitation is appended once at the end if any subpart needs follow-up —
 // matching the completion prompt's item C acceptance criteria directly.
-function assembleCompoundReply(turnResults) {
+function assembleCompoundReply(turnResults, operator) {
   const bodyParts = turnResults.map((t) =>
 	t.isWithheld ? `On the other part: ${t.withheldNote}.` : t.response
   );
   let assembled = bodyParts.join(" ");
   if (turnResults.some((t) => t.isWithheld)) {
 	assembled += ` Want to leave your contact info on the part(s) I couldn't answer? ` +
-	  `Ed will follow up personally. You can also reach him directly at ${ADMIN_EMAIL}.`;
+	  operatorFollowUp(operator) + operatorReachLine(operator);
   }
   return assembled;
 }
@@ -657,7 +677,7 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   // When mode = "disabled" (set via /admin → Config), skip Supabase content
   // lookups and Anthropic calls entirely. No redeploy needed to flip this.
   if (config.mode === "disabled") {
-	return jsonResponse({ response: BOT_DISABLED_MESSAGE, mode: config.mode }, 200, corsHeaders);
+	return jsonResponse({ response: botDisabledMessage(await getOperator(env)), mode: config.mode }, 200, corsHeaders);
   }
 
   // ── Rate guard ────────────────────────────────────────────────────────────
@@ -798,7 +818,10 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
 	  // writes racing against the same session/rate-limit state.
 	  turnResults.push(await handleSingleTurn(env, ctx, config, constitutionSection, combinedPrompt, subpart, history, page, session_id, source, promulgatedCorpus));
 	}
-	response = assembleCompoundReply(turnResults);
+	response = assembleCompoundReply(
+	  turnResults,
+	  turnResults.some((t) => t.isWithheld) ? await getOperator(env) : null,
+	);
 	// For session-capture/delivered-response bookkeeping below, treat the
 	// first subpart's route as primary — each subpart already recorded its
 	// own full lifecycle row independently above.
@@ -925,4 +948,4 @@ async function captureSession(env, sessionId, page, newTurns) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { handleChat, handleSingleTurn, captureSession, RESOLVE_GAP_MESSAGE, CONSTITUTIONAL_HOLD_MESSAGE, agenticDefect, coerceDefectArea, coerceDefectSeverity };
+export { handleChat, handleSingleTurn, captureSession, resolveGapMessage, constitutionalHoldMessage, agenticDefect, coerceDefectArea, coerceDefectSeverity };

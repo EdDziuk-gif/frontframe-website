@@ -1,7 +1,8 @@
 import { jsonResponse } from "../shared/http.js";
 import { TIER_DEFAULT_PANELS, grantedPanelKeys, panelIdsForKeys } from "../middleware/panels.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, ADMIN_URL, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, RESEARCH_PATTERN, STRIPE_PRICE_IDS, TESTING_LAYER, buildSystemPrompt, callAnthropic, fetchAndStoreDocument, getPhoenixDateStr, getPhoenixDayOfWeek, hashIp, sendResendEmail, sendSms, verifyStripeSignature } from "../shared/runtime.js";
+import { getCountersignerEmail } from "../shared/operator.js";
+import { ADMIN_URL, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, RESEARCH_PATTERN, STRIPE_PRICE_IDS, TESTING_LAYER, buildSystemPrompt, callAnthropic, fetchAndStoreDocument, getPhoenixDateStr, getPhoenixDayOfWeek, hashIp, sendResendEmail, sendSms, verifyStripeSignature } from "../shared/runtime.js";
 
 // § DOMAIN: changelog
 // ════════════════════════════════════════════════════════════════════════════
@@ -103,6 +104,8 @@ async function sendAgreement(request, env, userJwt, corsHeaders) {
   const lead     = leadRows?.[0] ?? {};
   const today    = new Date().toISOString().split("T")[0];
   const signatureUrl = env.DOCUSEAL_SIGNATURE_URL ?? "";
+  // The countersigner follows the active Operator row; no fallback address.
+  const countersignerEmail = await getCountersignerEmail(env);
   const submissionPayload = {
     template_id: 3600228, send_email: true,
     submitters: [
@@ -113,7 +116,7 @@ async function sendAgreement(request, env, userJwt, corsHeaders) {
           { name: "Client Email Address", default_value: lead.email         ?? "", readonly: true },
           { name: "Date Field 1",         default_value: today,                   readonly: true },
         ] },
-      { role: "Second Party", email: "ed@frontframe.co", completed: true,
+      { role: "Second Party", email: countersignerEmail, completed: true,
         fields: [
           { name: "FrontFrame Date",      default_value: today,        readonly: true },
           { name: "FrontFrame Signature", default_value: signatureUrl, readonly: true },
@@ -139,6 +142,8 @@ async function sendDueDiligence(request, env, userJwt, corsHeaders) {
   const lead         = leadRows[0];
   const today        = new Date().toISOString().split("T")[0];
   const signatureUrl = env.DOCUSEAL_SIGNATURE_URL ?? "";
+  // The countersigner follows the active Operator row; no fallback address.
+  const countersignerEmail = await getCountersignerEmail(env);
   const submissionPayload = {
     template_id: 3703869, send_email: true,
     submitters: [
@@ -149,7 +154,7 @@ async function sendDueDiligence(request, env, userJwt, corsHeaders) {
           { name: "Client_email",  default_value: lead.email         ?? "", readonly: true },
           { name: "Contract_date", default_value: today,                   readonly: true },
         ] },
-      { role: "FrontFrame", email: "ed@frontframe.co", completed: true,
+      { role: "FrontFrame", email: countersignerEmail, completed: true,
         fields: [{ name: "FrontFrame_Signature", default_value: signatureUrl, readonly: true }] },
     ],
   };
@@ -173,6 +178,8 @@ async function sendInfraAgreement(request, env, userJwt, corsHeaders) {
   const lead         = leadRows[0];
   const today        = new Date().toISOString().split("T")[0];
   const signatureUrl = env.DOCUSEAL_SIGNATURE_URL ?? "";
+  // The countersigner follows the active Operator row; no fallback address.
+  const countersignerEmail = await getCountersignerEmail(env);
   const submissionPayload = {
     template_id: 5966406, send_email: true,
     submitters: [
@@ -183,7 +190,7 @@ async function sendInfraAgreement(request, env, userJwt, corsHeaders) {
           { name: "Client_email",  default_value: lead.email         ?? "", readonly: true },
           { name: "Contract_date", default_value: today,                   readonly: true },
         ] },
-      { role: "FrontFrame", email: "ed@frontframe.co", completed: true,
+      { role: "FrontFrame", email: countersignerEmail, completed: true,
         fields: [{ name: "FrontFrame_Signature", default_value: signatureUrl, readonly: true }] },
     ],
   };

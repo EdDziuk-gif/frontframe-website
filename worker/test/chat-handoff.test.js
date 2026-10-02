@@ -27,16 +27,22 @@ vi.mock("../src/shared/supabase.js", async (importOriginal) => {
 
 const { COLLECTED_PATTERN } = await import("../src/shared/runtime.js");
 const { captureContactHandoff, inferContactMethod } = await import("../src/routes/intake.js");
-const { handleSingleTurn, RESOLVE_GAP_MESSAGE } = await import("../src/routes/chat.js");
+const { handleSingleTurn, resolveGapMessage } = await import("../src/routes/chat.js");
 
 const fakeCtx = () => ({ waitUntil: (p) => { if (p && typeof p.catch === "function") p.catch(() => {}); } });
 const CONFIG = { build_version: "test", stage_gate: "build" };
+// The active Operator row. Fictional values on purpose: the code must follow this
+// row, not any address written in the source.
+const OPERATOR_ROW = { display_name: "Pat", email: "pat@operator.example" };
+const OPERATOR = { resolved: true, email: OPERATOR_ROW.email, displayName: OPERATOR_ROW.display_name, notifyEmail: OPERATOR_ROW.email };
+const RESOLVE_GAP_MESSAGE = resolveGapMessage(OPERATOR);
 
 // supabaseFetch is called as supabaseFetch(env, table, query). Used here for
 // the handoff dedupe check (lead_alerts) and for threshold_config.
 function fetchImpl(_env, table) {
   if (table === "threshold_config") return Promise.resolve([{ threshold_low: 0.4, threshold_high: 0.9 }]);
   if (table === "lead_alerts") return Promise.resolve([]); // no prior alert -> not deduped
+  if (table === "reviewers") return Promise.resolve([OPERATOR_ROW]);
   return Promise.resolve([]);
 }
 

@@ -1,6 +1,7 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
 import { STRIPE_PRICE_IDS, sendResendEmail, sendSms } from "../shared/runtime.js";
+import { getOperator } from "../shared/operator.js";
 
 // § DOMAIN: subscriptions
 // ════════════════════════════════════════════════════════════════════════════
@@ -230,11 +231,13 @@ async function handleAdminVaultSet(request, env, userJwt, corsHeaders) {
   const { vendor, category, data } = await request.json().catch(() => ({}));
   if (!vendor || !data) return jsonResponse({ error: "vendor and data are required." }, 400, corsHeaders);
   try {
+    // Attributed to the active Operator row (not a literal address), so an Operator transfer carries over.
+    const operator = await getOperator(env);
     await supabaseRpc(env, "vault_upsert_entry", {
       p_vendor:     vendor,
       p_category:   category ?? "platform",
       p_data:       JSON.stringify(data),
-      p_updated_by: "ed@frontframe.co",
+      p_updated_by: operator.email ?? "operator",
     });
   } catch (e) {
     console.error("Vault save error:", e.message);

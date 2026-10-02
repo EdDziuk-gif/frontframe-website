@@ -44,7 +44,7 @@ async function handleVerifyOtp(request, env, corsHeaders) {
 //
 // Authorization checks the reviewers table, not a single hardcoded email —
 // this admin panel has multiple reviewers (Staff/Management roles), and an
-// earlier version of this route only ever allowed and emailed ADMIN_EMAIL,
+// earlier version of this route only ever allowed and emailed one hard-coded address,
 // which would have locked out every reviewer but Ed.
 async function handleMagicLink(request, env, corsHeaders) {
   const { email } = await request.json().catch(() => ({}));

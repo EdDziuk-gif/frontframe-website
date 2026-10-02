@@ -27,10 +27,15 @@ vi.mock("../src/shared/supabase.js", async (importOriginal) => {
 
 const { KB_GROUNDED_PATTERN } = await import("../src/shared/runtime.js");
 const { parseGroundingResult, createGroundingLifecycle } = await import("../src/shared/scoring.js");
-const { handleSingleTurn, RESOLVE_GAP_MESSAGE } = await import("../src/routes/chat.js");
+const { handleSingleTurn, resolveGapMessage } = await import("../src/routes/chat.js");
 
 const fakeCtx = () => ({ waitUntil: (p) => { if (p && typeof p.catch === "function") p.catch(() => {}); } });
 const CONFIG = { build_version: "test", stage_gate: "build" };
+// The active Operator row. Fictional values on purpose: the code must follow this
+// row, not any address written in the source.
+const OPERATOR_ROW = { display_name: "Pat", email: "pat@operator.example" };
+const OPERATOR = { resolved: true, email: OPERATOR_ROW.email, displayName: OPERATOR_ROW.display_name, notifyEmail: OPERATOR_ROW.email };
+const RESOLVE_GAP_MESSAGE = resolveGapMessage(OPERATOR);
 const CORPUS = "SYSTEM PROMPT ...\n\nKnowledge Base:\n\nQ: What does the Professional tier add?\nA: Everything in Standard plus advanced client management, multi-service booking, priority build and support, and extended maintenance.";
 
 // supabasePost returns an incrementing id per table so route/score ids are inspectable.
@@ -41,6 +46,7 @@ function postImpl(_env, table) {
 }
 function fetchImpl(_env, table) {
   if (table === "threshold_config") return Promise.resolve([{ threshold_low: 0.4, threshold_high: 0.9 }]);
+  if (table === "reviewers") return Promise.resolve([OPERATOR_ROW]);
   return Promise.resolve([]);
 }
 const postsTo = (table) => supabasePostMock.mock.calls.filter((c) => c[1] === table);

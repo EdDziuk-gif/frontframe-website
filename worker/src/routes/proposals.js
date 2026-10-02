@@ -1,6 +1,7 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseHeaders } from "../shared/supabase.js";
-import { sendResendEmail } from "../shared/runtime.js";
+import { escapeHtml, sendResendEmail } from "../shared/runtime.js";
+import { getOperator, operatorNameOr } from "../shared/operator.js";
 
 // § DOMAIN: proposals (client proposal authoring & delivery)
 // ════════════════════════════════════════════════════════════════════════════
@@ -162,6 +163,10 @@ export async function sendProposal(request, env, ctx, id, userJwt, corsHeaders) 
     sent_at: new Date().toISOString(),
   }).catch(e => console.error("proposal sent_at patch failed:", e));
 
+  // The contact line follows the active Operator row; no name or address is shown if it cannot be read.
+  const operator = await getOperator(env);
+  const operatorName = operatorNameOr(operator, "us");
+
   // Send email via Resend (fire-and-forget via waitUntil)
   const emailHtml = `
 <!DOCTYPE html>
@@ -174,7 +179,7 @@ export async function sendProposal(request, env, ctx, id, userJwt, corsHeaders) 
   <p style="color:#6B7A8D;margin-bottom:24px">Hi ${proposal.prospect_name},</p>
   <p style="margin-bottom:16px">
     Your proposal is ready for review. Click the link below to read through it,
-    flag any sections you'd like changed, and send Ed your overall response.
+    flag any sections you'd like changed, and send ${escapeHtml(operatorName)} your overall response.
   </p>
   <p style="margin-bottom:24px">
     <a href="${proposalUrl}"
@@ -188,7 +193,7 @@ export async function sendProposal(request, env, ctx, id, userJwt, corsHeaders) 
     If you have questions before reviewing, reply to this email.
   </p>
   <hr style="border:none;border-top:1px solid #E4E8EE;margin:24px 0">
-  <p style="color:#6B7A8D;font-size:0.8rem">FrontFrame · ed@frontframe.co</p>
+  <p style="color:#6B7A8D;font-size:0.8rem">FrontFrame${operator.resolved ? ` · ${escapeHtml(operator.email)}` : ""}</p>
 </body>
 </html>`;
 

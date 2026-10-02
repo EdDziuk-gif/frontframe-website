@@ -25,6 +25,9 @@
 	}
   ],
   "vars": {
-	"SUPABASE_URL": "https://ifjsepyzdnpmwyuytppr.supabase.co"
+	"SUPABASE_URL": "https://ifjsepyzdnpmwyuytppr.supabase.co",
+	"OPERATOR_FALLBACK_EMAIL": "ed@frontframe.co",
+	"SURGE_ACCOUNT_ID": "acct_01krevy9esf46rgm7ym1e66k8k",
+	"SURGE_TO_NUMBER": "+14803600069"
   }
 }

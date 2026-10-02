@@ -1,6 +1,7 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL, escapeHtml, sendResendEmail, sendSms } from "../shared/runtime.js";
+import { escapeHtml, sendSms } from "../shared/runtime.js";
+import { getOperator, sendOperatorEmail } from "../shared/operator.js";
 
 // § DOMAIN: notify
 // ════════════════════════════════════════════════════════════════════════════
@@ -72,7 +73,10 @@ ${transcript ? `<p style="margin:20px 0 8px;font-weight:700">Conversation</p><pr
 <hr style="border:none;border-top:1px solid #E8ECF0;margin:32px 0">
 <p style="font-size:0.75rem;color:#8A9BAE">Backup notification alongside the SMS alert. Not every handoff is a qualified lead — no need to drop everything for this.</p>
 </body></html>`;
-  const emailPromise = sendResendEmail(env, ADMIN_EMAIL, `FrontFrame handoff — ${name}`, emailHtml)
+  // Resolved once, before either alert path starts, so the email is dispatched
+  // immediately and stays independent of the lead_alerts write and the SMS.
+  const operator = await getOperator(env);
+  const emailPromise = sendOperatorEmail(env, `FrontFrame handoff — ${name}`, emailHtml, operator)
     .catch((e) => console.error("handoff backup email failed:", e));
   if (ctx?.waitUntil) ctx.waitUntil(emailPromise);
   else await emailPromise;

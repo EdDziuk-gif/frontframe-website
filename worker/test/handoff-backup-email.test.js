@@ -12,7 +12,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const sendResendEmailMock = vi.fn().mockResolvedValue({ success: true, status: "sent" });
 const sendSmsMock = vi.fn().mockResolvedValue({ success: false, status: "invalid_api_key" });
 const supabasePostMock = vi.fn();
-const supabaseFetchMock = vi.fn().mockResolvedValue([]);
+// The active Operator row. Fictional values on purpose: the code must follow this
+// row, not any address written in the source.
+const OPERATOR_ROW = { display_name: "Pat", email: "pat@operator.example" };
+const OPERATOR = { resolved: true, email: OPERATOR_ROW.email, displayName: OPERATOR_ROW.display_name, notifyEmail: OPERATOR_ROW.email };
+const fetchImpl = (_env, table) => Promise.resolve(table === "reviewers" ? [OPERATOR_ROW] : []);
+const supabaseFetchMock = vi.fn().mockImplementation(fetchImpl);
 
 vi.mock("../src/shared/runtime.js", async (importOriginal) => {
   const actual = await importOriginal();
@@ -39,7 +44,7 @@ beforeEach(() => {
   sendSmsMock.mockClear();
   supabasePostMock.mockReset();
   supabaseFetchMock.mockClear();
-  supabaseFetchMock.mockResolvedValue([]); // no prior alert -> not deduped
+  supabaseFetchMock.mockImplementation(fetchImpl); // no prior alert -> not deduped
 });
 
 describe("captureContactHandoff — Resend backup email", () => {
@@ -51,11 +56,23 @@ describe("captureContactHandoff — Resend backup email", () => {
     });
     expect(sendResendEmailMock).toHaveBeenCalledTimes(1);
     const [, to, subject, html] = sendResendEmailMock.mock.calls[0];
-    expect(to).toBe("ed@frontframe.co");
+    expect(to).toBe(OPERATOR_ROW.email);
     expect(subject).toContain("Sam Visitor");
     expect(html).toContain("sam@example.com");
     expect(html).toContain("Wants a callback about pricing");
     expect(html).toContain("Visitor: Hi");
+  });
+
+  it("sends to the OPERATOR_FALLBACK_EMAIL variable when the Operator lookup fails, so an outage cannot silence it", async () => {
+    supabaseFetchMock.mockImplementation((_env, table) =>
+      table === "reviewers" ? Promise.reject(new Error("db down")) : Promise.resolve([]));
+    supabasePostMock.mockResolvedValue([{ id: 1, alert_id: 1 }]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await captureContactHandoff({ OPERATOR_FALLBACK_EMAIL: "fallback@operator.example" }, fakeCtx(), {
+      session_id: "s9", name: "Kim", contact: "kim@example.com", method: "email",
+    });
+    expect(sendResendEmailMock).toHaveBeenCalledTimes(1);
+    expect(sendResendEmailMock.mock.calls[0][1]).toBe("fallback@operator.example");
   });
 
   it("still sends the email when the SMS fails (the actual production gap)", async () => {

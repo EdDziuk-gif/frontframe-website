@@ -1,6 +1,6 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { ADMIN_EMAIL } from "../shared/runtime.js";
+import { getCountersignerEmail } from "../shared/operator.js";
 import { getReviewerAuthority } from "./constitution.js";
 
 // § DOMAIN: outreach
@@ -55,6 +55,8 @@ async function sendOutreachContract(request, env, id, userJwt, corsHeaders) {
 
   const today        = new Date().toISOString().split("T")[0];
   const signatureUrl = env.DOCUSEAL_SIGNATURE_URL ?? "";
+  // The countersigner follows the active Operator row; no fallback address.
+  const countersignerEmail = await getCountersignerEmail(env);
 
   const submissionPayload = {
     template_id: 3703869,
@@ -67,7 +69,7 @@ async function sendOutreachContract(request, env, id, userJwt, corsHeaders) {
           { name: "Client_email",  default_value: p.email         ?? "", readonly: true },
           { name: "Contract_date", default_value: today,                 readonly: true },
         ] },
-      { role: "FrontFrame", email: ADMIN_EMAIL, completed: true,
+      { role: "FrontFrame", email: countersignerEmail, completed: true,
         fields: [{ name: "FrontFrame_Signature", default_value: signatureUrl, readonly: true }] },
     ],
   };

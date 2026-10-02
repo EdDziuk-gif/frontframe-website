@@ -11,11 +11,13 @@ export const ANTHROPIC_MODEL      = "claude-sonnet-4-6";
 export const ANTHROPIC_FAST_MODEL = "claude-haiku-4-5-20251001";
 export const ANTHROPIC_MAX_TOKENS = 1024;
 
-export const SURGE_ACCOUNT_ID = "acct_01krevy9esf46rgm7ym1e66k8k";
-export const SURGE_TO_NUMBER  = "+14803600069";
+// The Surge account id and the destination number for operator SMS alerts are
+// configuration (Worker variables SURGE_ACCOUNT_ID and SURGE_TO_NUMBER in
+// wrangler.jsonc), not code. SURGE_API_KEY stays a secret.
 
 export const RESEND_FROM  = "FrontFrame LLC <ed@frontframe.co>";
-export const ADMIN_EMAIL  = "ed@frontframe.co";
+// Operator addresses are not constants: see shared/operator.js (they follow the
+// active Operator row in `reviewers`). RESEND_FROM above is the sender identity.
 export const ADMIN_URL    = "https://frontframe.co/admin";
 
 export const STRIPE_PRICE_IDS = {
@@ -225,11 +227,12 @@ export function escapeHtml(s) {
 
 export async function sendSms(env, message) {
   if (!env.SURGE_API_KEY) { console.warn("SURGE_API_KEY not configured"); return { success: false, status: "not_configured" }; }
+  if (!env.SURGE_ACCOUNT_ID || !env.SURGE_TO_NUMBER) { console.warn("SURGE_ACCOUNT_ID or SURGE_TO_NUMBER not configured"); return { success: false, status: "not_configured" }; }
   try {
-    const res = await fetch(`https://api.surge.app/accounts/${SURGE_ACCOUNT_ID}/messages`, {
+    const res = await fetch(`https://api.surge.app/accounts/${env.SURGE_ACCOUNT_ID}/messages`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${env.SURGE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ to: SURGE_TO_NUMBER, body: message }),
+      body: JSON.stringify({ to: env.SURGE_TO_NUMBER, body: message }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) { console.error("Surge error:", res.status, JSON.stringify(data)); return { success: false, status: data.message ?? `http_${res.status}` }; }
