@@ -38,7 +38,14 @@ function toast(msg, type) {
   toastTimer = setTimeout(() => { el.className = ''; }, 3200);
 }
 
-async function api(method, path, body) {
+// Every admin request goes through here. A write (POST/PATCH/PUT/DELETE) that is
+// identical to one still in flight is not sent again: the second caller gets the
+// first request's result. A double click, an impatient second click during a slow
+// check, or a retried handler therefore cannot add a record twice. GETs are
+// unaffected, and the same write sent again after the first has finished is sent.
+const apiInFlight = new Map();
+
+async function apiSend(method, path, body) {
   const opts = {
     method,
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
@@ -50,6 +57,15 @@ async function api(method, path, body) {
     throw new Error(err.error || `Request failed: ${res.status}`);
   }
   return res.json();
+}
+
+function api(method, path, body) {
+  if (method === 'GET') return apiSend(method, path, body);
+  const key = method + ' ' + path + ' ' + (body ? JSON.stringify(body) : '');
+  if (apiInFlight.has(key)) return apiInFlight.get(key);
+  const p = apiSend(method, path, body).finally(() => apiInFlight.delete(key));
+  apiInFlight.set(key, p);
+  return p;
 }
 
 function fmtDate(iso) {
