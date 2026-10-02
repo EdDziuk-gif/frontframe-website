@@ -3626,6 +3626,23 @@ async function startKgrCase(gapRequestId) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
+// A KGR action that creates or advances a record runs one at a time: a second
+// click while the first is still working is ignored, so nothing is added twice.
+const kgrBusy = new Set();
+const kgrSolKeys = new Map();
+async function kgrOnce(key, fn) {
+  if (kgrBusy.has(key)) return;
+  kgrBusy.add(key);
+  try { return await fn(); } finally { kgrBusy.delete(key); }
+}
+function submitKgrSolutionUI(...a) { return kgrOnce(`sol-${a[0]}`, () => submitKgrSolutionUI_impl(...a)); }
+function addKgrHypothesis(...a) { return kgrOnce(`hypothesis`, () => addKgrHypothesis_impl(...a)); }
+function updateKgrHypothesis(...a) { return kgrOnce(`hyp-status-${a[0]}`, () => updateKgrHypothesis_impl(...a)); }
+function readyKgrCase(...a) { return kgrOnce(`ready`, () => readyKgrCase_impl(...a)); }
+function openCompanionCaseUI(...a) { return kgrOnce(`companion`, () => openCompanionCaseUI_impl(...a)); }
+function signOffKgrResolution(...a) { return kgrOnce(`signoff`, () => signOffKgrResolution_impl(...a)); }
+function prepareKgrResolutionStatement(...a) { return kgrOnce(`prepare`, () => prepareKgrResolutionStatement_impl(...a)); }
+
 async function openKgrCaseModal(id) {
   currentKgrCaseId = id;
   let c;
@@ -3688,7 +3705,7 @@ function renderKgrCaseModal(c) {
               <option value="human">Human</option>
               <option value="assistant_assisted">Assistant-assisted</option>
             </select>
-            <button class="btn btn-xs" onclick="submitKgrSolutionUI(${h.id})">Contribute</button>
+            <button class="btn btn-xs" id="kgr-sol-btn-${h.id}" onclick="submitKgrSolutionUI(${h.id})">Contribute</button>
             <span style="font-size:11px;color:var(--gray)">Checked, then immutable.</span>
           </div>
         </div>`;
@@ -3853,7 +3870,7 @@ async function saveKgrCaseTarget() {
   } finally { kgrTargetSaving = false; }
 }
 
-async function openCompanionCaseUI() {
+async function openCompanionCaseUI_impl() {
   if (!currentKgrCaseId) return;
   const text = prompt('Problem statement for the companion case (a second corpus target for this same problem):');
   if (text === null) return;
@@ -3945,7 +3962,7 @@ function renderKgrResolutionSection(c) {
   document.getElementById('kgr-prepare-resolution-btn').disabled = activeSolutions.length === 0;
 }
 
-async function prepareKgrResolutionStatement() {
+async function prepareKgrResolutionStatement_impl() {
   if (!currentKgrCaseId) return;
   const btn = document.getElementById('kgr-prepare-resolution-btn');
   btn.disabled = true;
@@ -3963,14 +3980,19 @@ async function prepareKgrResolutionStatement() {
   }
 }
 
-async function submitKgrSolutionUI(hypothesisId) {
+async function submitKgrSolutionUI_impl(hypothesisId) {
   if (!currentKgrCaseId) return;
   const ta = document.getElementById('kgr-sol-input-' + hypothesisId);
   const originSel = document.getElementById('kgr-sol-origin-' + hypothesisId);
   const content = (ta?.value || '').trim();
   if (!content) { toast('Enter a proposed solution first.', 'error'); return; }
-  // A client-generated key so a retried request resolves to one row, not two.
-  const submissionKey = (self.crypto?.randomUUID?.() || String(Date.now()) + Math.random());
+  // One key per (case, hypothesis, text): a repeated click or a retry of the same
+  // text resolves to one row. The key is dropped once the contribution succeeds.
+  const keyId = currentKgrCaseId + '|' + hypothesisId + '|' + content;
+  if (!kgrSolKeys.has(keyId)) kgrSolKeys.set(keyId, (self.crypto?.randomUUID?.() || String(Date.now()) + Math.random()));
+  const submissionKey = kgrSolKeys.get(keyId);
+  const btn = document.getElementById('kgr-sol-btn-' + hypothesisId);
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking\u2026'; }
   try {
     await api('POST', `/admin/kgr-cases/${currentKgrCaseId}/solutions`, {
       hypothesis_id: hypothesisId,
@@ -3978,11 +4000,13 @@ async function submitKgrSolutionUI(hypothesisId) {
       origin: originSel?.value || 'human',
       submission_key: submissionKey,
     });
+    kgrSolKeys.delete(keyId);
     toast('Solution contributed - checked and recorded.');
     const c = await api('GET', `/admin/kgr-cases/${currentKgrCaseId}`);
     renderKgrCaseModal(c);
   } catch (e) {
     toast(e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Contribute'; }
   }
 }
 
@@ -4001,7 +4025,7 @@ async function withdrawKgrSolutionUI(solutionId) {
   }
 }
 
-async function signOffKgrResolution(candidateId) {
+async function signOffKgrResolution_impl(candidateId) {
   if (!currentKgrCaseId) return;
   if (!confirm('Sign off this resolution? This is irreversible: it publishes the selected answer, and deletes the unselected snapshot alternatives, every contributed solution row for the case, and any accepted hypothesis that no longer supports the selection.')) return;
   try {
@@ -4064,7 +4088,7 @@ async function saveKgrCaseNotes() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function addKgrHypothesis() {
+async function addKgrHypothesis_impl() {
   if (!currentKgrCaseId) return;
   const description = document.getElementById('kgr-new-hypothesis').value.trim();
   if (!description) return;
@@ -4076,7 +4100,7 @@ async function addKgrHypothesis() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function updateKgrHypothesis(hypothesisId, status) {
+async function updateKgrHypothesis_impl(hypothesisId, status) {
   const promptText = status === 'falsified'
     ? 'Why was this hypothesis falsified? Required. If a replacement hypothesis supersedes it, name that replacement here so the relationship stays traceable.'
     : 'Test notes (why accepted)? Required.';
@@ -4091,7 +4115,7 @@ async function updateKgrHypothesis(hypothesisId, status) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function readyKgrCase() {
+async function readyKgrCase_impl() {
   try {
     await api('PATCH', `/admin/kgr-cases/${currentKgrCaseId}/ready`);
     toast('Case marked ready for decision.');
