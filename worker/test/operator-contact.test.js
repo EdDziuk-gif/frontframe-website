@@ -127,7 +127,7 @@ describe("visitor-facing wording", () => {
     expect(operatorFollowUp(RESOLVED, " once we have a solid answer"))
       .toBe("Pat will follow up personally once we have a solid answer.");
     expect(operatorReachLine(RESOLVED)).toBe(` You can also email ${ROW.email} directly.`);
-    expect(resolveGapMessage(RESOLVED)).toContain("Pat will follow up personally");
+    expect(resolveGapMessage(RESOLVED)).toContain("pass your question to Pat");
     expect(resolveGapMessage(RESOLVED)).toContain(ROW.email);
     expect(constitutionalHoldMessage(RESOLVED)).toContain("flagged it for Pat");
     expect(constitutionalHoldMessage(RESOLVED)).toContain(ROW.email);
@@ -141,15 +141,25 @@ describe("visitor-facing wording", () => {
       expect(text).not.toContain("@");
       expect(text).not.toContain(FALLBACK);
     }
-    expect(resolveGapMessage(UNRESOLVED)).toContain("We will follow up personally");
+    expect(resolveGapMessage(UNRESOLVED)).toContain("pass your question to our team");
     expect(constitutionalHoldMessage(UNRESOLVED)).toContain("the FrontFrame team");
     expect(operatorNameOr(UNRESOLVED, "us")).toBe("us");
   });
 
-  it("keeps the fixed leads the contact sub-flow recognizes", () => {
-    expect(resolveGapMessage(RESOLVED).startsWith("I don't have a reliable answer to that yet. Want to leave your contact info? ")).toBe(true);
-    expect(resolveGapMessage(UNRESOLVED).startsWith("I don't have a reliable answer to that yet. Want to leave your contact info? ")).toBe(true);
-    expect(constitutionalHoldMessage(UNRESOLVED).startsWith("That touches how FrontFrame itself is governed")).toBe(true);
+  it("asks a plain yes-or-no question, says how to answer, and promises nothing", () => {
+    for (const op of [RESOLVED, UNRESOLVED]) {
+      const gap = resolveGapMessage(op);
+      expect(gap.startsWith("I don't have a reliable answer to that.\n\nWould you like me to pass your question to ")).toBe(true);
+      expect(gap).toContain("Reply yes or no.");
+      expect(gap).not.toMatch(/follow up|solid answer|will contact/i);
+      const hold = constitutionalHoldMessage(op);
+      expect(hold.startsWith("That touches how FrontFrame itself is governed")).toBe(true);
+      expect(hold).toContain("Reply yes or no.");
+      expect(hold).not.toMatch(/follow up|solid answer|will contact/i);
+    }
+    // The address goes on its own parenthesised line, only when it is known.
+    expect(resolveGapMessage(RESOLVED).endsWith(`\n\n(You can also email ${ROW.email} directly.)`)).toBe(true);
+    expect(resolveGapMessage(UNRESOLVED).endsWith("Reply yes or no.")).toBe(true);
   });
 });
 

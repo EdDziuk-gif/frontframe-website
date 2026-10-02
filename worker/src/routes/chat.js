@@ -1,7 +1,7 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
 import { COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, parseJsonObject } from "../shared/runtime.js";
-import { getOperator, operatorFollowUp, operatorNameOr, operatorReachLine } from "../shared/operator.js";
+import { getOperator, operatorNameOr, operatorReachLine } from "../shared/operator.js";
 import { alertGapResolutionQueue } from "../shared/gap-alert.js";
 import { loadOrStartSession, modelHistory, saveSession } from "../shared/chat-session.js";
 import { offeredState, runFlowTurn, startedState } from "./handoff-flow.js";
@@ -28,10 +28,20 @@ function botDisabledMessage(operator) {
 // be surfaced to the inquirer on the system's own authority.
 // Draft copy — Ed's edit, not final.
 // The contact wording after the lead follows the active Operator row.
-const RESOLVE_GAP_LEAD =
-  "I don't have a reliable answer to that yet. Want to leave your contact info? ";
+// Every withheld answer ends in a plain yes-or-no question that says how to
+// answer it. It promises nothing: no follow-up, no timing, no answer to come.
+// The visitor's yes starts the handoff (routes/handoff-flow.js).
+const RESOLVE_GAP_LEAD = "I don't have a reliable answer to that.\n\n";
+// "(You can also email <address> directly.)" on its own line, or "" when the
+// Operator lookup failed.
+function reachNote(operator) {
+  const line = operatorReachLine(operator).trim();
+  return line ? `\n\n(${line})` : "";
+}
 function resolveGapMessage(operator) {
-  return RESOLVE_GAP_LEAD + operatorFollowUp(operator, " once we have a solid answer") + operatorReachLine(operator);
+  return RESOLVE_GAP_LEAD +
+    `Would you like me to pass your question to ${operatorNameOr(operator, "our team")}, along with how to reach you?\n\n` +
+    "Reply yes or no." + reachNote(operator);
 }
 
 // Phase E completion, item B. Shown when the prior, bounded constitutional-
@@ -45,9 +55,9 @@ const CONSTITUTIONAL_HOLD_LEAD =
   "That touches how FrontFrame itself is governed, which isn't something I can decide on my own. ";
 function constitutionalHoldMessage(operator) {
   return CONSTITUTIONAL_HOLD_LEAD +
-    `I've flagged it for ${operatorNameOr(operator, "the FrontFrame team")} to determine. ` +
-    `Want to leave your contact info so ${operatorNameOr(operator, "we")} can follow up?` +
-    operatorReachLine(operator);
+    `I've flagged it for ${operatorNameOr(operator, "the FrontFrame team")} to determine.\n\n` +
+    `Would you like me to pass your question to ${operatorNameOr(operator, "our team")}, along with how to reach you?\n\n` +
+    "Reply yes or no." + reachNote(operator);
 }
 
 // Truthful, compact statements used when assembling a compound reply — see
@@ -494,8 +504,8 @@ function assembleCompoundReply(turnResults, operator) {
   );
   let assembled = bodyParts.join(" ");
   if (turnResults.some((t) => t.isWithheld)) {
-	assembled += ` Want to leave your contact info on the part(s) I couldn't answer? ` +
-	  operatorFollowUp(operator) + operatorReachLine(operator);
+	assembled += `\n\nWould you like me to pass the part(s) I couldn't answer to ${operatorNameOr(operator, "our team")}, along with how to reach you?\n\n` +
+	  "Reply yes or no." + reachNote(operator);
   }
   return assembled;
 }

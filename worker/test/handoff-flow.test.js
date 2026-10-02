@@ -298,8 +298,8 @@ describe("handoff flow", () => {
   it("a withheld answer offers contact; yes continues from that question", async () => {
     knowledgeGap();
     const first = await send("What is your refund policy?");
-    expect(first.response).toContain("Want to leave your contact info?");
-    expect(first.response).toContain("Pat will follow up personally");
+    expect(first.response).toContain("Would you like me to pass your question to Pat");
+    expect(first.response).toContain("Reply yes or no.");
     const yes = await send("yes", first.session_id);
     expect(yes.response).toBe("Okay. What's your name?");
     expect(db.sessions.get(first.session_id).flow_data.pending_question).toBe("What is your refund policy?");
