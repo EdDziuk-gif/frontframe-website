@@ -2,26 +2,37 @@ import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseHeaders } from "../shared/supabase.js";
 import { escapeHtml, sendSms } from "../shared/runtime.js";
 import { getOperator, sendOperatorEmail } from "../shared/operator.js";
+import { localTimeNow, timezoneLabel } from "../shared/zip-timezone.js";
 
-// § DOMAIN: notify
+// § DOMAIN: contact handoff
 // ════════════════════════════════════════════════════════════════════════════
 
 // Infer a contact method when the caller didn't state one: "@" -> email,
-// otherwise assume a phone number and default to a call. Keeps a usable
-// contact submission from being dropped just because "method" was omitted
-// (Defect 2: visitor gave name + email but no stated preference).
+// otherwise assume a phone number and default to a call.
 function inferContactMethod(method, contact) {
   if (method === "phone" || method === "text" || method === "email") return method;
   return String(contact ?? "").includes("@") ? "email" : "phone";
 }
 
-// Shared contact-handoff capture: one lead row, one lead_alert row, one SMS,
-// one backup email. Called from the /notify route (widget-driven) and from
-// the chat worker's server-side [COLLECTED] handling. De-dupes on session_id
-// within a short window so the two paths cannot double-book the same visitor.
+// The one place a contact request leaves the site: one lead row, one lead_alert
+// row, one SMS, one email to the Operator.
+//
+// Called from the chat handoff flow (routes/handoff-flow.js), after the visitor
+// has read the exact text and said yes, and from the intake form (the visitor
+// submitting the form is their own affirmation).
+//
+// What is sent to the Operator is the contact details and the affirmed inquiry
+// (`summary`) and nothing else. The conversation is never emailed or texted
+// (Decision 1). `transcript`, when given, is stored on the lead_alerts row only,
+// readable in the admin Pipeline panel and cleared when a reviewer closes the
+// alert (Decisions 13, 15, 17, 20).
+//
+// The writes are awaited and the result says whether the request reached the
+// Operator by at least one route, so the caller never tells a visitor "sent"
+// when nothing was (`delivered`). De-dupes on session_id within a short window.
 async function captureContactHandoff(env, ctx, {
   session_id = null, name, contact, method, zip = "", timezone = "",
-  summary = "", source = "agent", transcript = "",
+  summary = "", source = "agent", transcript = null, consent = null,
 }) {
   const resolvedMethod = inferContactMethod(method, contact);
 
@@ -30,19 +41,26 @@ async function captureContactHandoff(env, ctx, {
       const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
       const existing = await supabaseFetch(env, "lead_alerts",
         `?session_id=eq.${encodeURIComponent(session_id)}&triggered_at=gte.${encodeURIComponent(since)}&select=alert_id&limit=1`);
-      if (existing?.length) return { deduped: true, alertId: existing[0].alert_id, leadId: null };
+      if (existing?.length) return { deduped: true, delivered: true, alertId: existing[0].alert_id, leadId: null };
     } catch (e) { console.error("handoff dedupe check failed (continuing):", e); }
   }
 
   const isEmail = String(contact ?? "").includes("@");
   const geo = [zip && `Zip: ${zip}`, timezone && `TZ: ${timezone}`].filter(Boolean).join("  ");
   const notes = [summary, geo].filter(Boolean).join("\n");
+  // For the Operator's email and text only: what time it is for the visitor right
+  // now, so a call back can be timed. The zone itself is worked out from the zip
+  // the visitor gave (shared/zip-timezone.js) and was shown to them before sending.
+  const localTime = localTimeNow(timezone);
+  const geoAlert = [geo && (timezone ? geo.replace(`TZ: ${timezone}`, `Time zone: ${timezoneLabel(timezone)} (from zip)`) : geo),
+    localTime && `Their time now: ${localTime}`].filter(Boolean).join("  ");
 
   let leadId = null;
   try {
     const leadRows = await supabasePost(env, "leads", {
       name, email: isEmail ? contact : null, phone: isEmail ? null : contact,
       notes, source, status: "new",
+      ...(consent ? { consented_at: consent.at, consent_notice_version: consent.noticeVersion } : {}),
     });
     leadId = leadRows?.[0]?.id ?? null;
   } catch (e) { console.error("handoff lead write failed:", e); }
@@ -51,39 +69,33 @@ async function captureContactHandoff(env, ctx, {
   const sourceLabel = source === "intake" ? "intake form" : "site assistant";
   const smsMessage =
     `FrontFrame contact request\nName: ${name}\nReach by: ${methodLabel}\nContact: ${contact}\n` +
-    (geo ? `${geo}\n` : "") + `Source: ${sourceLabel}\n` +
-    (summary ? `Summary: ${summary.slice(0, 200)}` : "");
+    (geoAlert ? `${geoAlert}\n` : "") + `Source: ${sourceLabel}\n` +
+    (summary ? `Request: ${summary.slice(0, 200)}` : "");
 
-  // Email backup, independent of the SMS/lead_alerts path below - it should
-  // still go out even if Surge is down or the lead_alerts write fails (that
-  // was the actual gap this closes: an invalid SURGE_API_KEY silently dropped
-  // every handoff notification with nothing else to catch it). Deliberately
-  // low-key, not an urgent page - not every handoff is a qualified lead.
   const emailHtml = `<!DOCTYPE html><html><body style="font-family:Inter,system-ui,sans-serif;color:#1E2D40;max-width:560px;margin:0 auto;padding:40px 24px">
-<div style="margin-bottom:24px"><strong style="font-size:1.1rem">FrontFrame — Contact Handoff</strong></div>
+<div style="margin-bottom:24px"><strong style="font-size:1.1rem">FrontFrame — Contact Request</strong></div>
 <p style="margin-bottom:4px"><strong>${escapeHtml(name)}</strong> submitted the ${escapeHtml(sourceLabel)}.</p>
 <p style="margin:16px 0;color:#3A4A5C">
   Reach by: ${escapeHtml(methodLabel)}<br>
   Contact: ${escapeHtml(contact)}<br>
-  ${geo ? escapeHtml(geo) + "<br>" : ""}
+  ${geoAlert ? escapeHtml(geoAlert) + "<br>" : ""}
   Source: ${escapeHtml(source)}
 </p>
-${summary ? `<p style="margin:16px 0"><strong>Summary:</strong> ${escapeHtml(summary)}</p>` : ""}
-${transcript ? `<p style="margin:20px 0 8px;font-weight:700">Conversation</p><pre style="white-space:pre-wrap;font-family:inherit;background:#F4F6F8;padding:16px;border-radius:8px;font-size:0.85rem;color:#3A4A5C">${escapeHtml(transcript)}</pre>` : ""}
+${summary ? `<p style="margin:16px 0"><strong>Request:</strong> ${escapeHtml(summary)}</p>` : ""}
 <hr style="border:none;border-top:1px solid #E8ECF0;margin:32px 0">
-<p style="font-size:0.75rem;color:#8A9BAE">Backup notification alongside the SMS alert. Not every handoff is a qualified lead — no need to drop everything for this.</p>
+<p style="font-size:0.75rem;color:#8A9BAE">Backup notification alongside the SMS alert. The visitor chose to send this text and nothing else. Any conversation is in the admin Pipeline panel.</p>
 </body></html>`;
-  // Resolved once, before either alert path starts, so the email is dispatched
-  // immediately and stays independent of the lead_alerts write and the SMS.
+
+  // Resolved once, then both routes run to completion before we report back.
   const operator = await getOperator(env);
-  const emailPromise = sendOperatorEmail(env, `FrontFrame handoff — ${name}`, emailHtml, operator)
-    .catch((e) => console.error("handoff backup email failed:", e));
-  if (ctx?.waitUntil) ctx.waitUntil(emailPromise);
-  else await emailPromise;
+  const emailPromise = sendOperatorEmail(env, `FrontFrame contact request — ${name}`, emailHtml, operator)
+    .then((r) => r?.success !== false)
+    .catch((e) => { console.error("handoff email failed:", e); return false; });
 
   const alertPromise = supabasePost(env, "lead_alerts", {
     session_id, page: source, prospect_name: name, trigger_reason: summary,
     current_site: null, status: "new", sms_sent: false, sms_status: null, lead_id: leadId,
+    ...(Array.isArray(transcript) && transcript.length ? { transcript } : {}),
   })
     .then(async (alertRows) => {
       const alertId = alertRows?.[0]?.alert_id ?? null;
@@ -97,21 +109,10 @@ ${transcript ? `<p style="margin:20px 0 8px;font-weight:700">Conversation</p><pr
     })
     .catch((e) => { console.error("handoff lead_alert write failed:", e); return null; });
 
-  if (ctx?.waitUntil) ctx.waitUntil(alertPromise);
-  else await alertPromise;
-  return { deduped: false, leadId };
+  const [emailSent, alertId] = await Promise.all([emailPromise, alertPromise]);
+  const delivered = Boolean(emailSent || alertId || leadId);
+  return { deduped: false, delivered, alertId, leadId };
 }
-
-async function handleNotify(request, env, ctx, corsHeaders) {
-  const body = await request.json();
-  const { session_id = null, name, contact, method, zip = "", timezone = "", summary = "", source, transcript = "" } = body;
-  if (!name || !contact || !source)
-    return jsonResponse({ error: "name, contact, and source are required" }, 400, corsHeaders);
-
-  await captureContactHandoff(env, ctx, { session_id, name, contact, method, zip, timezone, summary, source, transcript });
-  return jsonResponse({ received: true }, 200, corsHeaders);
-}
-
 
 // ════════════════════════════════════════════════════════════════════════════
 // § DOMAIN: inquiry
@@ -160,7 +161,7 @@ async function handleInquiry(request, env, corsHeaders) {
   const contact = phone?.trim() || email.trim().toLowerCase();
   const method  = phone?.trim() ? "phone" : "email";
 
-  await captureContactHandoff(env, null, {
+  const result = await captureContactHandoff(env, null, {
     name:     owner_name.trim(),
     contact,
     method,
@@ -168,9 +169,10 @@ async function handleInquiry(request, env, corsHeaders) {
     source:   "intake",
     zip:      "",
     timezone: "",
-    transcript: "",
   });
 
+  if (!result.delivered)
+    return jsonResponse({ error: "We couldn't send that just now. Please try again in a few minutes." }, 502, corsHeaders);
   return jsonResponse({ ok: true }, 200, corsHeaders);
 }
 
@@ -280,4 +282,4 @@ async function updateBookingAdmin(request, env, id, corsHeaders) {
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { handleNotify, captureContactHandoff, inferContactMethod, verifyTurnstile, handleInquiry, getBlackout, dateInBlackout, handleSchedule, getBlackoutAdmin, createBlackoutAdmin, deleteBlackoutAdmin, getBookingsAdmin, updateBookingAdmin };
+export { captureContactHandoff, inferContactMethod, verifyTurnstile, handleInquiry, getBlackout, dateInBlackout, handleSchedule, getBlackoutAdmin, createBlackoutAdmin, deleteBlackoutAdmin, getBookingsAdmin, updateBookingAdmin };

@@ -1,11 +1,10 @@
 import { jsonResponse } from "../shared/http.js";
 import { supabaseDelete, supabaseFetch, supabasePatch, supabasePatchByField, supabasePost, supabaseRpc, supabaseUpsert, supabaseHeaders } from "../shared/supabase.js";
-import { COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, escapeHtml, parseJsonObject, sendSms } from "../shared/runtime.js";
-import { getOperator, operatorFollowUp, operatorNameOr, operatorReachLine, sendOperatorEmail } from "../shared/operator.js";
-// Shared contact-handoff capture (lead + lead_alert + SMS, de-duped on session_id).
-// Lives next to /notify in intake.js; imported here so a [COLLECTED] marker is
-// captured server-side and can never be discarded by a resolve_gap route (Defect 2).
-import { captureContactHandoff } from "./intake.js";
+import { COLLECTED_PATTERN, DEFECT_PATTERN, ESCALATION_PATTERN, GAP_SIGNAL, KB_GROUNDED_INSTRUCTION, KB_GROUNDED_PATTERN, KNOWLEDGE_GAP_INSTRUCTION, KNOWLEDGE_GAP_PATTERN, RESEARCH_PATTERN, TESTING_LAYER, buildConstitutionSection, buildQaPairsQuery, buildSystemPrompt, cacheableBlock, callAnthropic, parseJsonObject } from "../shared/runtime.js";
+import { getOperator, operatorFollowUp, operatorNameOr, operatorReachLine } from "../shared/operator.js";
+import { alertGapResolutionQueue } from "../shared/gap-alert.js";
+import { loadOrStartSession, modelHistory, saveSession } from "../shared/chat-session.js";
+import { offeredState, runFlowTurn, startedState } from "./handoff-flow.js";
 import { underReviewQaPairIds } from "./kgr.js";
 import { getReviewerAuthority } from "./constitution.js";
 import { extractJwt } from "../middleware/auth.js";
@@ -28,8 +27,7 @@ function botDisabledMessage(operator) {
 // Per the architecture and REQ-SCA-06, a sub-threshold candidate answer cannot
 // be surfaced to the inquirer on the system's own authority.
 // Draft copy — Ed's edit, not final.
-// The fixed lead is what inContactCollectSubflow() recognizes in the history;
-// the contact wording after it follows the active Operator row.
+// The contact wording after the lead follows the active Operator row.
 const RESOLVE_GAP_LEAD =
   "I don't have a reliable answer to that yet. Want to leave your contact info? ";
 function resolveGapMessage(operator) {
@@ -62,25 +60,6 @@ const WITHHELD_KNOWLEDGE_GAP_NOTE =
 const WITHHELD_CONSTITUTIONAL_NOTE =
   "that part touches FrontFrame's own governance, which isn't mine to decide";
 
-// Defect 2: are we inside the "I can't answer that — leave your contact info"
-// sub-flow? True if a withhold message appears anywhere in the recent history
-// the client sent (it sends roughly the last five turns). The sub-flow spans
-// several turns — invite, "yes", name, zip, ... — not just the turn right after
-// the invite, so this looks across the window rather than only at the last
-// assistant turn. Once there, the visitor's follow-ups are contact-collection
-// dialogue, not answers to be scored: SCR has no jurisdiction and its
-// resolve_gap output would discard the model's real reply.
-function inContactCollectSubflow(history) {
-  if (!Array.isArray(history)) return false;
-  return history.some((m) => {
-	if (m?.role !== "assistant") return false;
-	const t = String(m.content ?? "").trim();
-	return t.startsWith(RESOLVE_GAP_LEAD)
-		|| t.startsWith(CONSTITUTIONAL_HOLD_LEAD)
-		|| t.includes("leave your contact info on the part(s) I couldn't answer");
-  });
-}
-
 // The defects table's area/severity/disposition CHECK constraints. Values
 // outside these are silently rejected by Postgres, so every write must land
 // inside them.
@@ -102,18 +81,6 @@ function agenticDefect(config, description) {
 	build_version: config.build_version ?? "unknown",
 	stage_gate: config.stage_gate ?? "build",
   };
-}
-
-// Phase E gap-resolution-queue visibility: a lightweight SMS alert whenever a
-// gap_resolution_requests row is created, so an unresolved visitor question
-// doesn't sit unseen. Best-effort — never blocks or fails the visitor reply.
-async function alertGapResolutionQueue(env, ctx, page, question, reason) {
-  ctx.waitUntil(
-	sendSms(env,
-	  `FrontFrame gap queue\nReason: ${reason}\nPage: ${page}\n` +
-	  `Question: ${question.slice(0, 200)}`
-	).catch((e) => console.error("gap-resolution-queue alert failed:", e))
-  );
 }
 
 // Phase E completion, item C. Cheap, purely syntactic prefilter run before
@@ -214,7 +181,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 	  );
 	}
 	if (scoringLifecycle?.gapResolutionRequestId) {
-	  await alertGapResolutionQueue(env, ctx, page, message, "constitutional_candidate");
+	  await alertGapResolutionQueue(env, ctx, page, "constitutional_candidate");
 	}
 	return {
 	  response: constitutionalHoldMessage(await operator()),
@@ -229,69 +196,20 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
   const messages = [...history, { role: "user", content: message }];
   const rawReply = await callAnthropic(env, combinedPrompt, messages);
 
-  // ── Escalation detection ─────────────────────────────────────────────────
+  // ── Handoff markers ──────────────────────────────────────────────────────
+  // Decisions 1, 12, 21 (2026-10-01). The model may signal only that the visitor
+  // wants a person: an escalation, a research request, or a collected-contact
+  // marker. Whatever details the marker carries are ignored. Nothing is saved,
+  // emailed or texted from here, and the model's text for this turn is not shown.
+  // The server asks for the details itself and sends only what the visitor has
+  // read and affirmed (routes/handoff-flow.js).
   let response = rawReply;
-  const escMatch = rawReply.match(ESCALATION_PATTERN);
-
-  if (escMatch) {
-	response = rawReply.replace(ESCALATION_PATTERN, "").trim();
-	let escalation;
-	try { escalation = JSON.parse(escMatch[0]); }
-	catch { escalation = { _escalate: true, reason: "unknown", prospect: "Visitor" }; }
-
-	const alertPayload = {
-	  session_id: null, page,
-	  prospect_name:  escalation.prospect     ?? "Visitor",
-	  trigger_reason: escalation.reason       ?? "",
-	  current_site:   escalation.current_site ?? null,
-	  status: "new", sms_sent: false, sms_status: null,
-	};
-
-	// Email backup, independent of the lead_alerts write and the SMS below -
-	// same reasoning as captureContactHandoff's backup email (intake.js): an
-	// invalid/missing SURGE_API_KEY silently dropped every alert here too,
-	// with nothing else to catch it. Escalation fires on signals in the
-	// conversation, often before the visitor has given contact info at all,
-	// so this stays a separate lightweight alert rather than being folded
-	// into captureContactHandoff's lead/contact shape.
-	const escalationEmailHtml = `<!DOCTYPE html><html><body style="font-family:Inter,system-ui,sans-serif;color:#1E2D40;max-width:560px;margin:0 auto;padding:40px 24px">
-<div style="margin-bottom:24px"><strong style="font-size:1.1rem">FrontFrame — Escalation Alert</strong></div>
-<p style="margin-bottom:4px">The chat assistant flagged a conversation for escalation.</p>
-<p style="margin:16px 0;color:#3A4A5C">
-  Prospect: ${escapeHtml(escalation.prospect ?? "Visitor")}<br>
-  Page: ${escapeHtml(page)}<br>
-  Signal: ${escapeHtml(escalation.reason ?? "escalation")}<br>
-  ${escalation.contact_preference ? `Contact: ${escapeHtml(escalation.contact_preference)} - ${escapeHtml(escalation.contact_value ?? "not provided")}<br>` : ""}
-  ${escalation.current_site ? `Site: ${escapeHtml(escalation.current_site)}<br>` : ""}
-</p>
-<hr style="border:none;border-top:1px solid #E8ECF0;margin:32px 0">
-<p style="font-size:0.75rem;color:#8A9BAE">Backup notification alongside the SMS alert. Not every escalation is a qualified lead — no need to drop everything for this.</p>
-</body></html>`;
-	const escalationOperator = await operator();
-	ctx.waitUntil(
-	  sendOperatorEmail(env, `FrontFrame escalation — ${escalation.prospect ?? "Visitor"}`, escalationEmailHtml, escalationOperator)
-		.catch((e) => console.error("escalation backup email failed:", e))
-	);
-
-	ctx.waitUntil(
-	  supabasePost(env, "lead_alerts", alertPayload)
-		.then(async (alertRows) => {
-		  const alertId = alertRows?.[0]?.alert_id ?? null;
-		  const smsMessage =
-			`FrontFrame alert\nProspect: ${escalation.prospect ?? "Visitor"}\nPage: ${page}\n` +
-			`Signal: ${escalation.reason ?? "escalation"}\n` +
-			(escalation.contact_preference ? `Contact: ${escalation.contact_preference} - ${escalation.contact_value ?? "not provided"}\n` : "") +
-			(escalation.current_site ? `Site: ${escalation.current_site}\n` : "") +
-			`Reply to continue the conversation.`;
-		  const smsResult = await sendSms(env, smsMessage);
-		  if (alertId) {
-			await supabasePatchByField(env, "lead_alerts", "alert_id", alertId,
-			  { sms_sent: smsResult.success, sms_status: smsResult.status })
-			  .catch((e) => console.error("lead_alert update failed:", e));
-		  }
-		})
-		.catch((e) => console.error("lead_alert write failed:", e))
-	);
+  let handoffRequested = false;
+  for (const pattern of [ESCALATION_PATTERN, RESEARCH_PATTERN, COLLECTED_PATTERN]) {
+	if (pattern.test(response)) {
+	  handoffRequested = true;
+	  response = response.replace(pattern, "").trim();
+	}
   }
 
   // ── Defect detection ─────────────────────────────────────────────────────
@@ -317,68 +235,8 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 	ctx.waitUntil(supabasePost(env, "defects", defectPayload).catch((e) => console.error("defect write failed:", e)));
   }
 
-  // ── Research detection ───────────────────────────────────────────────────
-  const researchMatch = response.match(RESEARCH_PATTERN);
-  if (researchMatch) {
-	response = response.replace(RESEARCH_PATTERN, "").trim();
-	let leadPayload;
-	try {
-	  const parsed  = JSON.parse(researchMatch[0]);
-	  const contact = parsed.contact ?? "";
-	  const isEmail = contact.includes("@");
-	  leadPayload = {
-		name: parsed.name ?? "Visitor", email: isEmail ? contact : null,
-		phone: isEmail ? null : (contact || null), notes: parsed.question ?? "", source: "agent", status: "new",
-	  };
-	} catch {
-	  leadPayload = { name: "Visitor", notes: "Research request - marker unparsed. Raw: " + researchMatch[0].slice(0, 200), source: "agent", status: "new" };
-	}
-	ctx.waitUntil(
-	  supabasePost(env, "leads", leadPayload)
-		.then(async () => {
-		  await sendSms(env,
-			`FrontFrame research request\nName: ${leadPayload.name}\n` +
-			`Contact: ${leadPayload.email ?? leadPayload.phone ?? "not provided"}\n` +
-			`Question: ${leadPayload.notes?.slice(0, 120) ?? ""}`);
-		})
-		.catch((e) => console.error("research lead write failed:", e))
-	);
-  }
-
-  // ── Contact-handoff detection ([COLLECTED] marker) ─────────────────────
-  // Defect 2: captured server-side so a resolve_gap route can never discard
-  // it. A completed handoff is not a scored answer — strip the marker, record
-  // the lead (de-duped on session_id against the client's own /notify call),
-  // and bypass Phase D for this turn.
-  let handoffCaptured = false;
-  const collectedMatch = response.match(COLLECTED_PATTERN);
-  if (collectedMatch) {
-	response = response.replace(COLLECTED_PATTERN, "").trim();
-	let collected = {};
-	try { collected = JSON.parse(collectedMatch[1]); } catch { collected = {}; }
-	if (collected && (collected.name || collected.contact)) {
-	  handoffCaptured = true;
-	  const transcript = [...history, { role: "user", content: message }, { role: "assistant", content: response }]
-		.map((t) => `${t.role === "user" ? "Visitor" : "Assistant"}: ${t.content}`)
-		.join("\n");
-	  ctx.waitUntil(
-		captureContactHandoff(env, ctx, {
-		  session_id,
-		  name:     collected.name     ?? "Visitor",
-		  contact:  collected.contact  ?? "",
-		  method:   collected.method   ?? "",
-		  zip:      collected.zip      ?? "",
-		  timezone: collected.timezone ?? "",
-		  summary:  collected.summary  ?? "",
-		  source:   "agent",
-		  transcript,
-		}).catch((e) => console.error("server-side contact handoff failed:", e))
-	  );
-	}
-	if (!response) {
-	  const op = await operator();
-	  response = `Got it — ${operatorFollowUp(op)}${operatorReachLine(op)}`;
-	}
+  if (handoffRequested) {
+	return { response: "", routeId: null, hedgeShown: false, isWithheld: false, withheldNote: null, handoffRequested: true };
   }
 
   // ── Knowledge-gap detection (Generation-Boundary Spike, Phase E) ─────────
@@ -438,13 +296,6 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
   let isWithheld = false;
   let withheldNote = null;
 
-  const isHandoffTurn = handoffCaptured || Boolean(escMatch);
-  const isCollectDialogue = !isHandoffTurn
-	&& inContactCollectSubflow(history)
-	&& knowledgeGapMissing === null
-	&& !knowledgeGapMalformed
-	&& rawReply.length <= 600;
-
   // ── Phase 3: post-generation constitutional-conformance check ───────────
   // Distinct from checkConstitutionalEligibility() at the top of this
   // function, which reviews the QUESTION before any answer exists. This
@@ -457,22 +308,13 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
   // route). Runs before the kbGrounded/SCR branches below so a non-conforming
   // answer never reaches grounding or SCR — the Constitution is superior to
   // both, same as the eligibility boundary is to generation itself.
-  const needsConformanceCheck = !isHandoffTurn && !isCollectDialogue
-	&& knowledgeGapMissing === null && !knowledgeGapMalformed
+  const needsConformanceCheck = knowledgeGapMissing === null && !knowledgeGapMalformed
 	&& Boolean(constitutionSection);
   const conformance = needsConformanceCheck
 	? await checkConstitutionalConformance(env, constitutionSection, response)
 	: { conforms: true, issue: null };
 
-  if (isHandoffTurn || isCollectDialogue) {
-	// Defect 2: a handoff turn ([COLLECTED] captured above, or an escalation
-	// marker), or contact-collection dialogue inside the withhold sub-flow
-	// ("what's your zip?", "got it"). Not a scored answer — deliver the model's
-	// own reply as-is, no Phase D. A renewed attempt to answer the original
-	// question still carries the knowledge-gap marker and is handled by the
-	// branches below, so it cannot reach here.
-	isWithheld = false;
-  } else if (!conformance.conforms) {
+  if (!conformance.conforms) {
 	// The answer's own content conflicts with a Constitution provision — the
 	// model overstepped, misstated a governance fact, or claimed an authority
 	// the Constitution doesn't grant. Withheld here, before grounding or SCR
@@ -504,7 +346,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 	  );
 	}
 	if (nonconformanceLifecycle?.gapResolutionRequestId) {
-	  await alertGapResolutionQueue(env, ctx, page, message, "constitutional_nonconformance");
+	  await alertGapResolutionQueue(env, ctx, page, "constitutional_nonconformance");
 	}
 	response = constitutionalHoldMessage(await operator());
 	isWithheld = true;
@@ -540,7 +382,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 		  }).catch((err) => console.error("corpus-conflict defect write failed:", err))
 		);
 		if (scoringLifecycle?.gapResolutionRequestId) {
-		  await alertGapResolutionQueue(env, ctx, page, message, "source_conflict");
+		  await alertGapResolutionQueue(env, ctx, page, "source_conflict");
 		}
 	  } else if (gRoute === "resolve_gap") {
 		// Decision 0034 item 7 (amended 2026-10-01): grounding below the low
@@ -558,7 +400,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 		  );
 		}
 		if (scoringLifecycle?.gapResolutionRequestId) {
-		  await alertGapResolutionQueue(env, ctx, page, message, scoringLifecycle.routeReason);
+		  await alertGapResolutionQueue(env, ctx, page, scoringLifecycle.routeReason);
 		}
 	  } else {
 		// Delivered: verified grounded (respond_strong or respond_limited).
@@ -613,7 +455,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 		isWithheld = true;
 		withheldNote = WITHHELD_KNOWLEDGE_GAP_NOTE;
 		if (scoringLifecycle?.gapResolutionRequestId) {
-		  await alertGapResolutionQueue(env, ctx, page, message,
+		  await alertGapResolutionQueue(env, ctx, page,
 			knowledgeGapMissing !== null ? "knowledge_gap" : "scr_low_confidence");
 		}
 	  } else if (scoringLifecycle.route === "respond_limited") {
@@ -637,7 +479,7 @@ async function handleSingleTurn(env, ctx, config, constitutionSection, combinedP
 	}
   }
 
-  return { response, routeId: scoringLifecycle?.routeId ?? null, hedgeShown, isWithheld, withheldNote, handoff: handoffCaptured };
+  return { response, routeId: scoringLifecycle?.routeId ?? null, hedgeShown, isWithheld, withheldNote };
 }
 
 // Assembles the per-subpart results of a decomposed compound question into
@@ -658,10 +500,25 @@ function assembleCompoundReply(turnResults, operator) {
   return assembled;
 }
 
+// Sent by the resources page notepad to ask the assistant to open the chat.
+const GREETING_REQUEST = "__greet__";
+
+// Longest visitor message accepted in one turn.
+const MAX_MESSAGE_CHARS = 4000;
+
 async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat") {
-  const body = await request.json();
-  const { page, message, history = [], session_id = null } = body;
-  if (!page || !message) return jsonResponse({ error: "page and message are required" }, 400, corsHeaders);
+  let body;
+  try { body = await request.json(); }
+  catch { return jsonResponse({ error: "Invalid JSON" }, 400, corsHeaders); }
+  // The browser sends the page, the message, and the server-issued session id
+  // (the "ticket"). It never sends conversation text: what was said earlier is
+  // what the server held (Decision 16), so earlier turns cannot be forged.
+  const { page, message: rawMessage, session_id: ticket = null } = body ?? {};
+  const message = typeof rawMessage === "string" ? rawMessage.trim() : "";
+  if (!page || typeof page !== "string" || !message)
+	return jsonResponse({ error: "page and message are required" }, 400, corsHeaders);
+  if (message.length > MAX_MESSAGE_CHARS)
+	return jsonResponse({ error: `Messages are limited to ${MAX_MESSAGE_CHARS} characters.` }, 400, corsHeaders);
 
   // The "admin" page persona is for signed-in staff, not site visitors — /chat
   // itself is otherwise unauthenticated (isProtectedRoute() only covers
@@ -688,6 +545,36 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   if (!rateLimit.allowed) {
 	return jsonResponse({ response: RATE_LIMITED_MESSAGE, mode: config.mode }, 200, corsHeaders);
   }
+
+  // ── Held session (Decision 16) ───────────────────────────────────────────
+  // A missing, unknown, expired or other-page ticket starts a fresh chat with no
+  // memory; the response carries the ticket to use from here on.
+  const { session } = await loadOrStartSession(env, ticket, page);
+  const session_id = session.session_id;
+  const reply = (payload) => jsonResponse({ mode: config.mode, handoff: false, session_id, ...payload }, 200, corsHeaders);
+  const saveTurns = (turns, flow_state, flow_data) =>
+	saveSession(env, session, { turns, flow_state, flow_data })
+	  .catch((e) => console.error("chat session save failed:", e));
+
+  // ── Contact handoff in progress ──────────────────────────────────────────
+  // While a visitor is being asked for contact details the server runs the
+  // dialogue (routes/handoff-flow.js). The model is not called.
+  if (session.flow_state !== "chat") {
+	const flow = await runFlowTurn({ env, ctx, session, message, operator: await getOperator(env), source });
+	if (!flow.exitToChat) {
+	  if (flow.sessionDeleted) {
+		return reply({ response: flow.response, handoff: true, session_id: null });
+	  }
+	  await saveTurns(
+		[{ role: "user", content: message, flow: true }, { role: "assistant", content: flow.response, flow: true }],
+		flow.flow_state, flow.flow_data);
+	  return reply({ response: flow.response });
+	}
+	// The visitor moved on from the offer with an ordinary question.
+	session.flow_state = "chat";
+	session.flow_data = {};
+  }
+  const history = modelHistory(session.conversation);
 
   // ── System prompt: shared core (page="all") + page-specific block ───────
   // Same global-row + page-row merge already used in operations.js's admin
@@ -801,14 +688,16 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   let response;
   let primaryRouteId = null;
   let primaryHedgeShown = false;
-  let handoffCaptured = false;
+  let handoffRequested = false;
+  let anyWithheld = false;
 
   if (!subparts) {
 	const turn = await handleSingleTurn(env, ctx, config, constitutionSection, combinedPrompt, message, history, page, session_id, source, promulgatedCorpus);
 	response = turn.response;
 	primaryRouteId = turn.routeId;
 	primaryHedgeShown = turn.hedgeShown;
-	handoffCaptured = Boolean(turn.handoff);
+	handoffRequested = Boolean(turn.handoffRequested);
+	anyWithheld = Boolean(turn.isWithheld);
   } else {
 	const turnResults = [];
 	for (const subpart of subparts) {
@@ -818,16 +707,17 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
 	  // writes racing against the same session/rate-limit state.
 	  turnResults.push(await handleSingleTurn(env, ctx, config, constitutionSection, combinedPrompt, subpart, history, page, session_id, source, promulgatedCorpus));
 	}
+	handoffRequested = turnResults.some((t) => t.handoffRequested);
+	anyWithheld = turnResults.some((t) => t.isWithheld);
 	response = assembleCompoundReply(
 	  turnResults,
-	  turnResults.some((t) => t.isWithheld) ? await getOperator(env) : null,
+	  anyWithheld ? await getOperator(env) : null,
 	);
-	// For session-capture/delivered-response bookkeeping below, treat the
-	// first subpart's route as primary — each subpart already recorded its
-	// own full lifecycle row independently above.
+	// For delivered-response bookkeeping below, treat the first subpart's
+	// route as primary — each subpart already recorded its own full lifecycle
+	// row independently above.
 	primaryRouteId = turnResults[0]?.routeId ?? null;
 	primaryHedgeShown = turnResults.some((t) => t.hedgeShown);
-	handoffCaptured = turnResults.some((t) => t.handoff);
 	for (const t of turnResults) {
 	  if (t.routeId) {
 		try {
@@ -837,6 +727,21 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
 		}
 	  }
 	}
+  }
+
+  // ── Where the conversation goes next ─────────────────────────────────────
+  // The visitor asked for a person: the server takes over with its own question.
+  // An answer was withheld and the visitor was invited to leave details: the
+  // server remembers the question so a "yes" continues from it.
+  let turnFlow = { flow_state: "chat", flow_data: {} };
+  let turnsAreFlow = false;
+  if (handoffRequested) {
+	const started = startedState(await getOperator(env), message);
+	response = started.response;
+	turnFlow = { flow_state: started.flow_state, flow_data: started.flow_data };
+	turnsAreFlow = true;
+  } else if (anyWithheld) {
+	turnFlow = offeredState(message);
   }
 
   if (!subparts && primaryRouteId) {
@@ -854,11 +759,16 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
 	}
   }
 
-  // ── Session capture ──────────────────────────────────────────────────────
-  // Capture the response actually delivered after Phase D/E routing.
-  if (config.capture_enabled && session_id) {
-	const turn = [{ role: "user", content: message }, { role: "assistant", content: response }];
-	ctx.waitUntil(captureSession(env, session_id, page, turn).catch((e) => console.error("session capture failed:", e)));
+  // ── Hold the turn ────────────────────────────────────────────────────────
+  // The delivered response, after Phase D/E routing, is what is held. Awaited:
+  // the next turn depends on it.
+  // The opening-greeting request from the resources page notepad is not something
+  // the visitor said, so it is not held (the greeting is shown by the page).
+  if (message !== GREETING_REQUEST) {
+	await saveTurns(
+	  [{ role: "user", content: message, ...(turnsAreFlow ? { flow: true } : {}) },
+	   { role: "assistant", content: response, ...(turnsAreFlow ? { flow: true } : {}) }],
+	  turnFlow.flow_state, turnFlow.flow_data);
   }
 
   // ── Gap detection (testing mode only) ────────────────────────────────────
@@ -872,7 +782,7 @@ async function handleChat(request, env, ctx, corsHeaders, source = "visitor_chat
   // is a testing instrument, and running it on live traffic meant one Haiku
   // call per visitor turn whether or not anyone was reviewing the output.
   // With the flag off, nothing is evaluated and nothing reaches review_queue.
-  if (config.capture_enabled && session_id) {
+  if (config.capture_enabled) {
 	ctx.waitUntil((async () => {
 	  try {
 		const flaggedTurn = { visitor_message: message, bot_response: response };
@@ -930,22 +840,9 @@ No other text.`,
 	})());
   }
 
-  return jsonResponse({ response, mode: config.mode, handoff: handoffCaptured }, 200, corsHeaders);
+  return reply({ response });
 }
-
-async function captureSession(env, sessionId, page, newTurns) {
-  const existing = await supabaseFetch(env, "chat_sessions",
-	`?session_id=eq.${sessionId}&select=session_id,conversation`);
-  if (!existing || existing.length === 0) {
-	await supabasePost(env, "chat_sessions", { session_id: sessionId, page, conversation: newTurns });
-  } else {
-	const updated = [...(existing[0].conversation ?? []), ...newTurns];
-	await supabasePatchByField(env, "chat_sessions", "session_id", sessionId,
-	  { conversation: updated, last_active_at: new Date().toISOString() });
-  }
-}
-
 
 // ════════════════════════════════════════════════════════════════════════════
 
-export { handleChat, handleSingleTurn, captureSession, resolveGapMessage, constitutionalHoldMessage, agenticDefect, coerceDefectArea, coerceDefectSeverity };
+export { handleChat, handleSingleTurn, resolveGapMessage, constitutionalHoldMessage, agenticDefect, coerceDefectArea, coerceDefectSeverity };

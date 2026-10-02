@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Escalation (the model's own "_escalate" marker for a hot/urgent signal,
-// distinct from the ordinary [COLLECTED] handoff) had its own SMS-only alert
-// path in chat.js, never routed through captureContactHandoff — so it had
-// the same single-point-of-failure gap the handoff path had before its
-// Resend backup was added: an invalid/missing SURGE_API_KEY silently dropped
-// every escalation alert with nothing else to catch it.
+// The model's "_escalate" marker used to email and text the Operator on its own
+// authority, before the visitor had agreed to anything. As of 2026-10-01
+// (Decisions 1 and 21) it only signals that the visitor wants a person; the
+// server asks, shows the visitor exactly what will be sent, and sends it only
+// after a yes (see handoff-flow.test.js).
 
 const callAnthropicMock = vi.fn();
 const sendResendEmailMock = vi.fn().mockResolvedValue({ success: true, status: "sent" });
@@ -51,8 +50,8 @@ beforeEach(() => {
   supabaseFetchMock.mockClear();
 });
 
-describe("escalation — Resend backup email", () => {
-  it("sends a backup email when the model emits an _escalate marker, even though the SMS fails", async () => {
+describe("escalation marker — nothing leaves the site before the visitor agrees", () => {
+  it("an _escalate marker sends no email or text and writes no alert or lead", async () => {
     callAnthropicMock.mockResolvedValueOnce(
       "I'd love to get you set up right away.\n" +
       '{"_escalate": true, "reason": "Visitor said they want to sign up today", "prospect": "Jordan"}'
@@ -63,42 +62,23 @@ describe("escalation — Resend backup email", () => {
       [], "home", "session-esc-1", "visitor_chat",
     );
 
-    expect(sendSmsMock).toHaveBeenCalled();
-    expect(sendResendEmailMock).toHaveBeenCalledTimes(1);
-    const [, to, subject, html] = sendResendEmailMock.mock.calls[0];
-    expect(to).toBe(OPERATOR_ROW.email);
-    expect(subject).toContain("Jordan");
-    expect(html).toContain("Jordan");
-    expect(html).toContain("Visitor said they want to sign up today");
-    expect(result.isWithheld).toBe(false);
+    expect(result.handoffRequested).toBe(true);
+    expect(result.response).toBe("");
+    expect(sendSmsMock).not.toHaveBeenCalled();
+    expect(sendResendEmailMock).not.toHaveBeenCalled();
+    expect(supabasePostMock).not.toHaveBeenCalled();
   });
 
-  it("still sends the email when the lead_alerts write fails", async () => {
-    supabasePostMock.mockRejectedValueOnce(new Error("db down"));
+  it("model-supplied marker details are ignored, not relayed", async () => {
     callAnthropicMock.mockResolvedValueOnce(
-      'Sure thing.\n{"_escalate": true, "reason": "urgent", "prospect": "Robin"}'
+      'Ok.\n{"_escalate": true, "reason": "<script>alert(1)</script>", "prospect": "<b>Sam</b>", "contact_value": "sam@example.com"}'
     );
-
-    await handleSingleTurn(
-      {}, fakeCtx(), CONFIG, "", "combined-prompt", "Call me now please",
-      [], "home", "session-esc-2", "visitor_chat",
-    );
-
-    expect(sendResendEmailMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("escapes HTML in model-supplied escalation fields", async () => {
-    callAnthropicMock.mockResolvedValueOnce(
-      'Ok.\n{"_escalate": true, "reason": "<script>alert(1)</script>", "prospect": "<b>Sam</b>"}'
-    );
-
-    await handleSingleTurn(
+    const result = await handleSingleTurn(
       {}, fakeCtx(), CONFIG, "", "combined-prompt", "Call me",
       [], "home", "session-esc-3", "visitor_chat",
     );
-
-    const html = sendResendEmailMock.mock.calls[0][3];
-    expect(html).not.toContain("<script>alert(1)</script>");
-    expect(html).toContain("&lt;script&gt;");
+    expect(result.handoffRequested).toBe(true);
+    expect(JSON.stringify(result)).not.toContain("sam@example.com");
+    expect(sendResendEmailMock).not.toHaveBeenCalled();
   });
 });

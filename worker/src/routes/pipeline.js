@@ -65,11 +65,21 @@ async function deleteLeadAlert(env, id, userJwt, corsHeaders) {
   return jsonResponse({ deleted: id }, 200, corsHeaders);
 }
 
+// The conversation behind an alert, for a reviewer who deals with handoffs
+// (Pipeline panel). A handoff's conversation is stored on the alert itself
+// (Decision 15) and is cleared by the database when the alert is closed
+// (Decision 20). An alert with no stored transcript falls back to the chat still
+// being held for its session, if any (held chats are discarded after a few hours).
 async function getAlertSession(env, alertId, userJwt, corsHeaders) {
   const alertRows = await supabaseFetch(env, "lead_alerts",
-    `?alert_id=eq.${encodeURIComponent(alertId)}&select=session_id,prospect_name`, userJwt);
+    `?alert_id=eq.${encodeURIComponent(alertId)}&select=session_id,prospect_name,status,transcript`, userJwt);
   if (!alertRows?.length) return jsonResponse({ error: "Alert not found" }, 404, corsHeaders);
-  const sessionId = alertRows[0].session_id;
+  const alert = alertRows[0];
+  if (Array.isArray(alert.transcript) && alert.transcript.length)
+    return jsonResponse({ conversation: alert.transcript, source: "handoff" }, 200, corsHeaders);
+  if (alert.status === "closed")
+    return jsonResponse({ conversation: null, reason: "closed" }, 200, corsHeaders);
+  const sessionId = alert.session_id;
   if (!sessionId) return jsonResponse({ conversation: null, reason: "no_session" }, 200, corsHeaders);
   const sessionRows = await supabaseFetch(env, "chat_sessions",
     `?session_id=eq.${encodeURIComponent(sessionId)}&select=conversation,page,started_at,last_active_at`, userJwt);

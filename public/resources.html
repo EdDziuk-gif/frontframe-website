@@ -834,8 +834,10 @@
     // ─── NOTEPAD ───
     const WORKER='https://api.frontframe.co';
     const PAGE='resources';
-    const sessionId=crypto.randomUUID();
-    let npHistory=[],npStarted=false;
+    // Issued by the server with the first reply; the browser sends only this
+    // ticket, never earlier messages.
+    let ticket=null;
+    let npStarted=false;
 
     const notepadObj    = document.getElementById('notepadObj');
     const notepadPanel  = document.getElementById('notepadPanel');
@@ -878,6 +880,7 @@
     function addNotepadMsg(text, role){
       const d=document.createElement('div');
       d.className='notepad-msg '+role;
+      d.style.whiteSpace='pre-wrap';
       d.textContent=text;
       notepadMsgs.appendChild(d);
       notepadMsgs.scrollTop=notepadMsgs.scrollHeight;
@@ -890,13 +893,13 @@
       try{
         const res=await fetch(`${WORKER}/chat`,{
           method:'POST', headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({page:PAGE, message:'__greet__', history:[], session_id:sessionId})
+          body:JSON.stringify({page:PAGE, message:'__greet__', session_id:ticket})
         });
         const data=await res.json();
         document.getElementById('npthinking')?.remove();
-        const reply=data.response||"What's on your mind?";
+        if(res.ok) ticket=data.session_id||null;
+        const reply=(res.ok&&data.response)||"What's on your mind?";
         addNotepadMsg(reply,'host');
-        npHistory.push({role:'assistant',content:reply});
       }catch{
         document.getElementById('npthinking')?.remove();
         addNotepadMsg("What's on your mind?",'host');
@@ -911,7 +914,6 @@
     async function sendNotepadMessage(text){
       if(!text.trim())return;
       addNotepadMsg(text,'visitor');
-      npHistory.push({role:'user',content:text});
       notepadInput.value=''; notepadInput.style.height='auto';
       notepadSend.disabled=true;
       const thinking=document.createElement('div');
@@ -920,13 +922,13 @@
       try{
         const res=await fetch(`${WORKER}/chat`,{
           method:'POST', headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({page:PAGE, message:text, history:npHistory.slice(-10), session_id:sessionId})
+          body:JSON.stringify({page:PAGE, message:text, session_id:ticket})
         });
         const data=await res.json();
         document.getElementById('npthinking')?.remove();
-        const reply=data.response||'Having trouble connecting right now.';
+        if(res.ok) ticket=data.session_id||null;
+        const reply=(res.ok&&data.response)||data.error||'Having trouble connecting right now.';
         addNotepadMsg(reply,'host');
-        npHistory.push({role:'assistant',content:reply});
       }catch{
         document.getElementById('npthinking')?.remove();
         addNotepadMsg('Having trouble connecting right now. Please try again.','host');

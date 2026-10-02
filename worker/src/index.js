@@ -4,6 +4,7 @@ import { matchRoute } from "./router.js";
 import { ADMIN_ROUTES } from "./routes/admin.js";
 import { DEBUG_ROUTES } from "./routes/debug.js";
 import { PUBLIC_ROUTES } from "./routes/public.js";
+import { discardIdleChatSessions } from "./shared/chat-session.js";
 import { CORS_HEADERS, jsonResponse } from "./shared/http.js";
 
 export const ROUTES = [...PUBLIC_ROUTES, ...ADMIN_ROUTES];
@@ -41,5 +42,17 @@ export default {
       console.error("Worker error:", err);
       return jsonResponse({ error: "Internal server error" }, 500, CORS_HEADERS);
     }
+  },
+
+  // Scheduled sweep (wrangler.jsonc "triggers"). Discards held chat messages that
+  // have been idle past CHAT_SESSION_IDLE_HOURS (Decision 19). The load path also
+  // discards an expired chat the moment it is found, so this only catches chats
+  // nobody comes back to.
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(
+      discardIdleChatSessions(env)
+        .then((n) => { if (n) console.log(`Discarded ${n} idle chat session(s)`); })
+        .catch((e) => console.error("Idle chat session sweep failed:", e)),
+    );
   },
 };

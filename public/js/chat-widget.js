@@ -11,21 +11,16 @@
 // original "canonical" widget, so most pages need only data-page):
 //   data-greeting            Custom opening message. Default: the standard
 //                             FrontFrame intro.
-//   data-source               Label sent to /notify so leads can be traced back
-//                             to the page they came from. Default: "agent".
-//   data-handoff              "false" disables the [COLLECTED:...] parsing and
-//                             the notify-Ed handoff entirely — the chat stays
-//                             plain Q&A. Default: enabled. Use this for pages
-//                             where the visitor's contact info is already known
-//                             (e.g. right after they've submitted a form).
-//   data-confirm-msg          Message shown after a successful handoff. Default:
-//                             "Got it — Ed will follow up directly." Ignored if
-//                             data-handoff="false".
 //   data-show-privacy-note    "false" skips the "Contact info stored by
-//                             FrontFrame..." privacy line after handoff. Default:
-//                             shown. Ignored if data-handoff="false".
-//   data-placeholder-after    Input placeholder shown once the input is disabled
-//                             after handoff. Default: "Ed will be in touch."
+//                             FrontFrame..." privacy line shown after the
+//                             visitor's contact request has been sent.
+//                             Default: shown.
+//
+// The conversation lives on the server. This script sends only the page, the
+// visitor's message, and the session ticket the server issued; it never sends
+// earlier messages and never sends contact details anywhere itself. When a
+// visitor asks for a person, the server asks for the details in the chat, shows
+// the visitor exactly what will be sent, and sends it only after a yes.
 //
 // The page name is read from this script tag's data-page attribute (and the
 // customization above from the same tag) so a single file can serve every
@@ -44,11 +39,7 @@
 
   var GREETING = ds.greeting ||
     "Hi — I'm an AI assistant for FrontFrame. Ask me anything about our services, or I can connect you with Ed.";
-  var SOURCE = ds.source || 'agent';
-  var HANDOFF_ENABLED = ds.handoff !== 'false';
-  var CONFIRM_MSG = ds.confirmMsg || 'Got it — Ed will follow up directly.';
   var SHOW_PRIVACY_NOTE = ds.showPrivacyNote !== 'false';
-  var PLACEHOLDER_AFTER = ds.placeholderAfter || 'Ed will be in touch.';
 
   var panel = document.getElementById('chatPanel');
   var toggle = document.getElementById('chatToggle');
@@ -62,8 +53,10 @@
   // simply won't have these elements — bail out quietly instead of throwing.
   if (!panel || !toggle || !closeBtn || !messages || !input || !sendBtn) return;
 
-  var sessionId = crypto.randomUUID();
-  var isOpen = false, history = [], greeted = false, expanded = false, handoffDone = false;
+  // Issued by the server with the first reply; null until then, and again after a
+  // contact request is sent (the next message starts a fresh chat).
+  var ticket = null;
+  var isOpen = false, greeted = false, expanded = false;
 
   input.addEventListener('input', function () {
     input.style.height = 'auto';
@@ -89,7 +82,7 @@
   function addMessage(text, role) {
     var d = document.createElement('div');
     d.className = 'msg ' + (role === 'user' ? 'user' : role === 'confirmed' ? 'confirmed' : 'agent');
-    d.textContent = text; messages.appendChild(d); messages.scrollTop = messages.scrollHeight;
+    d.style.whiteSpace = 'pre-wrap'; d.textContent = text; messages.appendChild(d); messages.scrollTop = messages.scrollHeight;
   }
 
   function addTyping() {
@@ -100,82 +93,35 @@
 
   function removeTyping() { var el = document.getElementById('np-typing'); if (el) el.remove(); }
 
-  function parseCollected(r) {
-    var m = r.match(/\[COLLECTED:([\s\S]*?)\]/);
-    if (!m) return null;
-    try { return JSON.parse(m[1]); } catch (e) { return null; }
-  }
-
-  function showHandoffConfirmation() {
-    setTimeout(function () {
-      addMessage(CONFIRM_MSG, 'confirmed');
-      if (SHOW_PRIVACY_NOTE) {
-        var privacyNote = document.createElement('div');
-        privacyNote.style.cssText = 'font-size:0.72rem;color:#8A9BAE;padding:2px 14px 8px;';
-        privacyNote.innerHTML = 'Contact info stored by FrontFrame. <a href="/about#privacy" style="color:#8A9BAE;text-decoration:underline;">Privacy policy</a>';
-        messages.appendChild(privacyNote);
-        messages.scrollTop = messages.scrollHeight;
-      }
-      input.disabled = true; sendBtn.disabled = true; input.placeholder = PLACEHOLDER_AFTER;
-    }, 600);
-  }
-
-  async function notifyEd(contactData) {
-    if (handoffDone) return; handoffDone = true;
-    var transcript = history.filter(function (m) { return m.role === 'user' || m.role === 'assistant'; })
-      .map(function (m) { return (m.role === 'user' ? 'Visitor' : 'Assistant') + ': ' + m.content; }).join('\n');
-    try {
-      var r = await fetch(WORKER_URL + '/notify', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId, name: contactData.name || '',
-          contact: contactData.contact || '', method: contactData.method || '',
-          zip: contactData.zip || '', timezone: contactData.timezone || '',
-          summary: contactData.summary || '', transcript: transcript, source: SOURCE
-        }),
-      });
-      if (!r.ok) throw new Error('notify ' + r.status);
-    } catch (e) {
-      addMessage("I've noted that — if you don't hear back soon, reach Ed directly at ed@frontframe.co.", 'agent');
-    }
+  function showPrivacyNote() {
+    if (!SHOW_PRIVACY_NOTE) return;
+    var privacyNote = document.createElement('div');
+    privacyNote.style.cssText = 'font-size:0.72rem;color:#8A9BAE;padding:2px 14px 8px;';
+    privacyNote.innerHTML = 'Contact info stored by FrontFrame. <a href="/about#privacy" style="color:#8A9BAE;text-decoration:underline;">Privacy policy</a>';
+    messages.appendChild(privacyNote);
+    messages.scrollTop = messages.scrollHeight;
   }
 
   async function sendMessage(text) {
     if (!text.trim()) return;
-    expandPanel(); addMessage(text, 'user'); history.push({ role: 'user', content: text });
+    expandPanel(); addMessage(text, 'user');
     input.value = ''; input.style.height = 'auto'; sendBtn.disabled = true; addTyping();
     try {
       var res = await fetch(WORKER_URL + '/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ page: PAGE, message: text, history: history.slice(-10), session_id: sessionId }),
+        body: JSON.stringify({ page: PAGE, message: text, session_id: ticket }),
       });
       var data = await res.json(); removeTyping();
-      var reply = data.response || 'Sorry, something went wrong.';
-
-      // Server-side handoff capture (Defect 2): the worker stripped the
-      // [COLLECTED] marker and recorded the lead itself. Show the confirmation
-      // UX but do NOT call /notify — the worker already did, de-duped.
-      if (HANDOFF_ENABLED && data.handoff) {
-        if (reply) { addMessage(reply, 'agent'); history.push({ role: 'assistant', content: reply }); }
-        handoffDone = true;
-        showHandoffConfirmation();
-        return;
-      }
-
-      var collected = HANDOFF_ENABLED ? parseCollected(reply) : null;
-      if (collected) {
-        var clean = reply.replace(/\[COLLECTED:[\s\S]*?\]/, '').trim();
-        if (clean) { addMessage(clean, 'agent'); history.push({ role: 'assistant', content: clean }); }
-        showHandoffConfirmation();
-        await notifyEd(collected); return;
-      }
-      addMessage(reply, 'agent'); history.push({ role: 'assistant', content: reply });
+      if (!res.ok) { addMessage(data.error || 'Sorry, something went wrong.', 'agent'); return; }
+      ticket = data.session_id || null;
+      addMessage(data.response || 'Sorry, something went wrong.', 'agent');
+      if (data.handoff) showPrivacyNote();
     } catch (e) { removeTyping(); addMessage('Having trouble connecting right now. Please try again.', 'agent'); }
-    finally { if (!handoffDone) sendBtn.disabled = false; input.focus(); }
+    finally { sendBtn.disabled = false; input.focus(); }
   }
 
   function greet() {
-    addMessage(GREETING, 'agent'); history.push({ role: 'assistant', content: GREETING });
+    addMessage(GREETING, 'agent');
   }
 
   sendBtn.addEventListener('click', function () { sendMessage(input.value); });

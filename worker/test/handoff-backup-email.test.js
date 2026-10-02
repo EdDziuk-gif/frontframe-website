@@ -48,11 +48,12 @@ beforeEach(() => {
 });
 
 describe("captureContactHandoff — Resend backup email", () => {
-  it("sends a backup email to the admin with name, contact, and transcript", async () => {
+  it("sends the Operator the name, contact and the affirmed request, and never the conversation", async () => {
     supabasePostMock.mockResolvedValue([{ id: 1, alert_id: 1 }]);
+    const transcript = [{ role: "user", content: "Hi, SECRET-CHAT-TEXT" }, { role: "assistant", content: "Hello" }];
     await captureContactHandoff(ENV, fakeCtx(), {
       session_id: "s1", name: "Sam Visitor", contact: "sam@example.com", method: "email",
-      summary: "Wants a callback about pricing", transcript: "Visitor: Hi\nAssistant: Hello",
+      summary: "Wants a callback about pricing", transcript,
     });
     expect(sendResendEmailMock).toHaveBeenCalledTimes(1);
     const [, to, subject, html] = sendResendEmailMock.mock.calls[0];
@@ -60,7 +61,33 @@ describe("captureContactHandoff — Resend backup email", () => {
     expect(subject).toContain("Sam Visitor");
     expect(html).toContain("sam@example.com");
     expect(html).toContain("Wants a callback about pricing");
-    expect(html).toContain("Visitor: Hi");
+    expect(html).not.toContain("SECRET-CHAT-TEXT");
+    // Nor in the text message.
+    expect(sendSmsMock.mock.calls[0][1]).not.toContain("SECRET-CHAT-TEXT");
+  });
+
+  it("stores the conversation on the alert record only, and the consent on the lead", async () => {
+    supabasePostMock.mockResolvedValue([{ id: 1, alert_id: 1 }]);
+    const transcript = [{ role: "user", content: "Hi" }, { role: "assistant", content: "Hello" }];
+    const res = await captureContactHandoff(ENV, fakeCtx(), {
+      session_id: "s1", name: "Sam", contact: "sam@example.com", method: "email", summary: "x", transcript,
+      consent: { at: "2026-10-01T12:00:00.000Z", noticeVersion: "v-test" },
+    });
+    const alert = supabasePostMock.mock.calls.find((c) => c[1] === "lead_alerts")[2];
+    expect(alert.transcript).toEqual(transcript);
+    const lead = supabasePostMock.mock.calls.find((c) => c[1] === "leads")[2];
+    expect(lead.consented_at).toBe("2026-10-01T12:00:00.000Z");
+    expect(lead.consent_notice_version).toBe("v-test");
+    expect(lead.notes).not.toContain("Hello");
+    expect(res.delivered).toBe(true);
+  });
+
+  it("reports not delivered when nothing reached the Operator by any route", async () => {
+    supabasePostMock.mockRejectedValue(new Error("db down"));
+    sendResendEmailMock.mockResolvedValueOnce({ success: false, status: "error" });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await captureContactHandoff(ENV, fakeCtx(), { session_id: "s8", name: "Al", contact: "al@example.com", method: "email" });
+    expect(res.delivered).toBe(false);
   });
 
   it("sends to the OPERATOR_FALLBACK_EMAIL variable when the Operator lookup fails, so an outage cannot silence it", async () => {
@@ -89,11 +116,11 @@ describe("captureContactHandoff — Resend backup email", () => {
     expect(sendResendEmailMock).toHaveBeenCalledTimes(1);
   });
 
-  it("escapes HTML in visitor-supplied fields (name, summary, transcript)", async () => {
+  it("escapes HTML in visitor-supplied fields (name, summary)", async () => {
     supabasePostMock.mockResolvedValue([{ id: 1, alert_id: 1 }]);
     await captureContactHandoff(ENV, fakeCtx(), {
       session_id: "s4", name: "<script>alert(1)</script>", contact: "x@example.com", method: "email",
-      summary: "<b>bold</b>", transcript: "Visitor: <img src=x>",
+      summary: "<b>bold</b>",
     });
     const html = sendResendEmailMock.mock.calls[0][3];
     expect(html).not.toContain("<script>alert(1)</script>");

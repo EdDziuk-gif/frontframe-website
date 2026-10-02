@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Defect 2: once a conversation is in the "leave your contact info" sub-flow,
-// the follow-up turns are contact-collection dialogue, not answers. They must
-// not be scored by SCR (whose resolve_gap output discards the reply), and a
-// completed [COLLECTED] marker must be captured server-side so it can never be
-// thrown away before the client sees it.
+// Contact handoff, as of 2026-10-01 (repair plan items 1 and 21): the model can
+// no longer collect contact details or create a lead. Its escalation, research
+// and [COLLECTED] markers only signal that the visitor wants a person; the server
+// then runs the dialogue (see handoff-flow.test.js).
 
 const callAnthropicMock = vi.fn();
 const supabasePostMock = vi.fn().mockResolvedValue([{ id: 1, alert_id: 1 }]);
@@ -115,74 +114,49 @@ describe("captureContactHandoff", () => {
   });
 });
 
-describe("handleSingleTurn — Defect 2 handoff handling", () => {
+describe("handleSingleTurn — handoff markers only signal that the visitor wants a person", () => {
   const args = (message, history, reply) => {
     callAnthropicMock.mockResolvedValueOnce(reply);
     return handleSingleTurn({}, fakeCtx(), CONFIG, "", "combined-prompt", message, history, "home", "s1", "visitor_chat");
   };
 
-  it("captures a [COLLECTED] marker server-side, strips it, and skips SCR", async () => {
+  it("a [COLLECTED] marker saves nothing and sends nothing; the model's text is not shown", async () => {
     const r = await args(
       "Ed Dziuk, ed@frontframe.co, zip 85251",
-      [{ role: "assistant", content: RESOLVE_GAP_MESSAGE }],
-      'Perfect — Ed will be in touch.\n[COLLECTED:{"name":"Ed Dziuk","contact":"ed@frontframe.co","method":"email","zip":"85251","timezone":"America/Phoenix","summary":"pricing question"}]',
+      [],
+      'Perfect — Ed will be in touch.\n[COLLECTED:{"name":"Ed Dziuk","contact":"ed@frontframe.co","method":"email","zip":"85251","summary":"pricing question"}]',
     );
-    expect(r.handoff).toBe(true);
-    expect(r.isWithheld).toBe(false);
-    expect(r.response).toBe("Perfect — Ed will be in touch.");
-    expect(r.response).not.toMatch(/COLLECTED/);
-    // exactly one model call — generation. SCR's scoring call never happened.
-    expect(callAnthropicMock).toHaveBeenCalledTimes(1);
-    // lead captured
-    expect(supabasePostMock.mock.calls.map((c) => c[1])).toContain("leads");
+    expect(r.handoffRequested).toBe(true);
+    expect(r.response).toBe("");
+    expect(callAnthropicMock).toHaveBeenCalledTimes(1); // generation only; no scoring
+    expect(supabasePostMock).not.toHaveBeenCalled();     // no lead, no alert
   });
 
-  it("delivers a contact-collection turn ('what's your zip?') as-is without scoring", async () => {
-    const r = await args(
-      "Yes",
-      [{ role: "assistant", content: RESOLVE_GAP_MESSAGE }],
-      "Great — what's your name, and what's your zip code so Ed knows when to reach you?",
-    );
-    expect(r.isWithheld).toBe(false);
-    expect(r.response).toBe("Great — what's your name, and what's your zip code so Ed knows when to reach you?");
-    expect(callAnthropicMock).toHaveBeenCalledTimes(1); // no SCR call
+  it("a _research marker creates no lead", async () => {
+    const r = await args("Can you research X for me?", [],
+      'Sure.\n{"_research": true, "name": "Ann", "contact": "ann@example.com", "question": "X"}');
+    expect(r.handoffRequested).toBe(true);
+    expect(supabasePostMock).not.toHaveBeenCalled();
   });
 
-  it("stays in the sub-flow across multiple collection turns (not just the turn after the invite)", async () => {
-    // History: invite -> "yes" -> model asked for name -> visitor gives it.
-    // The withhold message is no longer the *last* assistant turn, but we're
-    // still collecting, so this must not be scored.
-    const r = await args(
-      "Ed Dziuk",
-      [
-        { role: "assistant", content: RESOLVE_GAP_MESSAGE },
-        { role: "user", content: "yes" },
-        { role: "assistant", content: "Great — what's your name?" },
-      ],
-      "Thanks Ed. What's your zip code so Ed knows the best time to reach you?",
-    );
-    expect(r.isWithheld).toBe(false);
-    expect(r.response).toBe("Thanks Ed. What's your zip code so Ed knows the best time to reach you?");
-    expect(callAnthropicMock).toHaveBeenCalledTimes(1); // no SCR call
-  });
-
-  it("still withholds when the model re-attempts the original question inside the sub-flow", async () => {
+  it("still withholds when the model reports a knowledge gap", async () => {
     const r = await args(
       "just give me your best guess",
-      [{ role: "assistant", content: RESOLVE_GAP_MESSAGE }],
+      [],
       'I can only say what is written down.\n{"_knowledge_gap": true, "missing": "the refund policy"}',
     );
     expect(r.isWithheld).toBe(true);
+    expect(r.handoffRequested).toBeUndefined();
     expect(r.response).toBe(RESOLVE_GAP_MESSAGE);
   });
 
-  it("does not bypass scoring for a normal question (no withhold sub-flow)", async () => {
+  it("scores a normal question as before", async () => {
     callAnthropicMock
       .mockResolvedValueOnce("The Standard tier is $3,000.")            // generation
       .mockResolvedValueOnce('{"score":0.95,"rationale":"Directly answers."}'); // SCR
     const r = await handleSingleTurn({}, fakeCtx(), CONFIG, "", "combined-prompt",
       "How much is Standard?", [], "home", "s1", "visitor_chat");
-    expect(r.handoff).toBe(false);
+    expect(r.handoffRequested).toBeUndefined();
     expect(callAnthropicMock).toHaveBeenCalledTimes(2); // generation + SCR both ran
     expect(supabasePostMock.mock.calls.map((c) => c[1])).toContain("questions");
   });
